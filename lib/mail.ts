@@ -1,21 +1,80 @@
-import nodemailer from "nodemailer";
+import { MailtrapClient } from "mailtrap";
+const TOKEN = "cb14d3e9d2fc605027af80f6365e7d26";
+const client = new MailtrapClient({ token: TOKEN });
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+const generateEmailTemplate = (verificationLink: string) => `
+  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e1e1e1; padding: 20px; border-radius: 10px;">
+    <h2 style="color: #333; text-align: center;">Verify Your Email</h2>
+    <p style="font-size: 16px; color: #555;">
+      Thanks for signing up! To get started, please click the button below to verify your email address.
+    </p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${verificationLink}" 
+         style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+        Verify Email Address
+      </a>
+    </div>
+    <p style="font-size: 14px; color: #888;">
+      This link will expire in 24 hours. If you did not create an account, you can safely ignore this email.
+    </p>
+    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+    <p style="font-size: 12px; color: #aaa; text-align: center;">
+      &copy; ${new Date().getFullYear()} Sunyaverse Tech. All rights reserved.
+    </p>
+  </div>
+`;
 
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?token=${token}`;
+  const domain = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const verificationLink = `${domain}/verify-email?token=${token}`;
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM,
-    to: email,
-    subject: "Confirm your email",
-    html: `<p>Click <a href="${confirmLink}">here</a> to verify your email.</p>`,
-  });
+  const sender = {
+    email: "sunyaverse.tech@gmail.com",
+    name: "Sunyaverse",
+  };
+
+  const recipients = [{ email }];
+
+  try {
+    await client.send({
+      from: sender,
+      to: recipients,
+      subject: "Verify your email address",
+      category: "Email Verification",
+      html: generateEmailTemplate(verificationLink),
+    });
+    console.log("Verification email sent to:", email);
+  } catch (error) {
+    console.error("Failed to send email:", error);
+    throw new Error("Email could not be sent.");
+  }
+};
+
+export const sendSimpleMail = async (
+  email: string,
+  subject: string,
+  text: string,
+) => {
+  const sender = {
+    email: "sunyaverse.tech@gmail.com",
+    name: "Sunyaverse",
+  };
+
+  const recipients = [{ email }];
+
+  try {
+    const response = await client.send({
+      from: sender,
+      to: recipients,
+      subject: subject,
+      text: text,
+      category: "Notification",
+    });
+
+    console.log("Simple email sent successfully:", response);
+    return { success: true };
+  } catch (error) {
+    console.error("Error sending simple email:", error);
+    return { success: false, error };
+  }
 };
