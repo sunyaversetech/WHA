@@ -42,6 +42,7 @@ const handler = NextAuth({
       },
     }),
   ],
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async signIn({ profile, account }) {
       if (account?.provider === "google" && profile?.email) {
