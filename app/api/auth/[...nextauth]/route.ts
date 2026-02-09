@@ -1,7 +1,9 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
+import bcrypt from "bcryptjs";
 
 const handler = NextAuth({
   providers: [
@@ -9,15 +11,45 @@ const handler = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null;
+
+        await connectToDb();
+        const user = await User.findOne({
+          email: credentials.email.toLowerCase(),
+        });
+
+        if (!user || !user.password) return null;
+
+        const isPasswordCorrect = await bcrypt.compare(
+          credentials.password,
+          user.password,
+        );
+        if (!isPasswordCorrect) return null;
+
+        return {
+          id: user._id.toString(),
+          email: user.email,
+          name: user.name,
+          category: user.category,
+        };
+      },
+    }),
   ],
   callbacks: {
     async signIn({ profile, account }) {
-      if (account?.provider === "google" && profile) {
+      if (account?.provider === "google" && profile?.email) {
         try {
           await connectToDb();
 
           await User.findOneAndUpdate(
-            { email: profile.email },
+            { email: profile.email.toLowerCase() },
             {
               $set: {
                 name: profile.name,
@@ -27,11 +59,16 @@ const handler = NextAuth({
                 emailVerified: new Date(),
               },
             },
-            { upsert: true, new: true },
+            {
+              upsert: true,
+              new: true,
+              setDefaultsOnInsert: true,
+              runValidators: false,
+            },
           );
           return true;
         } catch (error) {
-          console.error("Error saving Google user:", error);
+          console.error("Database error during Google Sign-in:", error);
           return false;
         }
       }
@@ -45,7 +82,8 @@ const handler = NextAuth({
     },
   },
   pages: {
-    signIn: "/login",
+    signIn: "/auth",
+    error: "/auth",
   },
 });
 

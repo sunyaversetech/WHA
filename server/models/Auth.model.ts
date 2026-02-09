@@ -3,6 +3,10 @@ import mongoose, { Schema, model, models } from "mongoose";
 const UserSchema = new Schema(
   {
     name: { type: String },
+    category: {
+      type: String,
+      enum: ["user", "business"],
+    },
     email: {
       type: String,
       required: true,
