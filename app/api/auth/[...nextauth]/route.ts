@@ -43,6 +43,9 @@ const handler = NextAuth({
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
     async signIn({ profile, account }) {
       if (account?.provider === "google" && profile?.email) {
@@ -74,6 +77,13 @@ const handler = NextAuth({
         }
       }
       return true;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+        token.category = (user as any).category;
+      }
+      return token;
     },
     async session({ session, token }) {
       if (session.user) {
