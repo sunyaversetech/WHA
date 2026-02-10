@@ -2,6 +2,7 @@
 "use client";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -13,13 +14,12 @@ export default function Dashboard() {
   return (
     <div className="p-10">
       <h1 className="text-2xl font-bold">Welcome, {session?.user.name}</h1>
-      <Image
-        src={session?.user.image ?? ""}
-        alt="Profile"
-        className="rounded-full"
-        width={100}
-        height={100}
-      />
+      <Avatar>
+        <AvatarImage src={session?.user.image ?? ""} />
+        <AvatarFallback>
+          {session?.user.name && session?.user.name[0]}
+        </AvatarFallback>
+      </Avatar>
       <p>Email: {session?.user?.email}</p>
       <button
         onClick={() => signOut()}
