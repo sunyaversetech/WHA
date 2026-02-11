@@ -80,14 +80,29 @@ const handler = NextAuth({
     },
     async jwt({ token, user }) {
       if (user) {
-        token.sub = user.id;
         token.category = (user as any).category;
+        token.emailVerified = (user as any).emailVerified;
+        token.image = (user as any).image;
       }
+
+      if (!token.category || !token.emailVerified) {
+        await connectToDb();
+        const dbUser = await User.findOne({ email: token.email }).lean();
+
+        if (dbUser) {
+          token.category = dbUser.category || "none";
+          token.emailVerified = dbUser.emailVerified;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.sub;
+        (session.user as any).category = token.category || "none";
+        (session.user as any).verified = token.emailVerified || "none";
+        (session.user as any).provider = token || "none";
       }
       return session;
     },
