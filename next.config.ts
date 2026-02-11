@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+    domains: [
+      "lh3.googleusercontent.com",
+      "wha-sunya-my-uploads.s3.ap-southeast-2.amazonaws.com",
+    ],
   },
 };
 
