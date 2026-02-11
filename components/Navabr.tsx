@@ -1,8 +1,7 @@
-// components/Navbar.tsx
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut, signIn } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,9 +49,12 @@ export default function Navbar() {
           <DropdownMenu>
             <DropdownMenuTrigger className="outline-none">
               <Avatar className="h-9 w-9 border">
-                <AvatarImage src={session.user?.image || ""} alt="User" />
+                <AvatarImage
+                  src={session?.user?.image ? session.user.image : ""}
+                  alt="User"
+                />
                 <AvatarFallback>
-                  {session.user?.name?.charAt(0) || "U"}
+                  {session?.user?.name?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
