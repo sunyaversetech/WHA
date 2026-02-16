@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import dynamic from 'next/dynamic';
-import { use } from 'react';
-import { getBusinessById } from '@/lib/data/businesses';
-import { getDealsByBusinessId } from '@/lib/data/deals';
+import { useState } from "react";
+import dynamic from "next/dynamic";
+import { use } from "react";
+import { getBusinessById } from "@/lib/data/businesses";
+import { getDealsByBusinessId } from "@/lib/data/deals";
 import {
   MapPin,
   Phone,
@@ -16,12 +16,12 @@ import {
   Tag,
   Sparkles,
   Building,
-} from 'lucide-react';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import DealCard from '@/components/cards/deal-card';
+} from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import DealCard from "@/components/cards/deal-card";
 
-const BusinessMap = dynamic(() => import('@/components/business-map'), {
+const BusinessMap = dynamic(() => import("@/components/business-map"), {
   ssr: false,
 });
 
@@ -37,7 +37,7 @@ export default function BusinessDetailPage({
     unwrappedParams = params;
   }
   const business = getBusinessById(unwrappedParams.id);
-  const [activeTab, setActiveTab] = useState<'about' | 'deals'>('about');
+  const [activeTab, setActiveTab] = useState<"about" | "deals">("about");
 
   if (!business) {
     notFound();
@@ -49,31 +49,31 @@ export default function BusinessDetailPage({
   // Determine category label and color
   const getCategoryInfo = () => {
     switch (business.category) {
-      case 'restaurant':
-        return { label: 'Restaurant', color: 'bg-red-500' };
-      case 'cafe':
-        return { label: 'Café', color: 'bg-amber-500' };
-      case 'food-truck':
-        return { label: 'Food Truck', color: 'bg-orange-500' };
-      case 'grocery':
-        return { label: 'Grocery Store', color: 'bg-green-500' };
-      case 'salon':
-        return { label: 'Salon', color: 'bg-pink-500' };
-      case 'consultancy':
-        return { label: 'Consultancy', color: 'bg-blue-500' };
-      case 'automotive':
-        return { label: 'Automotive', color: 'bg-gray-500' };
-      case 'event':
-        return { label: 'Event', color: 'bg-gray-500' };
+      case "restaurant":
+        return { label: "Restaurant", color: "bg-red-500" };
+      case "cafe":
+        return { label: "Café", color: "bg-amber-500" };
+      case "food-truck":
+        return { label: "Food Truck", color: "bg-orange-500" };
+      case "grocery":
+        return { label: "Grocery Store", color: "bg-green-500" };
+      case "salon":
+        return { label: "Salon", color: "bg-pink-500" };
+      case "consultancy":
+        return { label: "Consultancy", color: "bg-blue-500" };
+      case "automotive":
+        return { label: "Automotive", color: "bg-gray-500" };
+      case "event":
+        return { label: "Event", color: "bg-gray-500" };
       default:
-        return { label: 'Business', color: 'bg-purple-500' };
+        return { label: "Business", color: "bg-purple-500" };
     }
   };
 
   const categoryInfo = getCategoryInfo();
 
   function isPromise<T>(value: any): value is Promise<T> {
-    return !!value && typeof value.then === 'function';
+    return !!value && typeof value.then === "function";
   }
 
   return (
@@ -83,8 +83,7 @@ export default function BusinessDetailPage({
         <Link
           href="/businesses"
           className="glass text-gray-700 hover:text-purple-600 p-2 rounded-full shadow-md transition-colors flex items-center justify-center"
-          aria-label="Back to businesses"
-        >
+          aria-label="Back to businesses">
           <ArrowLeft className="h-5 w-5" />
         </Link>
       </div>
@@ -93,7 +92,7 @@ export default function BusinessDetailPage({
       <div className="relative h-[30vh] md:h-[40vh] w-full">
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent z-10"></div>
         <img
-          src={business.image || '/placeholder.svg'}
+          src={business.image || "/placeholder.svg"}
           alt={business.name}
           className="w-full h-full object-cover"
         />
@@ -108,29 +107,27 @@ export default function BusinessDetailPage({
             <div className="card-lg p-4 md:p-6 mb-6">
               <div className="flex space-x-1 mb-6 bg-gray-100/50 rounded-lg p-1">
                 <button
-                  onClick={() => setActiveTab('about')}
+                  onClick={() => setActiveTab("about")}
                   className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
-                    activeTab === 'about'
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-                  }`}
-                >
+                    activeTab === "about"
+                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
+                  }`}>
                   About
                 </button>
                 <button
-                  onClick={() => setActiveTab('deals')}
+                  onClick={() => setActiveTab("deals")}
                   className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
-                    activeTab === 'deals'
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-                  }`}
-                >
+                    activeTab === "deals"
+                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
+                  }`}>
                   Deals ({businessDeals.length})
                 </button>
               </div>
 
               {/* Tab Content */}
-              {activeTab === 'about' ? (
+              {activeTab === "about" ? (
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-3">
@@ -154,8 +151,7 @@ export default function BusinessDetailPage({
                           </div>
                           <a
                             href={`tel:${business.phone}`}
-                            className="text-gray-700 hover:text-blue-600 transition-colors"
-                          >
+                            className="text-gray-700 hover:text-blue-600 transition-colors">
                             {business.phone}
                           </a>
                         </div>
@@ -169,8 +165,7 @@ export default function BusinessDetailPage({
                             href={business.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-gray-700 hover:text-green-600 transition-colors flex items-center space-x-1"
-                          >
+                            className="text-gray-700 hover:text-green-600 transition-colors flex items-center space-x-1">
                             <span>Visit Website</span>
                             <ExternalLink className="h-3 w-3" />
                           </a>
@@ -217,7 +212,7 @@ export default function BusinessDetailPage({
                         No deals available
                       </h3>
                       <p className="text-gray-500">
-                        This business doesn't have any active deals at the
+                        This business doesn`t have any active deals at the
                         moment.
                       </p>
                     </div>
@@ -238,8 +233,7 @@ export default function BusinessDetailPage({
                 {business.phone && (
                   <a
                     href={`tel:${business.phone}`}
-                    className="w-full btn-primary flex items-center justify-center space-x-2"
-                  >
+                    className="w-full btn-primary flex items-center justify-center space-x-2">
                     <Phone className="h-4 w-4" />
                     <span>Call Now</span>
                   </a>
@@ -249,8 +243,7 @@ export default function BusinessDetailPage({
                     href={business.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full btn-secondary flex items-center justify-center space-x-2"
-                  >
+                    className="w-full btn-secondary flex items-center justify-center space-x-2">
                     <Globe className="h-4 w-4" />
                     <span>Visit Website</span>
                   </a>
