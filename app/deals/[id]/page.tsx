@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { use } from 'react';
-import { getDealById } from '@/lib/data/deals';
+import { useState } from "react";
+import { use } from "react";
+import { getDealById } from "@/lib/data/deals";
 import {
   Calendar,
   Store,
@@ -14,15 +14,15 @@ import {
   Sparkles,
   Tag,
   Heart,
-} from 'lucide-react';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { useFavorites } from '@/contexts/favorites-context';
-import { useRedeem } from '@/contexts/redeem-context';
-import { getBusinessById } from '@/lib/data/businesses';
+} from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { useFavorites } from "@/contexts/favorites-context";
+import { useRedeem } from "@/contexts/redeem-context";
+import { getBusinessById } from "@/lib/data/businesses";
 
 function isPromise<T>(value: any): value is Promise<T> {
-  return !!value && typeof value.then === 'function';
+  return !!value && typeof value.then === "function";
 }
 
 export default function DealDetailPage({ params }: { params: { id: string } }) {
@@ -49,7 +49,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
 
   const business = deal?.businessId ? getBusinessById(deal.businessId) : null;
   const alreadyRedeemed = deal ? isDealRedeemed(deal.id) : false;
-  const isDealFavorite = isFavorite('deals', deal.id);
+  const isDealFavorite = isFavorite("deals", deal.id);
 
   const handleRedeemComplete = async () => {
     if (!deal) return;
@@ -63,13 +63,13 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
 
     setRedemptionResult({
       success: true,
-      message: 'Deal redeemed successfully!',
+      message: "Deal redeemed successfully!",
       code,
     });
   };
 
   const handleFavoriteClick = () => {
-    toggleFavorite('deals', deal.id);
+    toggleFavorite("deals", deal.id);
   };
 
   return (
@@ -79,8 +79,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
         <Link
           href="/deals"
           className="glass text-gray-700 hover:text-blue-600 p-2 rounded-lg shadow-md transition-colors flex items-center justify-center"
-          aria-label="Back to events"
-        >
+          aria-label="Back to events">
           <ArrowLeft className="h-5 w-5" />
         </Link>
       </div>
@@ -112,12 +111,11 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                   onClick={handleFavoriteClick}
                   className={`p-2 rounded-lg transition-all duration-200 self-start ${
                     isDealFavorite
-                      ? 'text-red-500 bg-red-50'
-                      : 'text-gray-400 bg-gray-100 hover:text-red-500 hover:bg-red-50'
-                  }`}
-                >
+                      ? "text-red-500 bg-red-50"
+                      : "text-gray-400 bg-gray-100 hover:text-red-500 hover:bg-red-50"
+                  }`}>
                   <Heart
-                    className={`h-5 w-5 ${isDealFavorite ? 'fill-current' : ''}`}
+                    className={`h-5 w-5 ${isDealFavorite ? "fill-current" : ""}`}
                   />
                 </button>
               </div>
@@ -127,13 +125,12 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                 <div className="mb-6">
                   <Link
                     href={`/businesses/${deal.businessId}`}
-                    className="block border border-gray-200 hover:bg-gray-50 rounded-lg p-4 -m-4 transition-colors"
-                  >
+                    className="block border border-gray-200 hover:bg-gray-50 rounded-lg p-4 -m-4 transition-colors">
                     <div className="flex items-start gap-4">
                       <div className="flex-shrink-0">
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
                           <img
-                            src={business.image || '/placeholder.svg'}
+                            src={business.image || "/placeholder.svg"}
                             alt={`${business.name} logo`}
                             className="w-full h-full object-cover"
                             loading="lazy"
@@ -208,7 +205,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                       </span>
                     </div>
                     <p className="text-green-700 text-sm">
-                      You've already claimed this deal
+                      You`ve already claimed this deal
                     </p>
                     {/* Show the redemption code even if already redeemed */}
                     {deal.coupon && (
@@ -228,8 +225,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                   <div>
                     <button
                       onClick={handleRedeemComplete}
-                      className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-4 px-6 rounded-xl text-lg transition-all duration-300 shadow-lg hover:shadow-xl"
-                    >
+                      className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-4 px-6 rounded-xl text-lg transition-all duration-300 shadow-lg hover:shadow-xl">
                       Redeem Deal
                     </button>
                     <p className="text-gray-500 text-sm mt-3">
@@ -257,7 +253,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                     {deal.category
                       ? deal.category.charAt(0).toUpperCase() +
                         deal.category.slice(1)
-                      : 'Deal'}
+                      : "Deal"}
                   </p>
                 </div>
               </div>

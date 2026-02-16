@@ -1,64 +1,68 @@
-'use client';
+"use client";
 
-import type React from 'react';
-import { memo } from 'react';
+import { memo, useEffect, useState } from "react";
 
-import Link from 'next/link';
-import { Calendar, MapPin, Building, Tag, ArrowRight } from 'lucide-react';
-import type { FeaturedItem } from '@/lib/types';
+import { Calendar, MapPin, Building, Tag, ArrowRight } from "lucide-react";
+import type { FeaturedItem } from "@/lib/types";
 
 interface FeaturedCardProps {
   item: FeaturedItem;
 }
 
 const FeaturedCard = memo(function FeaturedCard({ item }: FeaturedCardProps) {
+  const [shouldNavigate, setShouldNavigate] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (shouldNavigate && shouldNavigate !== "#") {
+      window.location.href = shouldNavigate;
+    }
+  }, [shouldNavigate]);
+
   const handleCardClick = () => {
     const link = getLink(item);
-    if (link !== '#') {
-      window.location.href = link;
-    }
+    setShouldNavigate(link);
   };
 
   // Helper to get the correct link for each type
   const getLink = (item: FeaturedItem) => {
     switch (item.type) {
-      case 'event':
+      case "event":
         return `/events/${item.id}`;
-      case 'business':
+      case "business":
         return `/businesses/${item.id}`;
-      case 'deal':
+      case "deal":
         return `/deals/${item.id}`;
       default:
-        return '#';
+        return "#";
     }
   };
 
   // Get icon and color based on type
   const getTypeInfo = () => {
     switch (item.type) {
-      case 'event':
+      case "event":
         return {
           icon: Calendar,
-          color: 'from-blue-500 to-purple-500',
-          label: 'Event',
+          color: "from-blue-500 to-purple-500",
+          label: "Event",
         };
-      case 'business':
+      case "business":
         return {
           icon: Building,
-          color: 'from-purple-500 to-pink-500',
-          label: 'Business',
+          color: "from-purple-500 to-pink-500",
+          label: "Business",
         };
-      case 'deal':
+      case "deal":
         return {
           icon: Tag,
-          color: 'from-green-500 to-emerald-500',
-          label: 'Deal',
+          color: "from-green-500 to-emerald-500",
+          label: "Deal",
         };
       default:
         return {
           icon: ArrowRight,
-          color: 'from-gray-500 to-gray-600',
-          label: 'Featured',
+          color: "from-gray-500 to-gray-600",
+          label: "Featured",
         };
     }
   };
@@ -69,12 +73,11 @@ const FeaturedCard = memo(function FeaturedCard({ item }: FeaturedCardProps) {
   return (
     <div
       className="group relative overflow-hidden rounded-xl cursor-pointer"
-      onClick={handleCardClick}
-    >
+      onClick={handleCardClick}>
       {/* Full-Image Background */}
       <div className="relative w-full h-56 md:h-60 rounded-xl overflow-hidden group">
         <img
-          src={item.image || '/placeholder.svg'}
+          src={item.image || "/placeholder.svg"}
           alt={item.title}
           className="w-full h-full object-cover"
           loading="lazy"

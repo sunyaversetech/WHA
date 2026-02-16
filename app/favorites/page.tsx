@@ -1,18 +1,33 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useFavorites } from '@/contexts/favorites-context';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getEvents } from '@/lib/data/events';
-import { getDeals } from '@/lib/data/deals';
-import EventCard from '@/components/cards/event-card';
-import DealCard from '@/components/cards/deal-card';
-import { Calendar, Tag, Heart, Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import { useState } from "react";
+import { useFavorites } from "@/contexts/favorites-context";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getEvents } from "@/lib/data/events";
+import { getDeals } from "@/lib/data/deals";
+import EventCard from "@/components/cards/event-card";
+import DealCard from "@/components/cards/deal-card";
+import { Calendar, Tag, Heart } from "lucide-react";
+import Link from "next/link";
+
+const EmptyState = ({ type }: { type: string }) => (
+  <div className="card-lg p-8 text-center">
+    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <Heart className="h-8 w-8 text-gray-400" />
+    </div>
+    <h2 className="text-xl font-bold mb-2">No favorite {type} yet</h2>
+    <p className="text-gray-600 mb-6">
+      You haven`t added any {type} to your favorites yet.
+    </p>
+    <Link href={`/${type}`} className="btn-primary">
+      Browse {type}
+    </Link>
+  </div>
+);
 
 export default function FavoritesPage() {
   const { favorites } = useFavorites();
-  const [activeTab, setActiveTab] = useState('events');
+  const [activeTab, setActiveTab] = useState("events");
 
   // Get all data
   const allEvents = getEvents();
@@ -20,29 +35,14 @@ export default function FavoritesPage() {
 
   // Filter favorites
   const favoriteEvents = allEvents.filter((event) =>
-    favorites.events.includes(event.id)
+    favorites.events.includes(event.id),
   );
   const favoriteDeals = allDeals.filter((deal) =>
-    favorites.deals.includes(deal.id)
+    favorites.deals.includes(deal.id),
   );
 
   // Total favorites count
   const totalFavorites = favoriteEvents.length + favoriteDeals.length;
-
-  const EmptyState = ({ type }: { type: string }) => (
-    <div className="card-lg p-8 text-center">
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <Heart className="h-8 w-8 text-gray-400" />
-      </div>
-      <h2 className="text-xl font-bold mb-2">No favorite {type} yet</h2>
-      <p className="text-gray-600 mb-6">
-        You haven't added any {type} to your favorites yet.
-      </p>
-      <Link href={`/${type}`} className="btn-primary">
-        Browse {type}
-      </Link>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gradient-modern">
@@ -74,15 +74,13 @@ export default function FavoritesPage() {
             <div className="flex flex-wrap justify-center gap-3">
               <Link
                 href="/events"
-                className="btn-primary flex items-center space-x-2"
-              >
+                className="btn-primary flex items-center space-x-2">
                 <Calendar className="h-4 w-4" />
                 <span>Browse Events</span>
               </Link>
               <Link
                 href="/deals"
-                className="btn-secondary flex items-center space-x-2"
-              >
+                className="btn-secondary flex items-center space-x-2">
                 <Tag className="h-4 w-4" />
                 <span>Browse Deals</span>
               </Link>
@@ -92,21 +90,18 @@ export default function FavoritesPage() {
           <Tabs
             defaultValue="events"
             className="w-full"
-            onValueChange={setActiveTab}
-          >
+            onValueChange={setActiveTab}>
             <div className="card p-4 md:p-6 mb-6">
               <TabsList className="grid grid-cols-2">
                 <TabsTrigger
                   value="events"
-                  className="flex items-center justify-center space-x-2"
-                >
+                  className="flex items-center justify-center space-x-2">
                   <Calendar className="h-4 w-4" />
                   <span>Events ({favoriteEvents.length})</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="deals"
-                  className="flex items-center justify-center space-x-2"
-                >
+                  className="flex items-center justify-center space-x-2">
                   <Tag className="h-4 w-4" />
                   <span>Deals ({favoriteDeals.length})</span>
                 </TabsTrigger>
