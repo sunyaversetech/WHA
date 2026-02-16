@@ -1,19 +1,19 @@
 import { type Metadata } from "next";
 
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Urbanist } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/Auth/SessionWrapper";
 import ReactQueryContext from "@/lib/ReactQueryContext";
 import Navbar from "@/components/Navabr";
+import { CityFilterProvider } from "@/contexts/city-filter-context";
+import { FavoritesProvider } from "@/contexts/favorites-context";
+import { RedeemProvider } from "@/contexts/redeem-context";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const urbanist = Urbanist({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-urbanist",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -28,13 +28,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${urbanist.variable} ${urbanist.variable} antialiased`}>
         <ReactQueryContext>
-          <SessionWrapper>
-            <Navbar />
-            {children}
-          </SessionWrapper>
+          <RedeemProvider>
+            <FavoritesProvider>
+              <CityFilterProvider>
+                <SessionWrapper>
+                  <Navbar />
+                  {children}
+                </SessionWrapper>
+              </CityFilterProvider>
+            </FavoritesProvider>
+          </RedeemProvider>
         </ReactQueryContext>
       </body>
     </html>

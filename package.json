@@ -24,6 +24,7 @@
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",
     "express-fileupload": "^1.5.2",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.563.0",
     "mailtrap": "^4.4.0",
     "mongoose": "^9.1.5",
@@ -35,6 +36,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.1",
+    "react-leaflet": "^5.0.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "uuid": "^13.0.0",
@@ -43,6 +45,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcrypt": "^6.0.0",
+    "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/nodemailer": "^6.4.22",
     "@types/react": "^19",

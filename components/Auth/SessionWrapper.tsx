@@ -7,10 +7,9 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  const publicRoutes = ["/auth", "/"];
 
   useEffect(() => {
-    if (status === "unauthenticated" && !publicRoutes.includes(pathname)) {
+    if (status === "unauthenticated" && pathname.startsWith("/dashboard")) {
       router.push("/auth");
     }
   }, [status, pathname, router]);

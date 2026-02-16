@@ -1,12 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  font-family: 'Urbanist',
+
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-urbanist: var(--font-urbanist);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -79,6 +85,13 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --color-base-rgb: 255, 255, 255;
+  --color-primary-rgb: 52, 52, 52;
+  --color-neutral-rgb: 200, 200, 200;
+
+  --font-normal: 400;
+  --font-bold: 700;
+  --font-black: 900;
 }
 
 .dark {
@@ -117,9 +130,452 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    color: hsl(var(--foreground));
+    background: var(--background-gradient);
+    @apply antialiased;
+    font-weight: var(--font-normal);
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    font-family: var(--font-urbanist);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
   }
+
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply tracking-tight font-bold;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    font-weight: var(--font-black);
+    letter-spacing: -0.03em;
+  }
+
+  h2 {
+    font-weight: var(--font-extrabold);
+    letter-spacing: -0.025em;
+  }
+
+  h3 {
+    font-weight: var(--font-bold);
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    font-weight: var(--font-normal);
+    line-height: 1.7;
+    letter-spacing: -0.005em;
+  }
+
+  /* Modern focus styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2;
+  }
+
+  /* Smooth transitions */
+  * {
+    @apply transition-colors duration-200;
+  }
+}
+
+@layer components {
+
+  .card {
+    @apply backdrop-blur-sm border rounded-xl shadow-md transition-all duration-300;
+    background-color: color-mix(in srgb, var(--background), transparent 20%);
+    border-color: color-mix(in srgb, var(--border), transparent 70%);
+  }
+
+  .card-lg {
+    @apply backdrop-blur-sm border rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300;
+    background-color: rgba(var(--color-base-rgb), 0.8);
+    border-color: rgba(var(--color-neutral-rgb), 0.3);
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg;
+    background-color: var(--color-primary);
+    color: var(--color-base);
+  }
+
+  .btn-primary:hover {
+    background-color: rgba(var(--color-primary-rgb), 0.9);
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md;
+    background-color: var(--color-secondary);
+    color: var(--color-base);
+  }
+
+  .btn-secondary:hover {
+    background-color: rgba(var(--color-secondary-rgb), 0.9);
+  }
+
+  .btn-ghost {
+    @apply px-3 py-2 rounded-lg transition-all duration-200;
+    color: var(--color-secondary);
+  }
+
+  .btn-ghost:hover {
+    color: var(--color-primary);
+    background-color: rgba(var(--color-neutral-rgb), 0.5);
+  }
+
+  /* Modern Input Component */
+  .input-modern {
+    @apply w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 transition-all duration-200;
+    background-color: rgba(var(--color-base-rgb), 0.6);
+    border-color: rgba(var(--color-neutral-rgb), 0.3);
+    color: var(--color-secondary);
+  }
+
+  .input-modern::placeholder {
+    color: rgba(var(--color-neutral-rgb), 0.6);
+  }
+
+  .input-modern:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+  }
+
+  /* Modern Container */
+  .container-modern {
+    @apply container mx-auto px-3 md:px-4;
+  }
+
+  /* Modern Section */
+  .section-modern {
+    @apply py-6 md:py-8;
+  }
+
+  /* Modern Header */
+  .header-modern {
+    @apply backdrop-blur-sm border-b sticky top-0 z-40 shadow-sm;
+    background-color: rgba(var(--color-base-rgb), 0.8);
+    border-color: rgba(var(--color-neutral-rgb), 0.3);
+  }
+
+  /* Modern Gradient Text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(to right,
+        var(--color-secondary),
+        var(--color-neutral));
+  }
+
+  .gradient-text-primary {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(to right,
+        var(--color-primary),
+        var(--color-secondary),
+        var(--color-neutral));
+  }
+
+  /* Modern Badge */
+  .badge {
+    @apply inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply border;
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+    color: var(--color-primary);
+    border-color: rgba(var(--color-primary-rgb), 0.2);
+  }
+
+  .badge-secondary {
+    @apply border;
+    background-color: rgba(var(--color-secondary-rgb), 0.1);
+    color: var(--color-secondary);
+    border-color: rgba(var(--color-secondary-rgb), 0.2);
+  }
+
+  .badge-success {
+    @apply border;
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+    color: var(--color-primary);
+    border-color: rgba(var(--color-primary-rgb), 0.2);
+  }
+
+  .badge-warning {
+    @apply border;
+    background-color: rgba(var(--color-secondary-rgb), 0.1);
+    color: var(--color-secondary);
+    border-color: rgba(var(--color-secondary-rgb), 0.2);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Modern backdrop blur utilities */
+  .backdrop-blur-modern {
+    backdrop-filter: blur(8px);
+  }
+
+  /* Modern glass effect */
+  .glass {
+    @apply backdrop-blur-sm border;
+    background-color: rgba(var(--color-base-rgb), 0.8);
+    border-color: rgba(var(--color-neutral-rgb), 0.3);
+  }
+
+  /* Modern gradient backgrounds */
+  .bg-gradient-modern {
+    background: var(--background-gradient);
+  }
+
+  /* Modern shadow utilities */
+  .shadow-modern {
+    box-shadow: var(--shadow);
+  }
+
+  .shadow-modern-lg {
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Modern border radius */
+  .rounded-modern {
+    border-radius: var(--radius);
+  }
+
+  .rounded-modern-lg {
+    border-radius: calc(var(--radius) * 1.5);
+  }
+
+  .color-primary {
+    color: var(--color-primary);
+  }
+
+  .color-secondary {
+    color: var(--color-secondary);
+  }
+
+  .color-neutral {
+    color: var(--color-neutral);
+  }
+
+  .color-base {
+    color: var(--color-base);
+  }
+
+  /* Brand color utilities with transparency support */
+  .bg-primary-transparent {
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+  }
+
+  .bg-secondary-transparent {
+    background-color: rgba(var(--color-secondary-rgb), 0.1);
+  }
+
+  .bg-neutral-transparent {
+    background-color: rgba(var(--color-neutral-rgb), 0.1);
+  }
+
+  .border-primary-transparent {
+    border-color: rgba(var(--color-primary-rgb), 0.2);
+  }
+
+  .border-secondary-transparent {
+    border-color: rgba(var(--color-secondary-rgb), 0.2);
+  }
+
+  .border-neutral-transparent {
+    border-color: rgba(var(--color-neutral-rgb), 0.2);
+  }
+
+  .text-primary-transparent {
+    color: rgba(var(--color-primary-rgb), 0.8);
+  }
+
+  .text-secondary-transparent {
+    color: rgba(var(--color-secondary-rgb), 0.8);
+  }
+
+  .text-neutral-transparent {
+    color: rgba(var(--color-neutral-rgb), 0.8);
+  }
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+/* Modern loading states */
+.loading {
+  @apply animate-pulse bg-gray-200 rounded;
+}
+
+/* Modern focus ring */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+}
+
+/* Modern hover effects */
+.hover-lift {
+  @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-lg;
+}
+
+/* Modern responsive text */
+.text-responsive {
+  @apply text-sm md:text-base lg:text-lg;
+}
+
+.text-responsive-lg {
+  @apply text-base md:text-lg lg:text-xl;
+}
+
+.text-responsive-xl {
+  @apply text-lg md:text-xl lg:text-2xl;
+}
+
+/* Urbanist Typography Utilities */
+.font-urbanist {
+  font-family: var(--font-sans);
+}
+
+.font-thin {
+  font-weight: var(--font-thin);
+}
+
+.font-extralight {
+  font-weight: var(--font-extralight);
+}
+
+.font-light {
+  font-weight: var(--font-light);
+}
+
+.font-normal {
+  font-weight: var(--font-normal);
+}
+
+.font-medium {
+  font-weight: var(--font-medium);
+}
+
+.font-semibold {
+  font-weight: var(--font-semibold);
+}
+
+.font-bold {
+  font-weight: var(--font-bold);
+}
+
+.font-extrabold {
+  font-weight: var(--font-extrabold);
+}
+
+.font-black {
+  font-weight: var(--font-black);
+}
+
+/* Enhanced Typography for Urbanist */
+.heading-urbanist {
+  @apply font-urbanist font-bold tracking-tight;
+}
+
+.body-urbanist {
+  @apply font-urbanist font-normal leading-relaxed;
+}
+
+.caption-urbanist {
+  @apply font-urbanist font-medium text-sm tracking-wide;
+}
+
+.text-urbanist-display {
+  @apply font-urbanist font-black text-4xl md:text-5xl lg:text-6xl tracking-tighter leading-none;
+}
+
+.text-urbanist-heading {
+  @apply font-urbanist font-extrabold text-2xl md:text-3xl lg:text-4xl tracking-tight leading-tight;
+}
+
+.text-urbanist-subheading {
+  @apply font-urbanist font-bold text-xl md:text-2xl tracking-tight leading-snug;
+}
+
+.text-urbanist-body {
+  @apply font-urbanist font-normal text-base md:text-lg leading-relaxed tracking-wide;
+}
+
+.text-urbanist-caption {
+  @apply font-urbanist font-medium text-sm tracking-wide;
+}
+
+.text-urbanist-button {
+  @apply font-urbanist font-semibold text-sm md:text-base tracking-wide;
 }
