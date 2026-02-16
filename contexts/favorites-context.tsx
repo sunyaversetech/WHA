@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   createContext,
@@ -6,9 +6,9 @@ import {
   useState,
   useEffect,
   type ReactNode,
-} from 'react';
+} from "react";
 
-type FavoriteType = 'events' | 'deals';
+type FavoriteType = "events" | "deals";
 
 interface FavoritesContextType {
   favorites: {
@@ -20,7 +20,7 @@ interface FavoritesContextType {
 }
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
@@ -34,19 +34,21 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   // Load favorites from localStorage on mount
   useEffect(() => {
-    const savedFavorites = localStorage.getItem('favorites');
+    const savedFavorites = localStorage.getItem("favorites");
     if (savedFavorites) {
       try {
-        setFavorites(JSON.parse(savedFavorites));
+        setTimeout(() => {
+          setFavorites(JSON.parse(savedFavorites));
+        }, 0);
       } catch (error) {
-        console.error('Failed to parse favorites from localStorage', error);
+        console.error("Failed to parse favorites from localStorage", error);
       }
     }
   }, []);
 
   // Save favorites to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites));
+    localStorage.setItem("favorites", JSON.stringify(favorites));
   }, [favorites]);
 
   const toggleFavorite = (type: FavoriteType, id: string) => {
@@ -75,8 +77,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   return (
     <FavoritesContext.Provider
-      value={{ favorites, toggleFavorite, isFavorite }}
-    >
+      value={{ favorites, toggleFavorite, isFavorite }}>
       {children}
     </FavoritesContext.Provider>
   );
@@ -85,7 +86,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 export function useFavorites() {
   const context = useContext(FavoritesContext);
   if (context === undefined) {
-    throw new Error('useFavorites must be used within a FavoritesProvider');
+    throw new Error("useFavorites must be used within a FavoritesProvider");
   }
   return context;
 }
