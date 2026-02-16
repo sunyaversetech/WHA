@@ -1,4 +1,4 @@
-import { getEventById } from '@/lib/data/events';
+import { getEventById } from "@/lib/data/events";
 import {
   Calendar,
   MapPin,
@@ -8,10 +8,10 @@ import {
   Ticket,
   ArrowLeft,
   Sparkles,
-} from 'lucide-react';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import FavoriteButton from '@/components/ui/favorite-button';
+} from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import FavoriteButton from "@/components/ui/favorite-button";
 
 export default async function EventDetailPage({
   params,
@@ -32,8 +32,7 @@ export default async function EventDetailPage({
         <Link
           href="/events"
           className="glass text-gray-700 hover:text-blue-600 p-2 rounded-full shadow-md transition-colors flex items-center justify-center"
-          aria-label="Back to events"
-        >
+          aria-label="Back to events">
           <ArrowLeft className="h-5 w-5" />
         </Link>
       </div>
@@ -42,7 +41,7 @@ export default async function EventDetailPage({
       <div className="relative h-[30vh] md:h-[40vh] w-full">
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent z-10"></div>
         <img
-          src={event.image || '/placeholder.svg'}
+          src={event.image || "/placeholder.svg"}
           alt={event.title}
           className="w-full h-full object-cover"
         />
@@ -136,8 +135,7 @@ export default async function EventDetailPage({
                     href={event.ticketUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full btn-primary flex items-center justify-center space-x-2"
-                  >
+                    className="w-full btn-primary flex items-center justify-center space-x-2">
                     <Ticket className="h-4 w-4" />
                     <span>Get Tickets</span>
                   </a>
@@ -167,8 +165,7 @@ export default async function EventDetailPage({
                     </div>
                     <a
                       href={`mailto:${event.contactEmail}`}
-                      className="text-gray-700 hover:text-blue-600 transition-colors"
-                    >
+                      className="text-gray-700 hover:text-blue-600 transition-colors">
                       {event.contactEmail}
                     </a>
                   </div>
@@ -180,8 +177,7 @@ export default async function EventDetailPage({
                     </div>
                     <a
                       href={`tel:${event.contactPhone}`}
-                      className="text-gray-700 hover:text-green-600 transition-colors"
-                    >
+                      className="text-gray-700 hover:text-green-600 transition-colors">
                       {event.contactPhone}
                     </a>
                   </div>
@@ -219,7 +215,7 @@ export default async function EventDetailPage({
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tickets:</span>
                   <span className="font-medium">
-                    {event.ticketUrl ? 'Available' : 'Free Entry'}
+                    {event.ticketUrl ? "Available" : "Free Entry"}
                   </span>
                 </div>
               </div>
