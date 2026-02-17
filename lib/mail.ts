@@ -1,6 +1,16 @@
 import { MailtrapClient } from "mailtrap";
-const TOKEN = "cb14d3e9d2fc605027af80f6365e7d26";
+const TOKEN = process.env.MAIL_TOKEN!;
 const client = new MailtrapClient({ token: TOKEN });
+import nodemailer from "nodemailer";
+
+const transporter = nodemailer.createTransport({
+  host: "sandbox.smtp.mailtrap.io",
+  port: 2525,
+  auth: {
+    user: process.env.MAILTRAP_USER!,
+    pass: process.env.MAILTRAP_PASS!,
+  },
+});
 
 const generateEmailTemplate = (verificationLink: string) => `
   <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e1e1e1; padding: 20px; border-radius: 10px;">
@@ -63,12 +73,11 @@ export const sendSimpleMail = async (
   const recipients = [{ email }];
 
   try {
-    const response = await client.send({
-      from: sender,
-      to: recipients,
+    const response = await transporter.sendMail({
+      from: sender.email,
+      to: email,
       subject: subject,
       text: text,
-      category: "Notification",
     });
 
     console.log("Simple email sent successfully:", response);
