@@ -14,49 +14,59 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { toast } from "sonner";
+import { useSingup } from "@/services/Auth/auth.service";
 
-const signupSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  email: z.email().regex(/^[\w-.]+@([\w-.]+.)+[\w-.]+[a-zA-Z]{0,4}$/, {
-    message: "Invalid email",
-  }),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  category: z.enum(["user", "business"]),
-});
+const signupSchema = z
+  .object({
+    name: z.string().min(2, "Name is required"),
+    email: z.email().min(1, "Email is required"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    cpassword: z
+      .string()
+      .min(6, "Confirm Password must be at least 6 characters"),
+    category: z.enum(["user", "business"]),
+  })
+  .refine((data) => data.password === data.cpassword, {
+    message: "Passwords don't match",
+  });
 
 export default function SignupPage() {
   const router = useRouter();
+  const { mutate } = useSingup();
+
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
     defaultValues: { name: "", email: "", password: "", category: "user" },
   });
 
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
-    try {
-      const res = await fetch("/api/signup", {
-        method: "POST",
-        body: JSON.stringify(values),
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok) router.push("/auth");
-    } catch (err) {
-      console.error(err);
-    }
+    mutate(values as any, {
+      onSuccess: () => {
+        toast.success("Signup successful! Please log in.");
+        router.push("/auth?tab=login");
+      },
+      onError: (error) => {
+        toast.error(
+          error.response?.data?.message || "Signup failed. Please try again.",
+        );
+      },
+    });
   };
 
   return (
     <div className="flex ">
       <div className="w-full max-w-md space-y-6 rounded-xl bg-white p-8 ">
-        <h2 className="text-2xl font-bold text-center">Create Account</h2>
+        <h2 className="text-2xl font-bold text-center">
+          Create Account For Users
+        </h2>
+        <Link
+          href="/auth/business"
+          className="block text-center text-sm text-blue-500 underline hover:text-gray-700">
+          Are you a business? Sign up here
+        </Link>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -100,27 +110,18 @@ export default function SignupPage() {
             />
             <FormField
               control={form.control}
-              name="category"
+              name="cpassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Register As</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="user">Individual User</SelectItem>
-                      <SelectItem value="business">Business</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <Button
               type="submit"
               className="w-full bg-red-600 hover:bg-red-700">

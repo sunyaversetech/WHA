@@ -12,8 +12,10 @@ import {
 } from "@/components/ui/card";
 import LoginPage from "./LoginPage";
 import SignupPage from "./Signup";
+import { useSearchParams } from "next/navigation";
 
 export default function AuthPage() {
+  const params = useSearchParams();
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md shadow-lg border-none bg-white">
@@ -23,7 +25,9 @@ export default function AuthPage() {
         </CardHeader>
 
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs
+            defaultValue={params.get("tab") === "signup" ? "signup" : "login"}
+            className="w-full">
             <TabsList className="grid w-full grid-cols-2 rounded-full bg-gray-100 p-1 mb-6 h-12">
               <TabsTrigger
                 value="login"

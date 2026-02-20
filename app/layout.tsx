@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 
-import { Geist, Geist_Mono, Urbanist } from "next/font/google";
+import { Urbanist } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/Auth/SessionWrapper";
 import ReactQueryContext from "@/lib/ReactQueryContext";
@@ -8,6 +8,7 @@ import Navbar from "@/components/Navabr";
 import { CityFilterProvider } from "@/contexts/city-filter-context";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { RedeemProvider } from "@/contexts/redeem-context";
+import { Toaster } from "sonner";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -36,6 +37,7 @@ export default function RootLayout({
                 <SessionWrapper>
                   <Navbar />
                   {children}
+                  <Toaster />
                 </SessionWrapper>
               </CityFilterProvider>
             </FavoritesProvider>

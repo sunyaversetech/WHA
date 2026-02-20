@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import { Schema, model, models } from "mongoose";
 
 const UserSchema = new Schema(
   {
@@ -9,7 +9,6 @@ const UserSchema = new Schema(
     },
     email: {
       type: String,
-      required: true,
       unique: true,
       lowercase: true,
     },
@@ -34,6 +33,10 @@ const UserSchema = new Schema(
       unique: true,
       sparse: true,
     },
+    business_name: { type: String },
+    business_category: { type: String },
+    abn_number: { type: String },
+    verified: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

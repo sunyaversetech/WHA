@@ -1,4 +1,3 @@
-// app/api/auth/signup/route.ts
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import bcrypt from "bcryptjs";
@@ -7,9 +6,16 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, password, category } = body;
+    const {
+      name,
+      email,
+      password,
+      category,
+      business_name,
+      business_category,
+      abn_number,
+    } = body;
 
-    // 1. Validate Input
     if (!name || !email || !password || !category) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -19,7 +25,6 @@ export async function POST(req: Request) {
 
     await connectToDb();
 
-    // 2. Check if user already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return NextResponse.json(
@@ -30,16 +35,19 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const newUser = await User.create({
+    await User.create({
       name,
       email: email.toLowerCase(),
       password: hashedPassword,
       category,
       provider: "credentials",
+      business_name,
+      business_category,
+      abn_number,
     });
 
     return NextResponse.json(
-      { message: "User created successfully", userId: newUser._id },
+      { message: "User created successfully" },
       { status: 201 },
     );
   } catch (error: any) {

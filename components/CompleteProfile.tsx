@@ -66,7 +66,6 @@ export type ProfileFormValues = z.infer<typeof profileSchema>;
 function ResourceSection({
   nestIndex,
   control,
-  form,
 }: {
   nestIndex: number;
   control: any;

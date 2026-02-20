@@ -6,22 +6,19 @@ import Image from "next/image";
 export default function Dashboard() {
   const { data: session, status } = useSession();
 
+  const businessName = (session?.user as { business_name?: string })
+    ?.business_name;
+
   console.log("session", session);
 
   if (status === "unauthenticated") return <p>Access Denied. Please Login.</p>;
 
   return (
     <div className="p-10">
-      <h1 className="text-2xl font-bold">Welcome, {session?.user.name}</h1>
-      <Avatar>
-        <AvatarImage
-          src={session?.user.image ?? ""}
-          alt={`WhatsHappeningAustralia-${session?.user.name}`}
-        />
-        <AvatarFallback>
-          {session?.user.name && session?.user.name[0]}
-        </AvatarFallback>
-      </Avatar>
+      <div className="flex justify-between">
+        <h1 className="text-2xl font-bold">Welcome, {session?.user.name}</h1>
+        <h1 className="text-2xl font-bold">{businessName}</h1>
+      </div>
       <p>Email: {session?.user?.email}</p>
       <button
         onClick={() => signOut()}

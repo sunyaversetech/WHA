@@ -38,6 +38,11 @@ const handler = NextAuth({
           email: user.email,
           name: user.name,
           category: user.category,
+          verified: user.verified,
+          business_category: user.business_category,
+          business_name: user.business_name,
+          image: user.image,
+          provider: user.provider,
         };
       },
     }),
@@ -83,6 +88,8 @@ const handler = NextAuth({
         token.category = (user as any).category;
         token.emailVerified = (user as any).emailVerified;
         token.image = (user as any).image;
+        token.business_category = (user as any).business_category;
+        token.business_name = (user as any).business_name;
       }
 
       if (!token.category || !token.emailVerified) {
@@ -103,6 +110,9 @@ const handler = NextAuth({
         (session.user as any).category = token.category || "none";
         (session.user as any).verified = token.emailVerified || "none";
         (session.user as any).provider = token || "none";
+        (session.user as any).business_category =
+          token.business_category || "none";
+        (session.user as any).business_name = token.business_name || "none";
       }
       return session;
     },
