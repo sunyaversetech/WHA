@@ -31,6 +31,7 @@ const handler = NextAuth({
           credentials.password,
           user.password,
         );
+
         if (!isPasswordCorrect) return null;
 
         return {
@@ -38,11 +39,10 @@ const handler = NextAuth({
           email: user.email,
           name: user.name,
           category: user.category,
-          verified: user.verified,
+          emailVerified: user.emailVerified,
           business_category: user.business_category,
           business_name: user.business_name,
           image: user.image,
-          provider: user.provider,
         };
       },
     }),
@@ -52,67 +52,34 @@ const handler = NextAuth({
     strategy: "jwt",
   },
   callbacks: {
-    async signIn({ profile, account }) {
-      if (account?.provider === "google" && profile?.email) {
-        try {
-          await connectToDb();
-
-          await User.findOneAndUpdate(
-            { email: profile.email.toLowerCase() },
-            {
-              $set: {
-                name: profile.name,
-                image: (profile as any).picture,
-                googleId: profile.sub,
-                provider: "google",
-                emailVerified: new Date(),
-              },
-            },
-            {
-              upsert: true,
-              new: true,
-              setDefaultsOnInsert: true,
-              runValidators: false,
-            },
-          );
-          return true;
-        } catch (error) {
-          console.error("Database error during Google Sign-in:", error);
-          return false;
-        }
-      }
-      return true;
-    },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
+        token.id = user.id;
         token.category = (user as any).category;
-        token.emailVerified = (user as any).emailVerified;
-        token.image = (user as any).image;
         token.business_category = (user as any).business_category;
         token.business_name = (user as any).business_name;
+        token.emailVerified = (user as any).emailVerified;
       }
 
-      if (!token.category || !token.emailVerified) {
+      if (!token.category || token.category === "none") {
         await connectToDb();
         const dbUser = await User.findOne({ email: token.email }).lean();
-
         if (dbUser) {
-          token.category = dbUser.category || "none";
+          token.category = dbUser.category;
+          token.business_category = dbUser.business_category;
+          token.business_name = dbUser.business_name;
           token.emailVerified = dbUser.emailVerified;
         }
       }
-
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.sub;
-        (session.user as any).category = token.category || "none";
-        (session.user as any).verified = token.emailVerified || "none";
-        (session.user as any).provider = token || "none";
-        (session.user as any).business_category =
-          token.business_category || "none";
-        (session.user as any).business_name = token.business_name || "none";
+        (session.user as any).category = token.category;
+        (session.user as any).business_category = token.business_category;
+        (session.user as any).business_name = token.business_name;
+        (session.user as any).verified = token.emailVerified;
       }
       return session;
     },

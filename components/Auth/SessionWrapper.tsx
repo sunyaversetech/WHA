@@ -6,9 +6,16 @@ import { useEffect } from "react";
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { data: session, status } = useSession();
   const userCategory = (session?.user as { category?: string })?.category;
+  console.log(
+    "Session Status:",
+    status,
+    "Session Data:",
+    session,
+    "User Category:",
+    userCategory,
+  );
   const router = useRouter();
   const pathname = usePathname();
-  console.log("session", session);
 
   useEffect(() => {
     if (!pathname) return;

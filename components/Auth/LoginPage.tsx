@@ -1,7 +1,7 @@
 // app/login/page.tsx
 "use client";
 import { signIn, useSession } from "next-auth/react";
-import { Chrome } from "lucide-react";
+import { Chrome, Chromium } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useState } from "react";
 
 const loginSchema = z.object({
   email: z.email().min(1, "Email is required"),
@@ -25,6 +27,7 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const { data } = useSession();
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -34,6 +37,7 @@ export default function LoginPage() {
   console.log("data", data);
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
+    setLoading(true);
     const result = await signIn("credentials", {
       email: values.email.toLowerCase().trim(),
       password: values.password,
@@ -41,10 +45,15 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      console.error("Auth Error Type:", result.error);
+      console.error("Auth Error Type:", result);
+      toast.error(
+        `${result.status === 401 ? "Invalid email or password. Please try again." : "An error occurred during login. Please try again later."}`,
+      );
+      setLoading(false);
     } else if (result?.ok) {
       router.push("/dashboard");
       router.refresh();
+      setLoading(false);
     }
   };
 
@@ -86,8 +95,8 @@ export default function LoginPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">
-              Sign In
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
         </Form>
@@ -106,7 +115,7 @@ export default function LoginPage() {
         <button
           onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
           className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
-          <Chrome className="h-5 w-5 text-red-500" />
+          <Chromium className="h-5 w-5 text-red-500" />
           Google
         </button>
 
