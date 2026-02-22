@@ -26,6 +26,7 @@ import * as z from "zod";
 import { useSingup } from "@/services/Auth/auth.service";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { parseJson } from "@/lib/action";
 
 export const signupSchema = z
   .object({
@@ -62,8 +63,6 @@ export default function BusinessSignup() {
     },
   });
 
-  console.log("Business Signup Form Data:", form.formState.errors);
-
   function onSubmit(values: SingUPFormSchema) {
     mutate(values, {
       onSuccess: () => {
@@ -71,9 +70,10 @@ export default function BusinessSignup() {
         router.push("/auth?tab=login");
       },
       onError: (error) => {
-        toast.error(
-          error.response?.data?.message || "Signup failed. Please try again.",
-        );
+        const errorMessage =
+          error?.message ||
+          (typeof error === "string" ? error : "An unexpected error occurred");
+        toast.error(errorMessage);
       },
     });
   }
