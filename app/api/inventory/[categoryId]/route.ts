@@ -6,7 +6,7 @@ import { Service } from "@/server/models/Service.schema";
 
 export async function POST(
   req: Request,
-  { params }: { params: { categoryId: string } },
+  { params }: { params: Promise<{ categoryId: string }> },
 ) {
   try {
     await connectToDb();
