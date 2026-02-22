@@ -43,14 +43,14 @@ const Sidebar = () => {
           icon: LayoutDashboard,
           link: "/dashboard",
           hasDropdown: false,
-          active: pathname.startsWith("/dashboard"),
+          active: pathname === "/dashboard",
         },
         {
           title: "Bookings",
           icon: Album,
           link: "/dashboard/bookings",
           hasDropdown: false,
-          active: pathname.startsWith("/dashboard/bookings"),
+          active: pathname === "/dashboard/bookings",
         },
         {
           title: "Deals",
