@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { use } from "react";
 import { getBusinessById } from "@/lib/data/businesses";
 import { getDealsByBusinessId } from "@/lib/data/deals";
+import { BadgeCheck } from "lucide-react";
+
 import {
   MapPin,
   Phone,
@@ -16,6 +18,7 @@ import {
   Tag,
   Sparkles,
   Building,
+  LucideCaptions,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -83,13 +86,21 @@ export default function BusinessDetailPage({
         <Link
           href="/businesses"
           className="glass text-gray-700 hover:text-purple-600 p-2 rounded-full shadow-md transition-colors flex items-center justify-center"
-          aria-label="Back to businesses">
+          aria-label="Back to businesses"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Link>
       </div>
 
-      <div>
-        <h1>Header</h1>
+      <div className="space-y-6 mt-10">
+        <div className="flex item-center ">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
+            {business.name}
+          </h1>
+          <h1>
+            <BadgeCheck className="text-green" />
+          </h1>
+        </div>
       </div>
 
       {/* Hero Section */}
@@ -116,7 +127,8 @@ export default function BusinessDetailPage({
                     activeTab === "about"
                       ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
                       : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
-                  }`}>
+                  }`}
+                >
                   About
                 </button>
                 <button
@@ -125,7 +137,8 @@ export default function BusinessDetailPage({
                     activeTab === "deals"
                       ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
                       : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
-                  }`}>
+                  }`}
+                >
                   Deals ({businessDeals.length})
                 </button>
               </div>
@@ -155,7 +168,8 @@ export default function BusinessDetailPage({
                           </div>
                           <a
                             href={`tel:${business.phone}`}
-                            className="text-gray-700 hover:text-blue-600 transition-colors">
+                            className="text-gray-700 hover:text-blue-600 transition-colors"
+                          >
                             {business.phone}
                           </a>
                         </div>
@@ -169,7 +183,8 @@ export default function BusinessDetailPage({
                             href={business.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-gray-700 hover:text-green-600 transition-colors flex items-center space-x-1">
+                            className="text-gray-700 hover:text-green-600 transition-colors flex items-center space-x-1"
+                          >
                             <span>Visit Website</span>
                             <ExternalLink className="h-3 w-3" />
                           </a>
@@ -237,7 +252,8 @@ export default function BusinessDetailPage({
                 {business.phone && (
                   <a
                     href={`tel:${business.phone}`}
-                    className="w-full btn-primary flex items-center justify-center space-x-2">
+                    className="w-full btn-primary flex items-center justify-center space-x-2"
+                  >
                     <Phone className="h-4 w-4" />
                     <span>Call Now</span>
                   </a>
@@ -247,7 +263,8 @@ export default function BusinessDetailPage({
                     href={business.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full btn-secondary flex items-center justify-center space-x-2">
+                    className="w-full btn-secondary flex items-center justify-center space-x-2"
+                  >
                     <Globe className="h-4 w-4" />
                     <span>Visit Website</span>
                   </a>
