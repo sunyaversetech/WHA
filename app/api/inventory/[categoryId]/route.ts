@@ -34,13 +34,11 @@ export async function POST(req: Request, { params }: RouteContext) {
   }
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: { categoryId: string } },
-) {
+export async function GET(req: Request, { params }: RouteContext) {
   try {
     await connectToDb();
-    const services = await Service.find({ category: params.categoryId });
+    const { categoryId } = await params;
+    const services = await Service.find({ category: categoryId });
     return NextResponse.json(
       {
         message: "Success",
