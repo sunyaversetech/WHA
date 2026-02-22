@@ -76,10 +76,11 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.sub;
-        (session.user as any).category = token.category;
-        (session.user as any).business_category = token.business_category;
-        (session.user as any).business_name = token.business_name;
-        (session.user as any).verified = token.emailVerified;
+        (session.user as any).category = token.category || "none";
+        (session.user as any).business_category =
+          token.business_category || "none";
+        (session.user as any).business_name = token.business_name || "none";
+        (session.user as any).verified = token.emailVerified || false;
       }
       return session;
     },
