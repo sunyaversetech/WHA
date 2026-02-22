@@ -53,7 +53,6 @@ export const sendVerificationEmail = async (email: string, token: string) => {
       category: "Email Verification",
       html: generateEmailTemplate(verificationLink),
     });
-    console.log("Verification email sent to:", email);
   } catch (error) {
     console.error("Failed to send email:", error);
     throw new Error("Email could not be sent.");
@@ -80,7 +79,6 @@ export const sendSimpleMail = async (
       text: text,
     });
 
-    console.log("Simple email sent successfully:", response);
     return { success: true };
   } catch (error) {
     console.error("Error sending simple email:", error);

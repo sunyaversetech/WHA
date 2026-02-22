@@ -1,11 +1,12 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import bcrypt from "bcryptjs";
 
-const handler = NextAuth({
+// Export this so you can use it in getServerSession(authOptions)
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -52,35 +53,54 @@ const handler = NextAuth({
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
+        await connectToDb();
+        const existingUser = await User.findOne({ email: user.email });
+
+        if (!existingUser) {
+          const newUser = await User.create({
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            provider: "google",
+            googleId: profile?.sub,
+            category: "user",
+          });
+          user.id = newUser._id.toString();
+        } else {
+          user.id = existingUser._id.toString();
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
+      // On initial sign in, user object contains the data from authorize() or signIn()
       if (user) {
-        token.id = user.id;
+        token.mongodbId = user.id; // The 24-char hex ID
+        token.googleId = (user as any).googleId || null;
         token.category = (user as any).category;
-        token.business_category = (user as any).business_category;
         token.business_name = (user as any).business_name;
-        token.emailVerified = (user as any).emailVerified;
       }
 
-      if (!token.category || token.category === "none") {
+      // If missing data (e.g. session refresh), fetch from DB
+      if (!token.mongodbId) {
         await connectToDb();
         const dbUser = await User.findOne({ email: token.email }).lean();
         if (dbUser) {
-          token.category = dbUser.category;
-          token.business_category = dbUser.business_category;
-          token.business_name = dbUser.business_name;
-          token.emailVerified = dbUser.emailVerified;
+          token.mongodbId = (dbUser as any)._id.toString();
+          token.googleId = (dbUser as any).googleId;
+          token.category = (dbUser as any).category;
         }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.sub;
-        (session.user as any).category = token.category || "none";
-        (session.user as any).business_category =
-          token.business_category || "none";
-        (session.user as any).business_name = token.business_name || "none";
-        (session.user as any).verified = token.emailVerified || false;
+        (session.user as any).id = token.mongodbId; // Always the valid Mongo ObjectId
+        (session.user as any).googleId = token.googleId; // The long Google string
+        (session.user as any).category = token.category;
+        (session.user as any).business_name = token.business_name;
       }
       return session;
     },
@@ -89,6 +109,8 @@ const handler = NextAuth({
     signIn: "/auth",
     error: "/auth",
   },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

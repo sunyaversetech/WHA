@@ -26,8 +26,6 @@ export default function Dashboard() {
     ),
   );
 
-  console.log("Session Data:", session);
-
   const businessName = (session?.user as { business_name?: string })
     ?.business_name;
   const isUserOnly = !businessName;
