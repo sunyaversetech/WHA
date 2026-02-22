@@ -81,11 +81,11 @@ export default function BusinessSignup() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-card border rounded-xl shadow-sm mt-10">
+    <div className="max-w-md mx-auto p-6 bg-card border rounded-xl shadow-sm m-10">
       <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold">Create Business Account</h1>
+        <h1 className="text-2xl font-bold">WHA Business Account</h1>
         <p className="text-muted-foreground text-sm">
-          Join our platform to grow your reach.
+          Join our platform to manage your business.
         </p>
       </div>
 
@@ -231,6 +231,12 @@ export default function BusinessSignup() {
               </FormItem>
             )}
           />
+
+        <div className="text-sm">
+          <p>
+            I agree to the <a className="text-red-600" href="">Privacy Policy</a>, <a className="text-red-600" href="">Terms of Service</a> and <a className="text-red-600" href="">Terms of Business.</a>
+          </p>
+        </div>
 
           <Button type="submit" className="w-full">
             Register Business

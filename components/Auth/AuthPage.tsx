@@ -20,8 +20,8 @@ export default function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md shadow-lg border-none bg-white">
         <CardHeader className="text-center pb-2">
-          <CardTitle className="text-2xl font-bold">Welcome</CardTitle>
-          <CardDescription>Join our community or sign back in</CardDescription>
+          <CardTitle className="text-2xl font-bold">Whats Happening Australia</CardTitle>
+          <CardDescription>Create an account or log back in.</CardDescription>
         </CardHeader>
 
         <CardContent>

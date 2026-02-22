@@ -59,13 +59,13 @@ export default function LoginPage() {
 
   return (
     <div className="flex ">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-10 ">
-        <div className="text-center">
+      <div className="w-full max-w-md space-y-8 rounded-xl bg-white px-10 ">
+        {/* <div className="text-center">
           <h2 className="text-3xl font-extrabold text-gray-900">
             Welcome Back
           </h2>
           <p className="mt-2 text-sm text-gray-600">Sign in to your account</p>
-        </div>
+        </div> */}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

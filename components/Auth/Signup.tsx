@@ -58,14 +58,14 @@ export default function SignupPage() {
 
   return (
     <div className="flex ">
-      <div className="w-full max-w-md space-y-6 rounded-xl bg-white p-8 ">
-        <h2 className="text-2xl font-bold text-center">
-          Create Account For Users
+      <div className="w-full max-w-md space-y-2 rounded-xl bg-white px-8 ">
+        <h2 className="text-xl font-bold text-center">
+          Have a Business?
         </h2>
         <Link
           href="/auth/business"
-          className="block text-center text-sm text-blue-500 underline hover:text-gray-700">
-          Are you a business? Sign up here
+          className="block text-center text-sm text-blue-500  hover:text-gray-700">
+          Sign up as Business Account
         </Link>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -121,6 +121,13 @@ export default function SignupPage() {
                 </FormItem>
               )}
             />
+            <div className="text-sm">
+    
+              <p>
+                I agree to the <a className="text-red-600" href="">Privacy Policy</a>, <a className="text-red-600" href="">Terms of Service</a> and <a className="text-red-600" href="">Terms of Business.</a>
+              </p>
+             
+            </div>
 
             <Button
               type="submit"
@@ -129,7 +136,7 @@ export default function SignupPage() {
             </Button>
           </form>
         </Form>
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-gray-500 pt-4">
           Already have an account?{" "}
           <Link href="/login" className="text-red-600 font-medium">
             Login

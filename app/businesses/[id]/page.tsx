@@ -77,15 +77,19 @@ export default function BusinessDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-modern">
+    <div className="container-modern min-h-screen bg-gradient-modern relative">
       {/* Back Button - Fixed Position */}
-      <div className="fixed top-[100px] left-4 z-30">
+      <div className="absolute top-[20px] left-8 z-30">
         <Link
           href="/businesses"
           className="glass text-gray-700 hover:text-purple-600 p-2 rounded-full shadow-md transition-colors flex items-center justify-center"
           aria-label="Back to businesses">
           <ArrowLeft className="h-5 w-5" />
         </Link>
+      </div>
+
+      <div>
+        <h1>Header</h1>
       </div>
 
       {/* Hero Section */}
