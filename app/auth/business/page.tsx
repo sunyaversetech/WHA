@@ -36,10 +36,6 @@ export const signupSchema = z
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
     category: z.enum(["user", "business"]),
-    abn_number: z
-      .number()
-      .min(10000000000, "ABN must be 11 digits")
-      .max(99999999999, "ABN must be 11 digits"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -65,6 +61,8 @@ export default function BusinessSignup() {
       category: "business",
     },
   });
+
+  console.log("Business Signup Form Data:", form.formState.errors);
 
   function onSubmit(values: SingUPFormSchema) {
     mutate(values, {
