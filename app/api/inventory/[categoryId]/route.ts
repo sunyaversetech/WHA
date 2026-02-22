@@ -4,10 +4,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectToDb } from "@/lib/db";
 import { Service } from "@/server/models/Service.schema";
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ categoryId: string }> },
-) {
+type RouteContext = {
+  params: Promise<{ categoryId: string }>;
+};
+export async function POST(req: Request, { params }: RouteContext) {
   try {
     await connectToDb();
     const session = await getServerSession(authOptions);
