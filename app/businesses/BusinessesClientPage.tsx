@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useCallback } from 'react';
-import { getBusinesses } from '@/lib/data/businesses';
-import BusinessCard from '@/components/cards/business-card';
-import { Search, List, Map, Building, X, Filter } from 'lucide-react';
-import CategoryTabs from '@/components/category-tabs';
-import { useCityFilter } from '@/contexts/city-filter-context';
-import { filterByCity } from '@/lib/utils/city-filter';
+import { useState, useMemo, useCallback } from "react";
+import { getBusinesses } from "@/lib/data/businesses";
+import BusinessCard from "@/components/cards/business-card";
+import { Search, List, Map, Building, X, Filter } from "lucide-react";
+import CategoryTabs from "@/components/category-tabs";
+import { useCityFilter } from "@/contexts/city-filter-context";
+import { filterByCity } from "@/lib/utils/city-filter";
 
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
-const BusinessMap = dynamic(() => import('@/components/business-map'), {
+const BusinessMap = dynamic(() => import("@/components/business-map"), {
   ssr: false,
 });
 
@@ -18,14 +18,14 @@ export default function BusinessesClientPage() {
   const { selectedCity } = useCityFilter();
   const allBusinesses = getBusinesses();
   const businesses = filterByCity(allBusinesses, selectedCity);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   const featuredBusinesses = useMemo(() => {
-    const featuredBusinessIds = ['lakeside-gurkhas', 'wow-fresh', 'united-pay'];
+    const featuredBusinessIds = ["lakeside-gurkhas", "wow-fresh", "united-pay"];
     return featuredBusinessIds
       .map((id) => businesses.find((business) => business.id === id))
       .filter(Boolean);
@@ -35,14 +35,14 @@ export default function BusinessesClientPage() {
     const searchLower = searchTerm.toLowerCase();
 
     const categoryFiltered =
-      activeCategory === 'all'
+      activeCategory === "all"
         ? businesses
         : businesses.filter((business) => business.category === activeCategory);
 
     // Then filter by search term
     return categoryFiltered.filter((business) => {
       const searchMatch =
-        searchTerm === '' ||
+        searchTerm === "" ||
         business.name.toLowerCase().includes(searchLower) ||
         business.description.toLowerCase().includes(searchLower) ||
         business.location.toLowerCase().includes(searchLower);
@@ -57,23 +57,23 @@ export default function BusinessesClientPage() {
   }, []);
 
   const clearFilters = useCallback(() => {
-    setSearchTerm('');
-    setActiveCategory('all');
+    setSearchTerm("");
+    setActiveCategory("all");
   }, []);
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(e.target.value);
     },
-    []
+    [],
   );
 
   const clearSearch = useCallback(() => {
-    setSearchTerm('');
+    setSearchTerm("");
   }, []);
 
   const toggleViewMode = useCallback(() => {
-    setViewMode((prev) => (prev === 'list' ? 'map' : 'list'));
+    setViewMode((prev) => (prev === "list" ? "map" : "list"));
   }, []);
 
   return (
@@ -128,63 +128,56 @@ export default function BusinessesClientPage() {
               <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
                 {/* List View Button */}
                 <button
-                  onClick={() => setViewMode('list')}
+                  onClick={() => setViewMode("list")}
                   className={`flex items-center space-x-2 md:px-3 md:py-2  px-2 py-1 text-sm  md:text-base rounded-lg transition-all duration-200 ${
-                    viewMode === 'list'
-                      ? 'bg-purple-500 text-white shadow-md'
-                      : 'bg-white/60 border border-white/30 text-gray-700 hover:bg-white/80'
-                  }`}
-                >
+                    viewMode === "list"
+                      ? "bg-purple-500 text-white shadow-md"
+                      : "bg-white/60 border border-white/30 text-gray-700 hover:bg-white/80"
+                  }`}>
                   <List className="h-4 w-4" />
                   <span>List</span>
                 </button>
 
                 {/* Map View Button */}
                 <button
-                  onClick={() => setViewMode('map')}
+                  onClick={() => setViewMode("map")}
                   className={`flex items-center space-x-2   md:px-3 md:py-2 px-2 py-1 text-sm md:text-base rounded-lg transition-all duration-200 ${
-                    viewMode === 'map'
-                      ? 'bg-purple-500 text-white shadow-md'
-                      : 'bg-white/60 border border-white/30 text-gray-700 hover:bg-white/80'
-                  }`}
-                >
+                    viewMode === "map"
+                      ? "bg-purple-500 text-white shadow-md"
+                      : "bg-white/60 border border-white/30 text-gray-700 hover:bg-white/80"
+                  }`}>
                   <Map className="h-4 w-4" />
                   <span>Map</span>
                 </button>
               </div>
 
-              {/* Mobile Filter Trigger - Only shows on mobile */}
               <div className="relative md:hidden">
                 <button
                   className={`mobile-search-button p-1.5 rounded-lg transition-colors ${
                     mobileSearchOpen
-                      ? 'bg-purple-500 hover:bg-purple-600 shadow-md'
-                      : 'bg-gray-100 hover:bg-gray-200'
+                      ? "bg-purple-500 hover:bg-purple-600 shadow-md"
+                      : "bg-gray-100 hover:bg-gray-200"
                   }`}
                   onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-                  title={mobileSearchOpen ? 'Close filters' : 'Open filters'}
-                >
+                  title={mobileSearchOpen ? "Close filters" : "Open filters"}>
                   <Filter
                     className={`h-4 w-4 ${
-                      mobileSearchOpen ? 'text-white' : 'text-gray-500'
+                      mobileSearchOpen ? "text-white" : "text-gray-500"
                     }`}
                   />
                 </button>
-                {/* Active filter indicator */}
-                {(searchTerm || selectedCity !== 'all') && (
+                {(searchTerm || selectedCity !== "all") && (
                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
                 )}
               </div>
             </div>
 
-            {/* Search and City Filter - Hidden by default on mobile, shown when activated */}
             <div
               className={`mobile-search-container flex-col gap-2 mb-2 transition-all duration-300 ease-in-out ${
                 mobileSearchOpen
-                  ? 'flex opacity-100 max-h-96'
-                  : 'hidden opacity-0 max-h-0 md:flex md:opacity-100 md:max-h-none'
-              } md:flex-row md:gap-4 md:mb-4`}
-            >
+                  ? "flex opacity-100 max-h-96"
+                  : "hidden opacity-0 max-h-0 md:flex md:opacity-100 md:max-h-none"
+              } md:flex-row md:gap-4 md:mb-4`}>
               {/* Search Input */}
               <div className="relative w-full">
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
@@ -200,8 +193,7 @@ export default function BusinessesClientPage() {
                 {searchTerm && (
                   <button
                     onClick={clearSearch}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 transition-colors md:right-3"
-                  >
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 transition-colors md:right-3">
                     <X className="h-3 w-3 text-gray-400 hover:text-gray-600 md:h-4 md:w-4" />
                   </button>
                 )}
@@ -211,8 +203,7 @@ export default function BusinessesClientPage() {
               {searchTerm && (
                 <button
                   onClick={clearFilters}
-                  className="w-full px-3 py-2 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors font-medium md:hidden"
-                >
+                  className="w-full px-3 py-2 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors font-medium md:hidden">
                   Clear All Filters
                 </button>
               )}
@@ -232,7 +223,7 @@ export default function BusinessesClientPage() {
 
         {/* Businesses List/Map */}
         <div className="container-modern pb-8">
-          {viewMode === 'list' ? (
+          {viewMode === "list" ? (
             filteredBusinesses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                 {filteredBusinesses.map((business) => (

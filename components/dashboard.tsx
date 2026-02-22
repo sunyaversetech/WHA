@@ -54,15 +54,29 @@ export default function Dashboard() {
             </div>
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ">
               <h1 className="text-xl font-bold text-slate-800">
                 Welcome Back, {session?.user?.name}
               </h1>
-              <Badge
-                variant="outline"
-                className="text-[10px] uppercase tracking-tighter">
-                {businessName || "Personal Account"}
-              </Badge>
+              <div className="sm:hidden md:flex md:flex-wrap gap-2">
+                <Badge
+                  variant="outline"
+                  className="text-[10px] uppercase tracking-tighter">
+                  {businessName || "Personal Account"}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] uppercase tracking-tighter">
+                  {session?.user?.category || "Personal Account"}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] uppercase tracking-tighter">
+                  {session?.user?.verified
+                    ? "Verified"
+                    : "Business Not Verified"}
+                </Badge>
+              </div>
             </div>
             <p className="text-sm text-slate-500">
               {session?.user?.email} •{" "}
