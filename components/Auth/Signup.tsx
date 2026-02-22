@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useSingup } from "@/services/Auth/auth.service";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 const signupSchema = z
   .object({
@@ -36,6 +38,7 @@ const signupSchema = z
 export default function SignupPage() {
   const router = useRouter();
   const { mutate } = useSingup();
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
@@ -59,14 +62,15 @@ export default function SignupPage() {
   return (
     <div className="flex ">
       <div className="w-full max-w-md space-y-2 rounded-xl bg-white px-8 ">
-        <h2 className="text-xl font-bold text-center">
+        <h2 className="text-xl font-bold text-center">Signup As User</h2>
+        <p className="text-sm justify-center flex gap-2 mb-5">
           Have a Business?
-        </h2>
-        <Link
-          href="/auth/business"
-          className="block text-center text-sm text-blue-500  hover:text-gray-700">
-          Sign up as Business Account
-        </Link>
+          <Link
+            href="/auth/business"
+            className="block text-center text-sm text-blue-500  hover:text-gray-700">
+            Sign up as Business Account
+          </Link>
+        </p>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -101,9 +105,26 @@ export default function SignupPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
-                  </FormControl>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        {...field}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -113,20 +134,46 @@ export default function SignupPage() {
               name="cpassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
-                  </FormControl>
+                  <FormLabel>Password</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        {...field}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <div className="text-sm">
-    
               <p>
-                I agree to the <a className="text-red-600" href="">Privacy Policy</a>, <a className="text-red-600" href="">Terms of Service</a> and <a className="text-red-600" href="">Terms of Business.</a>
+                I agree to the{" "}
+                <a className="text-red-600" href="">
+                  Privacy Policy
+                </a>
+                ,{" "}
+                <a className="text-red-600" href="">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a className="text-red-600" href="">
+                  Terms of Business.
+                </a>
               </p>
-             
             </div>
 
             <Button

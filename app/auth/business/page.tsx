@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import { ChevronDown, ChevronLeft, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -82,11 +82,24 @@ export default function BusinessSignup() {
 
   return (
     <div className="max-w-md mx-auto p-6 bg-card border rounded-xl shadow-sm m-10">
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold">WHA Business Account</h1>
-        <p className="text-muted-foreground text-sm">
-          Join our platform to manage your business.
-        </p>
+      <div className="flex mb-6 text-center items-center">
+        <div
+          className="flex items-start justify-start p-4 -ml-4"
+          onClick={() => router.push("/auth?tab=login")}>
+          <ChevronLeft
+            className="h-8 w-8 cursor-pointer rounded-full border bg-white p-1.5 
+               text-slate-600 
+               transition-all hover:scale-105 active:scale-95"
+          />
+        </div>
+        <div className="flex flex-col justify-center m-auto items-center ">
+          <h1 className="text-2xl font-bold flex justify-center">
+            WHA Business Account
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Join our platform to manage your business.
+          </p>
+        </div>
       </div>
 
       <Form {...form}>
@@ -168,27 +181,6 @@ export default function BusinessSignup() {
           />
           <FormField
             control={form.control}
-            name="abn_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>ABN Number</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="12345678901"
-                    maxLength={11}
-                    minLength={11}
-                    value={field.value || ""}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="password"
             render={({ field }) => (
               <FormItem>
@@ -223,20 +215,48 @@ export default function BusinessSignup() {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <Input type={showPassword ? "text" : "password"} {...field} />
-                </FormControl>
+                <FormLabel>Password</FormLabel>
+                <div className="relative">
+                  <FormControl>
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      {...field}
+                    />
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-        <div className="text-sm">
-          <p>
-            I agree to the <a className="text-red-600" href="">Privacy Policy</a>, <a className="text-red-600" href="">Terms of Service</a> and <a className="text-red-600" href="">Terms of Business.</a>
-          </p>
-        </div>
+          <div className="text-sm">
+            <p>
+              I agree to the{" "}
+              <a className="text-red-600" href="">
+                Privacy Policy
+              </a>
+              ,{" "}
+              <a className="text-red-600" href="">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a className="text-red-600" href="">
+                Terms of Business.
+              </a>
+            </p>
+          </div>
 
           <Button type="submit" className="w-full">
             Register Business
