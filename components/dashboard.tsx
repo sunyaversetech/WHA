@@ -42,7 +42,7 @@ export default function Dashboard() {
     );
 
   return (
-    <div className="p-8 bg-slate-50 min-h-screen space-y-8">
+    <div className="p-8 min-h-screen space-y-8">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <div className="relative">
