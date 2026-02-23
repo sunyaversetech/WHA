@@ -10,6 +10,7 @@ import { FavoritesProvider } from "@/contexts/favorites-context";
 import { RedeemProvider } from "@/contexts/redeem-context";
 import { Toaster } from "sonner";
 import Sidebar from "@/components/Sidebar";
+import DashboardLayout from "@/components/DashboardLayout";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -30,8 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <div lang="en" className="flex w-full">
-      <Sidebar />
-      <div className="flex-1">{children}</div>
+      <DashboardLayout>{children}</DashboardLayout>
     </div>
   );
 }

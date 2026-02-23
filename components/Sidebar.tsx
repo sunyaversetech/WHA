@@ -6,7 +6,11 @@ import {
   LucideIcon,
   Calendar1,
   HeartHandshake,
+  Album,
+  User,
+  CirclePile,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -39,7 +43,14 @@ const Sidebar = () => {
           icon: LayoutDashboard,
           link: "/dashboard",
           hasDropdown: false,
-          active: pathname.startsWith("/dashboard"),
+          active: pathname === "/dashboard",
+        },
+        {
+          title: "Bookings",
+          icon: Album,
+          link: "/dashboard/bookings",
+          hasDropdown: false,
+          active: pathname === "/dashboard/bookings",
         },
         {
           title: "Deals",
@@ -58,11 +69,23 @@ const Sidebar = () => {
       ],
     },
     {
+      groupLabel: "Inventory",
+      items: [
+        {
+          title: "Inventory",
+          icon: CirclePile,
+          link: "/dashboard/inventory",
+          hasDropdown: false,
+          active: pathname.startsWith("/dashboard/inventory"),
+        },
+      ],
+    },
+    {
       groupLabel: "Profile",
       items: [
         {
           title: "Profile",
-          icon: Users,
+          icon: User,
           link: "/dashboard/profile",
           hasDropdown: false,
           active: pathname.startsWith("/dashboard/profile"),
@@ -76,9 +99,13 @@ const Sidebar = () => {
       prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title],
     );
   };
+  const { data: session, status } = useSession();
 
   return (
     <div className="w-64 h-screen bg-white border-r overflow-y-auto flex flex-col p-4 font-sans text-sm text-slate-600">
+      <h1 className="text-lg xl:text-2xl md:text-xl mb-10">
+        {session?.user.business_name ?? session?.user.name}
+      </h1>
       {menuData.map((group, idx) => (
         <div key={idx} className="mb-6">
           <p className="text-[11px] font-bold text-slate-400 mb-4 tracking-wider uppercase">

@@ -1,11 +1,11 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import bcrypt from "bcryptjs";
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -52,35 +52,59 @@ const handler = NextAuth({
     strategy: "jwt",
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
+        await connectToDb();
+        const existingUser = await User.findOne({ email: user.email });
+
+        if (!existingUser) {
+          const newUser = await User.create({
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            provider: "google",
+            googleId: profile?.sub,
+            category: "user",
+          });
+          user.id = newUser._id.toString();
+        } else {
+          user.id = existingUser._id.toString();
+        }
+      }
+      return true;
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.id = user.id;
+        token.mongodbId = user.id;
+        token.googleId = (user as any).googleId || null;
         token.category = (user as any).category;
-        token.business_category = (user as any).business_category;
         token.business_name = (user as any).business_name;
-        token.emailVerified = (user as any).emailVerified;
+        token.image = (user as any).image;
       }
 
-      if (!token.category || token.category === "none") {
+      if (trigger === "update" && session) {
+        return { ...token, ...session };
+      }
+
+      if (!user && token.email) {
         await connectToDb();
         const dbUser = await User.findOne({ email: token.email }).lean();
         if (dbUser) {
-          token.category = dbUser.category;
-          token.business_category = dbUser.business_category;
-          token.business_name = dbUser.business_name;
-          token.emailVerified = dbUser.emailVerified;
+          token.mongodbId = (dbUser as any)._id.toString();
+          token.category = (dbUser as any).category;
+          token.business_name = (dbUser as any).business_name;
+          token.image = (dbUser as any).image;
         }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.sub;
-        (session.user as any).category = token.category || "none";
-        (session.user as any).business_category =
-          token.business_category || "none";
-        (session.user as any).business_name = token.business_name || "none";
-        (session.user as any).verified = token.emailVerified || false;
+        (session.user as any).id = token.mongodbId;
+        (session.user as any).googleId = token.googleId;
+        (session.user as any).category = token.category;
+        (session.user as any).business_name = token.business_name;
+        (session.user as any).image = token.image;
       }
       return session;
     },
@@ -89,6 +113,8 @@ const handler = NextAuth({
     signIn: "/auth",
     error: "/auth",
   },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

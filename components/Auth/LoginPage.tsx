@@ -35,8 +35,6 @@ export default function LoginPage() {
     defaultValues: { email: "", password: "" },
   });
 
-  console.log("data", data);
-
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setLoading(true);
     const result = await signIn("credentials", {

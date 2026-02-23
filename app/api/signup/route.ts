@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
     if (!name || !email || !password || !category) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { message: "Missing required fields" },
         { status: 400 },
       );
     }
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return NextResponse.json(
-        { error: "User with this email already exists" },
+        { message: "User with this email already exists" },
         { status: 400 },
       );
     }
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("SIGNUP_ERROR:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { message: "Internal Server Error" },
       { status: 500 },
     );
   }

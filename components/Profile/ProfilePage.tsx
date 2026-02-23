@@ -65,7 +65,6 @@ const ProfilePage = ({ userData }: { userData: any }) => {
 
   const onSubmit = async (data: any) => {
     try {
-      console.log("Saving to MongoDB...", data);
       setIsOpen(false);
     } catch (error) {
       console.error(error);
