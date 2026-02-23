@@ -12,7 +12,7 @@ import {
   CheckSquare,
   DollarSign,
   LogOut,
-  Edit3,
+  Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,8 +39,6 @@ export default function Dashboard() {
         Access Denied. Please Login.
       </p>
     );
-
-  console.log("User session data:", session); // Debugging line to check session data
 
   return (
     <div className="p-8 min-h-screen space-y-8">
@@ -75,11 +73,12 @@ export default function Dashboard() {
               </div>
             </div>
             <p className="text-sm text-slate-500">
-              {session?.user?.email} •{" "}
+              {session?.user?.email}
+              {/* •{" "}
               <span className="text-orange-500 font-semibold underline">
                 21
               </span>{" "}
-              Pending Approvals
+              Pending Approvals */}
             </p>
           </div>
         </div>
@@ -100,29 +99,26 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
-          title="Attendance Overview"
+          title="Active Deals"
           value="120/154"
           trend="+2.1%"
-          icon={<Calendar />}
+          icon={<Handshake />}
           iconBg="bg-orange-500"
         />
 
-        {/* If category is user: Events | Else: Properties */}
         <MetricCard
-          title={isUserOnly ? "Total Events" : "Total No of Properties"}
-          value={isUserOnly ? "45" : "90/125"}
+          title={"Total Number of Bookings"}
+          value={"45"}
           trend="-2.1%"
           trendDown
           icon={<Briefcase />}
           iconBg="bg-teal-600"
         />
 
-        {/* If category is user: Active Events | Else: Clients */}
         <MetricCard
-          title={isUserOnly ? "Active Events" : "Total No of Clients"}
+          title={"Total No of Services"}
           value={isUserOnly ? "12" : "69/86"}
           trend="-11.2%"
           trendDown
@@ -130,7 +126,6 @@ export default function Dashboard() {
           iconBg="bg-blue-500"
         />
 
-        {/* If category is user: Past Bookings | Else: Tasks */}
         <MetricCard
           title={isUserOnly ? "Past Bookings" : "Total No of Tasks"}
           value={isUserOnly ? "168" : "225/28"}
@@ -140,7 +135,7 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <MetricCard
             title="Earnings"
@@ -201,12 +196,11 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 }
 
-// Sub-component for the Metric Cards
 const MetricCard = ({
   title,
   value,
