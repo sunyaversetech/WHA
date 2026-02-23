@@ -53,7 +53,7 @@ const CreateCategoryDialog = ({
     mutate(values, {
       onSuccess: () => {
         toast.success("Category created successfully");
-        queryClient.invalidateQueries({ queryKey: ["categories"] });
+        queryClient.invalidateQueries({ queryKey: ["category"] });
         form.reset();
         onOpenChange(false);
       },

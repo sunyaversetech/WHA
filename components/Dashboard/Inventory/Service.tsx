@@ -60,6 +60,7 @@ const DAYS = [
 import * as z from "zod";
 import CreateCategoryDialog from "./CreateCategoryDialog";
 import { useCreateService, useGetActivity } from "@/services/inventory.service";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const serviceSchema = z.object({
   id: z.string().optional(),
@@ -84,13 +85,12 @@ export interface Category {
 
 export default function CategorizedServices() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isCatDialogOpen, setIsCatDialogOpen] = useState(false);
   const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [editingService, setEditingService] =
     useState<ServicePostTypeSchema | null>(null);
-  const [newCatName, setNewCatName] = useState("");
+  const queryClient = useQueryClient();
 
   const form = useForm<ServicePostTypeSchema>({
     resolver: zodResolver(serviceSchema),
@@ -115,6 +115,9 @@ export default function CategorizedServices() {
       onSuccess: (res) => {
         toast.success(editingService ? "Service updated" : "Service added");
         setIsServiceDialogOpen(false);
+        queryClient.invalidateQueries({
+          queryKey: ["category"],
+        });
         setEditingService(null);
         form.reset({
           pricing_category: "hour",

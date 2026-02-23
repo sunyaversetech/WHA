@@ -1,4 +1,4 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 
 const s3Client = new S3Client({
@@ -37,3 +37,21 @@ export const uploadToS3 = async (
     throw error;
   }
 };
+
+export async function deleteFromS3(fileUrl: string) {
+  try {
+    const urlParts = fileUrl.split(".amazonaws.com/");
+    const key = urlParts[1];
+
+    if (!key) return;
+
+    await s3Client.send(
+      new DeleteObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME!,
+        Key: decodeURIComponent(key),
+      }),
+    );
+  } catch (error) {
+    console.error("S3 Delete Error:", error);
+  }
+}

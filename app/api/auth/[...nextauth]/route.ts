@@ -5,7 +5,6 @@ import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import bcrypt from "bcryptjs";
 
-// Export this so you can use it in getServerSession(authOptions)
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -74,33 +73,38 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user, account }) {
-      // On initial sign in, user object contains the data from authorize() or signIn()
+    async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.mongodbId = user.id; // The 24-char hex ID
+        token.mongodbId = user.id;
         token.googleId = (user as any).googleId || null;
         token.category = (user as any).category;
         token.business_name = (user as any).business_name;
+        token.image = (user as any).image;
       }
 
-      // If missing data (e.g. session refresh), fetch from DB
-      if (!token.mongodbId) {
+      if (trigger === "update" && session) {
+        return { ...token, ...session };
+      }
+
+      if (!user && token.email) {
         await connectToDb();
         const dbUser = await User.findOne({ email: token.email }).lean();
         if (dbUser) {
           token.mongodbId = (dbUser as any)._id.toString();
-          token.googleId = (dbUser as any).googleId;
           token.category = (dbUser as any).category;
+          token.business_name = (dbUser as any).business_name;
+          token.image = (dbUser as any).image;
         }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.mongodbId; // Always the valid Mongo ObjectId
-        (session.user as any).googleId = token.googleId; // The long Google string
+        (session.user as any).id = token.mongodbId;
+        (session.user as any).googleId = token.googleId;
         (session.user as any).category = token.category;
         (session.user as any).business_name = token.business_name;
+        (session.user as any).image = token.image;
       }
       return session;
     },

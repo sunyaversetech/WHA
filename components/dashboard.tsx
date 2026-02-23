@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import ProfileAvatar from "./ProfilePic";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -39,17 +40,14 @@ export default function Dashboard() {
       </p>
     );
 
+  console.log("User session data:", session); // Debugging line to check session data
+
   return (
     <div className="p-8 min-h-screen space-y-8">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden text-orange-600 font-bold">
-              {session?.user?.name?.charAt(0) || "U"}
-            </div>
-            <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-md border cursor-pointer hover:bg-slate-50">
-              <Edit3 className="h-3 w-3 text-slate-500" />
-            </div>
+            <ProfileAvatar currentImage={session?.user?.image || ""} />
           </div>
           <div>
             <div className="flex items-center gap-2 ">
