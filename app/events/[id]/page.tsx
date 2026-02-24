@@ -8,6 +8,7 @@ import {
   Ticket,
   ArrowLeft,
   Sparkles,
+  ChevronLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -26,24 +27,34 @@ export default async function EventDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-modern">
-      {/* Back Button - Fixed Position */}
-      <div className="fixed top-[100px] left-4 z-30">
-        <Link
-          href="/events"
-          className="glass text-gray-700 hover:text-blue-600 p-2 rounded-full shadow-md transition-colors flex items-center justify-center"
-          aria-label="Back to events">
-          <ArrowLeft className="h-5 w-5" />
+    <div className="container-modern min-h-screen bg-gradient-modern relative">
+      {/* Back Button */}
+      <div className="flex items-center justify-start gap-2 p-4 -ml-4">
+        <Link href="/events" aria-label="Back to events">
+          <ChevronLeft
+            className="h-8 w-8 cursor-pointer rounded-full border bg-white p-1.5 
+               text-slate-600 
+               transition-all hover:scale-105 active:scale-95"
+          />
         </Link>
+        <h3 className="text-lg font-semibold text-gray-800">Events</h3>
+      </div>
+
+      <div className="space-y-6 ">
+        <div className="flex item-center ">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
+            {event.title}
+          </h1>
+        </div>
       </div>
 
       {/* Hero Section */}
-      <div className="relative h-[30vh] md:h-[40vh] w-full">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent z-10"></div>
+      <div className="relative h-[30vh] md:h-[60vh] w-full  rounded-xl">
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent z-10 rounded-xl"></div>
         <img
           src={event.image || "/placeholder.svg"}
           alt={event.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover rounded-xl"
         />
       </div>
 
@@ -135,7 +146,8 @@ export default async function EventDetailPage({
                     href={event.ticketUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full btn-primary flex items-center justify-center space-x-2">
+                    className="w-full btn-primary flex items-center justify-center space-x-2"
+                  >
                     <Ticket className="h-4 w-4" />
                     <span>Get Tickets</span>
                   </a>
@@ -165,7 +177,8 @@ export default async function EventDetailPage({
                     </div>
                     <a
                       href={`mailto:${event.contactEmail}`}
-                      className="text-gray-700 hover:text-blue-600 transition-colors">
+                      className="text-gray-700 hover:text-blue-600 transition-colors"
+                    >
                       {event.contactEmail}
                     </a>
                   </div>
@@ -177,7 +190,8 @@ export default async function EventDetailPage({
                     </div>
                     <a
                       href={`tel:${event.contactPhone}`}
-                      className="text-gray-700 hover:text-green-600 transition-colors">
+                      className="text-gray-700 hover:text-green-600 transition-colors"
+                    >
                       {event.contactPhone}
                     </a>
                   </div>

@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { use } from "react";
 import { getBusinessById } from "@/lib/data/businesses";
 import { getDealsByBusinessId } from "@/lib/data/deals";
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, ChevronLeft, Star, Dot } from "lucide-react";
 
 import {
   MapPin,
@@ -75,26 +75,30 @@ export default function BusinessDetailPage({
 
   const categoryInfo = getCategoryInfo();
 
+  const rating = 4;
+  const totalReviews = 2000;
+
   function isPromise<T>(value: any): value is Promise<T> {
     return !!value && typeof value.then === "function";
   }
 
   return (
     <div className="container-modern min-h-screen bg-gradient-modern relative">
-      {/* Back Button - Fixed Position */}
-      <div className="absolute top-[20px] left-8 z-30">
-        <Link
-          href="/businesses"
-          className="glass text-gray-700 hover:text-purple-600 p-2 rounded-full shadow-md transition-colors flex items-center justify-center"
-          aria-label="Back to businesses"
-        >
-          <ArrowLeft className="h-5 w-5" />
+      {/* Back Button */}
+      <div className="flex items-center justify-start gap-2 p-4 -ml-4">
+        <Link href="/businesses" aria-label="Back to events">
+          <ChevronLeft
+            className="h-8 w-8 cursor-pointer rounded-full border bg-white p-1.5 
+               text-slate-600 
+               transition-all hover:scale-105 active:scale-95"
+          />
         </Link>
+        <h3 className="text-lg font-semibold text-gray-800">Businesses</h3>
       </div>
 
-      <div className="space-y-6 mt-10">
-        <div className="flex item-center ">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
+      <div className="space-y-6">
+        <div className="flex items-center gap-4 mb-3 ">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
             {business.name}
           </h1>
           <h1>
@@ -103,13 +107,51 @@ export default function BusinessDetailPage({
         </div>
       </div>
 
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center gap-2 text-sm text-muted-foreground">
+          {/* Rating Section */}
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-foreground">
+              {rating.toFixed(1)}
+            </span>
+
+            <div className="flex gap-1">
+              {[...Array(5)].map((_, index) => (
+                <Star
+                  key={index}
+                  className={`h-4 w-4 ${
+                    index < rating
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <span>({totalReviews.toLocaleString()})</span>
+          </div>
+
+          {/* Divider */}
+          <Dot className="hidden md:block h-4 w-4" />
+
+          {/* Status */}
+          <div className="font-medium text-red-500">Closed - Opens 9:00 am</div>
+
+          {/* Divider */}
+          <Dot className="hidden md:block h-4 w-4" />
+
+          {/* Location */}
+          <div>Kingston, Canberra</div>
+        </div>
+      </div>
+
       {/* Hero Section */}
-      <div className="relative h-[30vh] md:h-[40vh] w-full">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent z-10"></div>
+      <div className="relative  h-[30vh] lg:h-[60vh] w-full  rounded-xl mt-5">
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent z-10 rounded-xl"></div>
         <img
           src={business.image || "/placeholder.svg"}
           alt={business.name}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover rounded-xl"
         />
       </div>
 
@@ -185,7 +227,7 @@ export default function BusinessDetailPage({
                             rel="noopener noreferrer"
                             className="text-gray-700 hover:text-green-600 transition-colors flex items-center space-x-1"
                           >
-                            <span>Visit Website</span>
+                            <span>{business.website}</span>
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         </div>
@@ -252,7 +294,7 @@ export default function BusinessDetailPage({
                 {business.phone && (
                   <a
                     href={`tel:${business.phone}`}
-                    className="w-full btn-primary flex items-center justify-center space-x-2"
+                    className="w-full btn-secondary flex items-center justify-center space-x-2"
                   >
                     <Phone className="h-4 w-4" />
                     <span>Call Now</span>
@@ -269,7 +311,7 @@ export default function BusinessDetailPage({
                     <span>Visit Website</span>
                   </a>
                 )}
-                <button className="w-full btn-ghost flex items-center justify-center space-x-2">
+                <button className="w-full btn-secondary flex items-center justify-center space-x-2">
                   <Share2 className="h-4 w-4" />
                   <span>Share</span>
                 </button>
@@ -283,29 +325,6 @@ export default function BusinessDetailPage({
               </h3>
               <div className="h-48 rounded-lg overflow-hidden">
                 <BusinessMap businesses={[business]} />
-              </div>
-            </div>
-
-            {/* Business Info */}
-            <div className="card p-4 md:p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Business Info
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Category:</span>
-                  <span className="font-medium">{categoryInfo.label}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">City:</span>
-                  <span className="font-medium">{business.city}</span>
-                </div>
-                {business.phone && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Phone:</span>
-                    <span className="font-medium">{business.phone}</span>
-                  </div>
-                )}
               </div>
             </div>
           </div>
