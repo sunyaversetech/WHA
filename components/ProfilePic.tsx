@@ -5,6 +5,7 @@ import { Edit3, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useCreateProfilePic } from "@/services/profile-pic.service";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function ProfileAvatar({
   currentImage,
@@ -13,6 +14,7 @@ export default function ProfileAvatar({
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { mutate, isPending } = useCreateProfilePic();
+  const router = useRouter();
 
   const handleIconClick = () => {
     fileInputRef.current?.click();
@@ -27,6 +29,7 @@ export default function ProfileAvatar({
       mutate(formData, {
         onSuccess: () => {
           toast.success("Profile picture updated successfully!");
+          router.refresh();
         },
         onError: (error) => {
           console.error("Failed to upload profile picture:", error);
