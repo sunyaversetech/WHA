@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown, ChevronLeft, Eye, EyeOff } from "lucide-react";
+import { Check, ChevronLeft, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,18 +15,75 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import * as z from "zod";
 import { useSingup } from "@/services/Auth/auth.service";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { parseJson } from "@/lib/action";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { LocationFormField } from "@/components/ui/LocationFormFiled";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const categories = [
+  { label: "Automotive", value: "automotive" },
+  { label: "Barber", value: "barber" },
+  { label: "Cafe", value: "cafe" },
+  { label: "Cleaning", value: "cleaning" },
+  { label: "Consultancy", value: "consultancy" },
+  { label: "Driving School", value: "driving-school" },
+  { label: "Electrician", value: "electrician" },
+  { label: "Event Organizer", value: "event-organizer" },
+  { label: "Food Truck", value: "food-truck" },
+  { label: "Grocery", value: "grocery" },
+  { label: "Painter", value: "painter" },
+  { label: "Photography", value: "photography" },
+  { label: "Plumber", value: "plumber" },
+  { label: "Pujari", value: "pujari" },
+  { label: "Removalists", value: "removalists" },
+  { label: "Restaurant", value: "restaurant" },
+  { label: "Saloon and Makeup", value: "saloon-makeup" },
+  { label: "Shop", value: "shop" },
+  { label: "Social Club", value: "social-club" },
+  { label: "Travel and Tours", value: "travel-tours" },
+  { label: "Others", value: "others" },
+] as const;
+
+const communities = [
+  "Australian",
+  "Nepali",
+  "Indian",
+  "Bhutanese",
+  "European",
+  "Others",
+];
+
+const cities = [
+  { label: "Sydney", value: "sydney" },
+  { label: "Melbourne", value: "melbourne" },
+  { label: "Brisbane", value: "brisbane" },
+  { label: "Perth", value: "perth" },
+  { label: "Adelaide", value: "adelaide" },
+  { label: "Canberra", value: "canberra" },
+  { label: "Hobart", value: "hobart" },
+  { label: "Darwin", value: "darwin" },
+  { label: "Newcastle", value: "newcastle" },
+  { label: "Gold Coast", value: "gold-coast" },
+  { label: "Other", value: "other" },
+];
 
 export const signupSchema = z
   .object({
@@ -35,6 +92,18 @@ export const signupSchema = z
     business_name: z.string().min(2, "Business name is required"),
     business_category: z.string().min(1, "Please select a category"),
     password: z.string().min(8, "Password must be at least 8 characters"),
+    city: z.string().min(1, "City is required"),
+    termsOfServiceAccepted: z.boolean().refine((val) => val === true, {
+      message: "You must accept the Terms of Service",
+    }),
+    privacyPolicyAccepted: z.boolean().refine((val) => val === true, {
+      message: "You must accept the Privacy Policy",
+    }),
+    termsOfBusinessAccepted: z.boolean().refine((val) => val === true, {
+      message: "You must accept the Terms of Business",
+    }),
+    community: z.string().min(1, "Please select a community"),
+    location: z.string().min(2, "Location is required"),
     confirmPassword: z.string(),
     category: z.enum(["user", "business"]),
   })
@@ -55,11 +124,17 @@ export default function BusinessSignup() {
     defaultValues: {
       name: "",
       email: "",
+      city: "",
       business_name: "",
       business_category: "",
       password: "",
       confirmPassword: "",
       category: "business",
+      community: "",
+      location: "",
+      privacyPolicyAccepted: false,
+      termsOfServiceAccepted: false,
+      termsOfBusinessAccepted: false,
     },
   });
 
@@ -79,7 +154,7 @@ export default function BusinessSignup() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-card border rounded-xl shadow-sm m-10">
+    <div className="max-w-2xl mx-auto p-6 bg-card border rounded-xl shadow-sm m-10">
       <div className="flex mb-6 text-center items-center">
         <div
           className="flex items-start justify-start p-4 -ml-4"
@@ -129,36 +204,168 @@ export default function BusinessSignup() {
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="business_category"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Category</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="restaurants">Restaurants</SelectItem>
-                    <SelectItem value="cafes">Cafés</SelectItem>
-                    <SelectItem value="food_trucks">Food Trucks</SelectItem>
-                    <SelectItem value="grocery">Grocery</SelectItem>
-                    <SelectItem value="salons">Salons</SelectItem>
-                    <SelectItem value="consultancies">Consultancies</SelectItem>
-                    <SelectItem value="event">Event</SelectItem>
-                    <SelectItem value="others">Others</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between font-normal",
+                          !field.value && "text-muted-foreground",
+                        )}>
+                        {field.value
+                          ? categories.find((cat) => cat.value === field.value)
+                              ?.label
+                          : "Select a category"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-xl p-0">
+                    <Command>
+                      <CommandInput
+                        className="focus: focus-visible:ring-0 focus-visible:border-0"
+                        placeholder="Search category..."
+                      />
+                      <CommandList>
+                        <CommandEmpty>No category found.</CommandEmpty>
+                        <CommandGroup>
+                          {categories.map((category) => (
+                            <CommandItem
+                              value={category.label}
+                              key={category.value}
+                              onSelect={() => {
+                                form.setValue(
+                                  "business_category",
+                                  category.value,
+                                );
+                              }}>
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  category.value === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                              {category.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="community"
+            render={({ field }) => (
+              <FormItem className="space-y-3">
+                <FormLabel>Community</FormLabel>
+                <FormControl>
+                  <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    onValueChange={(value) => {
+                      if (value) field.onChange(value);
+                    }}
+                    value={field.value}
+                    className="flex flex-wrap justify-start gap-2">
+                    {communities.map((item) => (
+                      <ToggleGroupItem
+                        key={item}
+                        value={item.toLowerCase()}
+                        className={cn(
+                          "!rounded-md !border border-input h-10 px-4",
+                          "min-w-[100px] transition-all",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:opacity-100",
+                          "first:rounded-md last:rounded-md",
+                        )}>
+                        {item}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>City</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between font-normal",
+                          !field.value && "text-muted-foreground",
+                        )}>
+                        {field.value
+                          ? cities.find((city) => city.value === field.value)
+                              ?.label
+                          : "Select a City"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-xl p-0">
+                    <Command>
+                      <CommandInput
+                        className="focus: focus-visible:ring-0 focus-visible:border-0"
+                        placeholder="Search City..."
+                      />
+                      <CommandList>
+                        <CommandEmpty>No city found.</CommandEmpty>
+                        <CommandGroup>
+                          {cities.map((city) => (
+                            <CommandItem
+                              value={city.label}
+                              key={city.value}
+                              onSelect={() => {
+                                form.setValue("city", city.value);
+                              }}>
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  city.value === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                              {city.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <LocationFormField form={form} />
 
           <FormField
             control={form.control}
@@ -213,7 +420,7 @@ export default function BusinessSignup() {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>Confirm Password</FormLabel>
                 <div className="relative">
                   <FormControl>
                     <Input
@@ -239,24 +446,90 @@ export default function BusinessSignup() {
             )}
           />
 
-          <div className="text-sm">
-            <p>
-              I agree to the{" "}
-              <a className="text-red-600" href="">
-                Privacy Policy
-              </a>
-              ,{" "}
-              <a className="text-red-600" href="">
-                Terms of Service
-              </a>{" "}
-              and{" "}
-              <a className="text-red-600" href="">
-                Terms of Business.
-              </a>
-            </p>
+          <div className="space-y-4 max-w-xl">
+            {/* 1. Privacy Policy */}
+            <FormField
+              control={form.control}
+              name="privacyPolicyAccepted"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="leading-none">
+                    <FormLabel className="text-sm font-normal">
+                      I agree to the{" "}
+                      <a
+                        className="text-red-600 hover:underline"
+                        href="/privacy">
+                        Privacy Policy
+                      </a>
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {/* 2. Terms of Service */}
+            <FormField
+              control={form.control}
+              name="termsOfServiceAccepted"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="leading-none">
+                    <FormLabel className="text-sm font-normal">
+                      I agree to the{" "}
+                      <a className="text-red-600 hover:underline" href="/terms">
+                        Terms of Service
+                      </a>
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="termsOfBusinessAccepted"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="leading-none">
+                    <FormLabel className="text-sm font-normal">
+                      I agree to the{" "}
+                      <a
+                        className="text-red-600 hover:underline"
+                        href="/business">
+                        Terms of Business
+                      </a>
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
           </div>
 
-          <Button type="submit" className="w-full">
+          <Button
+            type="submit"
+            // disabled={!form.formState.isValid}
+            className="w-full">
             Register Business
           </Button>
         </form>

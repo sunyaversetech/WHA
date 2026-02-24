@@ -87,13 +87,9 @@ export default function EventsPageClient() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 relative">
       <div className="relative z-10">
-        {/* Compact Mobile Header with Desktop Preservation */}
         <div className="container-modern py-3 md:py-4">
-          {/* Header Container - More Compact on Mobile */}
           <div className="bg-white/80 border border-white/30 rounded-lg px-3 pb-2 pt-0 shadow md:rounded-xl md:p-6 md:shadow-lg">
-            {/* Header Row - Simplified on Mobile */}
             <div className="flex items-center justify-between  md:justify-start md:gap-3 md:mb-2">
-              {/* Title Group - More Compact */}
               <div className="flex items-center gap-2">
                 <div>
                   <h1 className="text-sm font-bold text-secondary  md:text-lg lg:text-2xl">
@@ -105,7 +101,6 @@ export default function EventsPageClient() {
                 </div>
               </div>
 
-              {/* Mobile Filter Trigger - Only shows on mobile */}
               <div className="relative md:hidden">
                 <button
                   className={`mobile-search-button p-1.5 rounded-lg transition-colors ${

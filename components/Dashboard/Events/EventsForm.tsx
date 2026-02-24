@@ -36,6 +36,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 export const eventSchema = z.object({
+  _id: z.string().optional(),
   title: z.string().min(2, "Title is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   price_category: z.string().min(2, "Price category is required"),

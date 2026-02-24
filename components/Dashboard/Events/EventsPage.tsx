@@ -79,8 +79,8 @@ export default function EventsBackend() {
                 </TableCell>
               </TableRow>
             ) : (
-              data?.data?.map((event: any) => (
-                <TableRow key={event.id}>
+              data?.data?.map((event) => (
+                <TableRow key={event._id}>
                   <TableCell className="font-medium">
                     <Dialog>
                       <DialogTrigger asChild>
@@ -122,7 +122,7 @@ export default function EventsBackend() {
                   <TableCell className="font-medium">{event.title}</TableCell>
                   <TableCell>{event.venue}</TableCell>
                   <TableCell>
-                    {event.price ? `$${event.price}` : "Free"}
+                    {event.ticket_price ? `$${event.ticket_price}` : "Free"}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center text-xs text-muted-foreground">

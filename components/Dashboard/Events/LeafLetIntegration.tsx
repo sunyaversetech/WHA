@@ -144,7 +144,6 @@ export default function MapPicker({ form }: MapPickerProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Search Header */}
       <div className="relative flex items-center gap-2">
         <div className="relative flex-1">
           <Input
