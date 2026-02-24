@@ -62,9 +62,9 @@ const Sidebar = () => {
         {
           title: "Events",
           icon: Calendar1,
-          link: "/events",
+          link: "/dashboard/events",
           hasDropdown: false,
-          active: pathname.startsWith("/events"),
+          active: pathname.startsWith("/dashboard/events"),
         },
       ],
     },
