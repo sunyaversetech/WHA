@@ -115,46 +115,53 @@ const Sidebar = () => {
           <div className="space-y-1">
             {group.items.map((item) => {
               const isOpen = openDropdowns.includes(item.title);
-
               return (
                 <div key={item.title}>
-                  <button
-                    onClick={() =>
-                      item.hasDropdown && toggleDropdown(item.title)
-                    }
-                    className={`w-full flex items-center justify-between p-2 rounded-lg transition-colors ${item.active && "bg-slate-100"} hover:bg-slate-100 ${
-                      !item.hasDropdown ? "cursor-pointer" : "cursor-default"
-                    }`}>
-                    <div className="flex items-center gap-3">
+                  <div
+                    className={`relative group flex items-center rounded-lg transition-colors ${item.active ? "bg-slate-100" : "hover:bg-slate-100"}`}>
+                    <Link
+                      href={item.link || "#"}
+                      className="flex-1 flex items-center gap-3 p-2 pr-10">
                       <item.icon size={18} strokeWidth={1.5} />
-                      <Link
-                        href={item.link ? item.link : ""}
-                        className="font-medium ">
-                        {item.title}
-                      </Link>
+                      <span className="font-medium">{item.title}</span>
+
                       {item.title === "Dashboard" && (
                         <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-md font-bold">
                           Hot
                         </span>
                       )}
-                    </div>
-                    {item.hasDropdown && (
-                      <ChevronDown
-                        size={16}
-                        className={`transition-transform duration-200 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    )}
-                  </button>
+                    </Link>
 
+                    {item.hasDropdown && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleDropdown(item.title);
+                        }}
+                        className="absolute right-2 p-1 hover:bg-slate-200 rounded-md transition-colors">
+                        <ChevronDown
+                          size={16}
+                          className={`transition-transform duration-200 ${
+                            isOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dropdown Children */}
                   {item.hasDropdown && isOpen && (
                     <div className="ml-9 mt-1 space-y-1">
                       {item.children?.map((child) => (
                         <Link
                           key={child.title}
                           href={child.link}
-                          className={`block p-2  border-l-2 ${child.active ? "border-l-orange-500 text-orange-500" : "text-slate-500"} hover:text-blue-600 transition-colors`}>
+                          className={`block p-2 border-l-2 ${
+                            child.active
+                              ? "border-l-orange-500 text-orange-500"
+                              : "text-slate-500"
+                          } hover:text-blue-600 transition-colors`}>
                           {child.title}
                         </Link>
                       ))}
