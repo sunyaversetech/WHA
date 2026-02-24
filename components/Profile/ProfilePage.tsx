@@ -89,7 +89,6 @@ const ProfilePage = ({ userData }: { userData: any }) => {
             )}
           </div>
 
-          {/* User Info Display */}
           <div className="flex-1 space-y-4">
             <div className="flex justify-between items-start">
               <div>
