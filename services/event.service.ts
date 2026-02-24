@@ -27,6 +27,6 @@ export const useGetAllEvents = () => {
   return useFetcher<ApiResponseType<EventFormValues[]>>(
     ["allEvents"],
     null,
-    "/api/event?personal=true",
+    "/api/event/123",
   );
 };
