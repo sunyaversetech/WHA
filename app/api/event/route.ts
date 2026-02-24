@@ -78,14 +78,6 @@ export async function GET(request: NextRequest) {
   try {
     await connectToDb();
 
-    const { searchParams } = new URL(request.url);
-    const isPersonal = searchParams.get("personal") === "true";
-
-    if (!isPersonal) {
-      const allEvents = await Event.find({}).sort({ date: 1 });
-      return NextResponse.json({ data: allEvents }, { status: 200 });
-    }
-
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
