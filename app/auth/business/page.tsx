@@ -93,14 +93,8 @@ export const signupSchema = z
     business_category: z.string().min(1, "Please select a category"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     city: z.string().min(1, "City is required"),
-    termsOfServiceAccepted: z.boolean().refine((val) => val === true, {
+    accpetalltermsandcondition: z.boolean().refine((val) => val === true, {
       message: "You must accept the Terms of Service",
-    }),
-    privacyPolicyAccepted: z.boolean().refine((val) => val === true, {
-      message: "You must accept the Privacy Policy",
-    }),
-    termsOfBusinessAccepted: z.boolean().refine((val) => val === true, {
-      message: "You must accept the Terms of Business",
     }),
     community: z.string().min(1, "Please select a community"),
     location: z.string().min(2, "Location is required"),
@@ -132,9 +126,7 @@ export default function BusinessSignup() {
       category: "business",
       community: "",
       location: "",
-      privacyPolicyAccepted: false,
-      termsOfServiceAccepted: false,
-      termsOfBusinessAccepted: false,
+      accpetalltermsandcondition: false,
     },
   });
 
@@ -450,7 +442,7 @@ export default function BusinessSignup() {
             {/* 1. Privacy Policy */}
             <FormField
               control={form.control}
-              name="privacyPolicyAccepted"
+              name="accpetalltermsandcondition"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
@@ -467,55 +459,14 @@ export default function BusinessSignup() {
                         href="/privacy">
                         Privacy Policy
                       </a>
-                    </FormLabel>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            {/* 2. Terms of Service */}
-            <FormField
-              control={form.control}
-              name="termsOfServiceAccepted"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="leading-none">
-                    <FormLabel className="text-sm font-normal">
-                      I agree to the{" "}
-                      <a className="text-red-600 hover:underline" href="/terms">
-                        Terms of Service
-                      </a>
-                    </FormLabel>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="termsOfBusinessAccepted"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="leading-none">
-                    <FormLabel className="text-sm font-normal">
-                      I agree to the{" "}
                       <a
                         className="text-red-600 hover:underline"
-                        href="/business">
+                        href="/privacy">
+                        Terms of Service
+                      </a>
+                      <a
+                        className="text-red-600 hover:underline"
+                        href="/privacy">
                         Terms of Business
                       </a>
                     </FormLabel>

@@ -9,6 +9,7 @@ import { CityFilterProvider } from "@/contexts/city-filter-context";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { RedeemProvider } from "@/contexts/redeem-context";
 import { Toaster } from "sonner";
+import BottomNav from "@/components/BottomNavbar";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -38,6 +39,7 @@ export default function RootLayout({
                   <Navbar />
                   {children}
                   <Toaster />
+                  <BottomNav />
                 </SessionWrapper>
               </CityFilterProvider>
             </FavoritesProvider>

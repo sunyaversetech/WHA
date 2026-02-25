@@ -1,8 +1,8 @@
-import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
 import { ApiResponseType } from "./apitypes";
 import { useMutation } from "@tanstack/react-query";
 import { Post } from "@/lib/action";
 import { useFetcher } from "@/lib/generic.service";
+import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
 
 export const useCreateEvent = () => {
   return useMutation<ApiResponseType<EventFormValues>, any, EventFormValues>({
@@ -13,6 +13,14 @@ export const useCreateEvent = () => {
         data: data,
       }),
   });
+};
+
+export const useGetSingleEvent = (id: string) => {
+  return useFetcher<ApiResponseType<EventFormValues>>(
+    ["singletEvent", id],
+    null,
+    `/api/event/${id}`,
+  );
 };
 
 export const useGetEvent = () => {
@@ -27,6 +35,6 @@ export const useGetAllEvents = () => {
   return useFetcher<ApiResponseType<EventFormValues[]>>(
     ["allEvents"],
     null,
-    "/api/event/123",
+    "/api/event/getallevent",
   );
 };

@@ -3,7 +3,10 @@ import { Schema, models, model } from "mongoose";
 const EventSchema = new Schema({
   title: { type: String },
   description: { type: String },
-  date: { type: Date },
+  dateRange: {
+    from: { type: Date },
+    to: { type: Date },
+  },
   user: { type: Schema.Types.ObjectId, ref: "User" },
   location: { type: String },
   venue: { type: String },
@@ -13,6 +16,9 @@ const EventSchema = new Schema({
   longitude: { type: Number },
   ticket_link: { type: String },
   ticket_price: { type: Number },
+  startTime: { type: String },
+  endTime: { type: String },
+  community: { type: String },
 });
 
 export const Event = models.Event || model("Event", EventSchema);

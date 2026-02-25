@@ -16,10 +16,8 @@ export default function EventsPageClient() {
   const [showFilters, setShowFilters] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
 
-  // mobile search
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
-  // Memoize featured events data to prevent recalculation
   const featuredEvents = useMemo(() => {
     const featuredEventIds = ["wha001", "4", "3"]; // Nawaj Sydney, Dashain, Teej
     return featuredEventIds

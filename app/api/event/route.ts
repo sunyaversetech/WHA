@@ -9,28 +9,39 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDb();
     const session = await getServerSession(authOptions);
-    if (!session)
+
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const formData = await req.formData();
 
     const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const venue = formData.get("venue") as string;
+    const city = formData.get("city") as string;
+    const community = formData.get("community") as string;
+    const category = formData.get("category") as string;
+    const location = formData.get("location") as string;
+
     const price_category = formData.get("price_category") as string;
     const ticket_link = formData.get("ticket_link") as string;
     const ticket_price = formData.get("ticket_price") as string;
-    const price = formData.get("price") as string;
-    const description = formData.get("description") as string;
-    const file = formData.get("image") as File;
-    const location = formData.get("location") as File;
-    const venue = formData.get("venue") as string;
-    const category = formData.get("category") as string;
-    const date = formData.get("date") as string;
+
+    const dateFrom =
+      formData.get("startDate") || formData.get("dateRange[from]");
+    const dateTo = formData.get("endDate") || formData.get("dateRange[to]");
+    const startTime = formData.get("startTime") as string;
+    const endTime = formData.get("endTime") as string;
+
     const latitude = parseFloat(formData.get("latitude") as string);
     const longitude = parseFloat(formData.get("longitude") as string);
 
-    if (!file || !title) {
+    const file = formData.get("image") as File;
+
+    if (!file || !title || !dateFrom || !dateTo) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields (Title, Image, or Dates)" },
         { status: 400 },
       );
     }
@@ -38,30 +49,33 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const uploadResult = await uploadToS3(buffer, file.name, file.type);
 
-    // const newDeal = await Event.create({
-    //   title,
-    //   expiryDate: new Date(expiryDate),
-    //   image: uploadResult.Location,
-    //   user: (session.user as any).id,
-    //   business_name: (session.user as any).business_name,
-
-    // });
-
     const newEvent = await Event.create({
       title,
       description,
-      date,
-      user: (session.user as any).id,
       venue,
+      city,
+      community,
       category,
       image: uploadResult.Location,
-      price,
+
+      dateRange: {
+        from: new Date(dateFrom as string),
+        to: new Date(dateTo as string),
+      },
+
+      startTime,
+      endTime,
+
+      price_category,
+      ticket_link: price_category === "paid" ? ticket_link : undefined,
+      ticket_price: price_category === "paid" ? ticket_price : "0",
+
+      location,
       latitude,
       longitude,
-      price_category,
-      location,
-      ticket_link,
-      ticket_price,
+
+      // Tracking owner
+      user: (session.user as any).id,
     });
 
     return NextResponse.json(

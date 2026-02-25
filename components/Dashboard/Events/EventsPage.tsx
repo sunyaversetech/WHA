@@ -52,7 +52,7 @@ export default function EventsBackend() {
             <DialogHeader>
               <DialogTitle>Create New Event</DialogTitle>
             </DialogHeader>
-            <EventForm open={open} setOpen={setOpen} />
+            <EventForm setOpen={setOpen} />
           </DialogContent>
         </Dialog>
       </div>
@@ -131,12 +131,14 @@ export default function EventsBackend() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {new Intl.DateTimeFormat("en-AU", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    }).format(new Date(event.date))}
+                    {event?.dateRange?.from
+                      ? new Intl.DateTimeFormat("en-AU", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        }).format(new Date(event?.dateRange?.from))
+                      : "-"}
                   </TableCell>
                 </TableRow>
               ))
