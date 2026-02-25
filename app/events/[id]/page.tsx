@@ -1,3 +1,4 @@
+"use client";
 import { getEventById } from "@/lib/data/events";
 import {
   Calendar,
@@ -6,29 +7,26 @@ import {
   Mail,
   Phone,
   Ticket,
-  ArrowLeft,
   Sparkles,
   ChevronLeft,
 } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import FavoriteButton from "@/components/ui/favorite-button";
+import { useGetSingleEvent } from "@/services/event.service";
+import Image from "next/image";
+import { differenceInDays, format } from "date-fns";
 
-export default async function EventDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const awaitedParams = await params;
-  const event = getEventById(awaitedParams.id);
+export default function EventDetailPage() {
+  const param = useParams();
+  const awaitedParams = param as { id: string };
+  const { data: event } = useGetSingleEvent(awaitedParams.id);
 
-  if (!event) {
-    notFound();
-  }
+  console.log("Fetched Event Data:", awaitedParams);
+  console.log("Fetched Event Data:", event);
 
   return (
     <div className="container-modern min-h-screen bg-gradient-modern relative">
-      {/* Back Button */}
       <div className="flex items-center justify-start gap-2 p-4 -ml-4">
         <Link href="/events" aria-label="Back to events">
           <ChevronLeft
@@ -43,25 +41,23 @@ export default async function EventDetailPage({
       <div className="space-y-6 ">
         <div className="flex item-center ">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
-            {event.title}
+            {event?.data?.title}
           </h1>
         </div>
       </div>
 
-      {/* Hero Section */}
       <div className="relative h-[30vh] md:h-[60vh] w-full  rounded-xl">
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent z-10 rounded-xl"></div>
-        <img
-          src={event.image || "/placeholder.svg"}
-          alt={event.title}
+        <Image
+          fill
+          src={event?.data?.image || "/placeholder.svg"}
+          alt={event?.data?.title || "Event Image"}
           className="w-full h-full object-cover rounded-xl"
         />
       </div>
 
-      {/* Content Section */}
       <div className="container-modern py-4 md:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-2">
             <div className="card-lg p-4 md:p-6 mb-6">
               <div className="flex justify-between items-start mb-6">
@@ -69,7 +65,7 @@ export default async function EventDetailPage({
                   Event Details
                 </h2>
                 <div className="flex space-x-2">
-                  <FavoriteButton type="events" id={event.id} />
+                  <FavoriteButton type="events" id={event?.data._id ?? ""} />
                   <button className="p-2 rounded-lg hover:bg-gray-100/50 transition-colors group">
                     <Share2 className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
                   </button>
@@ -85,7 +81,16 @@ export default async function EventDetailPage({
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Date & Time</p>
-                      <p className="font-medium text-gray-800">{event.date}</p>
+                      <p className="font-medium text-gray-800">
+                        {" "}
+                        {event?.data?.dateRange?.from instanceof Date
+                          ? event.data?.dateRange.from.toLocaleDateString()
+                          : event?.data?.dateRange?.from}{" "}
+                        -{" "}
+                        {event?.data?.dateRange?.to instanceof Date
+                          ? event.data?.dateRange.to.toLocaleDateString()
+                          : event?.data?.dateRange?.to}
+                      </p>
                     </div>
                   </div>
 
@@ -95,11 +100,13 @@ export default async function EventDetailPage({
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Venue</p>
-                      <p className="font-medium text-gray-800">{event.venue}</p>
+                      <p className="font-medium text-gray-800">
+                        {event?.data?.venue}
+                      </p>
                     </div>
                   </div>
 
-                  {event.category && (
+                  {event?.data?.category && (
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-green-100 rounded-lg">
                         <Sparkles className="h-4 w-4 text-green-600" />
@@ -107,7 +114,7 @@ export default async function EventDetailPage({
                       <div>
                         <p className="text-sm text-gray-500">Category</p>
                         <p className="font-medium text-gray-800">
-                          {event.category}
+                          {event.data?.category}
                         </p>
                       </div>
                     </div>
@@ -120,11 +127,13 @@ export default async function EventDetailPage({
                     About This Event
                   </h3>
                   <p className="text-gray-600 leading-relaxed mb-4">
-                    {event.description}
+                    {event?.data?.description}
                   </p>
-                  {event.details && (
+                  {event?.data?.description && (
                     <div
-                      dangerouslySetInnerHTML={{ __html: event.details }}
+                      dangerouslySetInnerHTML={{
+                        __html: event.data?.description,
+                      }}
                       className="text-gray-600 leading-relaxed"
                     />
                   )}
@@ -133,24 +142,21 @@ export default async function EventDetailPage({
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
-            {/* Quick Actions */}
             <div className="card p-4 md:p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Quick Actions
               </h3>
               <div className="space-y-3">
-                {event.ticketUrl ? (
-                  <a
-                    href={event.ticketUrl}
+                {event?.data?.ticket_link ? (
+                  <Link
+                    href={event.data?.ticket_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full btn-primary flex items-center justify-center space-x-2"
-                  >
+                    className="w-full btn-primary flex items-center justify-center space-x-2">
                     <Ticket className="h-4 w-4" />
                     <span>Get Tickets</span>
-                  </a>
+                  </Link>
                 ) : (
                   <div className="w-full bg-green-500 text-white px-4 py-3 rounded-xl font-medium flex items-center justify-center space-x-2 shadow-md">
                     <Ticket className="h-4 w-4" />
@@ -164,45 +170,42 @@ export default async function EventDetailPage({
               </div>
             </div>
 
-            {/* Contact Information */}
             <div className="card p-4 md:p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Contact Information
               </h3>
               <div className="space-y-3">
-                {event.contactEmail && (
+                {event?.data?.user.email && (
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-blue-100 rounded-lg">
                       <Mail className="h-4 w-4 text-blue-600" />
                     </div>
                     <a
-                      href={`mailto:${event.contactEmail}`}
-                      className="text-gray-700 hover:text-blue-600 transition-colors"
-                    >
-                      {event.contactEmail}
+                      href={`mailto:${event?.data?.user.email}`}
+                      className="text-gray-700 hover:text-blue-600 transition-colors">
+                      {event?.data?.user.email}
                     </a>
                   </div>
                 )}
-                {event.contactPhone && (
+                {/* {event.contactPhone && (
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-green-100 rounded-lg">
                       <Phone className="h-4 w-4 text-green-600" />
                     </div>
                     <a
                       href={`tel:${event.contactPhone}`}
-                      className="text-gray-700 hover:text-green-600 transition-colors"
-                    >
+                      className="text-gray-700 hover:text-green-600 transition-colors">
                       {event.contactPhone}
                     </a>
                   </div>
-                )}
-                {!event.contactEmail && !event.contactPhone && (
+                )} */}
+                {/* {!event.contactEmail && !event.contactPhone && (
                   <div className="text-center py-4">
                     <p className="text-gray-500 text-sm">
                       Contact information not available
                     </p>
                   </div>
-                )}
+                )} */}
               </div>
             </div>
 
@@ -213,23 +216,60 @@ export default async function EventDetailPage({
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Date:</span>
-                  <span className="font-medium">{event.date}</span>
+                  <span className="text-gray-600">Start Date:</span>
+                  <span className="font-medium">
+                    {event?.data?.dateRange?.from ? (
+                      <>{format(new Date(event.data.dateRange.from), "PPP")}</>
+                    ) : event?.data?.date ? (
+                      format(new Date(event.data.date), "PPP")
+                    ) : (
+                      "TBA"
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">End Date:</span>
+                  <span className="font-medium">
+                    {event?.data?.dateRange?.to ? (
+                      <>{format(new Date(event.data.dateRange.to), "PPP")}</>
+                    ) : event?.data?.date ? (
+                      format(new Date(event.data.date), "PPP")
+                    ) : (
+                      "TBA"
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Days:</span>
+                  <span className="font-medium">
+                    {differenceInDays(
+                      new Date(event?.data?.dateRange?.to ?? ""),
+                      new Date(event?.data?.dateRange?.from ?? ""),
+                    ) + 1}{" "}
+                    {differenceInDays(
+                      new Date(event?.data?.dateRange?.to ?? ""),
+                      new Date(event?.data?.dateRange?.from ?? ""),
+                    ) +
+                      1 >
+                    1
+                      ? "days"
+                      : "day"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Venue:</span>
-                  <span className="font-medium">{event.venue}</span>
+                  <span className="font-medium">{event?.data?.venue}</span>
                 </div>
-                {event.category && (
+                {event?.data?.category && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Category:</span>
-                    <span className="font-medium">{event.category}</span>
+                    <span className="font-medium">{event.data?.category}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tickets:</span>
                   <span className="font-medium">
-                    {event.ticketUrl ? "Available" : "Free Entry"}
+                    {event?.data?.ticket_link ? "Available" : "Free Entry"}
                   </span>
                 </div>
               </div>

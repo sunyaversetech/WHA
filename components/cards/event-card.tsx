@@ -1,136 +1,87 @@
-'use client';
+"use client";
 
-import type React from 'react';
-import { memo } from 'react';
+import { memo } from "react";
+import { Calendar, MapPin, Heart } from "lucide-react";
+import { useFavorites } from "@/contexts/favorites-context";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
-import Link from 'next/link';
-import { Calendar, MapPin, Heart, Ticket } from 'lucide-react';
-import type { Event } from '@/lib/types';
-import { useFavorites } from '@/contexts/favorites-context';
-
-interface EventCardProps {
-  event: Event;
-}
-
-const EventCard = memo(function EventCard({ event }: EventCardProps) {
+const EventCard = memo(function EventCard({ event }: { event: any }) {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const isEventFavorite = isFavorite('events', event.id);
+  const router = useRouter();
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleFavorite('events', event.id);
+  const eventId = event._id || "";
+  const isEventFavorite = isFavorite("events", eventId);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+    }).format(new Date(dateString));
   };
 
-  const handleCardClick = () => {
-    window.location.href = `/events/${event.id}`;
-  };
+  // FIX: Handle both 'date' (older records) and 'dateRange' (newer records)
+  let dateDisplay = "TBA";
+  if (event.dateRange?.from) {
+    dateDisplay = `${formatDate(event.dateRange.from)} - ${formatDate(event.dateRange.to)}`;
+  } else if (event.date) {
+    dateDisplay = formatDate(event.date);
+  }
 
   return (
     <div
-      className="group relative overflow-hidden rounded-lg  cursor-pointer"
-      onClick={handleCardClick}
-    >
-      {/* Full-Image Background */}
-      <div className="relative h-56 md:h-60  w-full">
-        <img
-          src={event.image || '/placeholder.svg'}
+      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer border border-neutral-100"
+      onClick={() => router.push(`/events/${eventId}`)}>
+      <div className="relative h-48 w-full">
+        <Image
+          width={500}
+          height={500}
+          src={event.image || "/placeholder.svg"}
           alt={event.title}
           className="w-full h-full object-cover"
-          loading="lazy"
         />
-        {/* Gradient overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-        {/* Category Badge - Top Left */}
-        <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-semibold px-2 py-1 rounded-lg shadow-lg">
-          {event.category
-            ? event.category.charAt(0).toUpperCase() + event.category.slice(1)
-            : 'Event'}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleFavorite("events", eventId);
+          }}
+          className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors">
+          <Heart
+            className={`h-4 w-4 ${isEventFavorite ? "fill-primary text-primary" : "text-neutral-600"}`}
+          />
+        </button>
+      </div>
+
+      <div className="p-4">
+        <div className="inline-block px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase mb-2">
+          {event.category || "Event"}
         </div>
-        {/* Favorite Button */}
-        {/* AFTER: Favorite button moved to top-right */}
-        <div className="absolute top-4 right-4 flex-shrink-0">
-          <button
-            onClick={handleFavoriteClick}
-            className={`p-2 bg-black/10 backdrop-blur-md border border-white/30 rounded-xl transition-colors duration-200 shadow-lg group/fav hover:bg-white/30 ${
-              isEventFavorite ? 'bg-primary/30 border-primary/50' : ''
-            }`}
-          >
-            <Heart
-              className={`h-5 w-5 transition-colors duration-200 ${
-                isEventFavorite
-                  ? 'text-primary fill-primary'
-                  : 'text-white group-hover/fav:text-primary'
-              }`}
-            />
-          </button>
+
+        <h3 className="font-bold text-gray-800 text-lg mb-3 line-clamp-1">
+          {event.title}
+        </h3>
+
+        <div className="space-y-2">
+          <div className="flex items-center text-neutral-600 text-sm">
+            <MapPin className="h-3.5 w-3.5 mr-2 text-primary flex-shrink-0" />
+            <span className="truncate">{event.venue || "Venue TBA"}</span>
+          </div>
+          <div className="flex items-center text-neutral-600 text-sm">
+            <Calendar className="h-3.5 w-3.5 mr-2 text-primary flex-shrink-0" />
+            <span>{dateDisplay}</span>
+          </div>
         </div>
-        {/* Ticket Button - Top Right */}
-        {/* {event.ticketUrl ? (
-          <a
-            href={event.ticketUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute top-4 right-4 flex items-center gap-2 px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl hover:bg-white/30 transition-colors duration-200 cursor-pointer"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Ticket className="h-4 w-4 text-white" />
-            <span className="text-white font-medium text-sm">Buy Ticket</span>
-          </a>
-        ) : (
-          <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl transition-colors duration-200">
-            <Ticket className="h-4 w-4 text-white" />
-            <span className="text-white font-medium text-sm">Free</span>
-          </div>
-        )} */}
-        {/* Glassmorphism Overlay - Bottom Portion */}
-        <div className="absolute bottom-0 left-0 right-0 bg-black/10 backdrop-blur-sm border-t border-white/20">
-          <div className="py-2 px-4 md:p-4">
-            {/* Main Title */}
-            <h3 className="text-sm md:text-md font-bold mb-2 md:mb-3 line-clamp-2 text-white leading-tight">
-              {event.title}
-            </h3>
 
-            <div className="flex items-center justify-between text-white/90 text-sm">
-              {/* Meta Info Row */}
-              <div className=" space-x-6 truncate max-w-[70%]">
-                <div className="flex items-center truncate pb-1">
-                  <MapPin className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                  <span className="truncate text-xs md:text-sm">
-                    {event.venue}
-                  </span>
-                </div>
-
-                <div className="flex items-center !ml-0">
-                  <Calendar className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                  <span className="truncate text-xs md:text-sm">
-                    {event.date}
-                  </span>
-                </div>
-              </div>
-
-              {/* Ticket button moved to bottom-right */}
-              {event.ticketUrl ? (
-                <a
-                  href={event.ticketUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg hover:bg-white/30 transition-colors duration-200 cursor-pointer"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Ticket className="h-4 w-4 text-white" />
-                  <span className="text-white font-medium md:text-sm">
-                    Ticket
-                  </span>
-                </a>
-              ) : (
-                <div className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl transition-colors duration-200">
-                  <Ticket className="h-4 w-4 text-white" />
-                  <span className="text-white font-medium text-sm">Free</span>
-                </div>
-              )}
-            </div>
-          </div>
+        <div className="mt-4 pt-4 border-t flex justify-between items-center">
+          <span className="text-xs font-semibold text-neutral-400">
+            {event.community || "General"}
+          </span>
+          <span className="text-sm font-bold text-secondary">
+            {event.ticket_price && event.ticket_price > 0
+              ? `$${event.ticket_price}`
+              : "FREE"}
+          </span>
         </div>
       </div>
     </div>

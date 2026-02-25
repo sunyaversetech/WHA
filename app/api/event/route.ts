@@ -74,7 +74,6 @@ export async function POST(req: NextRequest) {
       latitude,
       longitude,
 
-      // Tracking owner
       user: (session.user as any).id,
     });
 
