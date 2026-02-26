@@ -61,7 +61,8 @@ export default function EventDetailPage() {
           fill
           src={event?.data?.image || "/placeholder.svg"}
           alt={event?.data?.title || "Event Image"}
-          className="w-full h-full object-cover rounded-xl"
+          className="object-cover transition-opacity duration-300"
+          onLoadingComplete={(img) => img.classList.remove("opacity-0")}
         />
       </div>
 
@@ -82,7 +83,6 @@ export default function EventDetailPage() {
               </div>
 
               <div className="space-y-6">
-                {/* Event Information */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-blue-100 rounded-lg">

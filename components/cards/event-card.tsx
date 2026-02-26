@@ -21,7 +21,6 @@ const EventCard = memo(function EventCard({ event }: { event: any }) {
     }).format(new Date(dateString));
   };
 
-  // FIX: Handle both 'date' (older records) and 'dateRange' (newer records)
   let dateDisplay = "TBA";
   if (event.dateRange?.from) {
     dateDisplay = `${formatDate(event.dateRange.from)} - ${formatDate(event.dateRange.to)}`;

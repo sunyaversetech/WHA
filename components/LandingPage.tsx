@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, Sparkles, Building, Tag, Users, Star } from "lucide-react";
+import {
+  Calendar,
+  Sparkles,
+  Building,
+  Tag,
+  Users,
+  Star,
+  CalendarRange,
+} from "lucide-react";
 import EventCard from "@/components/cards/event-card";
 import DealCard from "@/components/cards/deal-card";
 import BusinessCard from "@/components/cards/business-card";
@@ -24,12 +32,16 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "./ui/carousel";
+import { useGetLandingPageData } from "@/services/landing.service";
 
 export default function LandingPage() {
   const allEvents = getEvents();
   const allDeals = getDeals();
   const allBusinesses = getBusinesses();
 
+  const { data } = useGetLandingPageData();
+
+  console.log("data", data);
   const events = useFilteredEvents(allEvents);
   const deals = useFilteredDeals(allDeals);
   const businesses = useFilteredBusinesses(allBusinesses);
@@ -39,9 +51,9 @@ export default function LandingPage() {
       <div className="container-modern !pr-0  pt-1 md:pt-6">
         <Carousel className="w-full ">
           <CarouselContent>
-            {featuredItems.map((item) => (
-              <CarouselItem key={item.id} className="basis-1/2 lg:basis-1/2">
-                <FeaturedCard key={item.id} item={item} />
+            {data?.data.business.map((item: any) => (
+              <CarouselItem key={item._id} className="basis-1/2 lg:basis-1/2">
+                <FeaturedCard key={item._id} item={item} />
               </CarouselItem>
             ))}
           </CarouselContent>
@@ -183,7 +195,7 @@ export default function LandingPage() {
         </div>
 
         <div className="container-modern pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
-          <CardSlider
+          {/* <CardSlider
             title="Upcoming Events"
             icon={<Calendar className="h-5 w-5 text-primary" />}
             viewAllHref="/events">
@@ -194,7 +206,30 @@ export default function LandingPage() {
                 .slice(0, 6)
                 .map((event: any) => <EventCard key={event.id} event={event} />)
             )}
-          </CardSlider>
+          </CardSlider> */}
+          <h1 className="mb-4 flex items-center gap-2">
+            <CalendarRange /> Upcoming Events
+          </h1>
+
+          {data?.data.upcomingevents.length < 1 ? (
+            <div className="w-full items-center text-center text-2xl font-semibold">
+              No Upcoming Events Right Now
+            </div>
+          ) : (
+            <Carousel className="w-full ">
+              <CarouselContent>
+                {data?.data.upcomingevents.map((item: any) => (
+                  <CarouselItem
+                    key={item._id}
+                    className="basis-1/2 lg:basis-1/2">
+                    <EventCard key={item._id} event={item} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          )}
         </div>
 
         <div className="container-modern pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
