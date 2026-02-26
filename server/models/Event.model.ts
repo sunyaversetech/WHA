@@ -8,9 +8,13 @@ const EventSchema = new Schema({
     to: { type: Date },
   },
   user: { type: Schema.Types.ObjectId, ref: "User" },
+  email: { type: String },
+  phone_number: { type: String },
+  website_link: { type: String },
   location: { type: String },
   venue: { type: String },
   category: { type: String },
+  category_name: { type: String },
   image: { type: String },
   latitude: { type: Number },
   longitude: { type: Number },
@@ -19,6 +23,7 @@ const EventSchema = new Schema({
   startTime: { type: String },
   endTime: { type: String },
   community: { type: String },
+  community_name: { type: String },
 });
 
 export const Event = models.Event || model("Event", EventSchema);

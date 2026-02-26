@@ -2,15 +2,7 @@ import { type Metadata } from "next";
 
 import { Urbanist } from "next/font/google";
 import "../globals.css";
-import SessionWrapper from "@/components/Auth/SessionWrapper";
-import ReactQueryContext from "@/lib/ReactQueryContext";
-import Navbar from "@/components/Navabr";
-import { CityFilterProvider } from "@/contexts/city-filter-context";
-import { FavoritesProvider } from "@/contexts/favorites-context";
-import { RedeemProvider } from "@/contexts/redeem-context";
-import { Toaster } from "sonner";
 import Sidebar from "@/components/Sidebar";
-import DashboardLayout from "@/components/DashboardLayout";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -31,7 +23,8 @@ export default function RootLayout({
 }>) {
   return (
     <div lang="en" className="flex w-full">
-      <DashboardLayout>{children}</DashboardLayout>
+      <Sidebar />
+      <div className="flex-1 ml-5 mt-2">{children}</div>
     </div>
   );
 }

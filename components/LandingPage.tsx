@@ -1,19 +1,22 @@
 "use client";
-
 import Link from "next/link";
-import { Calendar, Sparkles, Building, Tag, Users, Star } from "lucide-react";
+import {
+  Calendar,
+  Sparkles,
+  Building,
+  Tag,
+  Users,
+  CalendarRange,
+} from "lucide-react";
 import EventCard from "@/components/cards/event-card";
 import DealCard from "@/components/cards/deal-card";
 import BusinessCard from "@/components/cards/business-card";
 import PlaceholderCard from "@/components/cards/placeholder-card";
-import { getEvents } from "@/lib/data/events";
 import { getDeals } from "@/lib/data/deals";
 import { getBusinesses } from "@/lib/data/businesses";
 import CardSlider from "@/components/ui/card-slider";
 import FeaturedCard from "@/components/cards/featured-card";
-import { featuredItems } from "@/lib/data/featured";
 import {
-  useFilteredEvents,
   useFilteredDeals,
   useFilteredBusinesses,
 } from "@/hooks/use-filtered-data";
@@ -24,13 +27,15 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "./ui/carousel";
+import { useGetLandingPageData } from "@/services/landing.service";
 
 export default function LandingPage() {
-  const allEvents = getEvents();
   const allDeals = getDeals();
   const allBusinesses = getBusinesses();
 
-  const events = useFilteredEvents(allEvents);
+  const { data } = useGetLandingPageData();
+
+  console.log("data", data);
   const deals = useFilteredDeals(allDeals);
   const businesses = useFilteredBusinesses(allBusinesses);
 
@@ -48,9 +53,9 @@ export default function LandingPage() {
         <h1>Top Businesses in Canberra</h1>
         <Carousel className="w-full ">
           <CarouselContent>
-            {featuredItems.map((item) => (
-              <CarouselItem key={item.id} className="basis-1/2 lg:basis-1/2">
-                <FeaturedCard key={item.id} item={item} />
+            {data?.data.business.map((item: any) => (
+              <CarouselItem key={item._id} className="basis-1/2 lg:basis-1/2">
+                <FeaturedCard key={item._id} item={item} />
               </CarouselItem>
             ))}
           </CarouselContent>
@@ -69,7 +74,7 @@ export default function LandingPage() {
           <div className="flex flex-wrap justify-between gap-2 mx-auto  md:max-w-full rounded-lg ">
             {[
               {
-                count: events.length,
+                count: data?.data?.events?.length ?? 0,
                 label: "Events",
                 color: "bg-primary/10 text-primary",
                 hover: "hover:bg-primary/20",
@@ -77,7 +82,7 @@ export default function LandingPage() {
                 icon: Calendar,
               },
               {
-                count: deals.length,
+                count: data?.data?.deals?.length,
                 label: "Deals",
                 color: "bg-secondary/10 text-secondary",
                 hover: "hover:bg-secondary/20",
@@ -85,7 +90,7 @@ export default function LandingPage() {
                 icon: Tag,
               },
               {
-                count: businesses.length,
+                count: data?.data?.business?.length,
                 label: "Businesses",
                 color: "bg-neutral/10 text-neutral",
                 hover: "hover:bg-neutral/20",
@@ -116,7 +121,7 @@ export default function LandingPage() {
         </div>
 
         <div className="container-modern pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
-          <CardSlider
+          {/* <CardSlider
             title="Upcoming Events"
             icon={<Calendar className="h-5 w-5 text-primary" />}
             viewAllHref="/events"
@@ -128,7 +133,30 @@ export default function LandingPage() {
                 .slice(0, 6)
                 .map((event: any) => <EventCard key={event.id} event={event} />)
             )}
-          </CardSlider>
+          </CardSlider> */}
+          <h1 className="mb-4 flex items-center gap-2">
+            <CalendarRange /> Upcoming Events
+          </h1>
+
+          {data?.data.upcomingevents.length < 1 ? (
+            <div className="w-full items-center text-center text-2xl font-semibold">
+              No Upcoming Events Right Now
+            </div>
+          ) : (
+            <Carousel className="w-full ">
+              <CarouselContent>
+                {data?.data.upcomingevents.map((item: any) => (
+                  <CarouselItem
+                    key={item._id}
+                    className="basis-1/2 lg:basis-1/2">
+                    <EventCard key={item._id} event={item} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          )}
         </div>
 
         <div className="container-modern pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
@@ -256,7 +284,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Notice: Platform in Development */}
       <div className="container-modern py-4 md:py-6">
         <div className="card p-3 md:p-4 lg:p-6">
           <div className="flex items-start space-x-3 md:space-x-4">

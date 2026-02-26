@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
     const community = formData.get("community") as string;
     const category = formData.get("category") as string;
     const location = formData.get("location") as string;
+    const email = formData.get("email") as string;
+    const phone_number = formData.get("phone_number") as string;
+    const website_link = formData.get("website_link") as string;
 
     const price_category = formData.get("price_category") as string;
     const ticket_link = formData.get("ticket_link") as string;
@@ -53,6 +56,9 @@ export async function POST(req: NextRequest) {
       title,
       description,
       venue,
+      email,
+      phone_number,
+      website_link,
       city,
       community,
       category,
@@ -74,7 +80,6 @@ export async function POST(req: NextRequest) {
       latitude,
       longitude,
 
-      // Tracking owner
       user: (session.user as any).id,
     });
 

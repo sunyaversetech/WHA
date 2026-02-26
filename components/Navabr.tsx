@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Settings, LogOut, MapPin } from "lucide-react";
-import { Button } from "./ui/button";
 import { usePathname } from "next/navigation";
 
 export default function Navbar() {
@@ -32,7 +31,7 @@ export default function Navbar() {
         </div>
       </Link>
 
-      {session && pathname == "/" ? (
+      {session && !pathname.startsWith("/dashboard") ? (
         <div className="hidden md:flex items-center border rounded-full px-6 py-2 gap-8 text-slate-600 font-medium shadow-sm">
           {" "}
           <Link href="/events" className="hover:text-red-600 transition-colors">

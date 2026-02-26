@@ -43,6 +43,8 @@ export const authOptions: NextAuthOptions = {
           business_category: user.business_category,
           business_name: user.business_name,
           image: user.image,
+          city_name: user.city_name,
+          community_name: user.community_name,
         };
       },
     }),
@@ -80,6 +82,8 @@ export const authOptions: NextAuthOptions = {
         token.category = (user as any).category;
         token.business_name = (user as any).business_name;
         token.image = (user as any).image;
+        token.city_name = (user as any).city_name;
+        token.community_name = (user as any).community_name;
       }
 
       if (trigger === "update" && session) {
@@ -94,6 +98,8 @@ export const authOptions: NextAuthOptions = {
           token.category = (dbUser as any).category;
           token.business_name = (dbUser as any).business_name;
           token.image = (dbUser as any).image;
+          token.city_name = (dbUser as any).city_name;
+          token.community_name = (dbUser as any).community_name;
         }
       }
       return token;
@@ -105,6 +111,8 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).category = token.category;
         (session.user as any).business_name = token.business_name;
         (session.user as any).image = token.image;
+        (session.user as any).city_name = token.city_name;
+        (session.user as any).community_name = token.community_name;
       }
       return session;
     },

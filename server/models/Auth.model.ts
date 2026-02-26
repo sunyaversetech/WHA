@@ -13,12 +13,12 @@ const UserSchema = new Schema(
       lowercase: true,
     },
     city: { type: String },
+    city_name: { type: String },
     location: { type: String },
     community: { type: String },
+    community_name: { type: String },
     image: { type: String },
-    privacyPolicyAccepted: { type: Boolean, default: false },
-    termsOfServiceAccepted: { type: Boolean, default: false },
-    termsOfBusinessAccepted: { type: Boolean, default: false },
+    accpetalltermsandcondition: { type: Boolean, default: false },
     password: {
       type: String,
       required: function () {

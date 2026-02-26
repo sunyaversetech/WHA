@@ -20,6 +20,7 @@ import { EventForm } from "./EventsForm";
 import { useGetEvent } from "@/services/event.service";
 import Image from "next/image";
 import { useState } from "react";
+import Link from "next/link";
 
 type EventRecord = {
   id: string;
@@ -42,19 +43,11 @@ export default function EventsBackend() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Events Dashboard</h1>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add Event
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Event</DialogTitle>
-            </DialogHeader>
-            <EventForm setOpen={setOpen} />
-          </DialogContent>
-        </Dialog>
+        <Link
+          href="/dashboard/events/add-event"
+          className="ml-auto flex bg-red-500 text-white items-center p-2 rounded-sm hover:bg-red-600">
+          <PlusCircle className="mr-2 h-4 w-4" /> Add Event
+        </Link>
       </div>
 
       <div className="border rounded-lg">
