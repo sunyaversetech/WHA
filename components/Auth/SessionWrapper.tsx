@@ -16,6 +16,10 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
       router.push("/auth");
     }
 
+    if (status === "authenticated" && pathname.startsWith("/auth")) {
+      router.push("/dashboard");
+    }
+
     if (
       status === "authenticated" &&
       userCategory === "none" &&

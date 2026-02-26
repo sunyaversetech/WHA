@@ -41,13 +41,18 @@ export const eventSchema = z.object({
     from: z.date(),
     to: z.date(),
   }),
+  email: z.email().min(1, "Email is required"),
+  phone_number: z.number().min(1, "Phone number is required"),
+  website_link: z.string().optional(),
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   category: z.string().min(1, "Category is required"),
+  category_name: z.string().optional(),
   price_category: z.enum(["free", "paid"]),
   ticket_link: z.string().optional(),
   ticket_price: z.string().optional(),
   community: z.string().min(1, "Community is required"),
+  community_name: z.string().optional(),
   city: z.string().min(2, "City is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   location: z.string().min(2, "Location is required"),
@@ -102,100 +107,144 @@ export function EventForm({ setOpen }: { setOpen: (open: boolean) => void }) {
   };
   return (
     <Form {...form}>
+      <h1 className="text-2xl font-bold mb-4 ">Add New Event</h1>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Event Name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 space-y-4">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="Event Name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* 2. Image */}
-        <FormField
-          control={form.control}
-          name="image"
-          render={({ field: { value, onChange, ...fieldProps } }) => (
-            <FormItem>
-              <FormLabel>Event Image</FormLabel>
-              <FormControl>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => onChange(e.target.files?.[0])}
-                  {...fieldProps}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* 3. Venue */}
-        <FormField
-          control={form.control}
-          name="venue"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Venue</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Grand Ballroom" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* 4. Date Range */}
-        <FormField
-          control={form.control}
-          name="dateRange"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>From and to Date</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start border rounded-lg">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {field.value?.from ? (
-                      field.value.to ? (
-                        `${format(field.value.from, "PP")} - ${format(field.value.to, "PP")}`
-                      ) : (
-                        format(field.value.from, "PP")
-                      )
-                    ) : (
-                      <span>Pick Dates</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="range"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    numberOfMonths={2}
+          {/* 2. Image */}
+          <FormField
+            control={form.control}
+            name="image"
+            render={({ field: { value, onChange, ...fieldProps } }) => (
+              <FormItem>
+                <FormLabel>Event Image</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => onChange(e.target.files?.[0])}
+                    {...fieldProps}
                   />
-                </PopoverContent>
-              </Popover>
-            </FormItem>
-          )}
-        />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* 5 & 6. Time From/To */}
-        <div className="grid grid-cols-2 gap-4">
+          {/* 3. Venue */}
+          <FormField
+            control={form.control}
+            name="venue"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Venue</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Grand Ballroom" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. hello@gmail.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="phone_number"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g. +61 234 567 890"
+                    {...field}
+                    onChange={(e) => Number(e.target.value)}
+                    type="number"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="website_link"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Website Link</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* 4. Date Range */}
+          <FormField
+            control={form.control}
+            name="dateRange"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>From and to Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border rounded-lg">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {field.value?.from ? (
+                        field.value.to ? (
+                          `${format(field.value.from, "PP")} - ${format(field.value.to, "PP")}`
+                        ) : (
+                          format(field.value.from, "PP")
+                        )
+                      ) : (
+                        <span>Pick Dates</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="range"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      numberOfMonths={2}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="startTime"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="mt-1 gap-1 flex flex-col">
                 <FormLabel>Time From</FormLabel>
                 <FormControl>
                   <Input type="time" className="rounded-lg" {...field} />
@@ -207,7 +256,7 @@ export function EventForm({ setOpen }: { setOpen: (open: boolean) => void }) {
             control={form.control}
             name="endTime"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="mt-1 gap-1 flex flex-col">
                 <FormLabel>Time To</FormLabel>
                 <FormControl>
                   <Input type="time" className="rounded-lg" {...field} />
@@ -228,7 +277,7 @@ export function EventForm({ setOpen }: { setOpen: (open: boolean) => void }) {
                   type="single"
                   value={field.value}
                   onValueChange={(val) => val && field.onChange(val)}
-                  className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                  className="grid grid-cols-3 md:grid-cols-10 gap-2">
                   {[
                     "Community",
                     "Festival",
@@ -248,6 +297,21 @@ export function EventForm({ setOpen }: { setOpen: (open: boolean) => void }) {
             </FormItem>
           )}
         />
+
+        {form.watch("category") === "Others" && (
+          <FormField
+            control={form.control}
+            name="category_name"
+            render={({ field }) => (
+              <FormItem className="mt-1 gap-1 flex flex-col">
+                <FormLabel>Category Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}
@@ -311,7 +375,7 @@ export function EventForm({ setOpen }: { setOpen: (open: boolean) => void }) {
                   type="single"
                   value={field.value}
                   onValueChange={(val) => val && field.onChange(val)}
-                  className="grid grid-cols-3 gap-2">
+                  className="grid grid-cols-3 md:grid-cols-10 gap-2">
                   {[
                     "Australian",
                     "Nepali",
@@ -344,7 +408,7 @@ export function EventForm({ setOpen }: { setOpen: (open: boolean) => void }) {
                   type="single"
                   value={field.value}
                   onValueChange={(val) => val && field.onChange(val)}
-                  className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                  className="grid grid-cols-3 md:grid-cols-10 gap-2">
                   {[
                     "Sydney",
                     "Canberra",

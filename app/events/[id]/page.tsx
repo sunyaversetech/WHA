@@ -1,29 +1,38 @@
 "use client";
-import { getEventById } from "@/lib/data/events";
 import {
   Calendar,
   MapPin,
   Share2,
   Mail,
-  Phone,
   Ticket,
   Sparkles,
   ChevronLeft,
 } from "lucide-react";
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import FavoriteButton from "@/components/ui/favorite-button";
 import { useGetSingleEvent } from "@/services/event.service";
 import Image from "next/image";
 import { differenceInDays, format } from "date-fns";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import LoadingPage from "@/components/Loading";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 export default function EventDetailPage() {
   const param = useParams();
   const awaitedParams = param as { id: string };
-  const { data: event } = useGetSingleEvent(awaitedParams.id);
+  const { data: event, isLoading } = useGetSingleEvent(awaitedParams.id);
+  const DefaultIcon = L.icon({
+    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+  });
 
-  console.log("Fetched Event Data:", awaitedParams);
-  console.log("Fetched Event Data:", event);
+  if (isLoading) {
+    <LoadingPage />;
+  }
 
   return (
     <div className="container-modern min-h-screen bg-gradient-modern relative">
@@ -140,6 +149,32 @@ export default function EventDetailPage() {
                 </div>
               </div>
             </div>
+            {event?.data?.latitude && event?.data?.longitude && (
+              <div
+                style={{
+                  height: "400px",
+                  width: "100%",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                }}>
+                <MapContainer
+                  center={[event.data.latitude, event.data.longitude]}
+                  zoom={13}
+                  scrollWheelZoom={false}
+                  style={{ height: "100%", width: "100%" }}>
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker
+                    position={[event.data.latitude, event.data.longitude]}
+                    icon={DefaultIcon}>
+                    <Popup>{event.data.title}</Popup>
+                  </Marker>
+                  ;
+                </MapContainer>
+              </div>
+            )}
           </div>
 
           <div className="space-y-6">

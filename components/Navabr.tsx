@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Settings, LogOut, MapPin } from "lucide-react";
-import { Button } from "./ui/button";
 import { usePathname } from "next/navigation";
 
 export default function Navbar() {
@@ -21,7 +20,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`${pathname === "/" ? "container-modern" : ""} flex items-center justify-between px-6 py-3 border-b bg-white `}>
+      className={`${!pathname.startsWith("/dashboard") ? "container-modern" : ""} flex  items-center justify-between px-6 py-3 border-b bg-white `}>
       <Link href="/" className="flex items-center">
         <div className="bg-red-600 p-2 rounded-md">
           <span className="text-white font-bold text-xl">WH</span>
@@ -31,7 +30,7 @@ export default function Navbar() {
         </div>
       </Link>
 
-      {session && pathname == "/" ? (
+      {session && !pathname.startsWith("/dashboard") ? (
         <div className="hidden md:flex items-center border rounded-full px-6 py-2 gap-8 text-slate-600 font-medium shadow-sm">
           {" "}
           <Link href="/events" className="hover:text-red-600 transition-colors">

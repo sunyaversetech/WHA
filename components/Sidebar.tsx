@@ -17,8 +17,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 export type NavItem = {
-  title: string;
   icon: LucideIcon;
+  name: string;
   link?: string;
   hasDropdown: boolean;
   children?: { title: string; link: string; active?: boolean }[];
@@ -39,28 +39,28 @@ const Sidebar = () => {
       groupLabel: "General",
       items: [
         {
-          title: "Dashboard",
+          name: "dashboard",
           icon: LayoutDashboard,
           link: "/dashboard",
           hasDropdown: false,
           active: pathname === "/dashboard",
         },
         {
-          title: "Bookings",
+          name: "booking",
           icon: Album,
           link: "/dashboard/bookings",
           hasDropdown: false,
           active: pathname === "/dashboard/bookings",
         },
         {
-          title: "Deals",
+          name: "deals",
           icon: HeartHandshake,
           link: "/dashboard/deals",
           hasDropdown: false,
           active: pathname.startsWith("/dashboard/deals"),
         },
         {
-          title: "Events",
+          name: "events",
           icon: Calendar1,
           link: "/dashboard/events",
           hasDropdown: false,
@@ -72,7 +72,7 @@ const Sidebar = () => {
       groupLabel: "Inventory",
       items: [
         {
-          title: "Inventory",
+          name: "inventory",
           icon: CirclePile,
           link: "/dashboard/inventory",
           hasDropdown: false,
@@ -84,7 +84,7 @@ const Sidebar = () => {
       groupLabel: "Profile",
       items: [
         {
-          title: "Profile",
+          name: "profile",
           icon: User,
           link: "/dashboard/profile",
           hasDropdown: false,
@@ -94,79 +94,24 @@ const Sidebar = () => {
     },
   ];
 
-  const toggleDropdown = (title: string) => {
-    setOpenDropdowns((prev) =>
-      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title],
-    );
-  };
-  const { data: session, status } = useSession();
-
   return (
-    <div className="w-64 h-screen bg-white border-r overflow-y-auto flex flex-col p-4 font-sans text-sm text-slate-600">
-      <h1 className="text-lg xl:text-2xl md:text-xl mb-10">
-        {session?.user.business_name ?? session?.user.name}
-      </h1>
+    <div className="w-20 sm:w-17 min-h-screen bg-black text-white border-r overflow-y-auto flex flex-col p-4 font-sans text-sm overflow-hidden ">
       {menuData.map((group, idx) => (
-        <div key={idx} className="mb-6">
-          <p className="text-[11px] font-bold text-slate-400 mb-4 tracking-wider uppercase">
-            {group.groupLabel}
-          </p>
-
-          <div className="space-y-1">
+        <div key={idx} className="">
+          <div className="space-y-1 ">
             {group.items.map((item) => {
-              const isOpen = openDropdowns.includes(item.title);
               return (
-                <div key={item.title}>
+                <div key={item.link}>
                   <div
-                    className={`relative group flex items-center rounded-lg transition-colors ${item.active ? "bg-slate-100" : "hover:bg-slate-100"}`}>
+                    className={`relative group  flex items-center rounded-lg mb-2 transition-colors ${item.active ? "bg-slate-100 text-black" : "hover:bg-slate-100 hover:text-black"}`}>
                     <Link
+                      title={item.name}
+                      aria-label={item.name}
                       href={item.link || "#"}
                       className="flex-1 flex items-center gap-3 p-2 pr-10">
                       <item.icon size={18} strokeWidth={1.5} />
-                      <span className="font-medium">{item.title}</span>
-
-                      {item.title === "Dashboard" && (
-                        <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-md font-bold">
-                          Hot
-                        </span>
-                      )}
                     </Link>
-
-                    {item.hasDropdown && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleDropdown(item.title);
-                        }}
-                        className="absolute right-2 p-1 hover:bg-slate-200 rounded-md transition-colors">
-                        <ChevronDown
-                          size={16}
-                          className={`transition-transform duration-200 ${
-                            isOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-                    )}
                   </div>
-
-                  {/* Dropdown Children */}
-                  {item.hasDropdown && isOpen && (
-                    <div className="ml-9 mt-1 space-y-1">
-                      {item.children?.map((child) => (
-                        <Link
-                          key={child.title}
-                          href={child.link}
-                          className={`block p-2 border-l-2 ${
-                            child.active
-                              ? "border-l-orange-500 text-orange-500"
-                              : "text-slate-500"
-                          } hover:text-blue-600 transition-colors`}>
-                          {child.title}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
                 </div>
               );
             })}
