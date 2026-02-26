@@ -1,31 +1,27 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-export interface IDeal extends Document {
+export interface IDeal {
   title: string;
-  image: string;
-  expiryDate: Date;
+  valid_till: Date;
+  deals_for: string;
+  description: string;
   user: mongoose.Types.ObjectId;
-  business_name: string;
+  terms_for_the_deal: string;
+  deal_code: string;
 }
 
 const DealSchema = new Schema<IDeal>(
   {
     title: { type: String, required: true },
-    image: { type: String, required: true },
-    business_name: { type: String, required: true },
-    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    expiryDate: {
+    valid_till: {
       type: Date,
       required: true,
-      validate: {
-        validator: function (value: Date) {
-          const threeDaysFromNow = new Date();
-          threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-          return value <= threeDaysFromNow;
-        },
-        message: "Expiry date cannot be more than 3 days from today.",
-      },
     },
+    user: { type: Schema.Types.ObjectId, ref: "User" },
+    deals_for: { type: String, required: true },
+    description: { type: String, required: true },
+    terms_for_the_deal: { type: String, required: true },
+    deal_code: { type: String, required: true },
   },
   { timestamps: true },
 );

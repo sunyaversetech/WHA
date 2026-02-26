@@ -36,13 +36,10 @@ export async function PATCH(req: NextRequest, { params }: Props) {
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: Props) {
+export async function POST(req: NextRequest, { params }: Props) {
   try {
     await connectToDb();
     const { dealId } = await params;
-
-    const deal = await Deal.findById(dealId);
-    if (deal?.image) await deleteFromS3(deal.image);
 
     await Deal.findByIdAndDelete(dealId);
     return NextResponse.json({ message: "Deleted" });

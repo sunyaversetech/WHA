@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useState } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,32 +8,18 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Plus, Home, LayoutDashboard } from "lucide-react";
 import { DealCard } from "./DealCard";
-import { DealForm } from "./DealForm";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import Link from "next/link";
+import { useGetDeals } from "@/services/deal.service";
 
 export default function DealsPage() {
   const queryClient = useQueryClient();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedDeal, setSelectedDeal] = useState<any>(null);
 
-  // 1. Fetch Deals
-  const { data: deals, isLoading } = useQuery({
-    queryKey: ["deals"],
-    queryFn: () => fetch("/api/deals").then((res) => res.json()),
-  });
+  const { data, isLoading } = useGetDeals();
 
-  // 2. Mutations
   const createMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       const res = await fetch("/api/deals", { method: "POST", body: formData });
@@ -44,9 +29,10 @@ export default function DealsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
       toast.success("Deal created successfully");
-      setIsDialogOpen(false);
     },
   });
+
+  console.log(data);
 
   const handleFormSubmit = (values: any) => {
     const formData = new FormData();
@@ -82,28 +68,11 @@ export default function DealsPage() {
           </BreadcrumbList>
         </Breadcrumb>
 
-        {/* Add Deal Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              onClick={() => setSelectedDeal(null)}
-              className="bg-orange-600 hover:bg-orange-700 rounded-full px-6">
-              <Plus className="mr-2 h-4 w-4" /> Create Deal
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>
-                {selectedDeal ? "Edit Deal" : "Add New Deal"}
-              </DialogTitle>
-            </DialogHeader>
-            <DealForm
-              initialData={selectedDeal}
-              onSubmit={handleFormSubmit}
-              isLoading={createMutation.isPending}
-            />
-          </DialogContent>
-        </Dialog>
+        <Link
+          href="/dashboard/deals/new"
+          className="bg-orange-600 flex text-white items-center p-2 hover:bg-orange-700 rounded-full px-6">
+          <Plus className="mr-2 h-4 w-4" /> Create Deal
+        </Link>
       </div>
 
       <hr className="border-slate-200" />
@@ -120,20 +89,16 @@ export default function DealsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {deals?.map((deal: any) => (
+          {data?.data?.map((deal: any) => (
             <DealCard
               key={deal._id}
               deal={deal}
-              onEdit={(d: any) => {
-                setSelectedDeal(d);
-                setIsDialogOpen(true);
-              }}
               onDelete={(id: string) => {
                 toast.info(`Deleting deal ${id}...`);
               }}
             />
           ))}
-          {deals?.length === 0 && (
+          {data?.data?.length === 0 && (
             <div className="col-span-full text-center py-20 text-slate-500">
               No deals found. Click Create Deal to get started.
             </div>

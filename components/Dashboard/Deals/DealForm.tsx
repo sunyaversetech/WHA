@@ -1,9 +1,12 @@
 "use client";
-
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -13,29 +16,62 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
-const dealSchema = z.object({
-  title: z.string().min(2, "Title is required"),
-  expiryDate: z.date().refine((date) => {
-    const threeDaysFromNow = new Date();
-    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-    return date <= threeDaysFromNow;
-  }, "Expiry cannot be more than 3 days away"),
-  image: z.any().optional(),
+import { z } from "zod";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useCreateDeals } from "@/services/deal.service";
+import { toast } from "sonner";
+
+export const dealSchema = z.object({
+  title: z.string().min(2, "Title is too short"),
+  valid_till: z.date().min(1, "Date must be in the future"),
+  deals_for: z.string().min(1, "Target audience is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  terms_for_the_deal: z.string().min(1, "Terms are required"),
+  deal_code: z.string().toUpperCase().min(3, "Code must be 3+ characters"),
 });
 
-export function DealForm({ initialData, onSubmit, isLoading }: any) {
-  const form = useForm<z.infer<typeof dealSchema>>({
+export type DealFormValues = z.infer<typeof dealSchema>;
+
+export default function DealForm() {
+  const form = useForm<DealFormValues>({
     resolver: zodResolver(dealSchema),
-    defaultValues: initialData || {
+    defaultValues: {
       title: "",
-      expiryDate: new Date(),
+      deals_for: "",
+      description: "",
+      terms_for_the_deal: "",
+      deal_code: "",
     },
   });
 
+  const { mutate } = useCreateDeals();
+  function onSubmit(values: DealFormValues) {
+    const formData = new FormData();
+    Object.entries(values).forEach(([key, value]) => {
+      formData.append(key, value as any);
+    });
+    mutate(formData as any, {
+      onSuccess: () => {
+        form.reset();
+        toast("Deal created successfully");
+      },
+      onError: (error: any) => {
+        toast.error(error.response?.data?.message || "Failed to create deal");
+      },
+    });
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <h1 className="text-2xl my-4">Create New Deal</h1>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mx-4">
         <FormField
           control={form.control}
           name="title"
@@ -43,7 +79,107 @@ export function DealForm({ initialData, onSubmit, isLoading }: any) {
             <FormItem>
               <FormLabel>Deal Title</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. 50% Off Sunset Suite" {...field} />
+                <Input placeholder="Summer Flash Sale" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="deal_code"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Promo Code</FormLabel>
+                <FormControl>
+                  <Input placeholder="SAVE50" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="valid_till"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel className="mb-1">Valid Until</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground",
+                        )}>
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date < new Date(new Date().setHours(0, 0, 0, 0))
+                      }
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="deals_for"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Target Audience</FormLabel>
+              <FormControl>
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
+                  onValueChange={(value) => {
+                    if (value) field.onChange(value);
+                  }}
+                  value={field.value}
+                  className="flex flex-wrap justify-start gap-2">
+                  <ToggleGroupItem
+                    value={"all"}
+                    className={cn(
+                      "!rounded-md !border border-input h-10 px-4",
+                      "min-w-[100px] transition-all",
+                      "hover:bg-accent hover:text-accent-foreground",
+                      "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:opacity-100",
+                      "first:rounded-md last:rounded-md",
+                    )}>
+                    All
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value={"to_wha_user"}
+                    className={cn(
+                      "!rounded-md !border border-input h-10 px-4",
+                      "min-w-[100px] transition-all",
+                      "hover:bg-accent hover:text-accent-foreground",
+                      "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:opacity-100",
+                      "first:rounded-md last:rounded-md",
+                    )}>
+                    To WHA Users
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -52,20 +188,14 @@ export function DealForm({ initialData, onSubmit, isLoading }: any) {
 
         <FormField
           control={form.control}
-          name="expiryDate"
+          name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Expiry Date</FormLabel>
+              <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input
-                  type="date"
+                <Textarea
+                  placeholder="Describe the deal details..."
                   {...field}
-                  value={
-                    field.value instanceof Date
-                      ? field.value.toISOString().split("T")[0]
-                      : field.value
-                  }
-                  onChange={(e) => field.onChange(new Date(e.target.value))}
                 />
               </FormControl>
               <FormMessage />
@@ -73,17 +203,16 @@ export function DealForm({ initialData, onSubmit, isLoading }: any) {
           )}
         />
 
+        {/* Terms */}
         <FormField
           control={form.control}
-          name="image"
-          render={({ field: { value, onChange, ...field } }) => (
+          name="terms_for_the_deal"
+          render={({ field }) => (
             <FormItem>
-              <FormLabel>Deal Image</FormLabel>
+              <FormLabel>Terms & Conditions</FormLabel>
               <FormControl>
-                <Input
-                  type="file"
-                  accept="image/png, image/jpeg, image/webp"
-                  onChange={(e) => onChange(e.target.files?.[0])}
+                <Textarea
+                  placeholder="Usage limits, specific conditions..."
                   {...field}
                 />
               </FormControl>
@@ -94,9 +223,9 @@ export function DealForm({ initialData, onSubmit, isLoading }: any) {
 
         <Button
           type="submit"
-          className="w-full bg-orange-600 hover:bg-orange-700"
-          disabled={isLoading}>
-          {isLoading ? "Processing..." : "Save Deal"}
+          className="w-full"
+          disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Submitting..." : "Create Deal"}
         </Button>
       </form>
     </Form>

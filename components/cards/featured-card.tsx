@@ -77,7 +77,7 @@ const FeaturedCard = memo(function FeaturedCard({ item }: any) {
           width={500}
           height={500}
           src={item.image || "/placeholder.svg"}
-          alt={item.title}
+          alt={"WhatsHappeningAustralia"}
           className="w-full h-full object-cover"
           loading="lazy"
         />

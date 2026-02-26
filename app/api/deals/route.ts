@@ -15,25 +15,34 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
 
     const title = formData.get("title") as string;
-    const expiryDate = formData.get("expiryDate") as string;
-    const file = formData.get("image") as File;
+    const validTill = formData.get("valid_till") as string;
+    const dealsFor = formData.get("deals_for") as string;
+    const description = formData.get("description") as string;
+    const termsForTheDeal = formData.get("terms_for_the_deal") as string;
+    const dealCode = formData.get("deal_code") as string;
 
-    if (!file || !title || !expiryDate) {
+    if (
+      !validTill ||
+      !title ||
+      !dealsFor ||
+      !description ||
+      !termsForTheDeal ||
+      !dealCode
+    ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const uploadResult = await uploadToS3(buffer, file.name, file.type);
-
     const newDeal = await Deal.create({
       title,
-      expiryDate: new Date(expiryDate),
-      image: uploadResult.Location,
+      valid_till: new Date(validTill),
       user: (session.user as any).id,
-      business_name: (session.user as any).business_name,
+      deals_for: dealsFor,
+      description,
+      terms_for_the_deal: termsForTheDeal,
+      deal_code: dealCode,
     });
 
     return NextResponse.json(newDeal, { status: 201 });
@@ -53,7 +62,7 @@ export async function GET() {
     const deals = await Deal.find({ user: (session.user as any).id }).sort({
       createdAt: -1,
     });
-    return NextResponse.json(deals);
+    return NextResponse.json({ message: "", data: deals });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
