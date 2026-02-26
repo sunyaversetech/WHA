@@ -21,7 +21,8 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`${pathname === "/" ? "container-modern" : ""} flex items-center justify-between px-6 py-3 border-b bg-white `}>
+      className={`${pathname === "/" ? "container-modern" : ""} flex items-center justify-between px-6 py-3 border-b bg-white `}
+    >
       <Link href="/" className="flex items-center">
         <div className="bg-red-600 p-2 rounded-md">
           <span className="text-white font-bold text-xl">WH</span>
@@ -42,12 +43,14 @@ export default function Navbar() {
           </Link>
           <Link
             href="/businesses"
-            className="hover:text-red-600 transition-colors">
+            className="hover:text-red-600 transition-colors"
+          >
             Businesses
           </Link>
           <Link
             href="/dashboard"
-            className="hover:text-red-600 transition-colors">
+            className="hover:text-red-600 transition-colors"
+          >
             Dashboard
           </Link>
         </div>
@@ -59,19 +62,21 @@ export default function Navbar() {
         pathname.startsWith("/dashboard") ? (
           <Link
             href="/"
-            className="text-sm font-medium bg-red-600 text-white px-4 py-2 rounded-lg flex gap-1 items-center">
+            className="text-sm font-medium bg-red-600 text-white px-4 py-2 rounded-lg flex gap-1 items-center"
+          >
             <MapPin className="h-4 w-4" />
             <span>Request For Business</span>
           </Link>
         ) : (
           <Link
             href="/"
-            className="text-sm font-medium bg-red-600 text-white px-4 py-2 rounded-lg flex gap-1 items-center">
+            className="text-sm font-medium bg-red-600 text-white px-4 py-2 rounded-lg flex gap-1 items-center"
+          >
             <MapPin className="h-4 w-4" />
             <span>Australia</span>
           </Link>
         )}
-        <div className="flex items-center">
+        <div className="flex items-center hidden md:block">
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger className="outline-none">
@@ -92,21 +97,24 @@ export default function Navbar() {
                 <DropdownMenuItem asChild>
                   <Link
                     href="/dashboard/profile"
-                    className="flex items-center cursor-pointer">
+                    className="flex items-center cursor-pointer"
+                  >
                     <User className="mr-2 h-4 w-4" /> Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
                     href="/settings"
-                    className="flex items-center cursor-pointer">
+                    className="flex items-center cursor-pointer"
+                  >
                     <Settings className="mr-2 h-4 w-4" /> Settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-red-600 cursor-pointer"
-                  onClick={() => signOut({ callbackUrl: "/" })}>
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                >
                   <LogOut className="mr-2 h-4 w-4" /> Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -114,7 +122,8 @@ export default function Navbar() {
           ) : (
             <Link
               href="/auth"
-              className="text-sm font-medium bg-red-600 text-white px-4 py-2 rounded-lg">
+              className="text-sm font-medium bg-red-600 text-white px-4 py-2 rounded-lg"
+            >
               Login
             </Link>
           )}

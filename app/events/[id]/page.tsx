@@ -146,7 +146,7 @@ export default async function EventDetailPage({
                     href={event.ticketUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full btn-primary flex items-center justify-center space-x-2"
+                    className="w-full btn-secondary flex items-center justify-center space-x-2"
                   >
                     <Ticket className="h-4 w-4" />
                     <span>Get Tickets</span>
@@ -157,7 +157,7 @@ export default async function EventDetailPage({
                     <span>Free Entry</span>
                   </div>
                 )}
-                <button className="w-full btn-ghost flex items-center justify-center space-x-2">
+                <button className="w-full btn-secondary flex items-center justify-center space-x-2">
                   <Share2 className="h-4 w-4" />
                   <span>Share Event</span>
                 </button>
@@ -203,35 +203,6 @@ export default async function EventDetailPage({
                     </p>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Event Info */}
-            <div className="card p-4 md:p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Event Info
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Date:</span>
-                  <span className="font-medium">{event.date}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Venue:</span>
-                  <span className="font-medium">{event.venue}</span>
-                </div>
-                {event.category && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Category:</span>
-                    <span className="font-medium">{event.category}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tickets:</span>
-                  <span className="font-medium">
-                    {event.ticketUrl ? "Available" : "Free Entry"}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
