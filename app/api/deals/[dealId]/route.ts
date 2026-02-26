@@ -40,7 +40,6 @@ export async function POST(req: NextRequest, { params }: Props) {
   try {
     await connectToDb();
     const { dealId } = await params;
-
     await Deal.findByIdAndDelete(dealId);
     return NextResponse.json({ message: "Deleted" });
   } catch (error: any) {

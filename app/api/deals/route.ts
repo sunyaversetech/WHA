@@ -58,10 +58,11 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const deals = await Deal.find({ user: (session.user as any).id }).sort({
-      createdAt: -1,
-    });
+    const deals = await Deal.find({ user: (session.user as any).id })
+      .populate("user")
+      .sort({
+        createdAt: -1,
+      });
     return NextResponse.json({ message: "", data: deals });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

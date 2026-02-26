@@ -16,8 +16,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 export function DealCard({ deal, onEdit, onDelete }: any) {
+  const today = new Date();
+  const dealValidTill = new Date(deal.valid_till);
   return (
     <div className="group relative w-full max-w-sm overflow-hidden rounded-3xl border bg-white shadow-sm transition-all hover:shadow-md">
       <div className="absolute right-4 top-4 z-10">
@@ -42,35 +45,29 @@ export function DealCard({ deal, onEdit, onDelete }: any) {
 
       <div className="relative h-64 w-full">
         <Image
-          src={deal.image}
+          src={deal.user.image}
           alt={deal.title}
           fill
           className="object-cover"
           unoptimized
         />
-        <div className="absolute left-4 top-4 rounded-full bg-white/90 px-4 py-1.5 text-sm font-bold shadow-sm">
-          {deal.business_name}
+        <div className="absolute left-4 top-4 rounded-full bg-white/90 px-4 py-1.5 text-sm font-bold shadow-sm capitalize">
+          {deal.deals_for}
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-5">
         <div className="flex items-center justify-between">
           <p className="text-xs text-slate-500 font-medium">
-            Due on:{" "}
+            Valid Till:{" "}
             <span className="text-slate-900 font-bold">
-              {new Date(deal.expiryDate).toLocaleDateString()}
+              {format(new Date(deal.valid_till), "eeee, dd MMMM yyyy")}
             </span>
           </p>
-          <Badge className="bg-emerald-500 hover:bg-emerald-500">Active</Badge>
-        </div>
-
-        <div className="mt-3 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-slate-900">{deal.title}</h3>
-          <div className="flex items-center gap-1 text-slate-900 font-bold">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            4.84
-          </div>
+          <Badge
+            className={`${dealValidTill < today ? "bg-red-500 hover:bg-red-500" : "bg-emerald-500 hover:bg-emerald-500"}`}>
+            {dealValidTill < today ? "Expired" : "Active"}
+          </Badge>
         </div>
 
         <div className="mt-4 flex items-center gap-2 text-slate-500 text-sm">
@@ -80,7 +77,7 @@ export function DealCard({ deal, onEdit, onDelete }: any) {
 
         <div className="mt-2 flex items-center gap-2 text-slate-500 text-sm">
           <MapPin className="h-4 w-4" />
-          <span>123 Main Street, Downtown</span>
+          <span>{deal.user.city ?? deal.user.business_name}</span>
         </div>
 
         <div className="mt-4 flex gap-2">

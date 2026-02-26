@@ -77,7 +77,10 @@ const ProfilePage = ({ userData }: { userData: any }) => {
         <div className="flex flex-col md:flex-row gap-8 items-start">
           <div className="relative group">
             <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-              <AvatarImage src={session?.user?.image ?? ""} />
+              <AvatarImage
+                className="object-cover"
+                src={session?.user?.image ?? ""}
+              />
               <AvatarFallback className="bg-slate-100 text-2xl font-bold">
                 {session?.user?.name?.charAt(0)}
               </AvatarFallback>
