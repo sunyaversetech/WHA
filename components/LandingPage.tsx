@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import {
   Calendar,
@@ -7,21 +6,17 @@ import {
   Building,
   Tag,
   Users,
-  Star,
   CalendarRange,
 } from "lucide-react";
 import EventCard from "@/components/cards/event-card";
 import DealCard from "@/components/cards/deal-card";
 import BusinessCard from "@/components/cards/business-card";
 import PlaceholderCard from "@/components/cards/placeholder-card";
-import { getEvents } from "@/lib/data/events";
 import { getDeals } from "@/lib/data/deals";
 import { getBusinesses } from "@/lib/data/businesses";
 import CardSlider from "@/components/ui/card-slider";
 import FeaturedCard from "@/components/cards/featured-card";
-import { featuredItems } from "@/lib/data/featured";
 import {
-  useFilteredEvents,
   useFilteredDeals,
   useFilteredBusinesses,
 } from "@/hooks/use-filtered-data";
@@ -35,14 +30,12 @@ import {
 import { useGetLandingPageData } from "@/services/landing.service";
 
 export default function LandingPage() {
-  const allEvents = getEvents();
   const allDeals = getDeals();
   const allBusinesses = getBusinesses();
 
   const { data } = useGetLandingPageData();
 
   console.log("data", data);
-  const events = useFilteredEvents(allEvents);
   const deals = useFilteredDeals(allDeals);
   const businesses = useFilteredBusinesses(allBusinesses);
 
@@ -149,7 +142,7 @@ export default function LandingPage() {
           <div className="flex flex-wrap justify-between gap-2 mx-auto  md:max-w-full rounded-lg ">
             {[
               {
-                count: events.length,
+                count: data?.data?.events?.length ?? 0,
                 label: "Events",
                 color: "bg-primary/10 text-primary",
                 hover: "hover:bg-primary/20",
@@ -157,7 +150,7 @@ export default function LandingPage() {
                 icon: Calendar,
               },
               {
-                count: deals.length,
+                count: data?.data?.deals?.length,
                 label: "Deals",
                 color: "bg-secondary/10 text-secondary",
                 hover: "hover:bg-secondary/20",
@@ -165,7 +158,7 @@ export default function LandingPage() {
                 icon: Tag,
               },
               {
-                count: businesses.length,
+                count: data?.data?.business?.length,
                 label: "Businesses",
                 color: "bg-neutral/10 text-neutral",
                 hover: "hover:bg-neutral/20",
@@ -347,7 +340,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Notice: Platform in Development */}
       <div className="container-modern py-4 md:py-6">
         <div className="card p-3 md:p-4 lg:p-6">
           <div className="flex items-start space-x-3 md:space-x-4">

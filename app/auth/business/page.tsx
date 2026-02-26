@@ -92,6 +92,8 @@ export const signupSchema = z
     business_name: z.string().min(2, "Business name is required"),
     business_category: z.string().min(1, "Please select a category"),
     password: z.string().min(8, "Password must be at least 8 characters"),
+    city_name: z.string().optional(),
+    community_name: z.string().optional(),
     city: z.string().min(1, "City is required"),
     accpetalltermsandcondition: z.boolean().refine((val) => val === true, {
       message: "You must accept the Terms of Service",
@@ -111,6 +113,7 @@ export type SingUPFormSchema = z.infer<typeof signupSchema>;
 export default function BusinessSignup() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const { mutate } = useSingup();
 
   const form = useForm<SingUPFormSchema>({
@@ -202,7 +205,7 @@ export default function BusinessSignup() {
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Category</FormLabel>
-                <Popover>
+                <Popover onOpenChange={setOpen} open={open}>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
@@ -238,6 +241,7 @@ export default function BusinessSignup() {
                                   "business_category",
                                   category.value,
                                 );
+                                setOpen(false);
                               }}>
                               <Check
                                 className={cn(
@@ -296,66 +300,72 @@ export default function BusinessSignup() {
             )}
           />
 
+          {form.watch("community") === "others" && (
+            <FormField
+              control={form.control}
+              name="community_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Community Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g chinese" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           <FormField
             control={form.control}
             name="city"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="space-y-3">
                 <FormLabel>City</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        role="combobox"
+                <FormControl>
+                  <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    onValueChange={(value) => {
+                      if (value) field.onChange(value);
+                    }}
+                    value={field.value}
+                    className="flex flex-wrap justify-start gap-2">
+                    {cities.map((item) => (
+                      <ToggleGroupItem
+                        key={item.label}
+                        value={item.value.toLowerCase()}
                         className={cn(
-                          "w-full justify-between font-normal",
-                          !field.value && "text-muted-foreground",
+                          "!rounded-md !border border-input h-10 px-4",
+                          "min-w-[100px] transition-all",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:opacity-100",
+                          "first:rounded-md last:rounded-md capitalize",
                         )}>
-                        {field.value
-                          ? cities.find((city) => city.value === field.value)
-                              ?.label
-                          : "Select a City"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-xl p-0">
-                    <Command>
-                      <CommandInput
-                        className="focus: focus-visible:ring-0 focus-visible:border-0"
-                        placeholder="Search City..."
-                      />
-                      <CommandList>
-                        <CommandEmpty>No city found.</CommandEmpty>
-                        <CommandGroup>
-                          {cities.map((city) => (
-                            <CommandItem
-                              value={city.label}
-                              key={city.value}
-                              onSelect={() => {
-                                form.setValue("city", city.value);
-                              }}>
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  city.value === field.value
-                                    ? "opacity-100"
-                                    : "opacity-0",
-                                )}
-                              />
-                              {city.label}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                        {item.value}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+          {form.watch("city") === "other" && (
+            <FormField
+              control={form.control}
+              name="city_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g Sydney" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <LocationFormField form={form} />
 
@@ -439,7 +449,6 @@ export default function BusinessSignup() {
           />
 
           <div className="space-y-4 max-w-xl">
-            {/* 1. Privacy Policy */}
             <FormField
               control={form.control}
               name="accpetalltermsandcondition"
@@ -457,12 +466,12 @@ export default function BusinessSignup() {
                       <a
                         className="text-red-600 hover:underline"
                         href="/privacy">
-                        Privacy Policy
+                        Privacy Policy,
                       </a>
                       <a
                         className="text-red-600 hover:underline"
                         href="/privacy">
-                        Terms of Service
+                        Terms of Service,
                       </a>
                       <a
                         className="text-red-600 hover:underline"

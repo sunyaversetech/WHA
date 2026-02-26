@@ -14,6 +14,8 @@ export async function POST(req: Request) {
       business_name,
       business_category,
       abn_number,
+      city_name,
+      community_name,
     } = body;
 
     if (!name || !email || !password || !category) {
@@ -44,6 +46,8 @@ export async function POST(req: Request) {
       business_name,
       business_category,
       abn_number,
+      city_name,
+      community_name,
     });
 
     return NextResponse.json(
