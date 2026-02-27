@@ -9,6 +9,7 @@ import {
   Album,
   User,
   CirclePile,
+  HeartPlus,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -89,6 +90,13 @@ const Sidebar = () => {
           link: "/dashboard/profile",
           hasDropdown: false,
           active: pathname.startsWith("/dashboard/profile"),
+        },
+        {
+          name: "Favorites",
+          icon: HeartPlus,
+          link: "/dashboard/favorite",
+          hasDropdown: false,
+          active: pathname.startsWith("/dashboard/favorite"),
         },
       ],
     },
