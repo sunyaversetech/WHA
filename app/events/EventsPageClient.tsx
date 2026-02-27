@@ -30,15 +30,6 @@ export default function EventsPageClient() {
     return filtered || [];
   }, [apiResponse, selectedCity]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
-        <p className="text-sm text-neutral-500">Loading your events...</p>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-red-500">
@@ -63,7 +54,12 @@ export default function EventsPageClient() {
         </div>
         <EventHeader />
 
-        {events.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center">
+            <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
+            <p className="text-sm text-neutral-500">Loading your events...</p>
+          </div>
+        ) : events.length === 0 ? (
           <div className="mx-4 mt-8 p-20 text-center bg-white rounded-3xl border-2 border-dashed border-neutral-200">
             <Calendar className="h-12 w-12 mx-auto text-neutral-300 mb-4" />
             <h3 className="text-lg font-semibold text-secondary">

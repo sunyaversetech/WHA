@@ -3,7 +3,9 @@ import { connectToDb } from "@/lib/db";
 import Favorite from "@/server/models/Favroite.model";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-
+import "@/server/models/Event.model";
+import "@/server/models/Service.schema";
+import "@/server/models/DealSchema.model";
 export async function POST(req: Request) {
   try {
     await connectToDb();

@@ -17,11 +17,3 @@ export const useCreateFavroite = () => {
 export const useGetUserFavroite = () => {
   return useFetcher<ApiResponseType<any>>("favroite", null, "/api/favroite");
 };
-
-export const useGetPopulatedUserFavroite = () => {
-  return useFetcher<ApiResponseType<any>>(
-    "single-user-favroite",
-    null,
-    "/api/favroite/single-user-favorite",
-  );
-};

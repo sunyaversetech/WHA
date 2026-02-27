@@ -6,7 +6,7 @@ import { Heart, Calendar, MapPin, ArrowRight, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useCreateFavroite,
-  useGetPopulatedUserFavroite,
+  useGetUserFavroite,
 } from "@/services/favroite.service";
 import Image from "next/image";
 import { Button } from "./ui/button";
@@ -14,7 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function FavoritesPage() {
-  const { data: favoritesData, isLoading } = useGetPopulatedUserFavroite();
+  const { data: favoritesData, isLoading } = useGetUserFavroite();
 
   const favorites = favoritesData?.data || {
     events: [],

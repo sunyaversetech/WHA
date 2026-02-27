@@ -47,26 +47,22 @@ const EventCard = memo(function EventCard({ event }: { event: any }) {
       { item_id: eventId, item_type: "Event" },
       {
         onSuccess: (msg) => {
-          console.log("msg", msg);
           router.refresh();
           toast.success(msg.message);
           queryClient.invalidateQueries({ queryKey: ["favroite"] });
         },
-        onError: () => {},
+        onError: () => {
+          toast.error("Failed to add to favorites");
+        },
       },
     );
   };
 
   const { data: userFavorites } = useGetUserFavroite();
 
-  console.log("userFavorites event ID", eventId);
-  console.log("userFavorites", userFavorites);
-
   const isEventFavorite = userFavorites?.data?.events?.some(
-    (id: string) => id.toString() === eventId?.toString(),
+    (item: { _id: string }) => item._id.toString() === eventId?.toString(),
   );
-
-  console.log("Is favorited:", isEventFavorite);
 
   return (
     <div
