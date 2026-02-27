@@ -29,8 +29,6 @@ export async function GET(request: NextRequest) {
       query.name = { $regex: safeSearch, $options: "i" };
     }
 
-    console.log("Here is BAcked........................");
-
     const businesses = await User.find(query).sort({
       createdAt: -1,
     });

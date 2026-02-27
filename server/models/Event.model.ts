@@ -3,9 +3,10 @@ import { Schema, models, model } from "mongoose";
 const EventSchema = new Schema({
   title: { type: String },
   description: { type: String },
+  date: { type: Date, index: true },
   dateRange: {
-    from: { type: Date },
-    to: { type: Date },
+    from: { type: Date, index: true },
+    to: { type: Date, index: true },
   },
   user: { type: Schema.Types.ObjectId, ref: "User" },
   email: { type: String },

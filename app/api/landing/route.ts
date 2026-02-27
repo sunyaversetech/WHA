@@ -9,23 +9,20 @@ export async function GET() {
     await connectToDb();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString();
 
     const business = await User.find({ category: "business" }).sort({
       createdAt: -1,
     });
+    const upcomingevents = await Event.find({ date: { $gte: todayISO } })
+      .populate("user")
+      .sort({ "dateRange.from": 1 })
+      .limit(10)
+      .lean();
 
-    const upcomingevents = await Event.find({
-      events: "event",
-      date: { $gte: today },
-    })
-      .sort({ date: 1 })
-      .limit(10);
-
-    const deals = await Deal.find({
-      events: "deal",
-      date: { $gte: today },
-    })
-      .sort({ date: 1 })
+    const deals = await Deal.find({ valid_till: { $gte: todayISO } })
+      .populate("user")
+      .sort({ valid_till: 1 })
       .limit(10);
 
     return NextResponse.json(

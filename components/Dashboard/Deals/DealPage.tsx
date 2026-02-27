@@ -32,8 +32,6 @@ export default function DealsPage() {
     },
   });
 
-  console.log(data);
-
   const handleFormSubmit = (values: any) => {
     const formData = new FormData();
     formData.append("title", values.title);

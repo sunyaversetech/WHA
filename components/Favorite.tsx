@@ -108,13 +108,13 @@ export default function FavoritesPage() {
 
 function FavoriteCard({ item, type }: { item: any; type: string }) {
   const queryClient = useQueryClient();
+  console.log("item", item);
   const { mutate, isPending } = useCreateFavroite();
   const handleAddRemoveFavorite = () => {
     mutate(
       { item_id: item._id, item_type: "Event" },
       {
         onSuccess: (msg) => {
-          console.log("msg", msg);
           toast.success(msg.message);
           queryClient.invalidateQueries({ queryKey: ["single-user-favroite"] });
         },
@@ -128,7 +128,13 @@ function FavoriteCard({ item, type }: { item: any; type: string }) {
         <Image
           width={500}
           height={500}
-          src={item.image || "/api/placeholder/400/225"}
+          src={
+            item.image
+              ? item.image
+              : item.user.image
+                ? item.user.image
+                : "/api/placeholder/400/225"
+          }
           alt={item.title}
           style={{ height: "250px" }}
           className="w-full  object-cover group-hover:scale-105 transition-transform duration-500"

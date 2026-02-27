@@ -10,8 +10,6 @@ export async function GET(request: NextRequest, { params }: Props) {
 
     const { id } = await params;
 
-    console.log("Fetching event with ID:", id);
-
     const event = await Event.findById(id).populate(
       "user",
       "email business_name",

@@ -66,8 +66,6 @@ const FeaturedCard = memo(function FeaturedCard({ item }: any) {
   const typeInfo = getTypeInfo();
   const IconComponent = typeInfo.icon;
 
-  console.log("item", item);
-
   return (
     <div
       className="group relative overflow-hidden rounded-xl cursor-pointer"
