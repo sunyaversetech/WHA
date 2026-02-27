@@ -1,16 +1,42 @@
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+function escapeRegex(text: string) {
+  return text.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+}
+
+export async function GET(request: NextRequest) {
   try {
     await connectToDb();
 
-    const business = await User.find({ category: "business" }).sort({
+    const { searchParams } = new URL(request.url);
+
+    const rawCategory = searchParams.get("category") || "";
+    const rawSearch = searchParams.get("search") || "";
+
+    const category = rawCategory.replace(/\?+$/, "").trim();
+    const search = rawSearch.replace(/\?+$/, "").trim();
+
+    const query: any = { category: "business" };
+
+    if (category && category !== "all") {
+      query.business_category = category;
+    }
+
+    if (search) {
+      const safeSearch = escapeRegex(search);
+      query.name = { $regex: safeSearch, $options: "i" };
+    }
+
+    console.log("Here is BAcked........................");
+
+    const businesses = await User.find(query).sort({
       createdAt: -1,
     });
+
     return NextResponse.json(
-      { data: business, message: "Businesses retrieved successfully" },
+      { data: businesses, message: "Businesses retrieved successfully" },
       { status: 200 },
     );
   } catch (error: any) {

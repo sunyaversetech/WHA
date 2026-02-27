@@ -16,16 +16,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png",
 });
 
-interface BusinessMapProps {
-  businesses: Business[];
-}
-
-export default function BusinessMap({ businesses }: BusinessMapProps) {
+export default function BusinessMap({ businesses }: { businesses: any }) {
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(
     null,
   );
   const center: [number, number] = [-35.2809, 149.13];
-
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
       <div className="relative h-[500px] bg-gray-100">
@@ -37,7 +32,7 @@ export default function BusinessMap({ businesses }: BusinessMapProps) {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-          {businesses.map((business) =>
+          {businesses.map((business: any) =>
             business.latitude && business.longitude ? (
               <Marker
                 key={business.id}
