@@ -7,6 +7,8 @@ import {
   Ticket,
   Sparkles,
   ChevronLeft,
+  ExternalLink,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -18,6 +20,8 @@ import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import LoadingPage from "@/components/Loading";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { toast } from "sonner";
+import { useState } from "react";
 
 export default function EventDetailPage() {
   const param = useParams();
@@ -29,6 +33,28 @@ export default function EventDetailPage() {
     iconSize: [25, 41],
     iconAnchor: [12, 41],
   });
+
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const shareData = {
+      title: "Check out this event!",
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        toast.success("Event Copied!");
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      console.error("Error sharing:", err);
+    }
+  };
 
   if (isLoading) {
     <LoadingPage />;
@@ -130,7 +156,6 @@ export default function EventDetailPage() {
                   )}
                 </div>
 
-                {/* Description */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800 mb-3">
                     About This Event
@@ -156,23 +181,44 @@ export default function EventDetailPage() {
                   width: "100%",
                   borderRadius: "8px",
                   overflow: "hidden",
-                }}
-              >
+                }}>
                 <MapContainer
                   center={[event.data.latitude, event.data.longitude]}
                   zoom={13}
                   scrollWheelZoom={false}
-                  style={{ height: "100%", width: "100%" }}
-                >
+                  style={{ height: "100%", width: "100%" }}>
                   <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
                   <Marker
                     position={[event.data.latitude, event.data.longitude]}
-                    icon={DefaultIcon}
-                  >
-                    <Popup>{event.data.title}</Popup>
+                    icon={DefaultIcon}>
+                    <Popup>
+                      <div>
+                        <h3 className="font-bold text-lg">
+                          {event.data.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-2">
+                          {event.data.user.business_name}
+                        </p>
+                        <div className="flex space-x-2 mt-2">
+                          <Link
+                            href={`/businesses/${event.data.user._id}`}
+                            className="bg-primary !text-base px-3 py-1 rounded text-sm font-medium hover:bg-primary/80">
+                            View Details
+                          </Link>
+                          <a
+                            href={`https://www.google.com/maps?q=${event.data.latitude},${event.data.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-secondary !text-base px-3 py-1 rounded text-sm font-medium hover:bg-secondary/80 flex items-center">
+                            Get Directions
+                            <ExternalLink className="h-3 w-3 ml-1" />
+                          </a>
+                        </div>
+                      </div>
+                    </Popup>
                   </Marker>
                   ;
                 </MapContainer>
@@ -191,8 +237,7 @@ export default function EventDetailPage() {
                     href={event.data?.ticket_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full btn-secondary flex items-center justify-center space-x-2"
-                  >
+                    className="w-full btn-secondary flex items-center justify-center space-x-2">
                     <Ticket className="h-4 w-4" />
                     <span>Get Tickets</span>
                   </Link>
@@ -202,9 +247,20 @@ export default function EventDetailPage() {
                     <span>Free Entry</span>
                   </div>
                 )}
-                <button className="w-full btn-secondary flex items-center justify-center space-x-2">
-                  <Share2 className="h-4 w-4" />
-                  <span>Share Event</span>
+                <button
+                  onClick={handleShare}
+                  className="w-full btn-secondary flex items-center justify-center space-x-2 transition-all active:scale-95">
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 text-green-500" />
+                      <span>Link Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="h-4 w-4" />
+                      <span>Share Event</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -221,8 +277,7 @@ export default function EventDetailPage() {
                     </div>
                     <a
                       href={`mailto:${event?.data?.user.email}`}
-                      className="text-gray-700 hover:text-blue-600 transition-colors"
-                    >
+                      className="text-gray-700 hover:text-blue-600 transition-colors">
                       {event?.data?.user.email}
                     </a>
                   </div>

@@ -13,12 +13,6 @@ export default function EventsPageClient() {
 
   const { data: apiResponse, isLoading, error } = useGetAllEvents();
 
-  useEffect(() => {
-    if (apiResponse) {
-      console.log("Raw API Response:", apiResponse);
-    }
-  }, [apiResponse]);
-
   const events = useMemo(() => {
     let rawData = [];
     if (Array.isArray(apiResponse)) {
