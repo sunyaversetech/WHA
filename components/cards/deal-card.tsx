@@ -136,8 +136,10 @@ export default function DealCard({ deal }: { deal: any }) {
 
               <div className="flex justify-between items-center">
                 <div className="flex items-center text-xs text-gray-500 mt-1">
-                  <Calendar className="h-3 w-3 mr-1" />
-                  <span>Expires {deal.expiryDate}</span>
+                  <Calendar className="h-3 w-3 mr-1" /> Expires At :
+                  <span className="font-bold">
+                    {deal?.valid_till?.split("T")[0]}
+                  </span>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 mt-1">
