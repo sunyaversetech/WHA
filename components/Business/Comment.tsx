@@ -4,7 +4,15 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Star, MessageSquare, User, Loader2, Send } from "lucide-react";
+import {
+  Star,
+  MessageSquare,
+  User,
+  Loader2,
+  Send,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -20,14 +28,20 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useCreateReview, useGetReview } from "@/services/review.service";
+import {
+  useCreateReview,
+  useDeleteReview,
+  useGetReview,
+} from "@/services/review.service";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { DeleteConfirmDialog } from "../ui/DynamicDeleteButton";
 
 const reviewSchema = z.object({
+  review_id: z.string().optional(),
   business_id: z.string().optional(),
   rating: z.number().min(1, "Please select at least 1 star").max(5),
   comment: z.string().min(10, "Comment must be at least 10 characters"),
@@ -47,9 +61,8 @@ export default function BusinessReviewSection() {
   const { data: reviews } = useGetReview(String(id));
   const queryClient = useQueryClient();
 
-  console.log("reviews", reviews);
-
   const { mutate } = useCreateReview();
+  const { mutate: deleteReview } = useDeleteReview();
 
   async function onSubmit(values: z.infer<typeof reviewSchema>) {
     if (status === "unauthenticated") {
@@ -61,6 +74,12 @@ export default function BusinessReviewSection() {
       {
         onSuccess: () => {
           form.reset();
+
+          toast.success(
+            values.review_id
+              ? "Review updated successfully"
+              : "Review created successfully",
+          );
           queryClient.invalidateQueries({ queryKey: ["review"] });
         },
         onError: (error: any) => {
@@ -74,7 +93,22 @@ export default function BusinessReviewSection() {
     );
   }
 
-  console.log("session", session);
+  const handleDelete = (id: string) => {
+    deleteReview(
+      { id: id },
+      {
+        onSuccess: () => {
+          toast.success("Review deleted successfully");
+          queryClient.invalidateQueries({ queryKey: ["review"] });
+        },
+        onError: (error: any) => {
+          toast.error(
+            error.response?.data?.message || "Failed to delete review",
+          );
+        },
+      },
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 py-10">
@@ -171,19 +205,37 @@ export default function BusinessReviewSection() {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={review.user?.image} />
+                      <AvatarImage
+                        src={review.user?.image}
+                        className="object-cover"
+                      />
                       <AvatarFallback>{review.user?.name}</AvatarFallback>
                     </Avatar>
-                    {session?.user?.id === review.user?._id && (
-                      <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">
-                        You
-                      </span>
-                    )}
-                    {session?.user?.id === review.user?._id && (
-                      <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">
-                        You
-                      </span>
-                    )}
+                    <div className="flex justify-between gap-2 items-center">
+                      {session?.user?.id === review.user?._id && (
+                        <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-md h-6.5 text-sm font-medium">
+                          You
+                        </span>
+                      )}
+                      {session?.user?.id === review.user?._id && (
+                        <span className=" text-green-600 px-3 py-1 rounded-md h-6.5 text-sm font-medium">
+                          <Edit
+                            size={15}
+                            onClick={() => {
+                              form.setValue("comment", review.comment);
+                              form.setValue("rating", review.rating);
+                              form.setValue("review_id", review._id);
+                            }}
+                          />
+                        </span>
+                      )}
+                      {session?.user?.id === review.user?._id && (
+                        <DeleteConfirmDialog
+                          onConfirm={() => handleDelete(review._id)}
+                          text={review.comment}
+                        />
+                      )}
+                    </div>
                     <div>
                       <h4 className="font-bold text-slate-900 leading-none"></h4>
                       <p className="text-xs text-slate-500 mt-1">

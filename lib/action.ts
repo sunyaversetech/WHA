@@ -82,6 +82,33 @@ export async function Post<PayloadType, ResponseType>({
   }
 }
 
+export async function PATCH<PayloadType, ResponseType>({
+  url,
+  data,
+}: MutatorProps<PayloadType>): Promise<ResponseType> {
+  try {
+    const isFormData = data instanceof FormData;
+
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: isFormData ? undefined : await getHeaders(),
+      body: isFormData ? data : JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText || "Request failed");
+    }
+
+    return (await res.json()) as ResponseType;
+  } catch (error: any) {
+    if (error instanceof Error) {
+      throw new Error(error.message, { cause: error.cause });
+    }
+    throw new Error("An error occurred.");
+  }
+}
+
 /**
  * Delete data
  * @param {string} url - The URL to send the request to

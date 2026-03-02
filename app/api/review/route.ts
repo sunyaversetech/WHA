@@ -7,6 +7,7 @@ import * as z from "zod";
 import { authOptions } from "../auth/[...nextauth]/route";
 
 import "@/server/models/Auth.model";
+import mongoose from "mongoose";
 
 export const reviewSchema = z.object({
   business_id: z.string().min(1, "Business ID is required"),
@@ -26,23 +27,28 @@ export type ReviewFormValues = z.infer<typeof reviewSchema>;
 export async function POST(req: NextRequest) {
   try {
     await connectToDb();
+
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const userId = (session.user as any).id;
 
-    console.log(userId);
     const body = await req.json();
-    const validation = reviewSchema.safeParse(body);
-    if (!validation.success) {
+
+    const existingReview = await Review.findOne({
+      business_id: new mongoose.Types.ObjectId(body.business_id),
+      user: new mongoose.Types.ObjectId(userId),
+    });
+
+    if (existingReview) {
       return NextResponse.json(
-        { message: "Validation failed", errors: validation.error.format() },
-        { status: 400 },
+        { message: "You have already reviewed this business." },
+        { status: 409 },
       );
     }
 
-    const { business_id, rating, comment } = validation.data;
+    const { business_id, rating, comment } = body;
 
     const newReview = await Review.create({
       business_id,

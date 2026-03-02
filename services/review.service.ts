@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { ApiResponseType } from "./apitypes";
-import { Post } from "@/lib/action";
+import { PATCH, Post } from "@/lib/action";
 import { Reviews } from "@/components/Business/Comment";
 import { useFetcher } from "@/lib/generic.service";
 
@@ -33,13 +33,28 @@ export const useCreateReview = () => {
   return useMutation<ApiResponseType<Reviews>, any, Reviews>({
     mutationKey: ["createReview"],
     mutationFn: (data: Reviews) =>
-      Post<Reviews, ApiResponseType<Reviews>>({
-        url: "/api/review",
+      data.review_id
+        ? PATCH<Reviews, ApiResponseType<Reviews>>({
+            url: `/api/review/edit/${data.review_id}`,
+            data: data,
+          })
+        : Post<Reviews, ApiResponseType<Reviews>>({
+            url: "/api/review",
+            data: data,
+          }),
+  });
+};
+
+export const useDeleteReview = () => {
+  return useMutation<ApiResponseType<{ id: string }>, any, { id: string }>({
+    mutationKey: ["deleteReview"],
+    mutationFn: (data: { id: string }) =>
+      Post<{ id: string }, ApiResponseType<any>>({
+        url: `/api/review/delete/${data.id}`,
         data: data,
       }),
   });
 };
-
 // export const useGetReview = (business_id: string) => {
 //   return useMutation<ApiResponseType<any>, any, FormData>({
 //     mutationKey: ["review"],

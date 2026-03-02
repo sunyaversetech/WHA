@@ -19,7 +19,7 @@ const ReviewSchema: Schema<IReview> = new Schema(
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "Review must belong to a user"],
+      required: true,
     },
     rating: {
       type: Number,
@@ -40,7 +40,7 @@ const ReviewSchema: Schema<IReview> = new Schema(
   },
 );
 
-ReviewSchema.index({ business_id: 1, user_id: 1 }, { unique: true });
+ReviewSchema.index({ business_id: 1, user: 1 }, { unique: true });
 
 ReviewSchema.statics.calculateAverageRating = async function (businessId) {
   const stats = await this.aggregate([
