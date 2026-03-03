@@ -130,8 +130,8 @@ export default function CardSlider({
           {viewAllHref && (
             <Button
               asChild
-              variant="link"
-              className="flex items-center group text-sm md:text-md">
+              className="flex items-center group text-sm md:text-md"
+            >
               <a href={viewAllHref}>
                 View all{" "}
                 <ChevronRight className="ml-1 h-3 w-3 md:h-4 md:w-4 transition-transform group-hover:translate-x-0.5" />
@@ -160,7 +160,8 @@ export default function CardSlider({
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",
                 scrollSnapType: "x mandatory",
-              }}>
+              }}
+            >
               {/* Cards with 85% width and 30% peek */}
               <div className="flex gap-4 min-w-full">
                 {React.Children.map(children, (child, index) => (
@@ -169,7 +170,8 @@ export default function CardSlider({
                     className="flex-shrink-0 w-[85%] sm:w-[60%] lg:w-[40%]"
                     style={{
                       scrollSnapAlign: "start",
-                    }}>
+                    }}
+                  >
                     {child}
                   </div>
                 ))}
@@ -182,7 +184,8 @@ export default function CardSlider({
                 <button
                   onClick={scrollToPrev}
                   className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm rounded-full p-2 text-gray-700 hover:bg-white transition-colors shadow-lg z-10"
-                  aria-label="Previous">
+                  aria-label="Previous"
+                >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
               )}
@@ -190,7 +193,8 @@ export default function CardSlider({
                 <button
                   onClick={scrollToNext}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm rounded-full p-2 text-gray-700 hover:bg-white transition-colors shadow-lg z-10"
-                  aria-label="Next">
+                  aria-label="Next"
+                >
                   <ChevronRight className="h-5 w-5" />
                 </button>
               )}
