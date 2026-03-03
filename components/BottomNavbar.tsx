@@ -36,23 +36,23 @@ export default function BottomNav() {
               }`}
             >
               <div
-                className={`flex items-center justify-center rounded-xl p-2 mb-1 transition-all duration-200 ${
+                className={`flex items-center justify-center rounded-sm p-2 mb-1 transition-all duration-200 ${
                   active
-                    ? "bg-red-500 text-sm shadow-md scale-110"
-                    : "group-hover:bg-neutral/50 "
+                    ? "bg-primary text-sm shadow-md scale-110"
+                    : "group-hover:bg-[#f5f5f5]"
                 }`}
               >
                 <Icon
                   className={`h-5 w-5 ${
                     active
                       ? "text-base"
-                      : "text-primary group-hover:text-red-500"
+                      : "text-primary group-hover:text-primary"
                   }`}
                 />
               </div>
               <span
                 className={`text-xs font-medium transition-colors duration-200 ${
-                  active ? "text-primary" : "text-black hover:text-red-500"
+                  active ? "text-primary" : "text-black hover:text-primary"
                 }`}
               >
                 {link.name}
@@ -66,22 +66,22 @@ export default function BottomNav() {
           href={session ? "/dashboard" : "/auth"}
           className={`flex flex-col items-center justify-center w-full h-full transition-all duration-200 group ${
             isActive(session ? "/dashboard" : "/auth")
-              ? "text-secondary"
-              : "text-black hover:text-secondary"
+              ? "text-primary"
+              : "text-primary hover:text-primary"
           }`}
         >
           <div
-            className={`flex items-center justify-center rounded-xl p-2 mb-1 transition-all duration-200 ${
+            className={`flex items-center justify-center rounded-sm p-2 mb-1 transition-all duration-200 ${
               isActive(session ? "/dashboard" : "/auth")
-                ? "bg-red-500 text-sm shadow-md scale-110"
-                : "group-hover:bg-neutral/50 "
+                ? "bg-primary  text-white text-sm shadow-md scale-110"
+                : "group-hover:bg-[#f5f5f5]"
             }`}
           >
             <User
               className={`h-5 w-5 ${
                 isActive(session ? "/dashboard" : "/auth")
                   ? "text-base"
-                  : "text-primary group-hover:text-red-500"
+                  : "text-primary group-hover:text-priamry"
               }`}
             />
           </div>
@@ -89,7 +89,7 @@ export default function BottomNav() {
             className={`text-xs font-medium transition-colors duration-200 ${
               isActive(session ? "/dashboard" : "/auth")
                 ? "text-primary"
-                : "text-black hover:text-red-500"
+                : "text-black hover:text-primary"
             }`}
           >
             {session ? "Profile" : "Login"}
