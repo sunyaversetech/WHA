@@ -67,6 +67,14 @@ export async function GET(req: Request) {
       path: "item_id",
     });
 
+    const brokenFavoriteIds = favorite_docs
+      .filter((fav) => fav.item_id === null)
+      .map((fav) => fav._id);
+
+    if (brokenFavoriteIds.length > 0) {
+      await Favorite.deleteMany({ _id: { $in: brokenFavoriteIds } });
+    }
+
     const formatted_favorites = {
       events: favorite_docs
         .filter((f) => f.item_type === "Event")

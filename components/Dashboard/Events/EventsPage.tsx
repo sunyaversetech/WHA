@@ -26,7 +26,6 @@ import { useRouter } from "next/navigation";
 export default function EventsBackend() {
   const { data } = useGetEvent();
   const { mutate, isPending } = useDeleteEvent();
-  console.log("Event", data);
   const queryClient = useQueryClient();
   const router = useRouter();
   const handleDelete = (id: string) => {
@@ -36,6 +35,7 @@ export default function EventsBackend() {
         onSuccess: () => {
           toast.success("Event deleted successfully");
           queryClient.invalidateQueries({ queryKey: ["event"] });
+          queryClient.invalidateQueries({ queryKey: ["favorite"] });
         },
         onError: (error: any) => {
           toast.error(

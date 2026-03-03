@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "../../../auth/[...nextauth]/route";
 import Event from "@/server/models/Event.model";
+import User from "@/server/models/Auth.model";
+import { deleteFromS3 } from "@/server/lib/function";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -20,7 +22,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const { id: eventId } = await params;
     const currentUserId = (session.user as any).id;
     const event = await Event.findById(eventId);
-
+    await deleteFromS3(event.image);
     if (!event) {
       return NextResponse.json({ error: "Review not found" }, { status: 404 });
     }

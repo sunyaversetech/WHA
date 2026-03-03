@@ -14,7 +14,9 @@ export async function GET() {
     const business = await User.find({ category: "business" }).sort({
       createdAt: -1,
     });
-    const upcomingevents = await Event.find({ date: { $gte: todayISO } })
+    const upcomingevents = await Event.find({
+      "dateRange.from": { $gte: todayISO },
+    })
       .populate("user")
       .sort({ "dateRange.from": 1 })
       .limit(10)

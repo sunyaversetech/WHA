@@ -29,11 +29,9 @@ export default function FavoritesPage() {
   const { favorites } = useFavorites();
   const [activeTab, setActiveTab] = useState("events");
 
-  // Get all data
   const allEvents = getEvents();
   const allDeals = getDeals();
 
-  // Filter favorites
   const favoriteEvents = allEvents.filter((event) =>
     favorites.events.includes(event.id),
   );
@@ -41,7 +39,6 @@ export default function FavoritesPage() {
     favorites.deals.includes(deal.id),
   );
 
-  // Total favorites count
   const totalFavorites = favoriteEvents.length + favoriteDeals.length;
 
   return (

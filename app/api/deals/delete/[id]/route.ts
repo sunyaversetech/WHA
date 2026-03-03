@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "../../../auth/[...nextauth]/route";
 import { Deal } from "@/server/models/DealSchema.model";
+import User from "@/server/models/Auth.model";
 
 type RouteContext = {
   params: Promise<{ id: string }>;

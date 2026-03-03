@@ -26,14 +26,11 @@ export async function POST(req: NextRequest) {
     const email = formData.get("email") as string;
     const phone_number = formData.get("phone_number") as string;
     const website_link = formData.get("website_link") as string;
-
+    const dateRangeRaw = formData.get("dateRange") as string;
     const price_category = formData.get("price_category") as string;
     const ticket_link = formData.get("ticket_link") as string;
     const ticket_price = formData.get("ticket_price") as string;
 
-    const dateFrom =
-      formData.get("startDate") || formData.get("dateRange[from]");
-    const dateTo = formData.get("endDate") || formData.get("dateRange[to]");
     const startTime = formData.get("startTime") as string;
     const endTime = formData.get("endTime") as string;
 
@@ -41,6 +38,18 @@ export async function POST(req: NextRequest) {
     const longitude = parseFloat(formData.get("longitude") as string);
 
     const file = formData.get("image") as File;
+    let dateFrom = "";
+    let dateTo = "";
+
+    if (dateRangeRaw) {
+      try {
+        const parsedRange = JSON.parse(dateRangeRaw);
+        dateFrom = parsedRange.from;
+        dateTo = parsedRange.to;
+      } catch (e) {
+        console.error("Failed to parse dateRange:", e);
+      }
+    }
 
     if (!file || !title || !dateFrom || !dateTo) {
       return NextResponse.json(

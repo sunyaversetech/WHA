@@ -1,17 +1,17 @@
-import type { Deal } from '../types';
+import type { Deal } from "../types";
 
 const deals: Deal[] = [
   {
-    id: 'lakeside-pahilo-visit',
-    title: 'Pahilo Visit 5% OFF Welcome Deal',
-    description: '',
-    coupon: 'WHA5',
-    business: 'Lake Side Gurkhas',
-    businessId: 'lakeside-gurkhas',
-    expiryDate: 'August 29, 2025',
-    image: '/deals/wha-deal.png',
-    city: 'Canberra',
-    category: 'food',
+    id: "lakeside-pahilo-visit",
+    title: "Pahilo Visit 5% OFF Welcome Deal",
+    description: "",
+    coupon: "WHA5",
+    business: "Lake Side Gurkhas",
+    businessId: "lakeside-gurkhas",
+    expiryDate: "August 29, 2025",
+    image: "/deals/wha-deal.png",
+    city: "Canberra",
+    category: "food",
     details: `
       <ul>
         <li>5% off your total bill </li>
@@ -46,7 +46,7 @@ const deals: Deal[] = [
       </div>
     `,
     terms:
-      'Reservation must be made at least 1 hour in advance. Mention coupon code in the reservation notes. Dine-in only. Not valid with other offers.',
+      "Reservation must be made at least 1 hour in advance. Mention coupon code in the reservation notes. Dine-in only. Not valid with other offers.",
   },
 
   // {

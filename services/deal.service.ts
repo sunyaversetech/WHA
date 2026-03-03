@@ -12,7 +12,7 @@ type DealsFormValues = {
   terms_for_the_deal: string;
   deal_code: string;
 };
-type DealsGetValues = {
+export type DealsGetValues = {
   _id: string;
   title: string;
   valid_till: Date;

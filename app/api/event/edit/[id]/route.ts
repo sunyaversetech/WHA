@@ -80,6 +80,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     const validatedData = eventSchema.partial().parse(rawData);
 
     const event = await Event.findById(eventId);
+    await deleteFromS3(event.image);
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }

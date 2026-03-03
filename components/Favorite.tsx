@@ -58,11 +58,14 @@ export default function FavoritesPage() {
         </TabsList>
 
         <TabsContent value="events">
-          {favorites.events.length > 0 ? (
+          {favorites.services && favorites.events.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favorites.events.map((event: any) => (
-                <FavoriteCard key={event._id} item={event} type="event" />
-              ))}
+              {favorites.events.map((event) => {
+                if (!event) return null;
+                return (
+                  <FavoriteCard key={event._id} item={event} type="event" />
+                );
+              })}
             </div>
           ) : (
             <EmptyState
@@ -73,11 +76,18 @@ export default function FavoritesPage() {
         </TabsContent>
 
         <TabsContent value="services">
-          {favorites.services.length > 0 ? (
+          {favorites.services && favorites.services.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favorites.services.map((service: any) => (
-                <FavoriteCard key={service._id} item={service} type="service" />
-              ))}
+              {favorites.services.map((service: any) => {
+                if (!service) return null;
+                return (
+                  <FavoriteCard
+                    key={service._id}
+                    item={service}
+                    type="service"
+                  />
+                );
+              })}
             </div>
           ) : (
             <EmptyState
@@ -88,11 +98,12 @@ export default function FavoritesPage() {
         </TabsContent>
 
         <TabsContent value="deals">
-          {favorites.deals.length > 0 ? (
+          {favorites.deals && favorites.deals.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favorites.deals.map((deal: any) => (
-                <FavoriteCard key={deal._id} item={deal} type="deal" />
-              ))}
+              {favorites.deals.map((deal) => {
+                if (!deal) return null;
+                return <FavoriteCard key={deal._id} item={deal} type="deal" />;
+              })}
             </div>
           ) : (
             <EmptyState
