@@ -28,9 +28,11 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCreateDeals, useGetSingleDeal } from "@/services/deal.service";
 import { toast } from "sonner";
 import { useGetSingleEvent } from "@/services/event.service";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 export const dealSchema = z.object({
+  _id: z.string().min(1, "ID is required"),
   title: z.string().min(2, "Title is too short"),
   valid_till: z.date().min(1, "Date must be in the future"),
   deals_for: z.string().min(1, "Target audience is required"),
@@ -43,21 +45,33 @@ export type DealFormValues = z.infer<typeof dealSchema>;
 
 export default function EditDealForm() {
   const parmas = useSearchParams();
+  const router = useRouter();
   const dealId = parmas.get("id");
-  console.log("id", dealId);
   const { data } = useGetSingleDeal(dealId!);
 
   console.log("data", data);
   const form = useForm<DealFormValues>({
     resolver: zodResolver(dealSchema),
     defaultValues: {
-      title: "",
-      deals_for: "",
-      description: "",
-      terms_for_the_deal: "",
-      deal_code: "",
+      _id: data?.data._id || "",
+      title: data?.data.title || "",
+      deals_for: data?.data.deals_for || "",
+      description: data?.data.description || "",
+      terms_for_the_deal: data?.data.terms_for_the_deal || "",
+      deal_code: data?.data.deal_code || "",
+      valid_till: data?.data.valid_till || new Date(),
     },
   });
+
+  useEffect(() => {
+    form.setValue("_id", data?.data._id || "");
+    form.setValue("title", data?.data.title || "");
+    form.setValue("deals_for", data?.data.deals_for || "");
+    form.setValue("description", data?.data.description || "");
+    form.setValue("terms_for_the_deal", data?.data.terms_for_the_deal || "");
+    form.setValue("deal_code", data?.data.deal_code || "");
+    form.setValue("valid_till", data?.data.valid_till || new Date());
+  }, [data, form]);
 
   const { mutate } = useCreateDeals();
   function onSubmit(values: DealFormValues) {
@@ -68,10 +82,11 @@ export default function EditDealForm() {
     mutate(formData as any, {
       onSuccess: () => {
         form.reset();
-        toast("Deal created successfully");
+        router.push("/dashboard/deals");
+        toast("Deals Updated successfully");
       },
       onError: (error: any) => {
-        toast.error(error.response?.data?.message || "Failed to create deal");
+        toast.error(error.response || "Failed to Edit deal");
       },
     });
   }
@@ -233,7 +248,7 @@ export default function EditDealForm() {
           type="submit"
           className="w-full"
           disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? "Submitting..." : "Create Deal"}
+          {form.formState.isSubmitting ? "Submitting..." : "Edit Deal"}
         </Button>
       </form>
     </Form>

@@ -13,6 +13,7 @@ type DealsFormValues = {
   deal_code: string;
 };
 type DealsGetValues = {
+  _id: string;
   title: string;
   valid_till: Date;
   deals_for: string;
@@ -23,15 +24,15 @@ type DealsGetValues = {
 };
 
 export const useCreateDeals = () => {
-  return useMutation<ApiResponseType<DealsFormValues>, any, DealsFormValues>({
+  return useMutation<ApiResponseType<FormData>, any, FormData>({
     mutationKey: ["createDeal"],
-    mutationFn: (data: DealsFormValues) =>
-      data.deal_id
-        ? PATCH<DealsFormValues, ApiResponseType<DealsFormValues>>({
-            url: `/api/deals/edit/${data.deal_id}`,
+    mutationFn: (data: FormData) =>
+      data.get("_id")
+        ? PATCH<FormData, ApiResponseType<FormData>>({
+            url: `/api/deals/edit/${data.get("_id")}`,
             data: data,
           })
-        : Post<DealsFormValues, ApiResponseType<DealsFormValues>>({
+        : Post<FormData, ApiResponseType<FormData>>({
             url: "/api/deals",
             data: data,
           }),
@@ -50,7 +51,7 @@ export const useGetSingleDeal = (id: string) => {
   return useFetcher<ApiResponseType<DealsGetValues>>(
     ["singleDeal", id],
     null,
-    `/api/event/single-deal/${id}`,
+    `/api/deals/single-deal/${id}`,
   );
 };
 
