@@ -98,7 +98,7 @@ export default function MapPicker({ form }: MapPickerProps) {
         <div className="relative flex-1">
           <Input
             placeholder="Search for a location..."
-            value={searchQuery}
+            value={searchQuery ? searchQuery : form.getValues("location")}
             onChange={handleInputChange}
             className="pr-10 rounded-lg"
           />

@@ -17,10 +17,32 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import { useDeleteDeal } from "@/services/deal.service";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
-export function DealCard({ deal, onEdit, onDelete }: any) {
+export function DealCard({ deal }: any) {
   const today = new Date();
+  const router = useRouter();
   const dealValidTill = new Date(deal.valid_till);
+  const queryClient = useQueryClient();
+  const { mutate: deleteDeal } = useDeleteDeal();
+
+  const handleDelete = (id: string) => {
+    deleteDeal(
+      { id: id },
+      {
+        onSuccess: () => {
+          toast.success("Deal deleted successfully");
+          queryClient.invalidateQueries({ queryKey: ["deals"] });
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Failed to delete deal");
+        },
+      },
+    );
+  };
   return (
     <div className="group relative w-full max-w-sm overflow-hidden rounded-3xl border bg-white shadow-sm transition-all hover:shadow-md">
       <div className="absolute right-4 top-4 z-10">
@@ -30,12 +52,14 @@ export function DealCard({ deal, onEdit, onDelete }: any) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
             <DropdownMenuItem
-              onClick={() => onEdit(deal)}
+              onClick={() =>
+                router.push(`/dashboard/deals/edit?id=${deal._id}`)
+              }
               className="cursor-pointer">
               <Edit2 className="mr-2 h-4 w-4" /> Edit
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => onDelete(deal._id)}
+              onClick={() => handleDelete(deal._id)}
               className="cursor-pointer text-red-600 focus:text-red-600">
               <Trash2 className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>

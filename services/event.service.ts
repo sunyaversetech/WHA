@@ -1,6 +1,6 @@
 import { ApiResponseType } from "./apitypes";
 import { useMutation } from "@tanstack/react-query";
-import { Post } from "@/lib/action";
+import { PATCH, Post } from "@/lib/action";
 import { useFetcher } from "@/lib/generic.service";
 import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
 import { useSearchParams } from "next/navigation";
@@ -20,6 +20,16 @@ export type EventType = {
     business_name: string;
   };
   location: string;
+  category_name: string;
+  email: string;
+  phone_number: number;
+  website_link: string;
+  price_category: "free" | "paid";
+  community_name: string;
+  city: string;
+  community: string;
+  startTime: string;
+  endTime: string;
   venue: string;
   category: string;
   image: string;
@@ -30,13 +40,21 @@ export type EventType = {
 };
 
 export const useCreateEvent = () => {
-  return useMutation<ApiResponseType<EventFormValues>, any, EventFormValues>({
+  return useMutation<ApiResponseType<EventFormValues>, any, FormData>({
     mutationKey: ["createEvent"],
-    mutationFn: (data: EventFormValues) =>
-      Post<EventFormValues, ApiResponseType<EventFormValues>>({
-        url: "/api/event",
-        data: data,
-      }),
+    mutationFn: (data: FormData) => {
+      if (data.get("_id")) {
+        return PATCH<FormData, ApiResponseType<EventFormValues>>({
+          url: `/api/event/edit/${data.get("_id")}`,
+          data: data,
+        });
+      } else {
+        return Post<FormData, ApiResponseType<EventFormValues>>({
+          url: "/api/event",
+          data: data,
+        });
+      }
+    },
   });
 };
 
@@ -67,4 +85,15 @@ export const useGetSingleEvent = (id: string) => {
     null,
     `/api/event/single-event/${id}`,
   );
+};
+
+export const useDeleteEvent = () => {
+  return useMutation<ApiResponseType<{ id: string }>, any, { id: string }>({
+    mutationKey: ["deleteEvent"],
+    mutationFn: (data: { id: string }) =>
+      Post<{ id: string }, ApiResponseType<any>>({
+        url: `/api/event/delete/${data.id}`,
+        data: data,
+      }),
+  });
 };

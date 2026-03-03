@@ -10,33 +10,41 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MapPin, Eye } from "lucide-react";
-import { EventForm } from "./EventsForm";
-import { useGetEvent } from "@/services/event.service";
+import { PlusCircle, MapPin, Eye, Edit } from "lucide-react";
+import { useDeleteEvent, useGetEvent } from "@/services/event.service";
 import Image from "next/image";
-import { useState } from "react";
 import Link from "next/link";
-
-type EventRecord = {
-  id: string;
-  title: string;
-  price: string;
-  venue: string;
-  date: string;
-  latitude: number;
-  longitude: number;
-};
+import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 export default function EventsBackend() {
-  const events: EventRecord[] = [];
-
   const { data } = useGetEvent();
-  const [open, setOpen] = useState(false);
+  const { mutate, isPending } = useDeleteEvent();
+  console.log("Event", data);
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const handleDelete = (id: string) => {
+    mutate(
+      { id },
+      {
+        onSuccess: () => {
+          toast.success("Event deleted successfully");
+          queryClient.invalidateQueries({ queryKey: ["event"] });
+        },
+        onError: (error: any) => {
+          toast.error(
+            error.response?.data?.message || "Failed to delete event",
+          );
+        },
+      },
+    );
+  };
 
   return (
     <div className="p-10 space-y-6">
@@ -45,8 +53,7 @@ export default function EventsBackend() {
 
         <Link
           href="/dashboard/events/add-event"
-          className="ml-auto flex bg-[#041e3a] text-white items-center p-2 rounded-md hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200"
-        >
+          className="ml-auto flex bg-[#041e3a] text-white items-center p-2 rounded-md hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
           <PlusCircle className="mr-2 h-4 w-4" /> Add Event
         </Link>
       </div>
@@ -59,8 +66,9 @@ export default function EventsBackend() {
               <TableHead>Event</TableHead>
               <TableHead>Venue</TableHead>
               <TableHead>Price</TableHead>
-              <TableHead>Coordinates</TableHead>
+              <TableHead>Location</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -68,8 +76,7 @@ export default function EventsBackend() {
               <TableRow>
                 <TableCell
                   colSpan={5}
-                  className="text-center py-10 text-muted-foreground"
-                >
+                  className="text-center py-10 text-muted-foreground">
                   No events found. Click `Add Event` to start.
                 </TableCell>
               </TableRow>
@@ -97,8 +104,7 @@ export default function EventsBackend() {
                         <DialogTitle className="text-sm ">
                           <span
                             className="inline-block text-white bg-slate-800 px-2 py-1 rounded-md"
-                            title={event.title}
-                          >
+                            title={event.title}>
                             {event.title}
                           </span>
                         </DialogTitle>
@@ -123,18 +129,42 @@ export default function EventsBackend() {
                   <TableCell>
                     <div className="flex items-center text-xs text-muted-foreground">
                       <MapPin className="mr-1 h-3 w-3" />
-                      {event.latitude.toFixed(4)}, {event.longitude.toFixed(4)}
+                      {event.location.split(",")[0]}{" "}
+                      {event.location.split(",")[1]}
                     </div>
                   </TableCell>
                   <TableCell>
                     {event?.dateRange?.from
                       ? new Intl.DateTimeFormat("en-AU", {
-                          weekday: "long",
-                          year: "numeric",
+                          day: "2-digit",
                           month: "short",
-                          day: "numeric",
                         }).format(new Date(event?.dateRange?.from))
+                      : "-"}{" "}
+                    to{" "}
+                    {event?.dateRange?.to
+                      ? new Intl.DateTimeFormat("en-AU", {
+                          day: "2-digit",
+                          month: "short",
+                        }).format(new Date(event?.dateRange?.to))
                       : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <Button
+                        variant={"ghost"}
+                        onClick={() =>
+                          router.push(
+                            `/dashboard/events/add-event?id=${event._id}`,
+                          )
+                        }>
+                        <Edit className="mr-2 h-4 w-4" />
+                      </Button>
+                      <DeleteConfirmDialog
+                        onConfirm={() => handleDelete(event._id ?? "")}
+                        text={event.title}
+                        isPending={isPending}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

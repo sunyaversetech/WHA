@@ -10,36 +10,12 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Plus, Home, LayoutDashboard } from "lucide-react";
 import { DealCard } from "./DealCard";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useGetDeals } from "@/services/deal.service";
 
 export default function DealsPage() {
-  const queryClient = useQueryClient();
-
   const { data, isLoading } = useGetDeals();
-
-  const createMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const res = await fetch("/api/deals", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Failed to create deal");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deals"] });
-      toast.success("Deal created successfully");
-    },
-  });
-
-  const handleFormSubmit = (values: any) => {
-    const formData = new FormData();
-    formData.append("title", values.title);
-    formData.append("expiryDate", values.expiryDate.toISOString());
-    if (values.image) formData.append("image", values.image);
-
-    createMutation.mutate(formData);
-  };
 
   return (
     <div className="mx-auto p-6 space-y-8">

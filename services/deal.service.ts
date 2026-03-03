@@ -1,9 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { ApiResponseType } from "./apitypes";
-import { Post } from "@/lib/action";
+import { PATCH, Post } from "@/lib/action";
 import { useFetcher } from "@/lib/generic.service";
 
 type DealsFormValues = {
+  deal_id?: string;
   title: string;
   valid_till: Date;
   deals_for: string;
@@ -12,6 +13,7 @@ type DealsFormValues = {
   deal_code: string;
 };
 type DealsGetValues = {
+  _id: string;
   title: string;
   valid_till: Date;
   deals_for: string;
@@ -22,13 +24,18 @@ type DealsGetValues = {
 };
 
 export const useCreateDeals = () => {
-  return useMutation<ApiResponseType<DealsFormValues>, any, DealsFormValues>({
+  return useMutation<ApiResponseType<FormData>, any, FormData>({
     mutationKey: ["createDeal"],
-    mutationFn: (data: DealsFormValues) =>
-      Post<DealsFormValues, ApiResponseType<DealsFormValues>>({
-        url: "/api/deals",
-        data: data,
-      }),
+    mutationFn: (data: FormData) =>
+      data.get("_id")
+        ? PATCH<FormData, ApiResponseType<FormData>>({
+            url: `/api/deals/edit/${data.get("_id")}`,
+            data: data,
+          })
+        : Post<FormData, ApiResponseType<FormData>>({
+            url: "/api/deals",
+            data: data,
+          }),
   });
 };
 
@@ -38,4 +45,23 @@ export const useGetDeals = () => {
     null,
     "/api/deals",
   );
+};
+
+export const useGetSingleDeal = (id: string) => {
+  return useFetcher<ApiResponseType<DealsGetValues>>(
+    ["singleDeal", id],
+    null,
+    `/api/deals/single-deal/${id}`,
+  );
+};
+
+export const useDeleteDeal = () => {
+  return useMutation<ApiResponseType<{ id: string }>, any, { id: string }>({
+    mutationKey: ["deleteDeal"],
+    mutationFn: (data: { id: string }) =>
+      Post<{ id: string }, ApiResponseType<any>>({
+        url: `/api/deals/delete/${data.id}`,
+        data: data,
+      }),
+  });
 };
