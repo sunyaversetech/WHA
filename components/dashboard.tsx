@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ProfileAvatar from "./ProfilePic";
+import DashboardNavbar from "./Dashboard/DashboardNavbar";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -41,101 +42,107 @@ export default function Dashboard() {
     );
 
   return (
-    <div className="p-8 min-h-screen space-y-8">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <ProfileAvatar currentImage={session?.user?.image || ""} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 ">
-              <h1 className="text-xl font-bold text-slate-800">
-                Welcome Back, {session?.user?.name}
-              </h1>
-              <div className="sm:hidden md:flex md:flex-wrap gap-2">
-                <Badge
-                  variant="outline"
-                  className="text-[10px] uppercase tracking-tighter">
-                  {businessName || "Personal Account"}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] uppercase tracking-tighter">
-                  {session?.user?.category || "Personal Account"}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] uppercase tracking-tighter">
-                  {session?.user?.verified
-                    ? "Verified"
-                    : "Business Not Verified"}
-                </Badge>
-              </div>
+    <>
+      <DashboardNavbar />
+      <div className="p-8 min-h-screen space-y-8">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <ProfileAvatar currentImage={session?.user?.image || ""} />
             </div>
-            <p className="text-sm text-slate-500">
-              {session?.user?.email}
-              {/* •{" "}
+            <div>
+              <div className="flex items-center gap-2 ">
+                <h1 className="text-xl font-bold text-slate-800">
+                  Welcome Back, {session?.user?.name}
+                </h1>
+                <div className="sm:hidden md:flex md:flex-wrap gap-2">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] uppercase tracking-tighter"
+                  >
+                    {businessName || "Personal Account"}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] uppercase tracking-tighter"
+                  >
+                    {session?.user?.category || "Personal Account"}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] uppercase tracking-tighter"
+                  >
+                    {session?.user?.verified
+                      ? "Verified"
+                      : "Business Not Verified"}
+                  </Badge>
+                </div>
+              </div>
+              <p className="text-sm text-slate-500">
+                {session?.user?.email}
+                {/* •{" "}
               <span className="text-orange-500 font-semibold underline">
                 21
               </span>{" "}
               Pending Approvals */}
-            </p>
+              </p>
+            </div>
           </div>
+
+          <div className="flex gap-3">
+            <Button className="bg-[#437682] hover:bg-[#365f69] text-white gap-2 shadow-lg">
+              <Plus className="h-4 w-4" /> Add Events
+            </Button>
+            <Button className="bg-[#f27431] hover:bg-[#d96328] text-white gap-2 shadow-lg">
+              <Plus className="h-4 w-4" /> Add Deals
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => signOut()}
+              className="border-red-200 text-red-600 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MetricCard
+            title="Active Deals"
+            value="120/154"
+            trend="+2.1%"
+            icon={<Handshake />}
+            iconBg="bg-orange-500"
+          />
+
+          <MetricCard
+            title={"Total Number of Bookings"}
+            value={"45"}
+            trend="-2.1%"
+            trendDown
+            icon={<Briefcase />}
+            iconBg="bg-teal-600"
+          />
+
+          <MetricCard
+            title={"Total No of Services"}
+            value={isUserOnly ? "12" : "69/86"}
+            trend="-11.2%"
+            trendDown
+            icon={<Users />}
+            iconBg="bg-blue-500"
+          />
+
+          <MetricCard
+            title={isUserOnly ? "Past Bookings" : "Total No of Tasks"}
+            value={isUserOnly ? "168" : "225/28"}
+            trend="+11.2%"
+            icon={<CheckSquare />}
+            iconBg="bg-pink-500"
+          />
         </div>
 
-        <div className="flex gap-3">
-          <Button className="bg-[#437682] hover:bg-[#365f69] text-white gap-2 shadow-lg">
-            <Plus className="h-4 w-4" /> Add Events
-          </Button>
-          <Button className="bg-[#f27431] hover:bg-[#d96328] text-white gap-2 shadow-lg">
-            <Plus className="h-4 w-4" /> Add Deals
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => signOut()}
-            className="border-red-200 text-red-600 hover:bg-red-50">
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="Active Deals"
-          value="120/154"
-          trend="+2.1%"
-          icon={<Handshake />}
-          iconBg="bg-orange-500"
-        />
-
-        <MetricCard
-          title={"Total Number of Bookings"}
-          value={"45"}
-          trend="-2.1%"
-          trendDown
-          icon={<Briefcase />}
-          iconBg="bg-teal-600"
-        />
-
-        <MetricCard
-          title={"Total No of Services"}
-          value={isUserOnly ? "12" : "69/86"}
-          trend="-11.2%"
-          trendDown
-          icon={<Users />}
-          iconBg="bg-blue-500"
-        />
-
-        <MetricCard
-          title={isUserOnly ? "Past Bookings" : "Total No of Tasks"}
-          value={isUserOnly ? "168" : "225/28"}
-          trend="+11.2%"
-          icon={<CheckSquare />}
-          iconBg="bg-pink-500"
-        />
-      </div>
-
-      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <MetricCard
             title="Earnings"
@@ -197,7 +204,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div> */}
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -213,7 +221,8 @@ const MetricCard = ({
     <CardContent className="p-6">
       <div className="flex justify-between items-start">
         <div
-          className={`h-10 w-10 ${iconBg} rounded-lg flex items-center justify-center text-white shadow-lg shadow-black/10`}>
+          className={`h-10 w-10 ${iconBg} rounded-lg flex items-center justify-center text-white shadow-lg shadow-black/10`}
+        >
           {React.cloneElement(icon, { size: 18 })}
         </div>
         <ChevronLeft className="h-7 w-7 rounded-full border p-1.5 shadow-[0_4px_10px_rgba(0,0,0,0.2)] bg-white text-slate-400 rotate-180" />
@@ -227,7 +236,8 @@ const MetricCard = ({
             {value}
           </h3>
           <span
-            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${trendDown ? "bg-red-50 text-red-500" : "bg-emerald-50 text-emerald-500"}`}>
+            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${trendDown ? "bg-red-50 text-red-500" : "bg-emerald-50 text-emerald-500"}`}
+          >
             {trendDown ? "▼" : "▲"} {trend}
           </span>
         </div>

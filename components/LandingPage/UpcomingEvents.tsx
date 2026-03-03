@@ -16,9 +16,7 @@ export function UpcomingEvents() {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-end mb-8">
           <h2 className="text-3xl font-bold">Featured Businesses</h2>
-          <Button variant="link" className="text-red-600">
-            View All
-          </Button>
+          <Button className="text-red-600">View All</Button>
         </div>
 
         <Carousel opts={{ align: "start" }} className="w-full">
@@ -26,7 +24,8 @@ export function UpcomingEvents() {
             {[1, 2, 3, 4, 5].map((i) => (
               <CarouselItem
                 key={i}
-                className="pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                className="pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+              >
                 <Card className="border-none shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
                   <div className="aspect-[4/3] bg-gray-200 relative overflow-hidden">
                     <Badge className="absolute top-3 left-3 bg-white/90 text-black hover:bg-white">

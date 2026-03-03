@@ -1,12 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 html {
-  font-family: 'Urbanist',
-
+  font-family: "Urbanist";
 }
 
 @theme inline {
@@ -60,8 +59,10 @@ html {
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* --primary: oklch(0.205 0 0); */
+  /* --primary-foreground: oklch(0.985 0 0); */
+  --primary: #041e3a;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -101,8 +102,10 @@ html {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  /* --primary: oklch(0.922 0 0); */
+  /* --primary-foreground: oklch(0.205 0 0); */
+  --primary: #041e3a;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -147,9 +150,7 @@ html {
     font-family: var(--font-urbanist);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-
   }
-
 
   h1,
   h2,
@@ -195,7 +196,6 @@ html {
 }
 
 @layer components {
-
   .card {
     @apply backdrop-blur-sm border rounded-xl shadow-md transition-all duration-300;
     background-color: color-mix(in srgb, var(--background), transparent 20%);
@@ -275,17 +275,21 @@ html {
   /* Modern Gradient Text */
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(to right,
-        var(--color-secondary),
-        var(--color-neutral));
+    background-image: linear-gradient(
+      to right,
+      var(--color-secondary),
+      var(--color-neutral)
+    );
   }
 
   .gradient-text-primary {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(to right,
-        var(--color-primary),
-        var(--color-secondary),
-        var(--color-neutral));
+    background-image: linear-gradient(
+      to right,
+      var(--color-primary),
+      var(--color-secondary),
+      var(--color-neutral)
+    );
   }
 
   /* Modern Badge */

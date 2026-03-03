@@ -11,9 +11,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Settings, LogOut, MapPin } from "lucide-react";
+import { User, Settings, LogOut, MapPin, ChevronRight } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { Button } from "./ui/button";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -71,19 +72,18 @@ export default function Navbar() {
             <span>Request For Business</span>
           </Link>
         ) : (
-          <Link
-            href="/"
-            className="text-sm font-medium bg-[#041e3a] text-white px-4 py-2 rounded-md flex gap-1 items-center hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200"
-          >
-            <MapPin className="h-4 w-4" />
-            <span>Australia</span>
-          </Link>
+          <Button variant="outline" asChild>
+            <Link href="/" className="gap-2">
+              <MapPin className="h-6 w-6" />
+              Australia
+            </Link>
+          </Button>
         )}
         <div className="flex items-center">
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger className="outline-none">
-                <Avatar className="h-9 w-9 border">
+                <Avatar className="h-10 w-10 md:h-12 md:w-12 border rounded-full">
                   <AvatarImage
                     src={session?.user?.image ? session.user.image : ""}
                     alt="User"
@@ -97,6 +97,14 @@ export default function Navbar() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center cursor-pointer"
+                  >
+                    <User className="mr-2 h-4 w-4" /> Dashboard
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
                     href="/dashboard/profile"
@@ -123,12 +131,9 @@ export default function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link
-              href="/auth"
-              className="text-sm font-medium bg-red-600 text-white px-4 py-2 rounded-lg"
-            >
-              Login
-            </Link>
+            <Button asChild>
+              <Link href="/auth">Login</Link>
+            </Button>
           )}
         </div>
       </div>

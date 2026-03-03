@@ -119,7 +119,8 @@ export default function MapPicker({ form }: MapPickerProps) {
                   className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 transition-colors border-b last:border-0"
                   onClick={() =>
                     handleSelectLocation(res.display_name, res.lat, res.lon)
-                  }>
+                  }
+                >
                   <p className="font-medium truncate">{res.display_name}</p>
                 </button>
               ))}
@@ -128,11 +129,11 @@ export default function MapPicker({ form }: MapPickerProps) {
         </div>
 
         <Button
-          type="button"
-          variant="secondary"
+          variant={"outline"}
           size="icon"
           onClick={handleGeolocation}
-          className="shrink-0 rounded-lg border">
+          className="shrink-0 rounded-lg border"
+        >
           <Navigation className="h-4 w-4" />
         </Button>
       </div>
