@@ -37,22 +37,22 @@ export default function Navbar() {
 
       {!pathname.startsWith("/dashboard") ? (
         <div className="hidden md:flex items-center border rounded-full px-6 py-2 gap-8 text-slate-600 font-medium shadow-sm">
-          <Link href="/events" className="hover:text-red-600 transition-colors">
+          <Link href="/events" className="hover:text-primary transition-colors">
             Events
           </Link>
-          <Link href="/deals" className="hover:text-red-600 transition-colors">
+          <Link href="/deals" className="hover:text-primary transition-colors">
             Deals
           </Link>
           <Link
             href="/businesses"
-            className="hover:text-red-600 transition-colors"
+            className="hover:text-primary transition-colors"
           >
             Businesses
           </Link>
           {status === "authenticated" && (
             <Link
               href="/dashboard"
-              className="hover:text-red-600 transition-colors"
+              className="hover:text-primary transition-colors"
             >
               Dashboard
             </Link>
