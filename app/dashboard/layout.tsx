@@ -3,6 +3,7 @@ import { type Metadata } from "next";
 import { Urbanist } from "next/font/google";
 import "../globals.css";
 import Sidebar from "@/components/Sidebar";
+import DashboardNavbar from "@/components/Dashboard/DashboardNavbar";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -23,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <div lang="en" className="flex w-full">
-      <Sidebar />
+      <DashboardNavbar />
       <div className="flex-1 ml-5 mt-2">{children}</div>
     </div>
   );
