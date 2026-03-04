@@ -275,21 +275,17 @@ html {
   /* Modern Gradient Text */
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(
-      to right,
-      var(--color-secondary),
-      var(--color-neutral)
-    );
+    background-image: linear-gradient(to right,
+        var(--color-secondary),
+        var(--color-neutral));
   }
 
   .gradient-text-primary {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(
-      to right,
-      var(--color-primary),
-      var(--color-secondary),
-      var(--color-neutral)
-    );
+    background-image: linear-gradient(to right,
+        var(--color-primary),
+        var(--color-secondary),
+        var(--color-neutral));
   }
 
   /* Modern Badge */
