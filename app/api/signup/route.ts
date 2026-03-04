@@ -8,14 +8,18 @@ export async function POST(req: Request) {
     const body = await req.json();
     const {
       name,
-      email,
-      password,
       category,
+      email,
+      city,
+      city_name,
+      location,
+      community,
+      community_name,
+      accpetalltermsandcondition,
+      password,
       business_name,
       business_category,
       abn_number,
-      city_name,
-      community_name,
     } = body;
 
     if (!name || !email || !password || !category) {
@@ -42,6 +46,10 @@ export async function POST(req: Request) {
       email: email.toLowerCase(),
       password: hashedPassword,
       category,
+      accpetalltermsandcondition,
+      location,
+      city,
+      community,
       provider: "credentials",
       business_name,
       business_category,

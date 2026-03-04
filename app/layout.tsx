@@ -4,12 +4,12 @@ import { Urbanist } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/Auth/SessionWrapper";
 import ReactQueryContext from "@/lib/ReactQueryContext";
-import Navbar from "@/components/Navabr";
 import { CityFilterProvider } from "@/contexts/city-filter-context";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { RedeemProvider } from "@/contexts/redeem-context";
 import { Toaster } from "sonner";
 import BottomNav from "@/components/BottomNavbar";
+import DashboardNavbar from "@/components/Dashboard/DashboardNavbar";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -36,7 +36,7 @@ export default function RootLayout({
             <FavoritesProvider>
               <CityFilterProvider>
                 <SessionWrapper>
-                  <Navbar />
+                  <DashboardNavbar />
                   <div className="mb-15 max-md:mt-5">{children}</div>
                   <Toaster />
                   <BottomNav />

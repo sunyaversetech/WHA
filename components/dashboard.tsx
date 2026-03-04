@@ -4,18 +4,14 @@ import { useSession, signOut } from "next-auth/react";
 import {
   ChevronLeft,
   Plus,
-  Calendar,
   Briefcase,
-  Ticket,
   Users,
-  TrendingUp,
   CheckSquare,
-  DollarSign,
   LogOut,
   Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ProfileAvatar from "./ProfilePic";
 import DashboardNavbar from "./Dashboard/DashboardNavbar";
@@ -58,20 +54,17 @@ export default function Dashboard() {
                 <div className="sm:hidden md:flex md:flex-wrap gap-2">
                   <Badge
                     variant="outline"
-                    className="text-[10px] uppercase tracking-tighter"
-                  >
+                    className="text-[10px] uppercase tracking-tighter">
                     {businessName || "Personal Account"}
                   </Badge>
                   <Badge
                     variant="outline"
-                    className="text-[10px] uppercase tracking-tighter"
-                  >
+                    className="text-[10px] uppercase tracking-tighter">
                     {session?.user?.category || "Personal Account"}
                   </Badge>
                   <Badge
                     variant="outline"
-                    className="text-[10px] uppercase tracking-tighter"
-                  >
+                    className="text-[10px] uppercase tracking-tighter">
                     {session?.user?.verified
                       ? "Verified"
                       : "Business Not Verified"}
@@ -99,8 +92,7 @@ export default function Dashboard() {
             <Button
               variant="outline"
               onClick={() => signOut()}
-              className="border-red-200 text-red-600 hover:bg-red-50"
-            >
+              className="border-red-200 text-red-600 hover:bg-red-50">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -221,8 +213,7 @@ const MetricCard = ({
     <CardContent className="p-6">
       <div className="flex justify-between items-start">
         <div
-          className={`h-10 w-10 ${iconBg} rounded-lg flex items-center justify-center text-white shadow-lg shadow-black/10`}
-        >
+          className={`h-10 w-10 ${iconBg} rounded-lg flex items-center justify-center text-white shadow-lg shadow-black/10`}>
           {React.cloneElement(icon, { size: 18 })}
         </div>
         <ChevronLeft className="h-7 w-7 rounded-full border p-1.5 shadow-[0_4px_10px_rgba(0,0,0,0.2)] bg-white text-slate-400 rotate-180" />
@@ -236,8 +227,7 @@ const MetricCard = ({
             {value}
           </h3>
           <span
-            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${trendDown ? "bg-red-50 text-red-500" : "bg-emerald-50 text-emerald-500"}`}
-          >
+            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${trendDown ? "bg-red-50 text-red-500" : "bg-emerald-50 text-emerald-500"}`}>
             {trendDown ? "▼" : "▲"} {trend}
           </span>
         </div>
