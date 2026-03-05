@@ -219,7 +219,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                     </p>
                   </div>
                 ) : alreadyRedeemed ? (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                  <div className="bg-green-50 border flex flex-col items-center border-green-200 rounded-lg p-6">
                     <div className="flex items-center justify-center space-x-2 mb-2">
                       <Check className="h-5 w-5 text-green-600" />
                       <span className="text-green-800 font-medium text-lg">
@@ -232,6 +232,12 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                     <p className="text-blue-950 text-sm font-bold">
                       Your Code: {userRedemption.uniqueKey}
                     </p>
+                    <div className="m-auto">
+                      <QRCodeCanvas
+                        value={userRedemption.uniqueKey || ""}
+                        size={150}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div>
