@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -27,35 +27,88 @@ import {
 } from "lucide-react";
 import debounce from "lodash.debounce";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
+import { useGetALLBusiness } from "@/services/business.service";
 
-const CATEGORIES = [
-  { name: "All", icon: Store, value: "all" },
-  { name: "Automotive", icon: Car, value: "automotive" },
-  { name: "Barber", icon: Scissors, value: "narber" },
-  { name: "Cafe", icon: Coffee, value: "cafe" },
-  { name: "Cleaning", icon: Eraser, value: "cleaning" },
-  { name: "Consultancy", icon: Briefcase, value: "consultancy" },
-  { name: "Driving School", icon: Car, value: "driving School" },
-  { name: "Electrician", icon: Zap, value: "electrician" },
-  { name: "Event Organizer", icon: Calendar, value: "event Organizer" },
-  { name: "Food Truck", icon: Truck, value: "food Truck" },
-  { name: "Grocery", icon: ShoppingBasket, value: "grocery" },
-  { name: "Painter", icon: Paintbrush, value: "painter" },
-  { name: "Photography", icon: Camera, value: "photography" },
-  { name: "Plumber", icon: Pipette, value: "plumber" },
-  { name: "Pujari", icon: Users, value: "pujari" },
-  { name: "Removalists", icon: Move, value: "removalists" },
-  { name: "Restaurant", icon: Utensils, value: "restaurant" },
-  { name: "Saloon & Makeup", icon: Sparkles, value: "saloon and Makeup" },
-  { name: "Shop", icon: ShoppingBag, value: "shop" },
-  { name: "Social Club", icon: Users, value: "social Club" },
-  { name: "Travel & Tours", icon: Plane, value: "travel and Tours" },
-  { name: "Others", icon: MoreHorizontal, value: "others" },
-];
+const CATEGORY_ICONS: Record<string, any> = {
+  all: Store,
+  automotive: Car,
+  barber: Scissors,
+  cafe: Coffee,
+  cleaning: Eraser,
+  consultancy: Briefcase,
+  "driving school": Car,
+  electrician: Zap,
+  "event organizer": Calendar,
+  "food truck": Truck,
+  grocery: ShoppingBasket,
+  painter: Paintbrush,
+  photography: Camera,
+  plumber: Pipette,
+  pujari: Users,
+  event: Calendar,
+  removalists: Move,
+  cafes: Coffee,
+  restaurant: Utensils,
+  "saloon and makeup": Sparkles,
+  shop: ShoppingBag,
+  "social club": Users,
+  "travel and tours": Plane,
+  others: MoreHorizontal,
+};
 
 export default function BusinessHeader() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data } = useGetALLBusiness();
+  const discoveredCategories = useRef<Set<string>>(new Set());
+  const [categories, setCategories] = useState<string[]>([]);
+
+  console.log("Business Data", data);
+  useEffect(() => {
+    if (data?.data) {
+      data.data.forEach((item: any) => {
+        if (item.business_category) {
+          discoveredCategories.current.add(item.business_category);
+        }
+      });
+      setCategories(Array.from(discoveredCategories.current));
+    }
+  }, [data?.data]);
+
+  const CATEGORIES = useMemo(() => {
+    const base = [{ name: "All", value: "all", icon: Store }];
+
+    const dynamic = categories.map((cat) => ({
+      name: cat,
+      value: cat,
+      icon: CATEGORY_ICONS[cat.toLowerCase()] || Store,
+    }));
+
+    return [...base, ...dynamic];
+  }, [categories]);
+
+  // { name: "All", icon: Store, value: "all" },
+  // { name: "Automotive", icon: Car, value: "automotive" },
+  // { name: "Barber", icon: Scissors, value: "narber" },
+  // { name: "Cafe", icon: Coffee, value: "cafe" },
+  // { name: "Cleaning", icon: Eraser, value: "cleaning" },
+  // { name: "Consultancy", icon: Briefcase, value: "consultancy" },
+  // { name: "Driving School", icon: Car, value: "driving School" },
+  // { name: "Electrician", icon: Zap, value: "electrician" },
+  // { name: "Event Organizer", icon: Calendar, value: "event Organizer" },
+  // { name: "Food Truck", icon: Truck, value: "food Truck" },
+  // { name: "Grocery", icon: ShoppingBasket, value: "grocery" },
+  // { name: "Painter", icon: Paintbrush, value: "painter" },
+  // { name: "Photography", icon: Camera, value: "photography" },
+  // { name: "Plumber", icon: Pipette, value: "plumber" },
+  // { name: "Pujari", icon: Users, value: "pujari" },
+  // { name: "Removalists", icon: Move, value: "removalists" },
+  // { name: "Restaurant", icon: Utensils, value: "restaurant" },
+  // { name: "Saloon & Makeup", icon: Sparkles, value: "saloon and Makeup" },
+  // { name: "Shop", icon: ShoppingBag, value: "shop" },
+  // { name: "Social Club", icon: Users, value: "social Club" },
+  // { name: "Travel & Tours", icon: Plane, value: "travel and Tours" },
+  // { name: "Others", icon: MoreHorizontal, value: "others" },
 
   const activeCategory = searchParams.get("category") || "all";
   const currentTab = searchParams.get("view") || "list";
@@ -147,18 +200,17 @@ export default function BusinessHeader() {
       <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon;
-          const isActive = activeCategory === cat.value;
+          const isActive = activeCategory === cat?.value;
 
           return (
             <button
               key={cat.value}
-              onClick={() => handleCategoryClick(cat.value)}
+              onClick={() => handleCategoryClick(cat?.value ?? "all")}
               className={`flex flex-col items-center justify-center min-w-[100px] p-3 rounded-2xl transition-all border shrink-0 ${
                 isActive
                   ? "bg-primary border-primary text-white"
                   : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-              }`}
-            >
+              }`}>
               <Icon
                 className={`h-5 w-5 mb-2 ${isActive ? "text-white" : "text-slate-500"}`}
               />

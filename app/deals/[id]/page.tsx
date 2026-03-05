@@ -51,8 +51,11 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
   const { mutate, isPending } = useRedeemCode();
   const { data } = useGetRedeem();
 
+  console.log("data", data);
   const userRedemption = data?.data?.find(
-    (redemption: any) => redemption.user === session?.user?.id,
+    (redemption: any) =>
+      redemption.user === session?.user?.id &&
+      redemption.deal === deal?.data?._id,
   );
 
   console.log("userRedemption", userRedemption);

@@ -1,8 +1,7 @@
 "use client";
 
 import DealCard from "@/components/cards/deal-card";
-import { Search, Tag, X, Filter } from "lucide-react";
-import CategoryTabs from "@/components/category-tabs";
+import { Search, Tag } from "lucide-react";
 import { useGetAllDeals } from "@/services/deal.service";
 
 export default function DealsPageClient() {

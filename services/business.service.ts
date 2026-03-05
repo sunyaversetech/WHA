@@ -34,6 +34,14 @@ export const useGetBusiness = () => {
   );
 };
 
+export const useGetALLBusiness = () => {
+  return useFetcher<ApiResponseType<UserBusinessType[]>>(
+    ["getbusinesses"],
+    null,
+    `/api/business`,
+  );
+};
+
 export const useGetSingleBusiness = () => {
   const param = useParams();
   const id = (param.id as string) || "";
