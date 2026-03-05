@@ -162,7 +162,7 @@ export default function BusinessHeader() {
   };
 
   return (
-    <div className="w-full bg-white px-4 py-2 md:p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div className="w-full bg-white px-4 py-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
       {/* Header + Tabs */}
       <div className="flex items-center justify-between mb-2  gap-2">
         <h1 className="text-lg md:text-xl font-bold text-slate-800">
@@ -184,26 +184,27 @@ export default function BusinessHeader() {
       </p> */}
 
       {/* Search + All Community */}
-      <div className="flex flex-col md:flex-row gap-2 mb-3">
+      <div className="flex flex-row gap-2 mb-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
+
           <input
             type="text"
             value={inputValue}
             onChange={handleSearchChange}
             placeholder="Search Local Businesses"
-            className="w-full pl-10 pr-3 py-2 text-xs md:text-sm border border-slate-200 rounded-full focus:outline-none transition"
+            className="w-full pl-10 pr-3 py-2 text-base border border-slate-200 rounded-full focus:outline-none "
           />
         </div>
         <div className="flex-none">
-          <div className="text-center px-3 py-2 text-xs md:text-sm bg-primary border text-white rounded-full cursor-pointer transition hover:bg-white hover:text-primary">
+          <div className="text-center px-3 py-2 text-sm md:text-base bg-primary border text-white rounded-full cursor-pointer transition hover:bg-white hover:text-primary">
             All Community
           </div>
         </div>
       </div>
 
       {/* Category Tabs */}
-      <div className="flex gap-1 md:gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
+      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon;
           const isActive = activeCategory === cat?.value;
@@ -212,7 +213,7 @@ export default function BusinessHeader() {
             <button
               key={cat.value}
               onClick={() => handleCategoryClick(cat?.value ?? "all")}
-              className={`flex flex-col items-center justify-center min-w-[100px] p-3 rounded-2xl transition-all border shrink-0 ${
+              className={`flex flex-col items-center justify-center  md:min-w-[80px] py-2 px-3 rounded-md md:rounded-xl transition-all border shrink-0 ${
                 isActive
                   ? "bg-primary border-primary text-white"
                   : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
