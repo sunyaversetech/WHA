@@ -63,7 +63,6 @@ export default function BusinessHeader() {
   const discoveredCategories = useRef<Set<string>>(new Set());
   const [categories, setCategories] = useState<string[]>([]);
 
-  console.log("Business Data", data);
   useEffect(() => {
     if (data?.data) {
       data.data.forEach((item: any) => {

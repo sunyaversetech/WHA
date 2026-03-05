@@ -18,15 +18,16 @@ type RedeemCodeResponseType = {
   verifiedAt?: Date;
 };
 
+type RedeemCodeFormResponseType = {
+  success: string;
+  uniqueKey: string;
+};
+
 export const useRedeemCode = () => {
-  return useMutation<
-    ApiResponseType<RedeemCodeResponseType>,
-    any,
-    RedeemCodeType
-  >({
+  return useMutation<RedeemCodeFormResponseType, any, RedeemCodeType>({
     mutationKey: ["getRedeem"],
     mutationFn: (data: RedeemCodeType) =>
-      Post<RedeemCodeType, ApiResponseType<RedeemCodeResponseType>>({
+      Post<RedeemCodeType, RedeemCodeFormResponseType>({
         url: "/api/deals/redeem",
         data: data,
       }),

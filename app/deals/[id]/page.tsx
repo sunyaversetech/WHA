@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { use } from "react";
 import { getDealById } from "@/lib/data/deals";
 import {
@@ -28,6 +28,7 @@ import {
   useRedeemCode,
 } from "@/services/redeemandverify.service";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 function isPromise<T>(value: any): value is Promise<T> {
   return !!value && typeof value.then === "function";
@@ -50,17 +51,26 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
   } | null>(null);
   const { mutate, isPending } = useRedeemCode();
   const { data } = useGetRedeem();
+  const queryClient = useQueryClient();
 
-  console.log("data", data);
   const userRedemption = data?.data?.find(
     (redemption: any) =>
       redemption.user === session?.user?.id &&
       redemption.deal === deal?.data?._id,
   );
 
-  console.log("userRedemption", userRedemption);
-
-  const alreadyRedeemed = !!userRedemption;
+  useEffect(() => {
+    if (!userRedemption) return;
+    setTimeout(
+      () =>
+        setRedemptionResult({
+          success: true,
+          message: "success",
+          code: userRedemption?.uniqueKey,
+        }),
+      0,
+    );
+  }, [userRedemption]);
 
   const handleRedeem = async () => {
     if (!session?.user) {
@@ -79,14 +89,16 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
           setRedemptionResult({
             success: true,
             message: "success",
-            code: data.data.uniqueKey,
+            code: data.uniqueKey,
           });
+          queryClient.invalidateQueries({ queryKey: ["redeem"] });
         },
         onError: (error) => {
           setRedemptionResult({
             success: false,
             message: error.message,
           });
+          toast.error(error.message);
         },
       },
     );
@@ -213,34 +225,13 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                       Show this code to the business:
                     </p>
                     <div className="bg-white border border-green-300 rounded-lg p-4 mb-3 w-full max-w-xs">
-                      <code className="text-xl font-mono font-bold text-green-800 tracking-widest">
+                      <code className="text-xl font-mono text-blue-950 font-bold text-green-800 tracking-widest">
                         {redemptionResult.code}
                       </code>
                     </div>
                     <p className="text-green-700 text-xs">
                       Code expires when deal expires
                     </p>
-                  </div>
-                ) : alreadyRedeemed ? (
-                  <div className="bg-green-50 border flex flex-col items-center border-green-200 rounded-lg p-6">
-                    <div className="flex items-center justify-center space-x-2 mb-2">
-                      <Check className="h-5 w-5 text-green-600" />
-                      <span className="text-green-800 font-medium text-lg">
-                        Already Redeemed
-                      </span>
-                    </div>
-                    <p className="text-green-700 text-sm">
-                      You`ve already claimed this deal.
-                    </p>
-                    <p className="text-blue-950 text-sm font-bold">
-                      Your Code: {userRedemption.uniqueKey}
-                    </p>
-                    <div className="m-auto">
-                      <QRCodeCanvas
-                        value={userRedemption.uniqueKey || ""}
-                        size={150}
-                      />
-                    </div>
                   </div>
                 ) : (
                   <div>
