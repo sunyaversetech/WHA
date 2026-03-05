@@ -25,7 +25,8 @@ export default function BusinessMap({ location, businessName }: MapProps) {
         center={coords}
         zoom={15}
         scrollWheelZoom={false}
-        className="h-full w-full">
+        className="h-full w-full"
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

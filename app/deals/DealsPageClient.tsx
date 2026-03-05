@@ -27,7 +27,7 @@ export default function DealsPageClient() {
                 </div>
               </div>
 
-              {/* <div className="relative md:hidden">
+              <div className="relative md:hidden">
                 <button
                   className={`mobile-search-button p-1.5 rounded-lg transition-colors ${
                     mobileSearchOpen
@@ -35,7 +35,8 @@ export default function DealsPageClient() {
                       : "bg-gray-100 hover:bg-gray-200"
                   }`}
                   onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-                  title={mobileSearchOpen ? "Close filters" : "Open filters"}>
+                  title={mobileSearchOpen ? "Close filters" : "Open filters"}
+                >
                   <Filter
                     className={`h-4 w-4 ${
                       mobileSearchOpen ? "text-white" : "text-gray-500"
@@ -45,11 +46,12 @@ export default function DealsPageClient() {
                 {(searchTerm || selectedCity !== "all") && (
                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
                 )}
-              </div> */}
+              </div>
             </div>
 
             <div
-              className={`mobile-search-container flex-col gap-2 mb-2 transition-all duration-300 ease-in-out hidden opacity-0 max-h-0 md:flex md:opacity-100 md:max-h-none  md:flex-row md:gap-4 md:mb-4`}>
+              className={`mobile-search-container flex-col gap-2 mb-2 transition-all duration-300 ease-in-out hidden opacity-0 max-h-0 md:flex md:opacity-100 md:max-h-none  md:flex-row md:gap-4 md:mb-4`}
+            >
               <div className="relative w-full">
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                   <Search className="h-4 w-4 text-gray-400" />

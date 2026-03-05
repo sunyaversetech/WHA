@@ -162,41 +162,48 @@ export default function BusinessHeader() {
   };
 
   return (
-    <div className="w-full bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-      <div className="mb-4">
-        <h1 className="flex w-full justify-between text-xl font-bold text-slate-800">
-          Find Local Businesses
-          <Tabs value={currentTab} onValueChange={handleTabChange}>
-            <TabsList>
-              <TabsTrigger value="list">List</TabsTrigger>
-              <TabsTrigger value="map">Map</TabsTrigger>
-            </TabsList>
-          </Tabs>
+    <div className="w-full bg-white px-4 py-2 md:p-6 rounded-2xl shadow-sm border border-gray-100">
+      {/* Header + Tabs */}
+      <div className="flex items-center justify-between mb-2  gap-2">
+        <h1 className="text-lg md:text-xl font-bold text-slate-800">
+          Local Businesses
         </h1>
-        <p className="text-sm text-slate-400">
-          Search for top-rated services and shops in your area
-        </p>
+        <Tabs
+          value={currentTab}
+          onValueChange={handleTabChange}
+          className="w-auto"
+        >
+          <TabsList className="w-auto">
+            <TabsTrigger value="list">List</TabsTrigger>
+            <TabsTrigger value="map">Map</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
+      {/* <p className="text-xs md:text-sm text-slate-400 mb-3 hidden md:block">
+        Search for top-rated services and shops in your area
+      </p> */}
 
-      <div className="relative mb-6 flex gap-2">
-        <div className="relative flex-[2]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 " />
+      {/* Search + All Community */}
+      <div className="flex flex-col md:flex-row gap-2 mb-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
           <input
             type="text"
             value={inputValue}
             onChange={handleSearchChange}
             placeholder="Search Local Businesses"
-            className="w-full pl-12 pr-4 py-2 bg-white border border-slate-200 rounded-full focus:outline-none  transition-all"
+            className="w-full pl-10 pr-3 py-2 text-xs md:text-sm border border-slate-200 rounded-full focus:outline-none transition"
           />
         </div>
-        <div className="flex-[1]">
-          <div className="p-2 text-center text-white border border-slate-200 rounded-full bg-primary transition-all hover:bg-white hover:text-primary">
+        <div className="flex-none">
+          <div className="text-center px-3 py-2 text-xs md:text-sm bg-primary border text-white rounded-full cursor-pointer transition hover:bg-white hover:text-primary">
             All Community
           </div>
         </div>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
+      {/* Category Tabs */}
+      <div className="flex gap-1 md:gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon;
           const isActive = activeCategory === cat?.value;
@@ -209,11 +216,12 @@ export default function BusinessHeader() {
                 isActive
                   ? "bg-primary border-primary text-white"
                   : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-              }`}>
+              }`}
+            >
               <Icon
-                className={`h-5 w-5 mb-2 ${isActive ? "text-white" : "text-slate-500"}`}
+                className={`h-4 w-4 sm:h-5 sm:w-5 mb-1 ${isActive ? "text-white" : "text-slate-500"}`}
               />
-              <span className="text-[10px] uppercase tracking-wider font-bold whitespace-nowrap">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold whitespace-nowrap text-center">
                 {cat.name}
               </span>
             </button>
