@@ -28,6 +28,7 @@ import {
   CarouselPrevious,
 } from "./ui/carousel";
 import { useGetLandingPageData } from "@/services/landing.service";
+import SponsorSlider from "./ui/sponsor-slider";
 
 export default function LandingPage() {
   const allDeals = getDeals();
@@ -39,14 +40,25 @@ export default function LandingPage() {
   const businesses = useFilteredBusinesses(allBusinesses);
 
   return (
-    <div className=" bg-gradient-modern  text-black">
-      <div className="container-modern mt-8">
-        <h1 className="border border-2 p-40 text-center">
-          Sponsor Banner Slider Carousel
-        </h1>
+    <div className=" bg-gradient-modern container-modern  text-black">
+      {/* Sponsor banner  */}
+
+      <div className="container-modern pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
+        <SponsorSlider>
+          <div className="relative h-[220px] md:h-[420px] rounded-xl overflow-hidden">
+            <img src="/events/ssa.png" className="w-full h-full object-cover" />
+          </div>
+
+          <div className="relative h-[220px] md:h-[420px] rounded-xl overflow-hidden">
+            <img
+              src="/events/skippy.png"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </SponsorSlider>
       </div>
 
-      <div className="container-modern !pr-0  pt-1 md:pt-6">
+      {/* <div className=" !pr-0  pt-1 md:pt-6">
         <h1>Top Businesses in Canberra</h1>
         <Carousel className="w-full ">
           <CarouselContent>
@@ -59,11 +71,11 @@ export default function LandingPage() {
           <CarouselPrevious />
           <CarouselNext />
         </Carousel>
-      </div>
+      </div> */}
 
       <div className=" mt-2 md:mt-4 bg-base text-black rounded-t-3xl">
         {/* Flexible Stats Cards*/}
-        <div className="container-modern py-4 md:py-6 border-b border-divider ">
+        {/* <div className="container-modern py-4 md:py-6 border-b border-divider ">
           <h2 className=" text-black text-sm md:text-md lg:text-lg font-bold mb-2 md:mb-4">
             Explore what`s active right now in your city
           </h2>
@@ -98,7 +110,8 @@ export default function LandingPage() {
               <Link
                 key={index}
                 href={stat.href}
-                className={`flex-1  p-2 md:p-4 rounded-lg shadow-sm text-black bg-white/40 border border-secondary/20 backdrop-blur-sm transition-all ${stat.color} ${stat.hover} hover:shadow-md flex items-center justify-center sm:flex-col sm:text-center`}>
+                className={`flex-1  p-2 md:p-4 rounded-lg shadow-sm text-black bg-white/40 border border-secondary/20 backdrop-blur-sm transition-all ${stat.color} ${stat.hover} hover:shadow-md flex items-center justify-center sm:flex-col sm:text-center`}
+              >
                 <div className="flex text-black flex-col items-center">
                   <div className="flex items-center justify-center mb-1">
                     <stat.icon className="h-5 w-5 mr-2 text-primary" />
@@ -114,22 +127,9 @@ export default function LandingPage() {
               </Link>
             ))}
           </div>
-        </div>
+        </div> */}
 
-        <div className="container-modern pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
-          {/* <CardSlider
-            title="Upcoming Events"
-            icon={<Calendar className="h-5 w-5 text-primary" />}
-            viewAllHref="/events"
-          >
-            {events.length === 0 ? (
-              <PlaceholderCard type="events" />
-            ) : (
-              events
-                .slice(0, 6)
-                .map((event: any) => <EventCard key={event.id} event={event} />)
-            )}
-          </CardSlider> */}
+        {/* <div className="container-modern pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
           <h1 className="mb-4 flex items-center gap-2">
             <CalendarRange /> Upcoming Events
           </h1>
@@ -144,7 +144,8 @@ export default function LandingPage() {
                 {data?.data.upcomingevents.map((item: any) => (
                   <CarouselItem
                     key={item._id}
-                    className="basis-1/2 lg:basis-1/2">
+                    className="basis-1/2 lg:basis-1/2"
+                  >
                     <EventCard key={item._id} event={item} />
                   </CarouselItem>
                 ))}
@@ -153,13 +154,14 @@ export default function LandingPage() {
               <CarouselNext />
             </Carousel>
           )}
-        </div>
+        </div> */}
 
-        <div className="container-modern pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
+        {/* <div className="container-modern pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
           <CardSlider
             title="Active Deals"
             icon={<Tag className="h-5 w-5 text-primary" />}
-            viewAllHref="/deals">
+            viewAllHref="/deals"
+          >
             {data?.data?.deals.length === 0 ? (
               <PlaceholderCard type="deals" />
             ) : (
@@ -168,13 +170,14 @@ export default function LandingPage() {
                 .map((deal: any) => <DealCard key={deal._id} deal={deal} />)
             )}
           </CardSlider>
-        </div>
+        </div> */}
 
-        <div className="container-modern pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
+        {/* <div className="container-modern pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
           <CardSlider
             title="Local Businesses"
             icon={<Building className="h-5 w-5 text-primary" />}
-            viewAllHref="/businesses">
+            viewAllHref="/businesses"
+          >
             {businesses.length === 0 ? (
               <PlaceholderCard type="businesses" />
             ) : (
@@ -185,9 +188,9 @@ export default function LandingPage() {
                 ))
             )}
           </CardSlider>
-        </div>
+        </div> */}
 
-        <div className="container-modern pt-2 pb-4 md:py-6  border-b border-divider">
+        {/* <div className="container-modern pt-2 pb-4 md:py-6  border-b border-divider">
           <div className="card-lg !rounded-lg p-2 md:p-6 lg:p-8">
             <div className="text-center mb-2 md:mb-6">
               <div className="flex items-center justify-center space-x-3  md:mb-4">
@@ -204,12 +207,14 @@ export default function LandingPage() {
               <a
                 href="mailto:info@whatshappeningaustralia.com"
                 className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-primary/10"
-                aria-label="Email">
+                aria-label="Email"
+              >
                 <svg
                   className="w-5 h-5 md:w-6 md:h-6 fill-current"
                   viewBox="0 0 24 24"
                   aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg">
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 2v.01L12 13 20 6.01V6H4zm0 12h16V8l-8 7-8-7v10z" />
                 </svg>
                 <span className="font-medium text-sm md:text-base hidden md:block">
@@ -221,11 +226,13 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-primary/10"
-                aria-label="Instagram">
+                aria-label="Instagram"
+              >
                 <svg
                   className="w-5 h-5 md:w-6 md:h-6 fill-current"
                   viewBox="0 0 24 24"
-                  aria-hidden="true">
+                  aria-hidden="true"
+                >
                   <path d="M7.75 2h8.5A5.75 5.75 0 0122 7.75v8.5A5.75 5.75 0 0116.25 22h-8.5A5.75 5.75 0 012 16.25v-8.5A5.75 5.75 0 017.75 2zm0 1.5A4.25 4.25 0 003.5 7.75v8.5A4.25 4.25 0 007.75 20.5h8.5a4.25 4.25 0 004.25-4.25v-8.5A4.25 4.25 0 0016.25 3.5h-8.5zm8.88 2.3a1.125 1.125 0 110 2.25 1.125 1.125 0 010-2.25zM12 7a5 5 0 110 10 5 5 0 010-10zm0 1.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z" />
                 </svg>
                 <span className="font-medium text-sm md:text-base hidden md:block">
@@ -237,11 +244,13 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-primary/10"
-                aria-label="Facebook">
+                aria-label="Facebook"
+              >
                 <svg
                   className="w-5 h-5 md:w-6 md:h-6 fill-current"
                   viewBox="0 0 24 24"
-                  aria-hidden="true">
+                  aria-hidden="true"
+                >
                   <path d="M22 12a10 10 0 10-11.5 9.87v-6.99H8v-2.88h2.5v-2.2c0-2.48 1.49-3.85 3.77-3.85 1.09 0 2.23.2 2.23.2v2.45h-1.25c-1.23 0-1.61.77-1.61 1.56v1.85h2.74l-.44 2.88h-2.3v6.99A10 10 0 0022 12z" />
                 </svg>
                 <span className="font-medium text-sm md:text-base hidden md:block">
@@ -253,12 +262,14 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 text-secondary hover:text-secondary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-secondary/10"
-                aria-label="TikTok">
+                aria-label="TikTok"
+              >
                 <svg
                   className="w-5 h-5 md:w-6 md:h-6 fill-current"
                   viewBox="0 0 48 48"
                   aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg">
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <path d="M41.5 14.7c-2.6 0-5-1-6.9-2.7v16.6c0 7.6-6.1 13.9-13.7 13.9-3.7 0-7.1-1.5-9.6-4-2.6-2.6-4-6-4-9.6s1.5-7.1 4-9.6c2.6-2.6 6-4 9.6-4 .8 0 1.6.1 2.3.2v6.7c-.7-.2-1.5-.3-2.3-.3-4.3 0-7.8 3.6-7.8 8s3.5 8 7.8 8c4.3 0 7.8-3.6 7.8-8V4h6.2c.2 2.6 1.4 5 3.3 6.7 1.8 1.7 4.2 2.7 6.7 2.8v6.2z" />
                 </svg>
                 <span className="font-medium text-sm md:text-base hidden md:block">
@@ -267,7 +278,7 @@ export default function LandingPage() {
               </a>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <div className="container-modern py-4 md:py-6">

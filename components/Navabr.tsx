@@ -190,9 +190,18 @@ export default function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild>
-              <Link href="/auth">Login</Link>
-            </Button>
+            <div className="flex gap-2">
+              <div className="hidden md:flex">
+                <Button asChild>
+                  <Link href="/auth">Login</Link>
+                </Button>
+              </div>
+              <div className="flex justify-center items-center border-l-2 pl-2">
+                <Link href="/auth/business" className="text-primary">
+                  For Business
+                </Link>
+              </div>
+            </div>
           )}
         </div>
       </div>

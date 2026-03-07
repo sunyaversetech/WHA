@@ -42,16 +42,6 @@ export default function EventsPageClient() {
   return (
     <div className="min-h-screen bg-neutral-50 pb-20">
       <div className="container-modern py-8">
-        <div className="mb-8 px-4">
-          <h1 className="text-3xl font-bold text-gray-800">
-            {selectedCity === "All Cities"
-              ? "All Events"
-              : `Events in ${selectedCity}`}
-          </h1>
-          <p className="text-neutral-500 mt-1">
-            {events.length} events found from server
-          </p>
-        </div>
         <EventHeader />
 
         {isLoading ? (
@@ -60,9 +50,9 @@ export default function EventsPageClient() {
             <p className="text-sm text-neutral-500">Loading your events...</p>
           </div>
         ) : events.length === 0 ? (
-          <div className="mx-4 mt-8 p-20 text-center bg-white rounded-3xl border-2 border-dashed border-neutral-200">
+          <div className=" mt-8 p-20 text-center bg-white rounded-3xl border-2 border-dashed border-neutral-200">
             <Calendar className="h-12 w-12 mx-auto text-neutral-300 mb-4" />
-            <h3 className="text-lg font-semibold text-secondary">
+            <h3 className="text-lg font-semibold text-primary">
               No events to show
             </h3>
             <p className="text-sm text-neutral-500 mt-1">

@@ -60,16 +60,7 @@ export default function SignupPage() {
 
   return (
     <div className="flex ">
-      <div className="w-full max-w-md space-y-2 rounded-xl bg-white px-8 ">
-        <h2 className="text-xl font-bold text-center">Signup As User</h2>
-        <p className="text-sm justify-center flex gap-2 mb-5">
-          Have a Business?
-          <Link
-            href="/auth/business"
-            className="block text-center text-sm text-blue-500  hover:text-gray-700">
-            Sign up as Business Account
-          </Link>
-        </p>
+      <div className="w-full max-w-md space-y-2 rounded-xl bg-white  ">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -77,9 +68,13 @@ export default function SignupPage() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  {/* <FormLabel>Full Name</FormLabel> */}
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input
+                      className="focus:outline-none focus:ring-0 focus-visible:ring-0"
+                      placeholder="Full Name"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -90,9 +85,13 @@ export default function SignupPage() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  {/* <FormLabel>Email</FormLabel> */}
                   <FormControl>
-                    <Input placeholder="email@example.com" {...field} />
+                    <Input
+                      className="focus:outline-none focus:ring-0 focus-visible:ring-0"
+                      placeholder="Email address"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -103,10 +102,12 @@ export default function SignupPage() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  {/* <FormLabel>Password</FormLabel> */}
                   <div className="relative">
                     <FormControl>
                       <Input
+                        className="focus:outline-none focus:ring-0 focus-visible:ring-0"
+                        placeholder="Password"
                         type={showPassword ? "text" : "password"}
                         {...field}
                       />
@@ -116,7 +117,8 @@ export default function SignupPage() {
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}>
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
@@ -128,7 +130,7 @@ export default function SignupPage() {
                 </FormItem>
               )}
             />
-            <FormField
+            {/* <FormField
               control={form.control}
               name="cpassword"
               render={({ field }) => (
@@ -146,7 +148,8 @@ export default function SignupPage() {
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}>
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
@@ -157,37 +160,35 @@ export default function SignupPage() {
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
             <div className="text-sm">
               <p>
                 I agree to the{" "}
-                <a className="text-red-600" href="">
+                <a className="text-red-500" href="">
                   Privacy Policy
                 </a>
                 ,{" "}
-                <a className="text-red-600" href="">
+                <a className="text-red-500" href="">
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a className="text-red-600" href="">
+                <a className="text-red-500" href="">
                   Terms of Business.
                 </a>
               </p>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full bg-red-600 hover:bg-red-700">
+            <Button type="submit" className="w-full">
               Sign Up
             </Button>
           </form>
         </Form>
-        <p className="text-center text-sm text-gray-500 pt-4">
+        {/* <p className="text-center text-sm text-gray-500 pt-4">
           Already have an account?{" "}
-          <Link href="/login" className="text-red-600 font-medium">
+          <Link href="/auth" className="text-red-600 font-medium">
             Login
           </Link>
-        </p>
+        </p> */}
       </div>
     </div>
   );
