@@ -8,45 +8,58 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Plus, Home, LayoutDashboard } from "lucide-react";
+import {
+  Plus,
+  Home,
+  LayoutDashboard,
+  ChevronLeft,
+  PlusCircle,
+} from "lucide-react";
 import { DealCard } from "./DealCard";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useGetDeals } from "@/services/deal.service";
+import { useRouter } from "next/navigation";
 
 export default function DealsPage() {
   const { data, isLoading } = useGetDeals();
+  const router = useRouter();
 
   return (
-    <div className="mx-auto p-6 space-y-8">
-      <div className="flex items-center justify-between">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/" className="flex items-center gap-1">
-                <Home className="h-4 w-4" /> Home
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink
-                href="/dashboard"
-                className="flex items-center gap-1">
-                <LayoutDashboard className="h-4 w-4" /> Dashboard
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>My Deals</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
+    <div className="space-y-6 max-w-6xl mx-auto">
+      <div className="flex items-start justify-between md:hidden">
+        <ChevronLeft
+          onClick={() => router.back()}
+          className="h-10 w-10 cursor-pointer rounded-full hover:border hover:bg-white p-1 -ml-2
+               text-[#ODODOD] 
+               transition-all hover:scale-105 active:scale-95"
+        />
         <Link
           href="/dashboard/deals/new"
-          className="bg-orange-600 flex text-white items-center p-2 hover:bg-orange-700 rounded-full px-6">
-          <Plus className="mr-2 h-4 w-4" /> Create Deal
+          className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200"
+        >
+          <PlusCircle className="mr-2 h-4 w-4" /> Add
         </Link>
+      </div>
+
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-xl text-secondary  font-bold tracking-tight">
+            Deals dashboard
+          </h1>
+          <p className="text-muted">
+            View and manage the deals offered by your business.
+          </p>
+        </div>
+
+        <div className="hidden md:block">
+          <Link
+            href="/dashboard/deals/new"
+            className="ml-auto flex bg-[#041e3a]  text-white items-center py-2 px-6 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" /> Add
+          </Link>
+        </div>
       </div>
 
       <hr className="border-slate-200" />

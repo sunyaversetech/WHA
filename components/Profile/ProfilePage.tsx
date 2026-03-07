@@ -72,7 +72,7 @@ const ProfilePage = ({ userData }: { userData: any }) => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div className="relative bg-white border rounded-2xl p-8 shadow-sm">
         <div className="flex flex-col md:flex-row gap-8 items-start">
           <div className="relative group">
@@ -128,7 +128,8 @@ const ProfilePage = ({ userData }: { userData: any }) => {
                   <Form {...form}>
                     <form
                       onSubmit={form.handleSubmit(onSubmit)}
-                      className="space-y-6">
+                      className="space-y-6"
+                    >
                       {/* Image Upload Placeholder */}
                       <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
                         <Avatar className="w-16 h-16">
@@ -206,7 +207,8 @@ const ProfilePage = ({ userData }: { userData: any }) => {
                                   <FormLabel>Category</FormLabel>
                                   <Select
                                     onValueChange={field.onChange}
-                                    defaultValue={field.value}>
+                                    defaultValue={field.value}
+                                  >
                                     <FormControl>
                                       <SelectTrigger>
                                         <SelectValue />
@@ -238,19 +240,22 @@ const ProfilePage = ({ userData }: { userData: any }) => {
                                 size="sm"
                                 onClick={() =>
                                   append({ name: "", price_category: "hr" })
-                                }>
+                                }
+                              >
                                 <Plus className="w-3 h-3 mr-1" /> Add
                               </Button>
                             </div>
                             {fields.map((field, index) => (
                               <div
                                 key={field.id}
-                                className="p-4 border rounded-md bg-white relative">
+                                className="p-4 border rounded-md bg-white relative"
+                              >
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   className="absolute top-1 right-1 h-7 w-7"
-                                  onClick={() => remove(index)}>
+                                  onClick={() => remove(index)}
+                                >
                                   <Trash2 className="w-4 h-4 text-red-500" />
                                 </Button>
                                 <div className="grid grid-cols-2 gap-2">
@@ -322,7 +327,8 @@ const ProfilePage = ({ userData }: { userData: any }) => {
             {userData.business_service.map(({ service, i }: any) => (
               <div
                 key={i}
-                className="p-4 border rounded-xl shadow-sm hover:border-blue-200 transition-colors">
+                className="p-4 border rounded-xl shadow-sm hover:border-blue-200 transition-colors"
+              >
                 <h4 className="font-bold text-lg">{service.name}</h4>
                 <Badge variant="secondary" className="mt-1 mb-2">
                   Per {service.price_category}

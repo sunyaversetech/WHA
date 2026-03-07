@@ -38,25 +38,25 @@ export default function Dashboard() {
     );
 
   return (
-    <>
-      <div className="p-8 min-h-screen space-y-8 bg-background">
+    <div className="space-y-6 max-w-6xl mx-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        {/* Header */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-4">
+            {/* Profile Avatar */}
             <div className="relative">
               <ProfileAvatar currentImage={session?.user?.image || ""} />
             </div>
-            <div>
-              <div className="flex items-center gap-2 ">
+
+            {/* User Info */}
+            <div className="flex-1">
+              <div className="flex  flex-col sm:flex-row sm:items-center gap-2">
                 <h1 className="text-xl font-bold text-slate-800">
-                  Welcome Back, {session?.user?.name}
+                  {session?.user?.business_name}
                 </h1>
-                <div className="sm:hidden md:flex md:flex-wrap gap-2">
-                  <Badge
-                    variant="outline"
-                    className="text-[10px] uppercase tracking-tighter"
-                  >
-                    {businessName || "Personal Account"}
-                  </Badge>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2 mt-1 sm:mt-0">
                   <Badge
                     variant="outline"
                     className="text-[10px] uppercase tracking-tighter"
@@ -73,134 +73,71 @@ export default function Dashboard() {
                   </Badge>
                 </div>
               </div>
-              <p className="text-sm text-slate-500">
+
+              {/* Email */}
+              <p className="text-sm text-slate-500 mt-2">
                 {session?.user?.email}
-                {/* •{" "}
-              <span className="text-orange-500 font-semibold underline">
-                21
-              </span>{" "}
-              Pending Approvals */}
+                {/* Optional pending approvals */}
+                {/* • <span className="text-orange-500 font-semibold underline">21</span> Pending Approvals */}
               </p>
             </div>
           </div>
-
-          <div className="flex gap-3">
-            <Button className="bg-[#437682] hover:bg-[#365f69] text-white gap-2 shadow-lg">
-              <Plus className="h-4 w-4" /> Add Events
-            </Button>
-            <Button className="bg-[#f27431] hover:bg-[#d96328] text-white gap-2 shadow-lg">
-              <Plus className="h-4 w-4" /> Add Deals
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => signOut()}
-              className="border-red-200 text-red-600 hover:bg-red-50"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
         </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard
-            title="Active Deals"
-            value="120/154"
-            trend="+2.1%"
-            icon={<Handshake />}
-            iconBg="bg-orange-500"
-          />
-
-          <MetricCard
-            title={"Total Number of Bookings"}
-            value={"45"}
-            trend="-2.1%"
-            trendDown
-            icon={<Briefcase />}
-            iconBg="bg-teal-600"
-          />
-
-          <MetricCard
-            title={"Total No of Services"}
-            value={isUserOnly ? "12" : "69/86"}
-            trend="-11.2%"
-            trendDown
-            icon={<Users />}
-            iconBg="bg-blue-500"
-          />
-
-          <MetricCard
-            title={isUserOnly ? "Past Bookings" : "Total No of Tasks"}
-            value={isUserOnly ? "168" : "225/28"}
-            trend="+11.2%"
-            icon={<CheckSquare />}
-            iconBg="bg-pink-500"
-          />
-        </div>
-
-        {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <MetricCard
-            title="Earnings"
-            value="$21,445"
-            trend="+10.2%"
-            icon={<DollarSign />}
-            iconBg="bg-purple-500"
-          />
-          <MetricCard
-            title="Profit This Week"
-            value="$5,544"
-            trend="+2.1%"
-            icon={<TrendingUp />}
-            iconBg="bg-red-500"
-          />
-          <MetricCard
-            title="Tenant Applicant"
-            value="98"
-            trend="+2.1%"
-            icon={<Users />}
-            iconBg="bg-emerald-500"
-          />
-          <MetricCard
-            title="New Tenant"
-            value="45/48"
-            trend="-11.2%"
-            trendDown
-            icon={<Users />}
-            iconBg="bg-slate-800"
-          />
-        </div>
-
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-md font-bold text-slate-700">
-              Analytics
-            </CardTitle>
-            <Badge variant="outline">This Week</Badge>
-          </CardHeader>
-          <CardContent className="space-y-6 pt-4">
-            {["Marketing", "Sales", "Support"].map((item, index) => (
-              <div key={item} className="space-y-2">
-                <div className="flex justify-between text-xs font-semibold text-slate-500">
-                  <span>{item}</span>
-                  <span>{analyticsData[index]}%</span>
-                </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full">
-                  <div
-                    className="h-full bg-orange-500 rounded-full"
-                    style={{ width: "60%" }}
-                  />
-                </div>
-              </div>
-            ))}
-            <p className="text-[11px] text-slate-400 text-center mt-4">
-              Stats automatically updated based on{" "}
-              {isUserOnly ? "personal" : "business"} activity.
-            </p>
-          </CardContent>
-        </Card>
-      </div> */}
       </div>
-    </>
+      {/* card  */}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Card 1 - Upcoming Events */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900 pt-6 px-6">
+            Upcoming Events
+          </h2>
+
+          <div>
+            <div className="flex items-center justify-between p-6 border-b cursor-pointer hover:bg-gray-50 transition">
+              <div>
+                <p className="font-medium text-gray-800">Design Meetup</p>
+                <p className="text-sm text-gray-500">June 12 • 6:00 PM</p>
+              </div>
+              <span className="text-sm text-blue-600 font-medium">View</span>
+            </div>
+
+            <div className="flex items-center justify-between p-6 border-b cursor-pointer hover:bg-gray-50 transition">
+              <div>
+                <p className="font-medium text-gray-800">Product Launch</p>
+                <p className="text-sm text-gray-500">June 18 • 3:00 PM</p>
+              </div>
+              <span className="text-sm text-blue-600 font-medium">View</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2 - Deals */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900 pt-6 px-6">
+            Recent Deals
+          </h2>
+
+          <div>
+            <div className="flex items-center justify-between p-6 border-b cursor-pointer hover:bg-gray-50 transition">
+              <div>
+                <p className="font-medium text-gray-800">Acme Corp</p>
+                <p className="text-sm text-gray-500">$12,000 • Closed Won</p>
+              </div>
+              <span className="text-sm text-green-600 font-medium">View</span>
+            </div>
+
+            <div className="flex items-center justify-between p-6 border-b cursor-pointer hover:bg-gray-50 transition">
+              <div>
+                <p className="font-medium text-gray-800">BrightTech</p>
+                <p className="text-sm text-gray-500">$8,500 • Negotiation</p>
+              </div>
+              <span className="text-sm text-green-600 font-medium">View</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

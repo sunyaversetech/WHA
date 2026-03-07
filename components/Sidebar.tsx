@@ -116,15 +116,17 @@ const Sidebar = () => {
 
   return (
     <div
-      className="h-screen 
-                  w-16 md:w-56
+      className="h-screen
+      fixed top-0 left-0  
+                  w-20 md:w-56
                   shrink-0
                   bg-primary 
                   text-white 
                   border-r 
                   flex flex-col 
                   font-sans text-sm 
-                  transition-all duration-300">
+                  transition-all duration-300"
+    >
       <div className="flex-1 overflow-y-auto p-2 md:p-4">
         <Link href="/" className="flex items-center justify-center ">
           <Image
@@ -146,7 +148,7 @@ const Sidebar = () => {
             <div className="space-y-1">
               {group.items.map((item) => (
                 <div key={item.link}>
-                  <Link
+                  {/* <Link
                     href={item.link || "#"}
                     title={item.name}
                     className={`flex items-center 
@@ -161,11 +163,38 @@ const Sidebar = () => {
                                   ? "bg-slate-100 text-black"
                                   : "hover:bg-gray-600 hover:text-white"
                               }`}>
+                
+                    <item.icon size={22} strokeWidth={1.5} />
+
+   
+                    <span className="hidden md:inline capitalize font-medium">
+                      {item.name}
+                    </span>
+                  </Link> */}
+
+                  {/* new design with text  */}
+                  <Link
+                    href={item.link || "#"}
+                    title={item.name}
+                    className={`flex flex-col md:flex-row
+              items-center 
+              justify-center md:justify-start
+              gap-1 md:gap-3
+              p-2 md:p-3
+              rounded-md
+              transition-all duration-200
+              w-full
+              ${
+                item.active
+                  ? "bg-slate-100 text-black"
+                  : "hover:bg-gray-600 hover:text-white"
+              }`}
+                  >
                     {/* ICON */}
                     <item.icon size={22} strokeWidth={1.5} />
 
-                    {/* TEXT (hidden on small screens) */}
-                    <span className="hidden md:inline capitalize font-medium">
+                    {/* TEXT */}
+                    <span className="text-[10px] md:text-sm capitalize font-medium">
                       {item.name}
                     </span>
                   </Link>
