@@ -208,11 +208,27 @@ export default function BusinessPage() {
               </div>
 
               <div className="flex gap-2 ">
-                <button className="flex items-center justify-center p-2 border bg-white rounded-full transition-all hover:scale-105 active:scale-95">
-                  <Heart className="h-4 w-4 text-primary" />
+                <button
+                  onClick={handleAddRemoveFavorite}
+                  className="flex items-center justify-center p-2 border bg-white rounded-full transition-all hover:scale-105 active:scale-95">
+                  {isPending ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+                  ) : (
+                    <Heart
+                      className={cn(
+                        "h-5 w-5 sm:h-6 sm:w-6 text-primary transition-all",
+                        isBusinessFavorite
+                          ? "text-red-500 scale-110"
+                          : "text-neutral-600 hover:text-neutral-900",
+                      )}
+                      fill={isBusinessFavorite ? "red" : "none"}
+                    />
+                  )}
                 </button>
 
-                <button className="flex items-center justify-center p-2 border rounded-full bg-white  transition-all hover:scale-105 active:scale-95">
+                <button
+                  className="flex items-center justify-center p-2 border rounded-full bg-white  transition-all hover:scale-105 active:scale-95"
+                  onClick={handleShare}>
                   <Share className="h-4 w-4 text-primary " />
                 </button>
               </div>

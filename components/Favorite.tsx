@@ -35,7 +35,6 @@ export default function FavoritesPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* back button  */}
       <div className="flex items-start justify-between md:hidden">
         <ChevronLeft
           onClick={() => router.back()}
@@ -45,7 +44,6 @@ export default function FavoritesPage() {
         />
       </div>
 
-      {/* header  */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-xl text-secondary  font-bold tracking-tight">
@@ -155,6 +153,7 @@ function FavoriteCard({ item, type }: { item: any; type: string }) {
       },
     );
   };
+
   return (
     <Card className="group overflow-hidden pt-0 border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white border border-slate-100">
       <div className="relative  overflow-hidden bg-slate-200">

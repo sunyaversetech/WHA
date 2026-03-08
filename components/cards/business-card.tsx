@@ -114,7 +114,7 @@ export default function BusinessCard({ business }: { business: any }) {
           {/* LEFT SIDE */}
           <div className="space-y-1">
             <h3 className="text-base md:text-lg font-semibold text-gray-900 leading-tight">
-              {business.name}
+              {business.business_name}
             </h3>
 
             <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">

@@ -121,7 +121,9 @@ export default function BusinessMap({ businesses }: { businesses: any }) {
                 }}>
                 <Popup>
                   <div>
-                    <h3 className="font-bold text-lg">{business.name}</h3>
+                    <h3 className="font-bold text-lg">
+                      {business.business_name}
+                    </h3>
 
                     <p className="text-gray-600 text-sm mb-2">
                       {business.location}
@@ -172,7 +174,7 @@ export default function BusinessMap({ businesses }: { businesses: any }) {
                 <div>
                   <h4 className="font-medium w-[100x] truncate">
                     <span className="inline-block w-[150px] truncate">
-                      {business.name}
+                      {business.business_name}
                     </span>
                   </h4>
 
