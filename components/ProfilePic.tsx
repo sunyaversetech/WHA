@@ -73,7 +73,8 @@ export default function ProfileAvatar({
 
       <div
         onClick={handleIconClick}
-        className="absolute -bottom-1 -right-1 bg-white rounded-full p-1.5 shadow-md border cursor-pointer hover:bg-slate-50 transition-all active:scale-90">
+        className="absolute -bottom-1 -right-1 bg-white rounded-full p-1.5 shadow-md border cursor-pointer hover:bg-slate-50 transition-all active:scale-90"
+      >
         <Edit3 className="h-3 w-3 text-slate-500" />
       </div>
     </div>

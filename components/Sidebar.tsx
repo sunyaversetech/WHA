@@ -116,14 +116,14 @@ const Sidebar = () => {
 
   return (
     <div
-      className="h-screen
+      className="h-screen hidden md:flex
       fixed top-0 left-0  
                   w-20 md:w-56
                   shrink-0
                   bg-primary 
                   text-white 
                   border-r 
-                  flex flex-col 
+                   flex-col 
                   font-sans text-sm 
                   transition-all duration-300"
     >
