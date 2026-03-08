@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import {
+  ReviewType,
   useCreateReview,
   useDeleteReview,
   useGetReview,
@@ -49,7 +50,11 @@ const reviewSchema = z.object({
 
 export type Reviews = z.infer<typeof reviewSchema>;
 
-export default function BusinessReviewSection() {
+export default function BusinessReviewSection({
+  reviews,
+}: {
+  reviews: ReviewType[];
+}) {
   const form = useForm<Reviews>({
     resolver: zodResolver(reviewSchema),
     defaultValues: { rating: 0, comment: "" },
@@ -57,8 +62,8 @@ export default function BusinessReviewSection() {
   const params = useParams();
   const { id } = params;
   const { data: session, status } = useSession();
+  // const { data: reviews } = useGetReview(String(id));
   const router = useRouter();
-  const { data: reviews } = useGetReview(String(id));
   const queryClient = useQueryClient();
 
   const { mutate } = useCreateReview();
@@ -188,19 +193,18 @@ export default function BusinessReviewSection() {
         <div className="flex items-center gap-3 px-2">
           <h3 className="text-2xl font-bold text-slate-900">Recent Reviews</h3>
           <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">
-            {reviews?.data?.length}
+            {reviews?.length}
           </span>
         </div>
 
         <Separator />
 
         <div className="space-y-4">
-          {reviews?.data && reviews?.data?.length > 0 ? (
-            reviews?.data?.map((review) => (
+          {reviews && reviews?.length > 0 ? (
+            reviews?.map((review) => (
               <div
                 key={review._id}
-                className="p-6 rounded-2xl border border-slate-100 bg-white hover:border-slate-200 transition-all shadow-sm"
-              >
+                className="p-6 rounded-2xl border border-slate-100 bg-white hover:border-slate-200 transition-all shadow-sm">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
                     <Avatar>

@@ -16,6 +16,7 @@ import { useParams } from "next/navigation";
 import { useGetSingleBusiness } from "@/services/business.service";
 import BusinessReviewSection from "@/components/Business/Comment";
 import Map from "./Map";
+import { useGetReview } from "@/services/review.service";
 
 const rating = 4;
 const totalReviews = 2000;
@@ -25,6 +26,7 @@ export default function BusinessPage() {
   const { id } = params;
   console.log(id);
   const { data } = useGetSingleBusiness();
+  const { data: reviews } = useGetReview(String(id));
   const business = {
     business_name: "The Coffee Hub",
     business_category: "Cafe & Restaurant",
@@ -37,7 +39,15 @@ export default function BusinessPage() {
     abn_number: "12 345 678 910",
   };
 
-  console.log(data);
+  console.log(reviews);
+
+  const averageRating =
+    reviews?.data && reviews.data.length > 0
+      ? Math.round(
+          reviews.data.reduce((acc, review) => acc + review.rating, 0) /
+            reviews.data.length,
+        )
+      : 0;
 
   return (
     <div className="container-modern mx-auto p-6">
@@ -67,38 +77,45 @@ export default function BusinessPage() {
           <div className="mt-3 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2 text-sm text-muted-foreground flex-wrap">
             <div className="flex items-center gap-1 sm:gap-2">
               <span className="font-medium text-foreground">
-                {rating.toFixed(1)}
+                {averageRating.toFixed(1)}
               </span>
               <div className="flex gap-1">
                 {[...Array(5)].map((_, index) => (
                   <Star
                     key={index}
                     className={`h-4 w-4 ${
-                      index < rating
+                      index < averageRating
                         ? "fill-yellow-400 text-yellow-400"
                         : "text-gray-300"
                     }`}
                   />
                 ))}
               </div>
-              <span>({totalReviews.toLocaleString()})</span>
+              <span>
+                (
+                {reviews?.data && reviews?.data.length > 0
+                  ? reviews?.data.length
+                  : "No Review Yet"}
+                )
+              </span>
             </div>
 
             <Dot className="hidden md:block h-4 w-4" />
 
-            {/* Status */}
             <div className="font-medium text-red-500">
               Closed - Opens 9:00 am
             </div>
 
             <Dot className="hidden md:block h-4 w-4" />
 
-            {/* Location */}
-            <div>{business.city_name}</div>
+            <div className="capitalize">
+              {data?.data.city === "other"
+                ? data?.data.city_name
+                : data?.data.city}
+            </div>
           </div>
         </div>
 
-        {/* Business Image */}
         <div className="order-1 md:order-2">
           <div className="relative h-80 md:h-120 w-full rounded-2xl overflow-hidden">
             <Image
@@ -107,11 +124,8 @@ export default function BusinessPage() {
               className="w-full h-full object-cover"
               fill
             />
-            {/* Gradient overlay */}
-            {/* <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" /> */}
 
             <div className="absolute inset-0 flex items-start justify-between p-3 md:hidden">
-              {/* ChevronLeft - left */}
               <div>
                 <ChevronLeft
                   className="h-8 w-8 cursor-pointer rounded-full border  p-1.5 
@@ -119,7 +133,6 @@ export default function BusinessPage() {
                 />
               </div>
 
-              {/* Like & Share - right */}
               <div className="flex gap-2 ">
                 <button className="flex items-center justify-center p-2 border bg-white rounded-full transition-all hover:scale-105 active:scale-95">
                   <Heart className="h-4 w-4 text-primary" />
@@ -175,7 +188,7 @@ export default function BusinessPage() {
               </div>
             )}
           </div>
-          <BusinessReviewSection />
+          <BusinessReviewSection reviews={reviews?.data || []} />
         </div>
 
         <div className="space-y-6">
