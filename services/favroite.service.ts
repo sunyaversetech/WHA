@@ -4,11 +4,13 @@ import { Post } from "@/lib/action";
 import { useFetcher } from "@/lib/generic.service";
 import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
 import { DealsGetValues } from "./deal.service";
+import { SingUPFormSchema } from "@/app/auth/business/page";
 
 type FavoriteType = {
   events: EventFormValues[];
   services: any;
   deals: DealsGetValues[];
+  business: SingUPFormSchema[];
 };
 
 export const useCreateFavroite = () => {

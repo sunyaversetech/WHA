@@ -10,13 +10,22 @@ import {
   Star,
   Heart,
   Share,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useGetSingleBusiness } from "@/services/business.service";
 import BusinessReviewSection from "@/components/Business/Comment";
 import Map from "./Map";
 import { useGetReview } from "@/services/review.service";
+import {
+  useCreateFavroite,
+  useGetUserFavroite,
+} from "@/services/favroite.service";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { cn } from "@/lib/utils";
 
 const rating = 4;
 const totalReviews = 2000;
@@ -26,7 +35,13 @@ export default function BusinessPage() {
   const { id } = params;
   console.log(id);
   const { data } = useGetSingleBusiness();
+  const { mutate, isPending } = useCreateFavroite();
   const { data: reviews } = useGetReview(String(id));
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const { data: session } = useSession();
+  const businessId = data?.data?._id;
+
   const business = {
     business_name: "The Coffee Hub",
     business_category: "Cafe & Restaurant",
@@ -38,7 +53,6 @@ export default function BusinessPage() {
     verified: true,
     abn_number: "12 345 678 910",
   };
-
   console.log(reviews);
 
   const averageRating =
@@ -48,6 +62,52 @@ export default function BusinessPage() {
             reviews.data.length,
         )
       : 0;
+
+  const handleShare = async () => {
+    const shareData = {
+      title: data?.data?.business_name || "Check out this business",
+      text: `Take a look at ${data?.data?.business_name} on our platform!`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert("Link copied to clipboard!");
+      }
+    } catch (err) {
+      console.error("Error sharing:", err);
+    }
+  };
+
+  const handleAddRemoveFavorite = () => {
+    if (!session) {
+      toast.error("Please login to add to favorites");
+      router.push("/auth");
+      return;
+    }
+    mutate(
+      { item_id: businessId, item_type: "User" },
+      {
+        onSuccess: (msg) => {
+          router.refresh();
+          toast.success(msg.message);
+          queryClient.invalidateQueries({ queryKey: ["favroite"] });
+        },
+        onError: () => {
+          toast.error("Failed to add to favorites");
+        },
+      },
+    );
+  };
+
+  const { data: userFavorites } = useGetUserFavroite();
+
+  const isBusinessFavorite = userFavorites?.data?.business?.some(
+    (item) => (item._id ?? "").toString() === businessId?.toString(),
+  );
 
   return (
     <div className="container-modern mx-auto p-6">
@@ -64,11 +124,28 @@ export default function BusinessPage() {
             </div>
 
             <div className="hidden flex items-center gap-2 md:flex md:items-center md:gap-2">
-              <button className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition">
-                <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <button
+                onClick={handleAddRemoveFavorite}
+                className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition">
+                {isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+                ) : (
+                  <Heart
+                    className={cn(
+                      "h-5 w-5 sm:h-6 sm:w-6 text-primary transition-all",
+                      isBusinessFavorite
+                        ? "text-red-500 scale-110"
+                        : "text-neutral-600 hover:text-neutral-900",
+                    )}
+                    fill={isBusinessFavorite ? "red" : "none"}
+                  />
+                )}
               </button>
 
-              <button className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition">
+              <button
+                onClick={handleShare}
+                className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition-all active:scale-90"
+                title="Share business">
                 <Share className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </button>
             </div>

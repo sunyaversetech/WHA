@@ -86,6 +86,9 @@ export async function GET(req: Request) {
       deals: favorite_docs
         .filter((f) => f.item_type === "Deal")
         .map((f) => f.item_id),
+      business: favorite_docs
+        .filter((f) => f.item_type === "User")
+        .map((f) => f.item_id),
     };
 
     return NextResponse.json(

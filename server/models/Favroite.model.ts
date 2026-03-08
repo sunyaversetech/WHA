@@ -10,7 +10,7 @@ const FavoriteSchema = new Schema(
     },
     item_type: {
       type: String,
-      enum: ["Event", "Service", "Deal"],
+      enum: ["Event", "Service", "Deal", "User"],
       required: true,
     },
   },

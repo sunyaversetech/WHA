@@ -87,6 +87,7 @@ const cities = [
 
 export const signupSchema = z
   .object({
+    _id: z.string().optional(),
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.email().min(1, "Please enter a valid email address"),
     business_name: z.string().min(2, "Business name is required"),
