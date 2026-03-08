@@ -19,13 +19,15 @@ export default function AuthPage() {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* LEFT SIDE */}
-      <div className="flex w-full md:w-1/2 items-center justify-center p-6">
+      <div className="flex w-full md:w-1/2 items-start justify-center p-6">
         <Card className="w-full max-w-md shadow-lg border-none bg-white flex flex-col max-h-[90vh]">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">
-              Whats Happening Australia
+            <CardTitle className="text-2xl font-bold text-start md:text-center">
+              Log in or sign up
             </CardTitle>
-            <CardDescription>Create an account or log back in.</CardDescription>
+            <CardDescription className="text-start md:text-center">
+              Create an account or log back in
+            </CardDescription>
           </CardHeader>
 
           <CardContent className="flex-1">

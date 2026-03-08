@@ -183,12 +183,13 @@ export default function SignupPage() {
             </Button>
           </form>
         </Form>
-        {/* <p className="text-center text-sm text-gray-500 pt-4">
-          Already have an account?{" "}
-          <Link href="/auth" className="text-red-600 font-medium">
-            Login
+        <div className="text-start pt-4">
+          <h1 className="text-lg font-bold">Have a business? </h1>
+
+          <Link href="/auth/business" className="text-primary font-medium">
+            Register in as a business
           </Link>
-        </p> */}
+        </div>
       </div>
     </div>
   );

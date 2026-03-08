@@ -38,7 +38,7 @@ export default function RootLayout({
               <CityFilterProvider>
                 <SessionWrapper>
                   <NavbarProvider />
-                  <div className="mb-15 md:mb-0  ">{children}</div>
+                  <div>{children}</div>
                   <Toaster />
                   <BottomNav />
                 </SessionWrapper>

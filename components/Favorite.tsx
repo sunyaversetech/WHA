@@ -2,7 +2,14 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Calendar, MapPin, ArrowRight, Loader2 } from "lucide-react";
+import {
+  Heart,
+  Calendar,
+  MapPin,
+  ArrowRight,
+  Loader2,
+  ChevronLeft,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useCreateFavroite,
@@ -12,6 +19,7 @@ import Image from "next/image";
 import { Button } from "./ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function FavoritesPage() {
   const { data: favoritesData, isLoading } = useGetUserFavroite();
@@ -23,17 +31,31 @@ export default function FavoritesPage() {
   };
 
   if (isLoading) return <FavoritesSkeleton />;
+  const router = useRouter();
 
   return (
-    <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8 min-h-screen bg-slate-50/50">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-          My Favorites
-        </h1>
-        <p className="text-slate-500">
-          Manage and view all the items you`ve saved across the marketplace.
-        </p>
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* back button  */}
+      <div className="flex items-start justify-between md:hidden">
+        <ChevronLeft
+          onClick={() => router.back()}
+          className="h-10 w-10 cursor-pointer rounded-full p-1 -ml-2
+               text-[#ODODOD] 
+               transition-all hover:scale-105 active:scale-95"
+        />
       </div>
+
+      {/* header  */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-xl text-secondary  font-bold tracking-tight">
+            Favorites
+          </h1>
+          <p className="text-muted">View and manage your favorites.</p>
+        </div>
+      </div>
+
+      <hr className="border-slate-200" />
 
       <Tabs defaultValue="events" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-3 mb-8 bg-slate-100 p-1 rounded-xl">
@@ -170,7 +192,8 @@ function FavoriteCard({ item, type }: { item: any; type: string }) {
               handleAddRemoveFavorite();
             }}
             variant={"outline"}
-            className=" cursor-pointer">
+            className=" cursor-pointer"
+          >
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
             ) : (

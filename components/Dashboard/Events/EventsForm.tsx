@@ -178,7 +178,7 @@ export function EventForm() {
         <div className="flex items-start justify-start">
           <ChevronLeft
             onClick={() => router.back()}
-            className="h-10 w-10 cursor-pointer rounded-full hover:border hover:bg-white p-1 -ml-2
+            className="h-10 w-10 cursor-pointer rounded-full  p-1 -ml-2
                text-[#ODODOD] 
                transition-all hover:scale-105 active:scale-95"
           />
