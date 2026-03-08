@@ -29,9 +29,9 @@ export default function FavoritesPage() {
     services: [],
     deals: [],
   };
+  const router = useRouter();
 
   if (isLoading) return <FavoritesSkeleton />;
-  const router = useRouter();
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -192,8 +192,7 @@ function FavoriteCard({ item, type }: { item: any; type: string }) {
               handleAddRemoveFavorite();
             }}
             variant={"outline"}
-            className=" cursor-pointer"
-          >
+            className=" cursor-pointer">
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
             ) : (
