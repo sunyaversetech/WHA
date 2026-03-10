@@ -1,7 +1,7 @@
 import { Post } from "@/lib/action";
 import { useMutation } from "@tanstack/react-query";
 import { ApiResponseType } from "../apitypes";
-import { SingUPFormSchema } from "@/app/auth/business/page";
+import { SingUPFormSchema } from "@/components/Auth/BusinessSignupPage";
 
 // export const useCreateActivity = () => {
 //   return useMutation<
