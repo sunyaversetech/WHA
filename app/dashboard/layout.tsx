@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Sidebar from "@/components/Sidebar";
-import DashboardNavbar from "@/components/Dashboard/DashboardNavbar";
-import MobileDashbaord from "@/components/MobileDashboard";
+import Sidebar from "@/components/ResuableComponents/Sidebar";
+// import MobileDashbaord from "@/components/MobileDashboard";
 
 export const metadata: Metadata = {
   title: "Dashboard",

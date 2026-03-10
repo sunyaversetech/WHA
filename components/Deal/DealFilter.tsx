@@ -12,7 +12,7 @@ import {
   Globe,
 } from "lucide-react";
 import debounce from "lodash.debounce";
-import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 
 const CATEGORY_ICONS: Record<string, any> = {
   all: Globe,
@@ -146,8 +146,7 @@ export default function DealsHeader() {
                 isActive
                   ? "bg-primary border-primary text-white"
                   : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-              }`}
-            >
+              }`}>
               <Icon
                 className={`h-4 w-4 sm:h-5 sm:w-5 mb-1 ${
                   isActive ? "text-white" : "text-slate-500"

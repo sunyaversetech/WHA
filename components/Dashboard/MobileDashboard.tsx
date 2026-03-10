@@ -103,8 +103,7 @@ export default function MobileDashboard() {
                 active
                   ? "bg-gray-100 text-primary"
                   : "hover:bg-gray-50 text-gray-800"
-              }`}
-            >
+              }`}>
               <Icon size={22} />
               <span className="text-lg">{item.name}</span>
             </Link>
@@ -127,8 +126,7 @@ export default function MobileDashboard() {
                 active
                   ? "bg-gray-100 text-primary"
                   : "hover:bg-gray-50 text-gray-800"
-              }`}
-            >
+              }`}>
               <Icon size={22} />
               <span className="text-lg">{item.name}</span>
             </Link>
@@ -140,8 +138,7 @@ export default function MobileDashboard() {
       <div className="bg-white rounded-2xl p-5 border border-gray-200">
         <button
           onClick={() => signOut()}
-          className="flex items-center gap-4 text-gray-600 hover:text-black transition"
-        >
+          className="flex items-center gap-4 text-gray-600 hover:text-black transition">
           <LogOut size={22} />
           <span className="text-lg">Log out</span>
         </button>

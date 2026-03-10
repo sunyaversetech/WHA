@@ -1,8 +1,8 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
-import DashboardNavbar from "./Dashboard/DashboardNavbar";
 import Navbar from "./Navabr";
+import DashboardNavbar from "@/components/Dashboard/DashboardNavbar";
 
 const NavbarProvider = () => {
   const pathname = usePathname();

@@ -16,7 +16,7 @@ import {
   useGetUserFavroite,
 } from "@/services/favroite.service";
 import Image from "next/image";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";

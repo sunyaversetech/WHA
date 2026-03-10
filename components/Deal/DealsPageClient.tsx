@@ -4,7 +4,7 @@ import DealCard from "@/components/cards/deal-card";
 
 import { Tag } from "lucide-react";
 import { useGetAllDeals } from "@/services/deal.service";
-import DealsHeader from "@/components/DealFilter";
+import DealsHeader from "./DealFilter";
 
 export default function DealsPageClient() {
   const { data: deals } = useGetAllDeals();

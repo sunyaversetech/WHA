@@ -26,9 +26,9 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "./ui/carousel";
+} from "../ui/carousel";
 import { useGetLandingPageData } from "@/services/landing.service";
-import SponsorSlider from "./ui/sponsor-slider";
+import SponsorSlider from "../ui/sponsor-slider";
 
 export default function LandingPage() {
   const allDeals = getDeals();

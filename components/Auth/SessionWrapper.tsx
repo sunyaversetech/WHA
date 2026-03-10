@@ -2,7 +2,7 @@
 import { SessionProvider, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import LoadingPage from "../Loading";
+import LoadingPage from "@/components/ResuableComponents/Loading";
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { data: session, status } = useSession();

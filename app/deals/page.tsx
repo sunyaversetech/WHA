@@ -1,4 +1,4 @@
-import DealsPageClient from "./DealsPageClient";
+import DealsPageClient from "@/components/Deal/DealsPageClient";
 
 export const metadata = {
   title: "Deals | What's Happening Canberra",

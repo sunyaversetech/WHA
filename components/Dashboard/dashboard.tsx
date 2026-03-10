@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ProfileAvatar from "./ProfilePic";
-import DashboardNavbar from "./Dashboard/DashboardNavbar";
+import DashboardNavbar from "./DashboardNavbar";
 import MobileDashbaord from "./MobileDashboard";
 
 export default function Dashboard() {
@@ -62,14 +62,12 @@ export default function Dashboard() {
                     <div className="flex flex-wrap gap-2 mt-1 sm:mt-0">
                       <Badge
                         variant="outline"
-                        className="text-[10px] uppercase tracking-tighter"
-                      >
+                        className="text-[10px] uppercase tracking-tighter">
                         {session?.user?.category || "Personal Account"}
                       </Badge>
                       <Badge
                         variant="outline"
-                        className="text-[10px] uppercase tracking-tighter"
-                      >
+                        className="text-[10px] uppercase tracking-tighter">
                         {session?.user?.verified
                           ? "Verified"
                           : "Business Not Verified"}
