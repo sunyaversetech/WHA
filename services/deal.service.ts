@@ -2,7 +2,6 @@ import { useMutation } from "@tanstack/react-query";
 import { ApiResponseType } from "./apitypes";
 import { PATCH, Post } from "@/lib/action";
 import { useFetcher } from "@/lib/generic.service";
-import { SingUPFormSchema } from "@/app/auth/business/page";
 import { UserBusinessType } from "./business.service";
 import { DealFormValues } from "@/components/Dashboard/Deals/DealForm";
 
