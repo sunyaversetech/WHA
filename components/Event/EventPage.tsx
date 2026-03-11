@@ -8,9 +8,14 @@ import { filterByCity } from "@/lib/utils/city-filter";
 import { useGetAllEvents } from "@/services/event.service";
 import EventHeader from "./EventFilter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent } from "../ui/tabs";
+import { useSearchParams } from "next/navigation";
+import EventMap from "./Event-map";
 
 export default function EventsPageClient() {
   const { selectedCity } = useCityFilter();
+  const searchParams = useSearchParams();
+  const view = searchParams.get("view") || "list";
 
   const { data: apiResponse, isLoading, error } = useGetAllEvents();
 
@@ -51,15 +56,24 @@ export default function EventsPageClient() {
             <Skeleton className="h-72 w-96 mb-4 animate-pulse" />
           </div>
         ) : events.length === 0 ? (
-          <div className=" mt-8 p-20 text-center bg-white rounded-3xl border-2 border-dashed border-neutral-200">
-            <Calendar className="h-12 w-12 mx-auto text-neutral-300 mb-4" />
-            <h3 className="text-lg font-semibold text-primary">
-              No events to show
-            </h3>
-            <p className="text-sm text-neutral-500 mt-1">
-              Try selecting `All Cities` in the navigation bar.
-            </p>
-          </div>
+          <>
+            <Tabs value={view}>
+              <TabsContent value="list">
+                <div className=" mt-8 p-20 text-center bg-white rounded-3xl border-2 border-dashed border-neutral-200">
+                  <Calendar className="h-12 w-12 mx-auto text-neutral-300 mb-4" />
+                  <h3 className="text-lg font-semibold text-primary">
+                    No events to show
+                  </h3>
+                  <p className="text-sm text-neutral-500 mt-1">
+                    Try selecting `All Cities` in the navigation bar.
+                  </p>
+                </div>
+              </TabsContent>
+              <TabsContent value="map">
+                <EventMap businesses={events?.data} />
+              </TabsContent>
+            </Tabs>
+          </>
         ) : (
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
             {events.map((event: any) => (

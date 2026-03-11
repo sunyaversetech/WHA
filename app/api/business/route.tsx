@@ -14,9 +14,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const rawCategory = searchParams.get("category") || "";
     const rawSearch = searchParams.get("search") || "";
+    const rawCity = searchParams.get("city") || "";
 
     const category = rawCategory.replace(/\?+$/, "").trim();
     const search = rawSearch.replace(/\?+$/, "").trim();
+    const city = rawCity.replace(/\?+$/, "").trim();
 
     const query: any = { category: "business" };
 
@@ -28,6 +30,13 @@ export async function GET(request: NextRequest) {
       const safeSearch = escapeRegex(search);
       query.name = { $regex: safeSearch, $options: "i" };
     }
+
+    if (city && city !== "all") {
+      query.city = { $regex: `^${escapeRegex(city)}$`, $options: "i" };
+    }
+
+    console.log("city", rawCity);
+    console.log("city", category);
 
     const businesses = await User.find(query).sort({ createdAt: -1 }).lean();
 

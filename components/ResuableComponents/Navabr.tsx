@@ -12,14 +12,28 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Settings, LogOut, MapPin, ChevronRight } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentCity = searchParams.get("city");
+  const buildPath = (href: string) => {
+    if (!currentCity) return href;
+    return `${href}?city=${currentCity}`;
+  };
 
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 border-b bg-white">
@@ -43,7 +57,7 @@ export default function Navbar() {
           ].map((item) => (
             <Link
               key={item.href}
-              href={item.href}
+              href={buildPath(item.href)}
               className={`px-5 py-2 rounded-full transition-all duration-300 ease-in-out
         ${
           isActive(item.href)
@@ -82,12 +96,44 @@ export default function Navbar() {
             <span>Request For Business</span>
           </Link>
         ) : (
-          <Button variant="outline" asChild>
-            <Link href="/" className="gap-2">
-              <MapPin className="h-6 w-6" />
-              Australia
-            </Link>
-          </Button>
+          <Select
+            onValueChange={(value) => {
+              if (value === "Australia") {
+                router.push(pathname);
+              } else {
+                router.push(`${pathname}?city=${value}`);
+              }
+            }}>
+            <SelectTrigger className="flex items-center gap-2 border border-blue-950 text-blue-950 font-bold capitalize">
+              <MapPin className="h-6 w-6 text-blue-950" />
+              {currentCity ?? "Australia"}
+            </SelectTrigger>
+            <SelectContent popover="auto" position="popper">
+              <SelectItem value="Australia">
+                <span className="flex items-center gap-2 ">
+                  <MapPin className="h-6 w-6" /> Australia
+                </span>
+              </SelectItem>
+
+              <SelectItem value="sydney">
+                <span className="flex items-center gap-2">
+                  <MapPin className="h-6 w-6" /> Sydney
+                </span>
+              </SelectItem>
+
+              <SelectItem value="canberra">
+                <span className="flex items-center gap-2">
+                  <MapPin className="h-6 w-6" /> Canberra
+                </span>
+              </SelectItem>
+
+              <SelectItem value="others">
+                <span className="flex items-center gap-2">
+                  <MapPin className="h-6 w-6" /> Others
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         )}
         <div className="flex items-center">
           {session ? (

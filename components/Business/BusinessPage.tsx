@@ -210,10 +210,11 @@ export default function BusinessesClientPage() {
               <div className=" mt-8 p-20 text-center bg-white rounded-3xl border-2 border-dashed border-neutral-200">
                 <Calendar className="h-12 w-12 mx-auto text-neutral-300 mb-4" />
                 <h3 className="text-lg font-semibold text-secondary">
-                  No Business to show
+                  No Business to show in this City or category
                 </h3>
-                <p className="text-sm text-neutral-500 mt-1">
-                  Try selecting `All` in the navigation bar.
+                <p className="text-sm text-neutral-500 mt-1 capitalize">
+                  Try selecting `Australia` in the Navigation bar and All in
+                  Filter above.
                 </p>
               </div>
             ) : (

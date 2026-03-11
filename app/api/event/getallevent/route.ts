@@ -18,6 +18,8 @@ export async function GET(request: NextRequest) {
 
     const category = rawCategory.replace(/\?+$/, "").trim();
     const search = rawSearch.replace(/\?+$/, "").trim();
+    const rawCity = searchParams.get("city") || "";
+    const city = rawCity.replace(/\?+$/, "").trim();
 
     const query: any = {};
 
@@ -28,6 +30,10 @@ export async function GET(request: NextRequest) {
     if (search) {
       const safeSearch = escapeRegex(search);
       query.title = { $regex: safeSearch, $options: "i" };
+    }
+
+    if (city && city !== "all") {
+      query.city = { $regex: `^${escapeRegex(city)}$`, $options: "i" };
     }
 
     const myEvents = await Event.find(query).sort({ createdAt: -1 });

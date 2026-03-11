@@ -6,6 +6,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import "@/server/models/Event.model";
 import "@/server/models/Service.schema";
 import "@/server/models/DealSchema.model";
+import "@/server/models/Auth.model";
 export async function POST(req: Request) {
   try {
     await connectToDb();

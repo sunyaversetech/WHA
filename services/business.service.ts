@@ -29,10 +29,11 @@ export const useGetBusiness = () => {
   const param = useSearchParams();
   const category = param.get("category") || "";
   const search = param.get("search") || "";
+  const city = param.get("city") || "";
   return useFetcher<ApiResponseType<UserBusinessType[]>>(
-    ["getbusinesses", category, search],
+    ["getbusinesses", category, search, city],
     null,
-    `/api/business?category=${category}&search=${search}`,
+    `/api/business?category=${category}&search=${search}&city=${city}`,
   );
 };
 

@@ -2,16 +2,31 @@ import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import { Deal } from "@/server/models/DealSchema.model";
 import Event from "@/server/models/Event.model";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+function escapeRegex(text: string) {
+  return text.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+}
+
+export async function GET(request: NextRequest) {
   try {
     await connectToDb();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayISO = today.toISOString();
 
-    const business = await User.find({ category: "business" }).sort({
+    const { searchParams } = new URL(request.url);
+    const cityParam = searchParams.get("city") || "";
+    const query: any = { category: "business" };
+
+    const city = cityParam.replace(/\?+$/, "").trim();
+
+    if (city) {
+      const safeCity = escapeRegex(city);
+      query.name = { $regex: safeCity, $options: "i" };
+    }
+
+    const business = await User.find({ category: "business", ...query }).sort({
       createdAt: -1,
     });
     const upcomingevents = await Event.find({
