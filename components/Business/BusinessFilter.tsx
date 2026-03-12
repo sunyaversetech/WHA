@@ -28,6 +28,7 @@ import {
 import debounce from "lodash.debounce";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { useGetALLBusiness } from "@/services/business.service";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
 
 const CATEGORY_ICONS: Record<string, any> = {
   all: Store,
@@ -160,6 +161,8 @@ export default function BusinessHeader() {
   const handleTabChange = (value: string) => {
     updateQuery({ view: value });
   };
+  const currentCity = searchParams.get("city");
+  const currentCommunity = searchParams.get("community");
 
   return (
     <div className="w-full bg-white px-4 py-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
@@ -196,9 +199,43 @@ export default function BusinessHeader() {
           />
         </div>
         <div className="flex-none">
-          <div className="text-center px-3 py-2 text-sm md:text-base bg-primary border text-white rounded-full cursor-pointer transition hover:bg-white hover:text-primary">
-            All Community
-          </div>
+          <Select
+            onValueChange={(val) => {
+              updateQuery({ community: val === "All" ? null : val });
+            }}>
+            <SelectTrigger className="flex items-center gap-2 border border-blue-950 text-blue-950 font-bold capitalize">
+              {currentCommunity ?? "All Community"}
+            </SelectTrigger>
+            <SelectContent popover="auto" position="popper">
+              <SelectItem value="All">
+                <span className="flex items-center gap-2 ">All Community</span>
+              </SelectItem>
+
+              <SelectItem value="Australian">
+                <span className="flex items-center gap-2">Australian</span>
+              </SelectItem>
+
+              <SelectItem value="Nepali">
+                <span className="flex items-center gap-2">Nepali</span>
+              </SelectItem>
+
+              <SelectItem value="Indian">
+                <span className="flex items-center gap-2">Indian</span>
+              </SelectItem>
+
+              <SelectItem value="Bhutanese">
+                <span className="flex items-center gap-2">Bhutanese</span>
+              </SelectItem>
+
+              <SelectItem value="European">
+                <span className="flex items-center gap-2">European</span>
+              </SelectItem>
+
+              <SelectItem value="Others">
+                <span className="flex items-center gap-2">Others</span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

@@ -30,7 +30,6 @@ import { cn } from "@/lib/utils";
 export default function BusinessPage() {
   const params = useParams();
   const { id } = params;
-  console.log(id);
   const { data } = useGetSingleBusiness();
   const { mutate, isPending } = useCreateFavroite();
   const { data: reviews } = useGetReview(String(id));

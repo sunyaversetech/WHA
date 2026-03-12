@@ -15,10 +15,12 @@ export async function GET(request: NextRequest) {
     const rawCategory = searchParams.get("category") || "";
     const rawSearch = searchParams.get("search") || "";
     const rawCity = searchParams.get("city") || "";
+    const rawCommunity = searchParams.get("community") || "";
 
     const category = rawCategory.replace(/\?+$/, "").trim();
     const search = rawSearch.replace(/\?+$/, "").trim();
     const city = rawCity.replace(/\?+$/, "").trim();
+    const community = rawCommunity.replace(/\?+$/, "").trim();
 
     const query: any = { category: "business" };
 
@@ -34,9 +36,12 @@ export async function GET(request: NextRequest) {
     if (city && city !== "all") {
       query.city = { $regex: `^${escapeRegex(city)}$`, $options: "i" };
     }
-
-    console.log("city", rawCity);
-    console.log("city", category);
+    if (community) {
+      query.community = {
+        $regex: `^${escapeRegex(community)}$`,
+        $options: "i",
+      };
+    }
 
     const businesses = await User.find(query).sort({ createdAt: -1 }).lean();
 

@@ -5,7 +5,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   Globe,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import debounce from "lodash.debounce";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
 
 const CATEGORY_ICONS: Record<string, any> = {
   all: Globe,
@@ -39,7 +40,6 @@ const BASE_CATEGORIES = [
 export default function EventHeader() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const activeCategory = searchParams.get("category") || "all";
   const currentTab = searchParams.get("view") || "list";
 
@@ -99,9 +99,11 @@ export default function EventHeader() {
     }));
   }, []);
 
+  const currentCity = searchParams.get("city");
+  const currentCommunity = searchParams.get("community");
+
   return (
     <div className="w-full bg-white px-4 py-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
-      {/* Header */}
       <div className="flex items-center justify-between mb-2 gap-2">
         <h1 className="text-lg md:text-xl font-bold text-slate-800">
           Trending Events
@@ -115,11 +117,9 @@ export default function EventHeader() {
         </Tabs>
       </div>
 
-      {/* Search */}
       <div className="flex flex-row gap-2 mb-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
-
           <input
             type="text"
             value={inputValue}
@@ -130,9 +130,43 @@ export default function EventHeader() {
         </div>
 
         <div className="flex-none">
-          <div className="text-center px-3 py-2 text-sm md:text-base bg-primary border text-white rounded-full cursor-pointer transition hover:bg-white hover:text-primary">
-            All Events
-          </div>
+          <Select
+            onValueChange={(val) => {
+              updateQuery({ community: val === "All" ? null : val });
+            }}>
+            <SelectTrigger className="flex items-center gap-2 border border-blue-950 text-blue-950 font-bold capitalize">
+              {currentCommunity ?? "All Events"}
+            </SelectTrigger>
+            <SelectContent popover="auto" position="popper">
+              <SelectItem value="All">
+                <span className="flex items-center gap-2 ">All Events</span>
+              </SelectItem>
+
+              <SelectItem value="Australian">
+                <span className="flex items-center gap-2">Australian</span>
+              </SelectItem>
+
+              <SelectItem value="Nepali">
+                <span className="flex items-center gap-2">Nepali</span>
+              </SelectItem>
+
+              <SelectItem value="Indian">
+                <span className="flex items-center gap-2">Indian</span>
+              </SelectItem>
+
+              <SelectItem value="Bhutanese">
+                <span className="flex items-center gap-2">Bhutanese</span>
+              </SelectItem>
+
+              <SelectItem value="European">
+                <span className="flex items-center gap-2">European</span>
+              </SelectItem>
+
+              <SelectItem value="Others">
+                <span className="flex items-center gap-2">Others</span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

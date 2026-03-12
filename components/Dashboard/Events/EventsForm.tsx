@@ -235,8 +235,7 @@ export function EventForm() {
                             ? file
                             : URL.createObjectURL(file);
                         window.open(url, "_blank");
-                      }}
-                    >
+                      }}>
                       {typeof form.watch("image") === "string"
                         ? form.watch("image").split("/").pop()
                         : form.watch("image")?.name}
@@ -245,8 +244,7 @@ export function EventForm() {
                     <button
                       type="button"
                       onClick={() => form.setValue("image", undefined)}
-                      className="flex-shrink-0 ml-1 text-slate-400 hover:text-red-500 transition-colors"
-                    >
+                      className="flex-shrink-0 ml-1 text-slate-400 hover:text-red-500 transition-colors">
                       <span className="text-lg font-bold leading-none">
                         &times;
                       </span>
@@ -328,8 +326,7 @@ export function EventForm() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-start border rounded-lg"
-                      >
+                        className="w-full justify-start border rounded-lg">
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {field.value?.from ? (
                           field.value.to ? (
@@ -392,8 +389,7 @@ export function EventForm() {
                     type="single"
                     value={field.value}
                     onValueChange={(val) => val && field.onChange(val)}
-                    className="flex flex-wrap w-full gap-2"
-                  >
+                    className="flex flex-wrap w-full gap-2">
                     {[
                       "Community",
                       "Festival",
@@ -404,8 +400,7 @@ export function EventForm() {
                       <ToggleGroupItem
                         key={cat}
                         value={cat}
-                        className={toggleItemStyles}
-                      >
+                        className={toggleItemStyles}>
                         {cat}
                       </ToggleGroupItem>
                     ))}
@@ -441,8 +436,7 @@ export function EventForm() {
                     type="single"
                     value={field.value}
                     onValueChange={(val) => val && field.onChange(val)}
-                    className="flex w-full gap-2"
-                  >
+                    className="flex w-full gap-2">
                     <ToggleGroupItem value="free" className={toggleItemStyles}>
                       Free
                     </ToggleGroupItem>
@@ -494,8 +488,7 @@ export function EventForm() {
                     type="single"
                     value={field.value}
                     onValueChange={(val) => val && field.onChange(val)}
-                    className="flex flex-wrap gap-2"
-                  >
+                    className="flex flex-wrap gap-2">
                     {[
                       "Australian",
                       "Nepali",
@@ -507,8 +500,7 @@ export function EventForm() {
                       <ToggleGroupItem
                         key={com}
                         value={com}
-                        className={toggleItemStyles}
-                      >
+                        className={toggleItemStyles}>
                         {com}
                       </ToggleGroupItem>
                     ))}
@@ -529,8 +521,7 @@ export function EventForm() {
                     type="single"
                     value={field.value}
                     onValueChange={(val) => val && field.onChange(val)}
-                    className="flex flex-wrap gap-4"
-                  >
+                    className="flex flex-wrap gap-4">
                     {[
                       "Sydney",
                       "Canberra",
@@ -546,8 +537,7 @@ export function EventForm() {
                       <ToggleGroupItem
                         key={cat}
                         value={cat}
-                        className={toggleItemStyles}
-                      >
+                        className={toggleItemStyles}>
                         {cat}
                       </ToggleGroupItem>
                     ))}
@@ -575,8 +565,7 @@ export function EventForm() {
           <Button
             type="submit"
             className="w-full h-12 text-lg rounded-lg"
-            disabled={isPending}
-          >
+            disabled={isPending}>
             {isPending
               ? "Saving Event..."
               : data

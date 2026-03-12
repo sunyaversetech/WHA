@@ -55,30 +55,48 @@ export default function EventsPageClient() {
             <Skeleton className="h-72 w-96 mb-4 animate-pulse" />
             <Skeleton className="h-72 w-96 mb-4 animate-pulse" />
           </div>
-        ) : events.length === 0 ? (
+        ) : events.length !== 0 ? (
           <>
-            <Tabs value={view}>
+            <Tabs value={view} className="w-full">
               <TabsContent value="list">
-                <div className=" mt-8 p-20 text-center bg-white rounded-3xl border-2 border-dashed border-neutral-200">
-                  <Calendar className="h-12 w-12 mx-auto text-neutral-300 mb-4" />
-                  <h3 className="text-lg font-semibold text-primary">
-                    No events to show
-                  </h3>
-                  <p className="text-sm text-neutral-500 mt-1">
-                    Try selecting `All Cities` in the navigation bar.
-                  </p>
-                </div>
+                {events.length === 0 ? (
+                  <div className="mt-8 p-20 text-center bg-white rounded-3xl border-2 border-dashed border-neutral-200">
+                    <Calendar className="h-12 w-12 mx-auto text-neutral-300 mb-4" />
+                    <h3 className="text-lg font-semibold text-primary">
+                      No events to show
+                    </h3>
+                    <p className="text-sm text-neutral-500 mt-1">
+                      Try selecting `All Cities` in the navigation bar.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
+                    {events.map((event: any) => (
+                      <EventCard key={event._id} event={event} />
+                    ))}
+                  </div>
+                )}
               </TabsContent>
+
               <TabsContent value="map">
-                <EventMap businesses={events?.data} />
+                <div className="mt-8 h-[600px] rounded-xl overflow-hidden border">
+                  <EventMap businesses={events} />
+                </div>
               </TabsContent>
             </Tabs>
           </>
         ) : (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
-            {events.map((event: any) => (
-              <EventCard key={event._id} event={event} />
-            ))}
+          <div className="mt-8 grid grid-cols-1  gap-6 px-4">
+            <div className="mt-8 p-20 text-center bg-white rounded-3xl border-2 border-dashed border-neutral-200">
+              <Calendar className="h-12 w-12 mx-auto text-neutral-300 mb-4" />
+              <h3 className="text-lg font-semibold text-primary">
+                No events to show
+              </h3>
+              <p className="text-sm text-neutral-500 mt-1">
+                Try selecting `Australia` in the navigation bar and `All` in
+                Filter.
+              </p>
+            </div>
           </div>
         )}
       </div>

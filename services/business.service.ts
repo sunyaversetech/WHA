@@ -30,10 +30,11 @@ export const useGetBusiness = () => {
   const category = param.get("category") || "";
   const search = param.get("search") || "";
   const city = param.get("city") || "";
+  const community = param.get("community") || "";
   return useFetcher<ApiResponseType<UserBusinessType[]>>(
-    ["getbusinesses", category, search, city],
+    ["getbusinesses", category, search, city, community],
     null,
-    `/api/business?category=${category}&search=${search}&city=${city}`,
+    `/api/business?category=${category}&search=${search}&city=${city}&community=${community}`,
   );
 };
 

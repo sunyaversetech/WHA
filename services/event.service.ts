@@ -72,11 +72,12 @@ export const useGetAllEvents = () => {
   const category = param.get("category") || "";
   const search = param.get("search") || "";
   const city = param.get("city") || "";
+  const community = param.get("community") || "";
 
   return useFetcher<ApiResponseType<EventFormValues[]>>(
-    ["allEvents", category, search, city],
+    ["allEvents", category, search, city, community],
     null,
-    `/api/event/getallevent?category=${category}&search=${search}&city=${city}`,
+    `/api/event/getallevent?category=${category}&search=${search}&city=${city}&community=${community}`,
   );
 };
 

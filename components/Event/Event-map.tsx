@@ -82,6 +82,8 @@ export default function EventMap({ businesses }: { businesses: any }) {
     null,
   );
 
+  console.log("businesses", businesses);
+
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null,
   );
@@ -89,8 +91,8 @@ export default function EventMap({ businesses }: { businesses: any }) {
   const center: [number, number] = [-35.2809, 149.13];
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-      <div className="relative h-[500px] bg-gray-100">
+    <div className="bg-white rounded-lg shadow-md h-full  border border-gray-200">
+      <div className="relative h-[480px] bg-gray-100">
         <MapContainer
           center={center}
           zoom={12}
@@ -121,9 +123,7 @@ export default function EventMap({ businesses }: { businesses: any }) {
                 }}>
                 <Popup>
                   <div>
-                    <h3 className="font-bold text-lg">
-                      {business.business_name}
-                    </h3>
+                    <h3 className="font-bold text-lg">{business.title}</h3>
 
                     <p className="text-gray-600 text-sm mb-2">
                       {business.location}
@@ -155,8 +155,8 @@ export default function EventMap({ businesses }: { businesses: any }) {
         </MapContainer>
       </div>
 
-      <div className="p-4">
-        <h3 className="font-medium text-lg mb-3">All Locations</h3>
+      <div className="p-4 ">
+        <h3 className="font-medium text-lg mb-3 ">All Locations</h3>
 
         <div className="space-y-2 max-h-[300px] flex gap-2 flex-wrap overflow-y-auto">
           {businesses.map((business: any) => (
@@ -174,7 +174,7 @@ export default function EventMap({ businesses }: { businesses: any }) {
                 <div>
                   <h4 className="font-medium w-[100x] truncate">
                     <span className="inline-block w-[150px] truncate">
-                      {business.business_name}
+                      {business.title}
                     </span>
                   </h4>
 

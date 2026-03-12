@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { useCallback } from "react";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -30,6 +31,23 @@ export default function Navbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCity = searchParams.get("city");
+
+  const updateQuery = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value && value !== "all") {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
+      });
+
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
   const buildPath = (href: string) => {
     if (!currentCity) return href;
     return `${href}?city=${currentCity}`;
@@ -97,12 +115,8 @@ export default function Navbar() {
           </Link>
         ) : (
           <Select
-            onValueChange={(value) => {
-              if (value === "Australia") {
-                router.push(pathname);
-              } else {
-                router.push(`${pathname}?city=${value}`);
-              }
+            onValueChange={(val) => {
+              updateQuery({ city: val === "Australia" ? null : val });
             }}>
             <SelectTrigger className="flex items-center gap-2 border border-blue-950 text-blue-950 font-bold capitalize">
               <MapPin className="h-6 w-6 text-blue-950" />
