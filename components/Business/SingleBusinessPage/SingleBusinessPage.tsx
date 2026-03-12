@@ -269,7 +269,7 @@ export default function BusinessPage() {
               <Map
                 latitude={data.data.latitude}
                 longitude={data.data.longitude}
-                businessName={data.data.business_name ?? ""}
+                business={data?.data ?? ""}
               />
             ) : (
               <div className="h-[200px] flex items-center justify-center bg-slate-50 rounded-xl border border-dashed">

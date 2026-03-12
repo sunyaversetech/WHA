@@ -115,6 +115,7 @@ export default function BusinessReviewSection({
     );
   };
 
+  console.log("reviews", reviews);
   return (
     <div className="max-w-4xl mx-auto space-y-10 py-10">
       <Card className="border-slate-200 shadow-sm overflow-hidden">
@@ -204,7 +205,7 @@ export default function BusinessReviewSection({
             reviews?.map((review) => (
               <div
                 key={review._id}
-                className="p-6 rounded-2xl border border-slate-100 bg-white hover:border-slate-200 transition-all shadow-sm">
+                className="p-6 rounded-2xl border   hover:border-slate-200 transition-all shadow-sm">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
                     <Avatar>
@@ -212,7 +213,9 @@ export default function BusinessReviewSection({
                         src={review.user?.image}
                         className="object-cover"
                       />
-                      <AvatarFallback>{review.user?.name}</AvatarFallback>
+                      <AvatarFallback className="text-white">
+                        {review.user?.name[0]}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex justify-between gap-2 items-center">
                       {session?.user?.id === review.user?._id && (
@@ -221,7 +224,7 @@ export default function BusinessReviewSection({
                         </span>
                       )}
                       {session?.user?.id === review.user?._id && (
-                        <span className=" text-green-600 px-3 py-1 rounded-md h-6.5 text-sm font-medium">
+                        <span className=" text-green-600 px-3 py-1.5 rounded-md h-6.5 text-sm font-medium">
                           <Edit
                             size={15}
                             onClick={() => {

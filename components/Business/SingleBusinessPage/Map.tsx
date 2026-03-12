@@ -3,6 +3,8 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 
 // Fix for missing marker icons
 const DefaultIcon = L.icon({
@@ -15,15 +17,14 @@ const DefaultIcon = L.icon({
 interface MapProps {
   latitude?: string | number;
   longitude?: string | number;
-  businessName: string;
+  business: any;
 }
 
-export default function Map({ latitude, longitude, businessName }: MapProps) {
+export default function Map({ latitude, longitude, business }: MapProps) {
   // 1. Convert to numbers and validate
   const lat = parseFloat(String(latitude));
   const lng = parseFloat(String(longitude));
 
-  // 2. Critical Safety Check: If coordinates are NaN or null, don't render the map
   if (isNaN(lat) || isNaN(lng)) {
     return (
       <div className="h-[400px] w-full bg-slate-100 flex items-center justify-center rounded-xl border border-dashed">
@@ -48,7 +49,27 @@ export default function Map({ latitude, longitude, businessName }: MapProps) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <Marker position={position} icon={DefaultIcon}>
-          <Popup>{businessName}</Popup>
+          <Popup>
+            {" "}
+            <div>
+              <h3 className="font-bold text-lg">{business.business_name}</h3>
+
+              <p className="text-gray-600 text-sm mb-2">{business.location}</p>
+
+              <div className="flex space-x-2 mt-2">
+                <a
+                  href={`https://maps.google.com/?q=${encodeURIComponent(
+                    ` ${business.location}`,
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-secondary px-3 py-1 rounded text-sm font-medium hover:bg-secondary/80 flex items-center text-white">
+                  Get Directions
+                  <ExternalLink className="h-3 w-3 ml-1" />
+                </a>
+              </div>
+            </div>
+          </Popup>
         </Marker>
       </MapContainer>
     </div>
