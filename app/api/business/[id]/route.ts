@@ -8,9 +8,14 @@ export async function GET(req: NextRequest, { params }: Props) {
   try {
     await connectToDb();
     const { id } = await params;
-    const filterId = id.replaceAll("_", " ");
+    const searchRegex = id.split("").join("\\s*");
     const business = await User.findOne(
-      { business_name: filterId },
+      {
+        business_name: {
+          $regex: `^${searchRegex}$`,
+          $options: "i",
+        },
+      },
       "-accpetalltermsandcondition -password -provider -googleId",
     )
       .sort({ createdAt: -1 })

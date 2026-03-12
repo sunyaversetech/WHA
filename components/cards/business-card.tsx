@@ -1,24 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import {
-  MapPin,
-  Phone,
-  Share2,
-  Building,
-  Star,
-  Clock,
-  ArrowRight,
-  ChevronLeft,
-  Dot,
-  BadgeCheck,
-} from "lucide-react";
-import type { Business } from "@/lib/types";
+import { Building, Star } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-
-const rating = 4;
-const totalReviews = 2000;
 
 export default function BusinessCard({ business }: { business: any }) {
   const getCategoryInfo = () => {
@@ -85,12 +69,12 @@ export default function BusinessCard({ business }: { business: any }) {
   const totalReviews = business?.reviews?.length ?? "no rating yet";
 
   const categoryInfo = getCategoryInfo();
-  const formattedName = business.business_name.replaceAll(" ", "_");
+  const slug = business.business_name.toLowerCase().replace(/[^a-z0-9]/g, "");
 
   return (
     <div
       className=" overflow-hidden group cursor-pointer"
-      onClick={() => router.push(`/businesses/${encodeURI(formattedName)}`)}>
+      onClick={() => router.push(`/businesses/${slug}`)}>
       <div className="relative w-full h-56 md:h-60 rounded-xl overflow-hidden group">
         <Image
           width={500}

@@ -48,7 +48,6 @@ export default function BusinessPage() {
     verified: true,
     abn_number: "12 345 678 910",
   };
-  console.log(data);
 
   const averageRating =
     reviews?.data && reviews.data.length > 0

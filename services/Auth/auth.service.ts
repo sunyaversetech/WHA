@@ -38,3 +38,25 @@ export const useSingup = () => {
       }),
   });
 };
+
+export const useSendMailRestPassword = () => {
+  return useMutation<ApiResponseType<any>, any, any>({
+    mutationKey: ["sendRestPassword"],
+    mutationFn: (data: any) =>
+      Post<any, ApiResponseType<any>>({
+        url: "/api/reset-password",
+        data: data,
+      }),
+  });
+};
+
+export const useVerifyCode = () => {
+  return useMutation<ApiResponseType<any>, any, any>({
+    mutationKey: ["verifyCode"],
+    mutationFn: (data: any) =>
+      Post<any, ApiResponseType<any>>({
+        url: "/api/auth/verify-code",
+        data: data,
+      }),
+  });
+};

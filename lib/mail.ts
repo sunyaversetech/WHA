@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
   host: "sandbox.smtp.mailtrap.io",
-  port: 2525,
+  port: 587,
   auth: {
     user: process.env.MAILTRAP_USER!,
     pass: process.env.MAILTRAP_PASS!,
@@ -63,25 +63,20 @@ export const sendSimpleMail = async (
   email: string,
   subject: string,
   text: string,
+  html?: string,
 ) => {
-  const sender = {
-    email: "sunyaverse.tech@gmail.com",
-    name: "Sunyaverse",
-  };
-
-  const recipients = [{ email }];
-
   try {
     const response = await transporter.sendMail({
-      from: sender.email,
+      from: `"Sunyaverse" <sunyaverse.tech@gmail.com>`,
       to: email,
       subject: subject,
       text: text,
+      html: html,
     });
 
     return { success: true };
   } catch (error) {
-    console.error("Error sending simple email:", error);
+    console.error("Error sending email:", error);
     return { success: false, error };
   }
 };

@@ -45,6 +45,8 @@ const UserSchema = new Schema(
     business_category: { type: String },
     abn_number: { type: String },
     verified: { type: Boolean, default: false },
+    resetPasswordToken: { type: String },
+    resetPasswordExpire: { type: Date },
   },
   { timestamps: true },
 );

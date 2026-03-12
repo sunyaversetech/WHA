@@ -108,50 +108,51 @@ export default function BusinessMap({ businesses }: { businesses: any }) {
             </Marker>
           )}
 
-          {businesses.map((business: any) =>
-            business.latitude && business.longitude ? (
-              <Marker
-                key={business.id}
-                position={[
-                  Number(business.latitude),
-                  Number(business.longitude),
-                ]}
-                eventHandlers={{
-                  click: () => setSelectedBusiness(business),
-                }}>
-                <Popup>
-                  <div>
-                    <h3 className="font-bold text-lg">
-                      {business.business_name}
-                    </h3>
+          {businesses &&
+            businesses.map((business: any) =>
+              business.latitude && business.longitude ? (
+                <Marker
+                  key={business._id}
+                  position={[
+                    Number(business.latitude),
+                    Number(business.longitude),
+                  ]}
+                  eventHandlers={{
+                    click: () => setSelectedBusiness(business),
+                  }}>
+                  <Popup>
+                    <div>
+                      <h3 className="font-bold text-lg">
+                        {business.business_name}
+                      </h3>
 
-                    <p className="text-gray-600 text-sm mb-2">
-                      {business.location}
-                    </p>
+                      <p className="text-gray-600 text-sm mb-2">
+                        {business.location}
+                      </p>
 
-                    <div className="flex space-x-2 mt-2">
-                      <Link
-                        href={`/businesses/${business.id}`}
-                        className="bg-primary px-3 py-1 rounded text-sm font-medium hover:bg-primary/80 text-white">
-                        View Details
-                      </Link>
+                      <div className="flex space-x-2 mt-2">
+                        <Link
+                          href={`/businesses/${business.id}`}
+                          className="bg-primary px-3 py-1 rounded text-sm font-medium hover:bg-primary/80 text-white">
+                          View Details
+                        </Link>
 
-                      <a
-                        href={`https://maps.google.com/?q=${encodeURIComponent(
-                          `${business.name}, ${business.location}, Canberra, Australia`,
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-secondary px-3 py-1 rounded text-sm font-medium hover:bg-secondary/80 flex items-center text-white">
-                        Get Directions
-                        <ExternalLink className="h-3 w-3 ml-1" />
-                      </a>
+                        <a
+                          href={`https://maps.google.com/?q=${encodeURIComponent(
+                            `${business.name}, ${business.location}, Canberra, Australia`,
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-secondary px-3 py-1 rounded text-sm font-medium hover:bg-secondary/80 flex items-center text-white">
+                          Get Directions
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                </Popup>
-              </Marker>
-            ) : null,
-          )}
+                  </Popup>
+                </Marker>
+              ) : null,
+            )}
         </MapContainer>
       </div>
 
@@ -159,36 +160,37 @@ export default function BusinessMap({ businesses }: { businesses: any }) {
         <h3 className="font-medium text-lg mb-3">All Locations</h3>
 
         <div className="space-y-2 max-h-[300px] flex gap-2 flex-wrap overflow-y-auto">
-          {businesses.map((business: any) => (
-            <div
-              key={business.id}
-              className={`p-3 max-w-[200px] h-[50px] overflow-hidden rounded-lg cursor-pointer ${
-                selectedBusiness?.id === business.id
-                  ? "bg-primary/10 border-primary/30"
-                  : "bg-neutral/50 hover:bg-neutral/100 border-neutral/200"
-              } border`}
-              onClick={() => setSelectedBusiness(business)}>
-              <div className="flex items-start">
-                <MapPin className="h-5 w-5 text-primary mt-0.5 mr-2 flex-shrink-0" />
+          {businesses &&
+            businesses.map((business: any) => (
+              <div
+                key={business._id}
+                className={`p-3 max-w-[200px] h-[50px] overflow-hidden rounded-lg cursor-pointer ${
+                  selectedBusiness?.id === business.id
+                    ? "bg-primary/10 border-primary/30"
+                    : "bg-neutral/50 hover:bg-neutral/100 border-neutral/200"
+                } border`}
+                onClick={() => setSelectedBusiness(business)}>
+                <div className="flex items-start">
+                  <MapPin className="h-5 w-5 text-primary mt-0.5 mr-2 flex-shrink-0" />
 
-                <div>
-                  <h4 className="font-medium w-[100x] truncate">
-                    <span className="inline-block w-[150px] truncate">
-                      {business.business_name}
-                    </span>
-                  </h4>
+                  <div>
+                    <h4 className="font-medium w-[100x] truncate">
+                      <span className="inline-block w-[150px] truncate">
+                        {business.business_name}
+                      </span>
+                    </h4>
 
-                  {/* <p className="text-sm text-gray-600">{business.location}</p> */}
+                    {/* <p className="text-sm text-gray-600">{business.location}</p> */}
 
-                  {business.phone && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {business.phone}
-                    </p>
-                  )}
+                    {business.phone && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        {business.phone}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </div>
