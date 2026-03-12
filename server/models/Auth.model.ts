@@ -41,7 +41,7 @@ const UserSchema = new Schema(
       unique: true,
       sparse: true,
     },
-    business_name: { type: String },
+    business_name: { type: String, unique: true },
     business_category: { type: String },
     abn_number: { type: String },
     verified: { type: Boolean, default: false },

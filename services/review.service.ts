@@ -68,7 +68,7 @@ export const useDeleteReview = () => {
 
 export const useGetReview = (business_id?: string) => {
   return useFetcher<ApiResponseType<ReviewType[]>>(
-    ["review"],
+    ["review", business_id ?? ""],
     null,
     `/api/review?business_id=${business_id}`,
   );

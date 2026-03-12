@@ -26,13 +26,12 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import Loading from "@/app/businesses/loading";
 
 export default function BusinessPage() {
-  const params = useParams();
-  const { id } = params;
-  const { data } = useGetSingleBusiness();
+  const { data, isLoading } = useGetSingleBusiness();
   const { mutate, isPending } = useCreateFavroite();
-  const { data: reviews } = useGetReview(String(id));
+  const { data: reviews } = useGetReview(data?.data?._id ?? "");
   const queryClient = useQueryClient();
   const router = useRouter();
   const { data: session } = useSession();
@@ -49,7 +48,7 @@ export default function BusinessPage() {
     verified: true,
     abn_number: "12 345 678 910",
   };
-  console.log(reviews);
+  console.log(data);
 
   const averageRating =
     reviews?.data && reviews.data.length > 0
@@ -104,6 +103,10 @@ export default function BusinessPage() {
   const isBusinessFavorite = userFavorites?.data?.business?.some(
     (item) => (item._id ?? "").toString() === businessId?.toString(),
   );
+
+  if (isLoading) return <Loading />;
+
+  console.log("data", data);
 
   return (
     <div className="container-modern mx-auto p-6">

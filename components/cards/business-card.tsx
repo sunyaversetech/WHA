@@ -85,11 +85,12 @@ export default function BusinessCard({ business }: { business: any }) {
   const totalReviews = business?.reviews?.length ?? "no rating yet";
 
   const categoryInfo = getCategoryInfo();
+  const formattedName = business.business_name.replaceAll(" ", "_");
 
   return (
     <div
       className=" overflow-hidden group cursor-pointer"
-      onClick={() => router.push(`/businesses/${business._id}`)}>
+      onClick={() => router.push(`/businesses/${encodeURI(formattedName)}`)}>
       <div className="relative w-full h-56 md:h-60 rounded-xl overflow-hidden group">
         <Image
           width={500}

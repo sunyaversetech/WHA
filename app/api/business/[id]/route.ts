@@ -1,5 +1,6 @@
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
+import { Review } from "@/server/models/Review.model";
 import { NextRequest, NextResponse } from "next/server";
 
 type Props = { params: Promise<{ id: string }> };
@@ -7,14 +8,30 @@ export async function GET(req: NextRequest, { params }: Props) {
   try {
     await connectToDb();
     const { id } = await params;
-
-    const business = await User.findById(
-      id,
+    const filterId = id.replaceAll("_", " ");
+    const business = await User.findOne(
+      { business_name: filterId },
       "-accpetalltermsandcondition -password -provider -googleId",
-    ).sort({ createdAt: -1 });
+    )
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (!business) {
+      return NextResponse.json(
+        { error: "Business not found" },
+        { status: 404 },
+      );
+    }
+
+    const review = await Review.find({ business_id: business._id }).sort({
+      createdAt: -1,
+    });
 
     return NextResponse.json(
-      { data: business, message: "Businesses retrieved successfully" },
+      {
+        data: { ...business, review: review },
+        message: "Businesses retrieved successfully",
+      },
       { status: 200 },
     );
   } catch (error: any) {
