@@ -7,6 +7,7 @@ declare module "next-auth" {
       category?: string;
       business_category?: string;
       business_name?: string;
+      emailVerified?: Date | string;
       verified?: Date | string;
     } & DefaultSession["user"];
   }

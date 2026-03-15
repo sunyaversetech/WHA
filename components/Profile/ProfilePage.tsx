@@ -40,6 +40,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useSession } from "next-auth/react";
+import ProfileAvatar from "../Dashboard/ProfilePic";
 
 const ProfilePage = ({ userData }: { userData: any }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -79,244 +80,208 @@ const ProfilePage = ({ userData }: { userData: any }) => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="relative bg-white border rounded-2xl p-8 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-8 items-start">
-          <div className="relative group">
-            <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-              <AvatarImage
-                className="object-cover"
-                src={session?.user?.image ?? ""}
-              />
-              <AvatarFallback className="bg-slate-100 text-2xl font-bold">
-                {session?.user?.name?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            {session?.user?.verified && (
-              <div className="absolute -bottom-2 -right-2 bg-blue-500 text-white p-1 rounded-full border-2 border-white">
-                <CheckCircle2 className="w-5 h-5" />
+        <div className="bg-white flex justify-between rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <ProfileAvatar currentImage={session?.user?.image || ""} />
               </div>
-            )}
-          </div>
 
-          <div className="flex-1 space-y-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-bold text-slate-900">
-                  {session?.user?.name}
-                </h1>
-                <div className="flex items-center gap-4 mt-1 text-slate-500">
-                  <span className="flex items-center gap-1">
-                    <Mail className="w-4 h-4" /> {session?.user?.email}
-                  </span>
-                  <Badge variant="outline" className="capitalize">
-                    {session?.user?.category}
-                  </Badge>
+              <div className="flex-1">
+                <div className="flex  flex-col sm:flex-row sm:items-center gap-2">
+                  <h1 className="text-xl font-bold text-slate-800">
+                    {session?.user?.business_name}
+                  </h1>
+
+                  {/* Badges */}
+                  <div className="flex flex-wrap gap-2 mt-1 sm:mt-0">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] uppercase tracking-tighter">
+                      {session?.user?.category || "Personal Account"}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] uppercase tracking-tighter">
+                      {session?.user?.verified
+                        ? "Verified"
+                        : "Business Not Verified"}
+                    </Badge>
+                  </div>
                 </div>
-                <h1 className="flex items-center gap-1 text-sm font-semibold text-slate-900">
-                  Business: {session?.user?.business_name}
-                  <Badge variant="outline" className="capitalize">
-                    {session?.user?.business_category}
-                  </Badge>
-                </h1>
+
+                {/* Email */}
+                <p className="text-sm text-slate-500 mt-2">
+                  {session?.user?.email}
+                  {/* Optional pending approvals */}
+                  {/* • <span className="text-orange-500 font-semibold underline">21</span> Pending Approvals */}
+                </p>
               </div>
+            </div>
+          </header>
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Pencil className="w-4 h-4 mr-2" /> Edit Profile
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Edit Profile Information</DialogTitle>
+              </DialogHeader>
 
-              <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Pencil className="w-4 h-4 mr-2" /> Edit Profile
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Edit Profile Information</DialogTitle>
-                  </DialogHeader>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6">
+                  <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
+                    <Avatar className="w-16 h-16">
+                      <AvatarImage src={profileImage} />
+                      <AvatarFallback>
+                        <UserIcon />
+                      </AvatarFallback>
+                    </Avatar>
+                    <FormField
+                      control={form.control}
+                      name="image"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Profile Image URL</FormLabel>
+                          <FormControl>
+                            <Input placeholder="https://..." {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                  <Form {...form}>
-                    <form
-                      onSubmit={form.handleSubmit(onSubmit)}
-                      className="space-y-6">
-                      <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
-                        <Avatar className="w-16 h-16">
-                          <AvatarImage src={profileImage} />
-                          <AvatarFallback>
-                            <UserIcon />
-                          </AvatarFallback>
-                        </Avatar>
-                        <FormField
-                          control={form.control}
-                          name="image"
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              <FormLabel>Profile Image URL</FormLabel>
-                              <FormControl>
-                                <Input placeholder="https://..." {...field} />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    {session?.user?.category === "business" && (
+                      <FormField
+                        control={form.control}
+                        name="abn_number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ABN Number</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
 
+                  {session?.user?.category === "business" && (
+                    <div className="space-y-6 border-t pt-4">
+                      <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <Building2 className="w-4 h-4" /> Business Details
+                      </h3>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
-                          name="name"
+                          name="business_name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Name</FormLabel>
+                              <FormLabel>Business Name</FormLabel>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
                             </FormItem>
                           )}
                         />
-                        {session?.user?.category === "business" && (
-                          <FormField
-                            control={form.control}
-                            name="abn_number"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>ABN Number</FormLabel>
+                        <FormField
+                          control={form.control}
+                          name="business_category"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Category</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}>
                                 <FormControl>
-                                  <Input {...field} />
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
                                 </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        )}
+                                <SelectContent>
+                                  <SelectItem value="restaurants">
+                                    Restaurants
+                                  </SelectItem>
+                                  <SelectItem value="cafes">Cafes</SelectItem>
+                                  <SelectItem value="others">Others</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          )}
+                        />
                       </div>
 
-                      {session?.user?.category === "business" && (
-                        <div className="space-y-6 border-t pt-4">
-                          <h3 className="font-semibold text-lg flex items-center gap-2">
-                            <Building2 className="w-4 h-4" /> Business Details
-                          </h3>
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="business_name"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Business Name</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="business_category"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Category</FormLabel>
-                                  <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="restaurants">
-                                        Restaurants
-                                      </SelectItem>
-                                      <SelectItem value="cafes">
-                                        Cafes
-                                      </SelectItem>
-                                      <SelectItem value="others">
-                                        Others
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                              <FormLabel>Services</FormLabel>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  append({ name: "", price_category: "hr" })
-                                }>
-                                <Plus className="w-3 h-3 mr-1" /> Add
-                              </Button>
-                            </div>
-                            {fields.map((field, index) => (
-                              <div
-                                key={field.id}
-                                className="p-4 border rounded-md bg-white relative">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="absolute top-1 right-1 h-7 w-7"
-                                  onClick={() => remove(index)}>
-                                  <Trash2 className="w-4 h-4 text-red-500" />
-                                </Button>
-                                <div className="grid grid-cols-2 gap-2">
-                                  <Input
-                                    placeholder="Service name"
-                                    {...form.register(
-                                      `business_service.${index}.name`,
-                                    )}
-                                  />
-                                  <Input
-                                    placeholder="Price category"
-                                    {...form.register(
-                                      `business_service.${index}.price_category`,
-                                    )}
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <FormLabel>Services</FormLabel>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              append({ name: "", price_category: "hr" })
+                            }>
+                            <Plus className="w-3 h-3 mr-1" /> Add
+                          </Button>
                         </div>
-                      )}
+                        {fields.map((field, index) => (
+                          <div
+                            key={field.id}
+                            className="p-4 border rounded-md bg-white relative">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-1 right-1 h-7 w-7"
+                              onClick={() => remove(index)}>
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Input
+                                placeholder="Service name"
+                                {...form.register(
+                                  `business_service.${index}.name`,
+                                )}
+                              />
+                              <Input
+                                placeholder="Price category"
+                                {...form.register(
+                                  `business_service.${index}.price_category`,
+                                )}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                      <DialogFooter>
-                        <Button type="submit" className="w-full">
-                          Update Records
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Displaying Business Specific Info on Profile Page */}
-            {userData?.category === "business" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
-                  <Building2 className="w-5 h-5 text-blue-600 mt-1" />
-                  <div>
-                    <p className="text-xs font-semibold uppercase text-slate-400">
-                      Business
-                    </p>
-                    <p className="font-medium">{userData.business_name}</p>
-                    <p className="text-sm text-slate-500">
-                      {userData.business_category}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
-                  <Briefcase className="w-5 h-5 text-purple-600 mt-1" />
-                  <div>
-                    <p className="text-xs font-semibold uppercase text-slate-400">
-                      Tax ID / ABN
-                    </p>
-                    <p className="font-medium">
-                      {userData.abn_number || "Not provided"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+                  <DialogFooter>
+                    <Button type="submit" className="w-full">
+                      Update Records
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 

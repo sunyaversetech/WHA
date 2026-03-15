@@ -67,10 +67,17 @@ export const authOptions: NextAuthOptions = {
             provider: "google",
             googleId: profile?.sub,
             category: "user",
+            emailVerified: user.emailVerified,
           });
           user.id = newUser._id.toString();
         } else {
           user.id = existingUser._id.toString();
+          if (!existingUser.emailVerified) {
+            await User.findByIdAndUpdate(existingUser._id, {
+              emailVerified: new Date(),
+            });
+            user.emailVerified = new Date();
+          }
         }
       }
       return true;
@@ -84,6 +91,7 @@ export const authOptions: NextAuthOptions = {
         token.image = (user as any).image;
         token.city_name = (user as any).city_name;
         token.community_name = (user as any).community_name;
+        token.emailVerified = (user as any).emailVerified ?? "";
       }
 
       if (trigger === "update" && session) {
@@ -100,6 +108,7 @@ export const authOptions: NextAuthOptions = {
           token.image = (dbUser as any).image;
           token.city_name = (dbUser as any).city_name;
           token.community_name = (dbUser as any).community_name;
+          token.emailVerified = (dbUser as any).emailVerified ?? "";
         }
       }
       return token;
@@ -113,6 +122,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).image = token.image;
         (session.user as any).city_name = token.city_name;
         (session.user as any).community_name = token.community_name;
+        (session.user as any).emailVerified = token.emailVerified;
       }
       return session;
     },

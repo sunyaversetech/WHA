@@ -26,8 +26,10 @@ import { Button } from "../ui/button";
 import LiveDateTime from "../ui/date-time";
 
 export default function DashboardNavbar() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const pathname = usePathname();
+
+  console.log(session);
 
   return (
     <nav className="hidden md:flex fixed top-0 left-0 right-0 z-50 ml-20 md:ml-56  items-center justify-between px-6 py-3 border-b bg-white shadow-sm">
@@ -51,10 +53,17 @@ export default function DashboardNavbar() {
         <div className="flex items-center">
           {session ? (
             <div className="flex items-center gap-2">
-              <Button variant={"outline"} size={"sm"} className="gap-2">
-                <BadgeCheck />
-                Pending Verification
-              </Button>
+              {session.user.emailVerified ? (
+                <Button variant={"outline"} size={"sm"} className="gap-2">
+                  <BadgeCheck className="text-blue-300" fill="blue" />
+                  Verified
+                </Button>
+              ) : (
+                <Button variant={"outline"} size={"sm"} className="gap-2">
+                  <BadgeCheck />
+                  Pending Verification
+                </Button>
+              )}
               <div className="px-2 py-2 hover:bg-[#f5f5f5] rounded-sm">
                 <Bell className="h-6 w-6" />
               </div>
@@ -74,7 +83,6 @@ export default function DashboardNavbar() {
                 <DropdownMenuContent
                   align="end"
                   className="w-80 p-4 rounded-2xl shadow-xl bg-white border">
-                  {/* Profile Header */}
                   <div className="flex items-center gap-3">
                     <Avatar className="h-14 w-14 rounded-full">
                       <AvatarImage
@@ -99,19 +107,21 @@ export default function DashboardNavbar() {
 
                   {/* Verify Box */}
                   <div className="mt-4">
-                    <Link
-                      href="/verify-email"
-                      className="flex justify-between items-center p-4 rounded-xl bg-yellow-100 border border-yellow-200 hover:bg-yellow-200 transition">
-                      <div>
-                        <p className="font-medium text-sm">
-                          Verify your email address
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Secure your account
-                        </p>
-                      </div>
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
+                    {!session?.user?.emailVerified && (
+                      <Link
+                        href="/verify-email"
+                        className="flex justify-between items-center p-4 rounded-xl bg-yellow-100 border border-yellow-200 hover:bg-yellow-200 transition">
+                        <div>
+                          <p className="font-medium text-sm">
+                            Verify your email address
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Secure your account
+                          </p>
+                        </div>
+                        <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    )}
                   </div>
 
                   <div className="my-4 border-t" />
@@ -122,12 +132,13 @@ export default function DashboardNavbar() {
                       className="block px-2 py-2 rounded-md hover:bg-gray-100 transition">
                       My profile
                     </Link>
-
-                    <Link
-                      href="/settings"
-                      className="block px-2 py-2 rounded-md hover:bg-gray-100 transition">
-                      Personal settings
-                    </Link>
+                    {session.user.category === "business" && (
+                      <Link
+                        href="/dashboard/settings"
+                        className="block px-2 py-2 rounded-md hover:bg-gray-100 transition">
+                        Personal settings
+                      </Link>
+                    )}
                   </div>
 
                   <div className="my-4 border-t" />
