@@ -32,18 +32,14 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${roboto.variable} antialiased `}>
         <ReactQueryContext>
-          <RedeemProvider>
-            <FavoritesProvider>
-              <CityFilterProvider>
-                <SessionWrapper>
-                  <NavbarProvider />
-                  <div>{children}</div>
-                  <Toaster />
-                  <BottomNav />
-                </SessionWrapper>
-              </CityFilterProvider>
-            </FavoritesProvider>
-          </RedeemProvider>
+          <CityFilterProvider>
+            <SessionWrapper>
+              <NavbarProvider />
+              <div>{children}</div>
+              <Toaster />
+              <BottomNav />
+            </SessionWrapper>
+          </CityFilterProvider>
         </ReactQueryContext>
       </body>
     </html>

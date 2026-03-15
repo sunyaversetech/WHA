@@ -22,11 +22,10 @@ const formatTime = (time: string): string => {
   const [hourStr, minute] = time.split(":");
   let hour = parseInt(hourStr, 10);
   const ampm = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12 || 12; // convert 0 to 12 for 12 AM, 12 to 12 for 12 PM
+  hour = hour % 12 || 12;
   return minute === "00" ? `${hour} ${ampm}` : `${hour}:${minute} ${ampm}`;
 };
 
-// Main formatting function
 const formatBusinessHours = (hoursData?: BusinessHoursData): string[] => {
   if (hoursData?.is24_7) {
     return ["Open 24 hours"];
@@ -42,7 +41,6 @@ const formatBusinessHours = (hoursData?: BusinessHoursData): string[] => {
     "Sunday",
   ];
 
-  // Create a map for quick lookup
   const scheduleMap = new Map<string, ScheduleEntry>();
   hoursData?.schedule.forEach((entry) => {
     scheduleMap.set(entry.day, entry);
@@ -74,18 +72,14 @@ const formatBusinessHours = (hoursData?: BusinessHoursData): string[] => {
         currentGroup.open === open &&
         currentGroup.close === close
       ) {
-        // Extend the current group
         currentGroup.endDay = day;
       } else {
-        // Finish previous group if any
         if (currentGroup) {
           groups.push(currentGroup);
         }
-        // Start a new group
         currentGroup = { startDay: day, endDay: day, open, close };
       }
     } else {
-      // Day is closed – end any ongoing group
       if (currentGroup) {
         groups.push(currentGroup);
         currentGroup = null;
@@ -93,12 +87,10 @@ const formatBusinessHours = (hoursData?: BusinessHoursData): string[] => {
     }
   }
 
-  // Push the last group if any
   if (currentGroup) {
     groups.push(currentGroup);
   }
 
-  // Format each group
   return groups.map((group) => {
     const openFormatted = formatTime(group.open);
     const closeFormatted = formatTime(group.close);
