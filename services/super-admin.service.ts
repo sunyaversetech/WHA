@@ -25,7 +25,7 @@ export const useSuperAdminGetALLUsers = () => {
 
 export const useSuperAdminGetALLEvents = () => {
   return useFetcher<ApiResponseType<EventType[]>>(
-    ["getbusinesses"],
+    ["getSuperAdminEvents"],
     null,
     `/api/super-admin/events`,
   );
@@ -33,7 +33,7 @@ export const useSuperAdminGetALLEvents = () => {
 
 export const useSuperAdminGetALLDeal = () => {
   return useFetcher<ApiResponseType<DealsGetValues[]>>(
-    ["getbusinesses"],
+    ["getSuperAdminDeals"],
     null,
     `/api/super-admin/deals`,
   );

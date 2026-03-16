@@ -10,6 +10,7 @@ import { RedeemProvider } from "@/contexts/redeem-context";
 import { Toaster } from "sonner";
 import BottomNav from "@/components/ResuableComponents/BottomNavbar";
 import NavbarProvider from "@/components/ResuableComponents/NavbarProvider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -35,7 +36,9 @@ export default function RootLayout({
           <CityFilterProvider>
             <SessionWrapper>
               <NavbarProvider />
-              <div>{children}</div>
+              <TooltipProvider>
+                <div>{children}</div>
+              </TooltipProvider>
               <Toaster />
               <BottomNav />
             </SessionWrapper>

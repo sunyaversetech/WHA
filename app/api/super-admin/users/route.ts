@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     await connectToDb();
-    const users = await User.find({ category: "user" }).populate("user").sort({
+    const users = await User.find({ category: "user" }).sort({
       createdAt: -1,
     });
     return NextResponse.json({

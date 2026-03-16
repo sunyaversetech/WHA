@@ -17,6 +17,8 @@ type DealsFormValues = {
 export type DealsGetValues = {
   _id: string;
   title: string;
+  current_redemptions: number;
+  max_redemptions: number;
   valid_till: Date;
   deals_for: string;
   description: string;

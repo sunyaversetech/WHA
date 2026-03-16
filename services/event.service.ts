@@ -17,6 +17,7 @@ export type EventType = {
   user: {
     _id: string;
     email: string;
+    name: string;
     business_name: string;
   };
   location: string;
