@@ -29,8 +29,6 @@ export default function DashboardNavbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
 
-  console.log(session);
-
   return (
     <nav className="hidden md:flex fixed top-0 left-0 right-0 z-50 ml-20 md:ml-56  items-center justify-between px-6 py-3 border-b bg-white shadow-sm">
       <div className="flex items-center gap-4">

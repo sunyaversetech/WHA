@@ -82,8 +82,6 @@ export default function EventMap({ businesses }: { businesses: any }) {
     null,
   );
 
-  console.log("businesses", businesses);
-
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null,
   );

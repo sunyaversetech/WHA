@@ -83,8 +83,6 @@ export function EventForm() {
 
   const data = singleEventData?.data;
 
-  console.log("singleeventdata", data);
-
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
@@ -168,9 +166,6 @@ export function EventForm() {
       },
     });
   };
-
-  console.log("Form", form.getValues());
-  console.log("Form", form.formState.errors);
 
   return (
     <Form {...form}>

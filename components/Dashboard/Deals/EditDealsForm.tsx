@@ -49,7 +49,6 @@ export default function EditDealForm() {
   const dealId = parmas.get("id");
   const { data } = useGetSingleDeal(dealId!);
 
-  console.log("data", data);
   const form = useForm<DealFormValues>({
     resolver: zodResolver(dealSchema),
     defaultValues: {

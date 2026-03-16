@@ -70,7 +70,6 @@ export function BusinessHoursForm() {
 
   const { mutate } = useUpdateOperatingHours();
   const { data: session } = useSession();
-  console.log("data", data);
 
   useEffect(() => {
     if (data?.data && data?.data !== undefined) {

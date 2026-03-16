@@ -18,8 +18,6 @@ export async function GET(request: NextRequest) {
     const rawCity = searchParams.get("city") || "";
     const rawCommunity = searchParams.get("community") || "";
 
-    console.log("rawCommunity", rawCommunity);
-
     const category = rawCategory.replace(/\?+$/, "").trim();
     const search = rawSearch.replace(/\?+$/, "").trim();
     const city = rawCity.replace(/\?+$/, "").trim();

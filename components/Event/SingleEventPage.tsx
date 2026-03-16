@@ -102,8 +102,6 @@ export default function EventDetailPage() {
     <LoadingPage />;
   }
 
-  console.log("event?.data?.dateRange?.from", event);
-
   return (
     <div className="container-modern mx-auto p-6 pb-20 md:pb-0">
       {/* Event Header Card */}

@@ -17,12 +17,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    console.log("--- Reset Verification Debug ---");
-    console.log("Input Code:", code);
-    console.log("DB Code:", existingUser.resetPasswordToken);
-    console.log("DB Expiry:", existingUser.resetPasswordExpire);
-    console.log("Current Time:", new Date());
-
     const user = await User.findOne({
       email: normalizedEmail,
       resetPasswordToken: code,

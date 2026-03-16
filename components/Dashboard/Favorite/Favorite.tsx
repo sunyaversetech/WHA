@@ -30,8 +30,6 @@ export default function FavoritesPage() {
   const router = useRouter();
   const { data: favoritesData, isLoading } = useGetUserFavroite();
 
-  console.log("favoritesData", favoritesData);
-
   const favorites = favoritesData?.data || {
     events: [],
     services: [],
@@ -170,7 +168,6 @@ export default function FavoritesPage() {
 
 function FavoriteCard({ item, type }: { item: any; type: string }) {
   const queryClient = useQueryClient();
-  console.log("item", item);
   const { mutate, isPending } = useCreateFavroite();
   const handleAddRemoveFavorite = () => {
     mutate(

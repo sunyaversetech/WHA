@@ -30,13 +30,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    console.log(
-      "Successfully saved code to DB for:",
-      email,
-      "Code:",
-      resetCode,
-    );
-
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 10px;">
         <div style="text-align: center; margin-bottom: 20px;">

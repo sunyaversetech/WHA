@@ -42,8 +42,6 @@ export function ABNUpdateForm() {
     useGetSingleDashboardBusiness(session?.user?.id || "");
   const { mutate: updateABN, isPending: isUpdating } = useUpadteABN();
 
-  console.log("businessData", session);
-
   const form = useForm<ABNFormType>({
     resolver: zodResolver(abnFormSchema),
     defaultValues: {

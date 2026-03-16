@@ -75,8 +75,6 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       }
     });
 
-    console.log("RawData after parsing:", rawData);
-
     const validatedData = eventSchema.partial().parse(rawData);
 
     const event = await Event.findById(eventId);
