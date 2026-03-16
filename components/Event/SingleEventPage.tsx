@@ -17,7 +17,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useGetSingleEvent } from "@/services/event.service";
 import Image from "next/image";
-import { formatDate } from "date-fns";
+import { format, formatDate, parse } from "date-fns";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -247,6 +247,20 @@ export default function EventDetailPage() {
                         -{" "}
                         {event?.data?.dateRange?.to &&
                           formatDate(event?.data?.dateRange?.to, "dd MMM yyyy")}
+                      </p>
+                      <p className="font-medium text-gray-800">
+                        {" "}
+                        {event?.data?.startTime &&
+                          format(
+                            parse(event.data.startTime, "HH:mm", new Date()),
+                            "h:mm aa",
+                          )}{" "}
+                        -{" "}
+                        {event?.data?.endTime &&
+                          format(
+                            parse(event.data.endTime, "HH:mm", new Date()),
+                            "h:mm aa",
+                          )}
                       </p>
                     </div>
                   </div>

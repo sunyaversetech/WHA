@@ -5,9 +5,10 @@ import DealCard from "@/components/cards/deal-card";
 import { Tag } from "lucide-react";
 import { useGetAllDeals } from "@/services/deal.service";
 import DealsHeader from "./DealFilter";
+import { Skeleton } from "../ui/skeleton";
 
 export default function DealsPageClient() {
-  const { data: deals } = useGetAllDeals();
+  const { data: deals, isLoading } = useGetAllDeals();
 
   const currentDate = new Date();
 
@@ -25,7 +26,13 @@ export default function DealsPageClient() {
 
         {/* DEALS GRID */}
         <div className="container-modern pb-8">
-          {data && data.length > 0 ? (
+          {isLoading ? (
+            <div className="flex  items-center gap-2   mt-5">
+              <Skeleton className="h-72 w-96 mb-4 animate-pulse rounded-xl" />
+              <Skeleton className="h-72 w-96 mb-4 animate-pulse" />
+              <Skeleton className="h-72 w-96 mb-4 animate-pulse" />
+            </div>
+          ) : data && data.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
               {data.map((deal) => (
                 <DealCard key={deal._id} deal={deal} />

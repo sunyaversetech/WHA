@@ -67,7 +67,7 @@ export const authOptions: NextAuthOptions = {
             provider: "google",
             googleId: profile?.sub,
             category: "user",
-            emailVerified: user.emailVerified,
+            emailVerified: new Date(),
           });
           user.id = newUser._id.toString();
         } else {
