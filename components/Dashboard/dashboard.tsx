@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import {
   ChevronLeft,
@@ -16,9 +16,11 @@ import { Badge } from "@/components/ui/badge";
 import ProfileAvatar from "./ProfilePic";
 import DashboardNavbar from "./DashboardNavbar";
 import MobileDashbaord from "./MobileDashboard";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [analyticsData] = React.useState(() =>
     ["Marketing", "Sales", "Support"].map(() =>
       Math.floor(Math.random() * 100),
@@ -28,6 +30,13 @@ export default function Dashboard() {
   const businessName = (session?.user as { business_name?: string })
     ?.business_name;
   const isUserOnly = !businessName;
+
+  console.log(session);
+  useEffect(() => {
+    if (session?.user?.category === "super-admin") {
+      router.push("/super-admin");
+    }
+  }, [session]);
 
   if (status === "loading")
     return <div className="p-10 text-center">Loading...</div>;

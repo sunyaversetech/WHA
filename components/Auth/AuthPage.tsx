@@ -33,8 +33,7 @@ export default function AuthPage() {
           <CardContent className="flex-1">
             <Tabs
               defaultValue={params.get("tab") === "signup" ? "signup" : "login"}
-              className="flex flex-col"
-            >
+              className="flex flex-col">
               <TabsList className="grid w-full grid-cols-2 rounded-full bg-gray-100 p-1 mb-4 h-11">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>

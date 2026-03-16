@@ -51,16 +51,14 @@ export default function SignupPage() {
         router.push("/auth?tab=login");
       },
       onError: (error) => {
-        toast.error(
-          error.response?.data?.message || "Signup failed. Please try again.",
-        );
+        toast.error(error.message || "Signup failed. Please try again.");
       },
     });
   };
 
   return (
     <div className="flex ">
-      <div className="w-full max-w-md space-y-2 rounded-xl bg-white  ">
+      <div className="w-full max-w-md space-y-2 rounded-xl bg-white">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -117,8 +115,7 @@ export default function SignupPage() {
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
+                      onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
@@ -130,15 +127,17 @@ export default function SignupPage() {
                 </FormItem>
               )}
             />
-            {/* <FormField
+            <FormField
               control={form.control}
               name="cpassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  {/* <FormLabel>Password</FormLabel> */}
                   <div className="relative">
                     <FormControl>
                       <Input
+                        className="focus:outline-none focus:ring-0 focus-visible:ring-0"
+                        placeholder="Password"
                         type={showPassword ? "text" : "password"}
                         {...field}
                       />
@@ -148,8 +147,7 @@ export default function SignupPage() {
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
+                      onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
@@ -160,7 +158,7 @@ export default function SignupPage() {
                   <FormMessage />
                 </FormItem>
               )}
-            /> */}
+            />
             <div className="text-sm">
               <p>
                 I agree to the{" "}

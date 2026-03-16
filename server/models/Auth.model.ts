@@ -5,7 +5,7 @@ const UserSchema = new Schema(
     name: { type: String },
     category: {
       type: String,
-      enum: ["user", "business"],
+      enum: ["user", "business", "super-admin"],
     },
     email: {
       type: String,
@@ -43,6 +43,7 @@ const UserSchema = new Schema(
     },
     business_name: { type: String, unique: true },
     business_category: { type: String },
+    isblocked: { type: Boolean, default: false },
     abn_number: { type: String },
     verified: { type: Boolean, default: false },
     resetPasswordToken: { type: String },

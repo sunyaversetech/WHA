@@ -1,6 +1,6 @@
 // app/login/page.tsx
 "use client";
-import { signIn, useSession } from "next-auth/react";
+import { getSession, signIn, useSession } from "next-auth/react";
 import { Chrome, Chromium, Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,8 +50,16 @@ export default function LoginPage() {
       );
       setLoading(false);
     } else if (result?.ok) {
-      router.push("/dashboard");
-      router.refresh();
+      const sessionRes = await fetch("/api/auth/session");
+      const session = await sessionRes.json();
+
+      console.log("Logged in user category:", session?.user?.category);
+      if (session?.user?.category === "super-admin") {
+        router.push("/super-admin");
+      } else {
+        router.push("/dashboard");
+      }
+
       setLoading(false);
     }
   };

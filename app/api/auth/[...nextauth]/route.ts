@@ -72,6 +72,7 @@ export const authOptions: NextAuthOptions = {
           user.id = newUser._id.toString();
         } else {
           user.id = existingUser._id.toString();
+          (user as any).category = existingUser.category;
           if (!existingUser.emailVerified) {
             await User.findByIdAndUpdate(existingUser._id, {
               emailVerified: new Date(),
@@ -81,6 +82,11 @@ export const authOptions: NextAuthOptions = {
         }
       }
       return true;
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
     },
     async jwt({ token, user, trigger, session }) {
       if (user) {

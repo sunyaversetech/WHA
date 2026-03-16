@@ -1,0 +1,44 @@
+import { connectToDb } from "@/lib/db";
+import { Review } from "@/server/models/Review.model";
+import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { authOptions } from "../../../auth/[...nextauth]/route";
+import Event from "@/server/models/Event.model";
+import User from "@/server/models/Auth.model";
+import { deleteFromS3 } from "@/server/lib/function";
+
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+export async function POST(req: NextRequest, { params }: RouteContext) {
+  try {
+    await connectToDb();
+
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id: eventId } = await params;
+    const currentUserCategory = (session.user as any).category;
+    const event = await Event.findById(eventId);
+    await deleteFromS3(event.image);
+    if (!event) {
+      return NextResponse.json({ error: "Review not found" }, { status: 404 });
+    }
+
+    if (currentUserCategory !== "super-admin") {
+      return NextResponse.json(
+        { error: "You are not authorized to delete this event" },
+        { status: 403 },
+      );
+    }
+
+    await Event.findByIdAndDelete(eventId);
+
+    return NextResponse.json({ message: "Review deleted successfully" });
+  } catch (error: any) {
+    console.error("Delete Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

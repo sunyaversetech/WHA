@@ -7,7 +7,14 @@ import DashboardNavbar from "@/components/Dashboard/DashboardNavbar";
 const NavbarProvider = () => {
   const pathname = usePathname();
   return (
-    <>{pathname.startsWith("/dashboard") ? <DashboardNavbar /> : <Navbar />}</>
+    <>
+      {pathname.startsWith("/dashboard") ||
+      pathname.startsWith("/super-admin") ? (
+        <DashboardNavbar />
+      ) : (
+        <Navbar />
+      )}
+    </>
   );
 };
 
