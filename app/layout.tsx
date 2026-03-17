@@ -36,13 +36,9 @@ export default function RootLayout({
           <CityFilterProvider>
             <SessionWrapper>
               <NavbarProvider />
-<<<<<<< Updated upstream
               <TooltipProvider>
                 <div>{children}</div>
               </TooltipProvider>
-=======
-              <div className="bg-gray-50">{children}</div>
->>>>>>> Stashed changes
               <Toaster />
               <BottomNav />
             </SessionWrapper>
