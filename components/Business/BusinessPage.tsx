@@ -195,8 +195,8 @@ export default function BusinessesClientPage() {
     //   </div>
     // </div>
 
-    <div className="min-h-screen bg-neutral-50 pb-20">
-      <div className="container-modern py-4 md:py-8 mx-4 md:mx-6 w-auto">
+    <div className="min-h-screen bg-neutral-50 pb-20 mx-4 md:mx-6">
+      <div className="container-modern py-4 md:py-8  w-auto">
         <BusinessHeader />
         <Tabs value={view}>
           <TabsContent value="list">

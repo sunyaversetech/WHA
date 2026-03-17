@@ -182,12 +182,9 @@ export default function BusinessHeader() {
           </TabsList>
         </Tabs>
       </div>
-      {/* <p className="text-xs md:text-sm text-slate-400 mb-3 hidden md:block">
-        Search for top-rated services and shops in your area
-      </p> */}
 
       {/* Search + All Community */}
-      <div className="flex flex-row gap-2 mb-3">
+      <div className="flex flex-col md:flex-row gap-2 mb-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
 
@@ -199,13 +196,13 @@ export default function BusinessHeader() {
             className="w-full pl-10 pr-3 py-2 text-base border border-slate-200 rounded-full focus:outline-none "
           />
         </div>
-        <div className="flex-none">
+        <div className="flex-none w-full md:w-auto">
           <Select
             onValueChange={(val) => {
               updateQuery({ community: val === "All" ? null : val });
             }}
           >
-            <SelectTrigger className="flex items-center gap-2 border border-primary rounded-full text-primary font-bold capitalize">
+            <SelectTrigger className="flex items-center w-full gap-2 border border-primary rounded-full text-primary font-bold capitalize">
               {currentCommunity ?? "All Community"}
             </SelectTrigger>
             <SelectContent popover="auto" position="popper">
@@ -220,22 +217,6 @@ export default function BusinessHeader() {
               <SelectItem value="Nepali">
                 <span className="flex items-center gap-2">Nepali</span>
               </SelectItem>
-
-              {/* <SelectItem value="Indian">
-                <span className="flex items-center gap-2">Indian</span>
-              </SelectItem>
-
-              <SelectItem value="Bhutanese">
-                <span className="flex items-center gap-2">Bhutanese</span>
-              </SelectItem>
-
-              <SelectItem value="European">
-                <span className="flex items-center gap-2">European</span>
-              </SelectItem>
-
-              <SelectItem value="Others">
-                <span className="flex items-center gap-2">Others</span>
-              </SelectItem> */}
             </SelectContent>
           </Select>
         </div>

@@ -46,11 +46,11 @@ export default function EventsPageClient() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 pb-20">
-      <div className="container-modern py-4 md:py-8 mx-4 md:mx-6 w-auto">
+    <div className="min-h-screen bg-neutral-50 mx-4 md:mx-6 pb-20">
+      <div className="container-modern py-4 md:py-8  w-auto">
         <EventHeader />
         {isLoading ? (
-          <div className="flex items-center gap-2  mt-5">
+          <div className="flex  items-center gap-2   mt-5">
             <Skeleton className="h-72 w-96 mb-4 animate-pulse rounded-xl" />
             <Skeleton className="h-72 w-96 mb-4 animate-pulse" />
             <Skeleton className="h-72 w-96 mb-4 animate-pulse" />
@@ -63,7 +63,7 @@ export default function EventsPageClient() {
                   <div className="mt-8 p-20 text-center bg-white rounded-3xl border-2 border-dashed border-neutral-200">
                     <Calendar className="h-12 w-12 mx-auto text-neutral-300 mb-4" />
                     <h3 className="text-lg font-semibold text-primary">
-                      No events to show
+                      No events to shows
                     </h3>
                     <p className="text-sm text-neutral-500 mt-1">
                       Try selecting `All Cities` in the navigation bar.

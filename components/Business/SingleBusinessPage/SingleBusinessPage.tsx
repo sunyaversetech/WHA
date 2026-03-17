@@ -123,7 +123,8 @@ export default function BusinessPage() {
             <div className="hidden flex items-center gap-2 md:flex md:items-center md:gap-2">
               <button
                 onClick={handleAddRemoveFavorite}
-                className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition">
+                className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition"
+              >
                 {isPending ? (
                   <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                 ) : (
@@ -142,7 +143,8 @@ export default function BusinessPage() {
               <button
                 onClick={handleShare}
                 className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition-all active:scale-90"
-                title="Share business">
+                title="Share business"
+              >
                 <Share className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </button>
             </div>
@@ -198,6 +200,7 @@ export default function BusinessPage() {
             <div className="absolute inset-0 flex items-start justify-between p-3 md:hidden">
               <div>
                 <ChevronLeft
+                  onClick={() => router.push("/businesses")}
                   className="h-8 w-8 cursor-pointer rounded-full border  p-1.5 
                  text-primary bg-white transition-all hover:scale-105 active:scale-95"
                 />
@@ -206,7 +209,8 @@ export default function BusinessPage() {
               <div className="flex gap-2 ">
                 <button
                   onClick={handleAddRemoveFavorite}
-                  className="flex items-center justify-center p-2 border bg-white rounded-full transition-all hover:scale-105 active:scale-95">
+                  className="flex items-center justify-center p-2 border bg-white rounded-full transition-all hover:scale-105 active:scale-95"
+                >
                   {isPending ? (
                     <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                   ) : (
@@ -224,7 +228,8 @@ export default function BusinessPage() {
 
                 <button
                   className="flex items-center justify-center p-2 border rounded-full bg-white  transition-all hover:scale-105 active:scale-95"
-                  onClick={handleShare}>
+                  onClick={handleShare}
+                >
                   <Share className="h-4 w-4 text-primary " />
                 </button>
               </div>
@@ -287,7 +292,8 @@ export default function BusinessPage() {
             <CardContent className="pt-6 ">
               <h3 className="font-bold mb-2">Business Status</h3>
               <Badge
-                className={`${data?.data?.verified ? "bg-green-600" : "bg-red-500"}`}>
+                className={`${data?.data?.verified ? "bg-green-600" : "bg-red-500"}`}
+              >
                 {data?.data?.verified
                   ? "Verified Business"
                   : "Pending Verification"}

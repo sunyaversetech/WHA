@@ -105,7 +105,7 @@ export default function EventHeader() {
   return (
     <div className=" w-full bg-white px-4 py-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-2 gap-2">
-        <h1 className="text-lg md:text-xl font-bold text-slate-800">
+        <h1 className="text-lg md:text-xl font-bold text-slate-800 md:block">
           Trending Events
         </h1>
 
@@ -117,25 +117,25 @@ export default function EventHeader() {
         </Tabs>
       </div>
 
-      <div className="flex flex-row gap-2 mb-3">
+      <div className="flex flex-col md:flex-row  gap-2 mb-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
           <input
             type="text"
             value={inputValue}
             onChange={handleSearchChange}
-            placeholder="Search Events"
+            placeholder="Search Local Events"
             className="w-full pl-10 pr-3 py-2 text-base border border-slate-200 rounded-full focus:outline-none"
           />
         </div>
 
-        <div className="flex-none">
+        <div className="flex-none w-full md:w-auto ">
           <Select
             onValueChange={(val) => {
               updateQuery({ community: val === "All" ? null : val });
             }}
           >
-            <SelectTrigger className="flex items-center gap-2 border border-blue-950 rounded-full text-blue-950 font-bold capitalize">
+            <SelectTrigger className="flex w-full items-center gap-2 border border-blue-950 rounded-full text-blue-950 font-bold capitalize">
               {currentCommunity ?? "All Community"}
             </SelectTrigger>
             <SelectContent popover="auto" position="popper">
@@ -150,22 +150,6 @@ export default function EventHeader() {
               <SelectItem value="Nepali">
                 <span className="flex items-center gap-2">Nepali</span>
               </SelectItem>
-
-              {/* <SelectItem value="Indian">
-                <span className="flex items-center gap-2">Indian</span>
-              </SelectItem>
-
-              <SelectItem value="Bhutanese">
-                <span className="flex items-center gap-2">Bhutanese</span>
-              </SelectItem>
-
-              <SelectItem value="European">
-                <span className="flex items-center gap-2">European</span>
-              </SelectItem>
-
-              <SelectItem value="Others">
-                <span className="flex items-center gap-2">Others</span>
-              </SelectItem> */}
             </SelectContent>
           </Select>
         </div>
