@@ -6,22 +6,23 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, ChevronRight } from "lucide-react";
+import { MapPin, ChevronDown } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
 import { useCallback } from "react";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const isActive = (path: string) => pathname === path;
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCity = searchParams.get("city");
+
+  const isActive = (path: string) => pathname === path;
 
   const updateQuery = useCallback(
     (updates: Record<string, string | null>) => {
@@ -46,207 +47,150 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 border-b bg-white">
+    <nav
+      className="sticky top-0 z-50 flex items-center justify-between px-6 py-3
+    bg-white/10 backdrop-blur-xl border-b border-white/20 shadow-lg"
+    >
+      {/* Logo */}
       <Link href={buildPath("/")} className="flex items-center">
         <Image
           src="/wha/logo.png"
-          alt="Whats Happening Australia Logo"
+          alt="logo"
           width={100}
           height={20}
-          className="object-contain w-16 sm:w-16 md:w-20 lg:w-24 h-auto"
+          className="object-contain w-20 h-auto"
           priority
         />
       </Link>
 
-      {!pathname.startsWith("/dashboard") ? (
-        <div className="hidden md:flex items-center bg-white backdrop-blur-sm border border-primary rounded-full p-1 gap-1 text-sm font-medium">
+      {/* Center Nav */}
+      {!pathname.startsWith("/dashboard") && (
+        <div
+          className="hidden md:flex items-center
+        bg-white/20 backdrop-blur-lg border border-priamry
+        rounded-full p-1 gap-1 text-sm font-medium shadow-md"
+        >
           {[
             { name: "Events", href: "/events" },
-            // { name: "Deals", href: "/deals" },
             { name: "Businesses", href: "/businesses" },
           ].map((item) => (
             <Link
               key={item.href}
               href={buildPath(item.href)}
-              className={`px-5 py-2 rounded-full transition-all duration-300 ease-in-out
-        ${
-          isActive(item.href)
-            ? "bg-primary text-white shadow-sm"
-            : "text-primary hover:bg-primary/10 hover:text-primary"
-        }
-      `}
+              className={`px-5 py-2 rounded-full transition-all duration-300
+              ${
+                isActive(item.href)
+                  ? "bg-primary text-white shadow"
+                  : "text-primary hover:bg-white/20"
+              }`}
             >
               {item.name}
             </Link>
           ))}
 
-          {status === "authenticated" && (
+          {/* {status === "authenticated" && (
             <Link
               href={buildPath("/dashboard")}
-              className={`px-5 py-2 rounded-full transition-all duration-300 ease-in-out
-        ${
-          isActive("/dashboard")
-            ? "bg-primary text-white shadow-sm"
-            : "text-primary hover:bg-primary/10 hover:text-primary"
-        }
-      `}
+              className={`px-5 py-2 rounded-full transition-all duration-300
+              ${
+                isActive("/dashboard")
+                  ? "bg-primary text-white shadow"
+                  : "text-primary hover:bg-white/20"
+              }`}
             >
               Dashboard
             </Link>
-          )}
+          )} */}
         </div>
-      ) : (
-        ""
       )}
-      <div className="flex gap-2">
-        {session?.user.category === "user" &&
-        pathname.startsWith("/dashboard") ? (
-          <Link
-            href="/"
-            className="text-sm font-medium bg-red-600 text-white px-4 py-2 rounded-lg flex gap-1 items-center"
-          >
-            <MapPin className="h-4 w-4" />
-            <span>Request For Business</span>
-          </Link>
+
+      {/* Right Section */}
+      <div className="flex items-center gap-3">
+        {/* City Filter - Redesigned */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="flex items-center gap-2 px-4 py-2 rounded-full
+            bg-white/20 backdrop-blur-md border border-primary
+            text-primary text-sm hover:bg-white/30 transition focus:outline-none focus:ring-0 focus-visible:ring-0"
+            >
+              <MapPin className="h-4 w-4" />
+              <span className="capitalize">{currentCity ?? "Australia"}</span>
+              <ChevronDown className="h-4 w-4 opacity-70" />
+            </button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent className="rounded-xl bg-white/90 backdrop-blur-lg border border-white/30 shadow-xl p-2">
+            {["Australia", "sydney", "canberra"].map((city) => (
+              <DropdownMenuItem
+                key={city}
+                onSelect={() =>
+                  updateQuery({ city: city === "Australia" ? null : city })
+                }
+                className="capitalize cursor-pointer"
+              >
+                {city}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Auth Section */}
+        {session ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <Avatar className="h-10 w-10 border rounded-full border-white/30">
+                <AvatarImage src={session?.user?.image ?? ""} />
+                <AvatarFallback>
+                  {session?.user?.name?.charAt(0) || "U"}
+                </AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              align="end"
+              className="w-64 p-3 rounded-2xl bg-white/90 backdrop-blur-lg shadow-xl"
+            >
+              <p className="font-semibold">{session.user?.name}</p>
+              <p className="text-sm text-muted-foreground mb-2">
+                {session.user?.email}
+              </p>
+
+              <div className="border-t my-2" />
+
+              <Link
+                href="/dashboard"
+                className="block px-2 py-2 rounded-md hover:bg-gray-100"
+              >
+                Dashboard
+              </Link>
+
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="w-full text-left px-2 py-2 rounded-md hover:bg-gray-100"
+              >
+                Logout
+              </button>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
-          <Select
-            onValueChange={(val) => {
-              updateQuery({ city: val === "Australia" ? null : val });
-            }}
-          >
-            <SelectTrigger className="flex items-center rounded-full gap-2 border py-4 border-blue-950 text-blue-950 font-bold capitalize">
-              <MapPin className="h-6 w-6 text-blue-950" />
-              {currentCity ?? "Australia"}
-            </SelectTrigger>
-            <SelectContent popover="auto" position="popper">
-              <SelectItem value="Australia">
-                <span className="flex items-center gap-2 ">Australia</span>
-              </SelectItem>
+          <div className="hidden md:flex gap-2">
+            <Link href="/auth">
+              <Button className="rounded-full px-5 bg-white/20 backdrop-blur-md text-priamry hover:bg-primary hover:text-white">
+                Login
+              </Button>
+            </Link>
 
-              <SelectItem value="sydney">
-                <span className="flex items-center gap-2">Sydney</span>
-              </SelectItem>
-
-              <SelectItem value="canberra">
-                <span className="flex items-center gap-2">Canberra</span>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            {/* <Link href="/auth">
+              <Button
+                variant="outline"
+                className="rounded-full px-5 border-white/40 text-white hover:bg-white/20"
+              >
+                Sign up
+              </Button>
+            </Link> */}
+          </div>
         )}
-        <div className="flex items-center">
-          {session ? (
-            <div className="hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger className="outline-none">
-                  <Avatar className="h-10 w-10 md:h-12 md:w-12 border rounded-full">
-                    <AvatarImage
-                      src={session?.user?.image ? session.user.image : ""}
-                      alt="User"
-                      className="object-cover"
-                    />
-                    <AvatarFallback>
-                      {session?.user?.name?.charAt(0) || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-80 p-4 rounded-2xl shadow-xl bg-white border"
-                >
-                  {/* Profile Header */}
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-14 w-14 rounded-full">
-                      <AvatarImage
-                        src={session?.user?.image ?? ""}
-                        alt="User"
-                        className="object-cover"
-                      />
-                      <AvatarFallback>
-                        {session?.user?.name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    <div>
-                      <p className="font-semibold text-lg leading-none">
-                        {session?.user?.name || "User"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Business Account
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Verify Box */}
-                  <div className="mt-4">
-                    <Link
-                      href="/verify-email"
-                      className="flex justify-between items-center p-4 rounded-xl bg-yellow-100 border border-yellow-200 hover:bg-yellow-200 transition"
-                    >
-                      <div>
-                        <p className="font-medium text-sm">
-                          Verify your email address
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Secure your account
-                        </p>
-                      </div>
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  </div>
-
-                  <div className="my-4 border-t" />
-                  {/* Menu Items */}
-                  <div className="space-y-2 text-[15px]">
-                    <Link
-                      href="/dashboard/profile"
-                      className="block px-2 py-2 rounded-md hover:bg-gray-100 transition"
-                    >
-                      My profile
-                    </Link>
-
-                    <Link
-                      href="/settings"
-                      className="block px-2 py-2 rounded-md hover:bg-gray-100 transition"
-                    >
-                      Personal settings
-                    </Link>
-                  </div>
-
-                  <div className="my-4 border-t" />
-
-                  <div className="space-y-2 text-[15px]">
-                    <Link
-                      href="/support"
-                      className="block px-2 py-2 rounded-md hover:bg-gray-100 transition"
-                    >
-                      Help and support
-                    </Link>
-
-                    <button
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                      className="w-full text-left px-2 py-2 rounded-md hover:bg-gray-100 transition"
-                    >
-                      Log out
-                    </button>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <div className="hidden md:flex">
-                <Button asChild>
-                  <Link href="/auth">Login</Link>
-                </Button>
-              </div>
-              {/* <div className="flex justify-center items-center border-l-2 pl-2">
-                <Link href="/auth/business" className="text-primary">
-                  For Business
-                </Link>
-              </div> */}
-            </div>
-          )}
-        </div>
       </div>
     </nav>
   );

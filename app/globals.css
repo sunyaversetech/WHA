@@ -131,9 +131,14 @@
   * {
     @apply border-border;
   }
-
+  /* 
   html {
     scroll-behavior: smooth;
+  } */
+
+  html,
+  body {
+    overscroll-behavior: none;
   }
 
   body {
