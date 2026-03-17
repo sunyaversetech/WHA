@@ -152,25 +152,27 @@ export default function BusinessSignup() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-card border rounded-xl shadow-sm m-10">
-      <div className="flex mb-6 text-center items-center">
+    <div className="w-full max-w-3xl mx-auto px-4 md:px-6 py-6 md:py-8 bg-white/80 backdrop-blur-xl border border-white/20 shadow-xl">
+      <div className="flex items-center justify-between mb-6">
         <div
           className="flex items-start justify-start p-4 -ml-4"
-          onClick={() => router.push("/auth?tab=login")}>
+          onClick={() => router.push("/auth?tab=login")}
+        >
           <ChevronLeft
             className="h-8 w-8 cursor-pointer rounded-full border bg-white p-1.5 
                text-slate-600 
                transition-all hover:scale-105 active:scale-95"
           />
         </div>
-        <div className="flex flex-col justify-center m-auto items-center ">
-          <h1 className="text-2xl font-bold flex justify-center">
+        <div className="text-center flex-1">
+          <h1 className="text-xl md:text-2xl font-bold">
             WHA Business Account
           </h1>
           <p className="text-muted-foreground text-sm">
-            Join our platform to manage your business.
+            Manage your business easily
           </p>
         </div>
+        <div className="w-8" /> {/* spacer for balance */}
       </div>
 
       <Form {...form}>
@@ -180,9 +182,13 @@ export default function BusinessSignup() {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Your Name</FormLabel>
+                {/* <FormLabel>Your Name</FormLabel> */}
                 <FormControl>
-                  <Input placeholder="John Doe" {...field} />
+                  <Input
+                    placeholder="Contact Name"
+                    {...field}
+                    className="focus:outline-none focus:ring-0 focus-visible:ring-0"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -194,9 +200,13 @@ export default function BusinessSignup() {
             name="business_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Business Name</FormLabel>
+                {/* <FormLabel>Business Name</FormLabel> */}
                 <FormControl>
-                  <Input placeholder="Acme Corp" {...field} />
+                  <Input
+                    placeholder="Business Name"
+                    {...field}
+                    className="focus:outline-none focus:ring-0 focus-visible:ring-0"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -207,7 +217,7 @@ export default function BusinessSignup() {
             name="business_category"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Category</FormLabel>
+                {/* <FormLabel>Category</FormLabel> */}
                 <Popover onOpenChange={setOpen} open={open}>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -216,8 +226,9 @@ export default function BusinessSignup() {
                         role="combobox"
                         className={cn(
                           "w-full justify-between font-normal",
-                          !field.value && "text-muted-foreground",
-                        )}>
+                          !field.value && "text-muted-foreground rounded-lg",
+                        )}
+                      >
                         {field.value
                           ? categories.find((cat) => cat.value === field.value)
                               ?.label
@@ -245,7 +256,8 @@ export default function BusinessSignup() {
                                   category.value,
                                 );
                                 setOpen(false);
-                              }}>
+                              }}
+                            >
                               <Check
                                 className={cn(
                                   "mr-2 h-4 w-4",
@@ -281,7 +293,8 @@ export default function BusinessSignup() {
                       if (value) field.onChange(value);
                     }}
                     value={field.value}
-                    className="flex flex-wrap justify-start gap-2">
+                    className="flex flex-wrap justify-start gap-2"
+                  >
                     {communities.map((item) => (
                       <ToggleGroupItem
                         key={item}
@@ -292,7 +305,8 @@ export default function BusinessSignup() {
                           "hover:bg-accent hover:text-accent-foreground",
                           "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:opacity-100",
                           "first:rounded-md last:rounded-md",
-                        )}>
+                        )}
+                      >
                         {item}
                       </ToggleGroupItem>
                     ))}
@@ -333,7 +347,8 @@ export default function BusinessSignup() {
                       if (value) field.onChange(value);
                     }}
                     value={field.value}
-                    className="flex flex-wrap justify-start gap-2">
+                    className="flex flex-wrap justify-start gap-2"
+                  >
                     {cities.map((item) => (
                       <ToggleGroupItem
                         key={item.label}
@@ -344,7 +359,8 @@ export default function BusinessSignup() {
                           "hover:bg-accent hover:text-accent-foreground",
                           "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:opacity-100",
                           "first:rounded-md last:rounded-md capitalize",
-                        )}>
+                        )}
+                      >
                         {item.value}
                       </ToggleGroupItem>
                     ))}
@@ -377,12 +393,13 @@ export default function BusinessSignup() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                {/* <FormLabel>Email</FormLabel> */}
                 <FormControl>
                   <Input
                     type="email"
-                    placeholder="work@business.com"
+                    placeholder="Email Address"
                     {...field}
+                    className="focus:outline-none focus:ring-0 focus-visible:ring-0"
                   />
                 </FormControl>
                 <FormMessage />
@@ -394,12 +411,14 @@ export default function BusinessSignup() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                {/* <FormLabel>Password</FormLabel> */}
                 <div className="relative">
                   <FormControl>
                     <Input
                       type={showPassword ? "text" : "password"}
                       {...field}
+                      placeholder="Password"
+                      className="focus:outline-none focus:ring-0 focus-visible:ring-0"
                     />
                   </FormControl>
                   <Button
@@ -407,7 +426,8 @@ export default function BusinessSignup() {
                     variant="ghost"
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}>
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
@@ -425,12 +445,14 @@ export default function BusinessSignup() {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
+                {/* <FormLabel>Confirm Password</FormLabel> */}
                 <div className="relative">
                   <FormControl>
                     <Input
                       type={showPassword ? "text" : "password"}
                       {...field}
+                      placeholder="Confirm Password"
+                      className="focus:outline-none focus:ring-0 focus-visible:ring-0"
                     />
                   </FormControl>
                   <Button
@@ -438,7 +460,8 @@ export default function BusinessSignup() {
                     variant="ghost"
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}>
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
@@ -465,20 +488,23 @@ export default function BusinessSignup() {
                   </FormControl>
                   <div className="leading-none">
                     <FormLabel className="text-sm font-normal">
-                      I agree to the{" "}
+                      I agree to the
                       <a
                         className="text-red-600 hover:underline"
-                        href="/privacy">
+                        href="/privacy"
+                      >
                         Privacy Policy,
                       </a>
                       <a
                         className="text-red-600 hover:underline"
-                        href="/privacy">
+                        href="/privacy"
+                      >
                         Terms of Service,
                       </a>
                       <a
                         className="text-red-600 hover:underline"
-                        href="/privacy">
+                        href="/privacy"
+                      >
                         Terms of Business
                       </a>
                     </FormLabel>
@@ -492,7 +518,8 @@ export default function BusinessSignup() {
           <Button
             type="submit"
             // disabled={!form.formState.isValid}
-            className="w-full">
+            className="w-full rounded-lg"
+          >
             Register Business
           </Button>
         </form>

@@ -31,13 +31,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>
+      <body className={`${inter.variable} antialiased bg-neutral-50`}>
         <ReactQueryContext>
           <CityFilterProvider>
             <SessionWrapper>
               <NavbarProvider />
               <TooltipProvider>
-                <div className="bg-neutral-50 pb-16">{children}</div>
+                <div className="pb-16 md:pb-0">{children}</div>
               </TooltipProvider>
               <Toaster />
               <BottomNav />

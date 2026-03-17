@@ -17,10 +17,10 @@ export default function AuthPage() {
   const params = useSearchParams();
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex w-full bg-gray-50  ">
       {/* LEFT SIDE */}
-      <div className="flex w-full md:w-1/2 items-start justify-center p-6">
-        <Card className="w-full max-w-md shadow-lg border-none bg-white flex flex-col max-h-[90vh]">
+      <div className=" flex w-full  items-center justify-center p-4 md:p-6 overflow-y-auto">
+        <Card className="w-full max-w-md shadow-lg border-none bg-white flex flex-col">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-bold text-start md:text-center">
               Log in or sign up
@@ -33,8 +33,9 @@ export default function AuthPage() {
           <CardContent className="flex-1">
             <Tabs
               defaultValue={params.get("tab") === "signup" ? "signup" : "login"}
-              className="flex flex-col">
-              <TabsList className="grid w-full grid-cols-2 rounded-full bg-gray-100 p-1 mb-4 h-11">
+              className="flex flex-col"
+            >
+              <TabsList className="grid w-full grid-cols-2 rounded-full bg-gray-100 mb-4">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
@@ -52,7 +53,7 @@ export default function AuthPage() {
       </div>
 
       {/* RIGHT IMAGE */}
-      <div className="relative hidden md:block md:w-1/2 h-full">
+      <div className="relative hidden md:w-1/2 ">
         <Image
           src="/wha/wha-auth.png"
           alt="Australia community"
