@@ -77,7 +77,7 @@ export default function Navbar() {
             <Link
               key={item.href}
               href={buildPath(item.href)}
-              className={`px-5 py-2 rounded-full transition-all duration-300
+              className={`px-5 py-2 rounded-full
               ${
                 isActive(item.href)
                   ? "bg-primary text-white shadow"
