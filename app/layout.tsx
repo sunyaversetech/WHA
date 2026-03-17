@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 
-import { Roboto } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/Auth/SessionWrapper";
 import ReactQueryContext from "@/lib/ReactQueryContext";
@@ -12,11 +12,11 @@ import BottomNav from "@/components/ResuableComponents/BottomNavbar";
 import NavbarProvider from "@/components/ResuableComponents/NavbarProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const roboto = Roboto({
+const inter = Inter({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-roboto",
-  weight: ["100", "300", "400", "500", "700", "900"], // Roboto available weights
+  variable: "--font-inter",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -31,14 +31,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${roboto.variable} antialiased `}>
+      <body className={`${inter.variable} antialiased`}>
         <ReactQueryContext>
           <CityFilterProvider>
             <SessionWrapper>
               <NavbarProvider />
+<<<<<<< Updated upstream
               <TooltipProvider>
                 <div>{children}</div>
               </TooltipProvider>
+=======
+              <div className="bg-gray-50">{children}</div>
+>>>>>>> Stashed changes
               <Toaster />
               <BottomNav />
             </SessionWrapper>

@@ -7,6 +7,7 @@ import {
   Tag,
   Users,
   CalendarRange,
+  Star,
 } from "lucide-react";
 import EventCard from "@/components/cards/event-card";
 import DealCard from "@/components/cards/deal-card";
@@ -16,6 +17,7 @@ import { getDeals } from "@/lib/data/deals";
 import { getBusinesses } from "@/lib/data/businesses";
 import CardSlider from "@/components/ui/card-slider";
 import FeaturedCard from "@/components/cards/featured-card";
+import { featuredItems } from "@/lib/data/featured";
 import {
   useFilteredDeals,
   useFilteredBusinesses,
@@ -40,44 +42,45 @@ export default function LandingPage() {
   const businesses = useFilteredBusinesses(allBusinesses);
 
   return (
-    <div className=" bg-gradient-modern container-modern  text-black">
-      {/* Sponsor banner  */}
-
-      <div className="container-modern pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
-        <SponsorSlider>
-          <div className="relative h-[220px] md:h-[420px] rounded-xl overflow-hidden">
-            <img src="/events/ssa.png" className="w-full h-full object-cover" />
-          </div>
-
-          <div className="relative h-[220px] md:h-[420px] rounded-xl overflow-hidden">
-            <img
-              src="/events/skippy.png"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </SponsorSlider>
+    <div className="container-modern  text-black">
+      {/* Featured Slider - Now using CardSlider */}
+      <div className=" px-4 pt-2 md:pt-6">
+        <CardSlider
+          title=""
+          icon={<Star className="h-3 w-3 md:h-5 md:w-5 text-white" />}
+        >
+          {featuredItems.map((item) => (
+            <FeaturedCard key={item.id} item={item} />
+          ))}
+        </CardSlider>
       </div>
 
       {/* <div className=" !pr-0  pt-1 md:pt-6">
         <h1>Top Businesses in Canberra</h1>
-        <Carousel className="w-full ">
-          <CarouselContent>
-            {data?.data.business.map((item: any) => (
-              <CarouselItem key={item._id} className="basis-1/2 lg:basis-1/2">
-                <FeaturedCard key={item._id} item={item} />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
-        </Carousel>
+        {data?.data?.business && data.data.business.length > 0 ? (
+          <Carousel className="w-full ">
+            <CarouselContent>
+              {data.data.business.map((item: any) => (
+                <CarouselItem key={item._id} className="basis-1/2 lg:basis-1/2">
+                  <FeaturedCard key={item._id} item={item} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        ) : (
+          <div className="mt-2 text-sm text-muted-foreground">
+            No featured businesses available right now.
+          </div>
+        )}
       </div> */}
 
-      <div className=" mt-2 md:mt-4 bg-base text-black rounded-t-3xl">
+      <div className="mt-2 md:mt-4 bg-white text-black rounded-t-3xl px-4 md:px-6">
         {/* Flexible Stats Cards*/}
-        {/* <div className="container-modern py-4 md:py-6 border-b border-divider ">
+        <div className="container-modern py-4 md:py-6 border-b border-divider ">
           <h2 className=" text-black text-sm md:text-md lg:text-lg font-bold mb-2 md:mb-4">
-            Explore what`s active right now in your city
+            Explore what's active right now in your city
           </h2>
 
           <div className="flex flex-wrap justify-between gap-2 mx-auto  md:max-w-full rounded-lg ">
@@ -91,7 +94,7 @@ export default function LandingPage() {
                 icon: Calendar,
               },
               {
-                count: data?.data?.deals?.length,
+                count: data?.data?.deals?.length ?? 0,
                 label: "Deals",
                 color: "bg-secondary/10 text-secondary",
                 hover: "hover:bg-secondary/20",
@@ -127,52 +130,44 @@ export default function LandingPage() {
               </Link>
             ))}
           </div>
-        </div> */}
+        </div>
 
-        {/* <div className="container-modern pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
-          <h1 className="mb-4 flex items-center gap-2">
-            <CalendarRange /> Upcoming Events
-          </h1>
+        {/* Recent Events Preview - Now using CardSlider */}
+        <div className="container-modern pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
+          <CardSlider
+            title="Upcoming Events"
+            icon={<Calendar className="h-5 w-5 text-primary" />}
+            viewAllHref="/events"
+          >
+            {data?.data?.length === 0 ? (
+              <PlaceholderCard type="events" />
+            ) : (
+              data?.data?.events
+                .slice(0, 6)
+                .map((events: any) => (
+                  <EventCard key={events.id} event={events} />
+                ))
+            )}
+          </CardSlider>
+        </div>
 
-          {data?.data.upcomingevents.length < 1 ? (
-            <div className="w-full items-center text-center text-2xl font-semibold">
-              No Upcoming Events Right Now
-            </div>
-          ) : (
-            <Carousel className="w-full ">
-              <CarouselContent>
-                {data?.data.upcomingevents.map((item: any) => (
-                  <CarouselItem
-                    key={item._id}
-                    className="basis-1/2 lg:basis-1/2"
-                  >
-                    <EventCard key={item._id} event={item} />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          )}
-        </div> */}
-
-        {/* <div className="container-modern pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
+        {/* <div className="pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
           <CardSlider
             title="Active Deals"
             icon={<Tag className="h-5 w-5 text-primary" />}
             viewAllHref="/deals"
           >
-            {data?.data?.deals.length === 0 ? (
+            {(data?.data?.deals?.length ?? 0) === 0 ? (
               <PlaceholderCard type="deals" />
             ) : (
               data?.data?.deals
-                .slice(0, 6)
+                ?.slice(0, 6)
                 .map((deal: any) => <DealCard key={deal._id} deal={deal} />)
             )}
           </CardSlider>
         </div> */}
 
-        {/* <div className="container-modern pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
+        <div className=" pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
           <CardSlider
             title="Local Businesses"
             icon={<Building className="h-5 w-5 text-primary" />}
@@ -188,9 +183,9 @@ export default function LandingPage() {
                 ))
             )}
           </CardSlider>
-        </div> */}
+        </div>
 
-        {/* <div className="container-modern pt-2 pb-4 md:py-6  border-b border-divider">
+        <div className="pt-2 pb-4 md:py-6  border-b border-divider">
           <div className="card-lg !rounded-lg p-2 md:p-6 lg:p-8">
             <div className="text-center mb-2 md:mb-6">
               <div className="flex items-center justify-center space-x-3  md:mb-4">
@@ -278,10 +273,10 @@ export default function LandingPage() {
               </a>
             </div>
           </div>
-        </div> */}
+        </div>
       </div>
 
-      <div className="container-modern py-4 md:py-6">
+      <div className=" py-4 md:py-6">
         <div className="card p-3 md:p-4 lg:p-6">
           <div className="flex items-start space-x-3 md:space-x-4">
             <div className="p-2 bg-yellow-500/20 rounded-xl flex-shrink-0">

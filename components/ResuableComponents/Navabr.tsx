@@ -53,7 +53,7 @@ export default function Navbar() {
           alt="Whats Happening Australia Logo"
           width={100}
           height={20}
-          className="object-contain"
+          className="object-contain w-16 sm:w-16 md:w-20 lg:w-24 h-auto"
           priority
         />
       </Link>
@@ -62,7 +62,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center bg-white backdrop-blur-sm border border-primary rounded-full p-1 gap-1 text-sm font-medium">
           {[
             { name: "Events", href: "/events" },
-            { name: "Deals", href: "/deals" },
+            // { name: "Deals", href: "/deals" },
             { name: "Businesses", href: "/businesses" },
           ].map((item) => (
             <Link
@@ -74,7 +74,8 @@ export default function Navbar() {
             ? "bg-primary text-white shadow-sm"
             : "text-primary hover:bg-primary/10 hover:text-primary"
         }
-      `}>
+      `}
+            >
               {item.name}
             </Link>
           ))}
@@ -88,7 +89,8 @@ export default function Navbar() {
             ? "bg-primary text-white shadow-sm"
             : "text-primary hover:bg-primary/10 hover:text-primary"
         }
-      `}>
+      `}
+            >
               Dashboard
             </Link>
           )}
@@ -101,7 +103,8 @@ export default function Navbar() {
         pathname.startsWith("/dashboard") ? (
           <Link
             href="/"
-            className="text-sm font-medium bg-red-600 text-white px-4 py-2 rounded-lg flex gap-1 items-center">
+            className="text-sm font-medium bg-red-600 text-white px-4 py-2 rounded-lg flex gap-1 items-center"
+          >
             <MapPin className="h-4 w-4" />
             <span>Request For Business</span>
           </Link>
@@ -109,28 +112,23 @@ export default function Navbar() {
           <Select
             onValueChange={(val) => {
               updateQuery({ city: val === "Australia" ? null : val });
-            }}>
-            <SelectTrigger className="flex items-center gap-2 border border-blue-950 text-blue-950 font-bold capitalize">
+            }}
+          >
+            <SelectTrigger className="flex items-center rounded-full gap-2 border py-4 border-blue-950 text-blue-950 font-bold capitalize">
               <MapPin className="h-6 w-6 text-blue-950" />
               {currentCity ?? "Australia"}
             </SelectTrigger>
             <SelectContent popover="auto" position="popper">
               <SelectItem value="Australia">
-                <span className="flex items-center gap-2 ">
-                  <MapPin className="h-6 w-6" /> Australia
-                </span>
+                <span className="flex items-center gap-2 ">Australia</span>
               </SelectItem>
 
               <SelectItem value="sydney">
-                <span className="flex items-center gap-2">
-                  <MapPin className="h-6 w-6" /> Sydney
-                </span>
+                <span className="flex items-center gap-2">Sydney</span>
               </SelectItem>
 
               <SelectItem value="canberra">
-                <span className="flex items-center gap-2">
-                  <MapPin className="h-6 w-6" /> Canberra
-                </span>
+                <span className="flex items-center gap-2">Canberra</span>
               </SelectItem>
             </SelectContent>
           </Select>
@@ -153,7 +151,8 @@ export default function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-80 p-4 rounded-2xl shadow-xl bg-white border">
+                  className="w-80 p-4 rounded-2xl shadow-xl bg-white border"
+                >
                   {/* Profile Header */}
                   <div className="flex items-center gap-3">
                     <Avatar className="h-14 w-14 rounded-full">
@@ -181,7 +180,8 @@ export default function Navbar() {
                   <div className="mt-4">
                     <Link
                       href="/verify-email"
-                      className="flex justify-between items-center p-4 rounded-xl bg-yellow-100 border border-yellow-200 hover:bg-yellow-200 transition">
+                      className="flex justify-between items-center p-4 rounded-xl bg-yellow-100 border border-yellow-200 hover:bg-yellow-200 transition"
+                    >
                       <div>
                         <p className="font-medium text-sm">
                           Verify your email address
@@ -199,13 +199,15 @@ export default function Navbar() {
                   <div className="space-y-2 text-[15px]">
                     <Link
                       href="/dashboard/profile"
-                      className="block px-2 py-2 rounded-md hover:bg-gray-100 transition">
+                      className="block px-2 py-2 rounded-md hover:bg-gray-100 transition"
+                    >
                       My profile
                     </Link>
 
                     <Link
                       href="/settings"
-                      className="block px-2 py-2 rounded-md hover:bg-gray-100 transition">
+                      className="block px-2 py-2 rounded-md hover:bg-gray-100 transition"
+                    >
                       Personal settings
                     </Link>
                   </div>
@@ -215,13 +217,15 @@ export default function Navbar() {
                   <div className="space-y-2 text-[15px]">
                     <Link
                       href="/support"
-                      className="block px-2 py-2 rounded-md hover:bg-gray-100 transition">
+                      className="block px-2 py-2 rounded-md hover:bg-gray-100 transition"
+                    >
                       Help and support
                     </Link>
 
                     <button
                       onClick={() => signOut({ callbackUrl: "/" })}
-                      className="w-full text-left px-2 py-2 rounded-md hover:bg-gray-100 transition">
+                      className="w-full text-left px-2 py-2 rounded-md hover:bg-gray-100 transition"
+                    >
                       Log out
                     </button>
                   </div>
@@ -235,11 +239,11 @@ export default function Navbar() {
                   <Link href="/auth">Login</Link>
                 </Button>
               </div>
-              <div className="flex justify-center items-center border-l-2 pl-2">
+              {/* <div className="flex justify-center items-center border-l-2 pl-2">
                 <Link href="/auth/business" className="text-primary">
                   For Business
                 </Link>
-              </div>
+              </div> */}
             </div>
           )}
         </div>

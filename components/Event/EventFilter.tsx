@@ -103,7 +103,7 @@ export default function EventHeader() {
   const currentCommunity = searchParams.get("community");
 
   return (
-    <div className="w-full bg-white px-4 py-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
+    <div className="w-full bg-white px-4  py-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-2 gap-2">
         <h1 className="text-lg md:text-xl font-bold text-slate-800">
           Trending Events
@@ -133,13 +133,14 @@ export default function EventHeader() {
           <Select
             onValueChange={(val) => {
               updateQuery({ community: val === "All" ? null : val });
-            }}>
-            <SelectTrigger className="flex items-center gap-2 border border-blue-950 text-blue-950 font-bold capitalize">
-              {currentCommunity ?? "All Events"}
+            }}
+          >
+            <SelectTrigger className="flex items-center gap-2 border border-blue-950 rounded-full text-blue-950 font-bold capitalize">
+              {currentCommunity ?? "All Community"}
             </SelectTrigger>
             <SelectContent popover="auto" position="popper">
               <SelectItem value="All">
-                <span className="flex items-center gap-2 ">All Events</span>
+                <span className="flex items-center gap-2 ">All Community</span>
               </SelectItem>
 
               <SelectItem value="Australian">
@@ -184,7 +185,8 @@ export default function EventHeader() {
                 isActive
                   ? "bg-primary border-primary text-white"
                   : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-              }`}>
+              }`}
+            >
               <Icon
                 className={`h-4 w-4 sm:h-5 sm:w-5 mb-1 ${
                   isActive ? "text-white" : "text-slate-500"

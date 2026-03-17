@@ -131,6 +131,8 @@ export default function CardSlider({
             <Button
               asChild
               className="flex items-center group text-sm md:text-md"
+              size="sm"
+              variant="ghost"
             >
               <a href={viewAllHref}>
                 View all{" "}
