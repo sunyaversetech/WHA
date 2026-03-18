@@ -100,6 +100,7 @@ export const authOptions: NextAuthOptions = {
         token.community_name = (user as any).community_name;
         token.emailVerified = (user as any).emailVerified ?? "";
         token.isblocked = (user as any).isblocked ?? false;
+        token.verified = (user as any).verified ?? false;
       }
 
       if (trigger === "update" && session) {
@@ -118,6 +119,7 @@ export const authOptions: NextAuthOptions = {
           token.community_name = (dbUser as any).community_name;
           token.emailVerified = (dbUser as any).emailVerified ?? "";
           token.isblocked = (dbUser as any).isblocked ?? false;
+          token.verified = (dbUser as any).verified ?? false;
         }
       }
       return token;
@@ -133,6 +135,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).community_name = token.community_name;
         (session.user as any).emailVerified = token.emailVerified;
         (session.user as any).isblocked = token.isblocked;
+        (session.user as any).verified = token.verified;
       }
       return session;
     },

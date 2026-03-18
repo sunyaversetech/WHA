@@ -18,6 +18,7 @@ const EventSchema = new Schema({
   category: { type: String },
   category_name: { type: String },
   city: { type: String },
+  city_name: { type: String },
   image: { type: String },
   latitude: { type: Number },
   longitude: { type: Number },

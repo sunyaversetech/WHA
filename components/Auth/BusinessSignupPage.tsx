@@ -62,26 +62,19 @@ const categories = [
   { label: "Others", value: "others" },
 ] as const;
 
-const communities = [
-  "Australian",
-  "Nepali",
-  "Indian",
-  "Bhutanese",
-  "European",
-  "Others",
-];
+const communities = ["Australian", "Nepali", "Others"];
 
 const cities = [
   { label: "Sydney", value: "sydney" },
-  { label: "Melbourne", value: "melbourne" },
-  { label: "Brisbane", value: "brisbane" },
-  { label: "Perth", value: "perth" },
-  { label: "Adelaide", value: "adelaide" },
+  // { label: "Melbourne", value: "melbourne" },
+  // { label: "Brisbane", value: "brisbane" },
+  // { label: "Perth", value: "perth" },
+  // { label: "Adelaide", value: "adelaide" },
   { label: "Canberra", value: "canberra" },
-  { label: "Hobart", value: "hobart" },
-  { label: "Darwin", value: "darwin" },
-  { label: "Newcastle", value: "newcastle" },
-  { label: "Gold Coast", value: "gold-coast" },
+  // { label: "Hobart", value: "hobart" },
+  // { label: "Darwin", value: "darwin" },
+  // { label: "Newcastle", value: "newcastle" },
+  // { label: "Gold Coast", value: "gold-coast" },
   { label: "Other", value: "other" },
 ];
 
@@ -156,8 +149,7 @@ export default function BusinessSignup() {
       <div className="flex items-center justify-between mb-6">
         <div
           className="flex items-start justify-start p-4 -ml-4"
-          onClick={() => router.push("/auth?tab=login")}
-        >
+          onClick={() => router.push("/auth?tab=login")}>
           <ChevronLeft
             className="h-8 w-8 cursor-pointer rounded-full border bg-white p-1.5 
                text-slate-600 
@@ -227,8 +219,7 @@ export default function BusinessSignup() {
                         className={cn(
                           "w-full justify-between font-normal",
                           !field.value && "text-muted-foreground rounded-lg",
-                        )}
-                      >
+                        )}>
                         {field.value
                           ? categories.find((cat) => cat.value === field.value)
                               ?.label
@@ -256,8 +247,7 @@ export default function BusinessSignup() {
                                   category.value,
                                 );
                                 setOpen(false);
-                              }}
-                            >
+                              }}>
                               <Check
                                 className={cn(
                                   "mr-2 h-4 w-4",
@@ -293,8 +283,7 @@ export default function BusinessSignup() {
                       if (value) field.onChange(value);
                     }}
                     value={field.value}
-                    className="flex flex-wrap justify-start gap-2"
-                  >
+                    className="flex flex-wrap justify-start gap-2">
                     {communities.map((item) => (
                       <ToggleGroupItem
                         key={item}
@@ -305,8 +294,7 @@ export default function BusinessSignup() {
                           "hover:bg-accent hover:text-accent-foreground",
                           "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:opacity-100",
                           "first:rounded-md last:rounded-md",
-                        )}
-                      >
+                        )}>
                         {item}
                       </ToggleGroupItem>
                     ))}
@@ -347,8 +335,7 @@ export default function BusinessSignup() {
                       if (value) field.onChange(value);
                     }}
                     value={field.value}
-                    className="flex flex-wrap justify-start gap-2"
-                  >
+                    className="flex flex-wrap justify-start gap-2">
                     {cities.map((item) => (
                       <ToggleGroupItem
                         key={item.label}
@@ -359,8 +346,7 @@ export default function BusinessSignup() {
                           "hover:bg-accent hover:text-accent-foreground",
                           "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:opacity-100",
                           "first:rounded-md last:rounded-md capitalize",
-                        )}
-                      >
+                        )}>
                         {item.value}
                       </ToggleGroupItem>
                     ))}
@@ -426,8 +412,7 @@ export default function BusinessSignup() {
                     variant="ghost"
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
+                    onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
@@ -460,8 +445,7 @@ export default function BusinessSignup() {
                     variant="ghost"
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
+                    onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
@@ -491,20 +475,17 @@ export default function BusinessSignup() {
                       I agree to the
                       <a
                         className="text-red-600 hover:underline"
-                        href="/privacy"
-                      >
+                        href="/privacy">
                         Privacy Policy,
                       </a>
                       <a
                         className="text-red-600 hover:underline"
-                        href="/privacy"
-                      >
+                        href="/privacy">
                         Terms of Service,
                       </a>
                       <a
                         className="text-red-600 hover:underline"
-                        href="/privacy"
-                      >
+                        href="/privacy">
                         Terms of Business
                       </a>
                     </FormLabel>
@@ -518,8 +499,7 @@ export default function BusinessSignup() {
           <Button
             type="submit"
             // disabled={!form.formState.isValid}
-            className="w-full rounded-lg"
-          >
+            className="w-full rounded-lg">
             Register Business
           </Button>
         </form>

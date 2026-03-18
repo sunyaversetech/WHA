@@ -1,20 +1,7 @@
 "use client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MapPin, Eye, Edit, ChevronLeft } from "lucide-react";
+import { PlusCircle, Edit, ChevronLeft } from "lucide-react";
 import { useDeleteEvent, useGetEvent } from "@/services/event.service";
 import Image from "next/image";
 import Link from "next/link";
@@ -57,8 +44,7 @@ export default function EventsBackend() {
         />
         <Link
           href="/dashboard/events/add-event"
-          className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200"
-        >
+          className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
           <PlusCircle className="mr-2 h-4 w-4" /> Add
         </Link>
       </div>
@@ -76,8 +62,7 @@ export default function EventsBackend() {
         <div className="hidden md:block">
           <Link
             href="/dashboard/events/add-event"
-            className="ml-auto flex bg-[#041e3a]  text-white items-center py-2 px-6 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200"
-          >
+            className="ml-auto flex bg-[#041e3a]  text-white items-center py-2 px-6 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
             <PlusCircle className="mr-2 h-4 w-4" /> Add
           </Link>
         </div>
@@ -91,8 +76,7 @@ export default function EventsBackend() {
         {data?.data?.map((event) => (
           <div
             key={event._id}
-            className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition"
-          >
+            className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition">
             <div className="relative h-40 w-full">
               <Image
                 src={event.image}
@@ -132,8 +116,7 @@ export default function EventsBackend() {
                   onClick={() =>
                     router.push(`/dashboard/events/add-event?id=${event._id}`)
                   }
-                  variant="ghost"
-                >
+                  variant="ghost">
                   <Edit className="h-4 w-4" />
                 </Button>
                 <DeleteConfirmDialog

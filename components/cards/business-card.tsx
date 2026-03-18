@@ -89,7 +89,11 @@ export default function BusinessCard({ business }: { business: any }) {
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-full bg-white text-primary">
               <Building className="w-3 h-3" />
-              <span>{categoryInfo.label}</span>
+              <span>Business</span>
+            </div>
+            <div className="flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-full bg-white text-primary">
+              <Building className="w-3 h-3" />
+              <span>{business.business_category}</span>
             </div>
           </div>
         </div>
@@ -97,7 +101,6 @@ export default function BusinessCard({ business }: { business: any }) {
 
       <div className="pt-3">
         <div className="flex items-start justify-between gap-3">
-          {/* LEFT SIDE */}
           <div className="space-y-1">
             <h3 className="text-base md:text-lg font-semibold text-gray-900 leading-tight">
               {business.business_name}

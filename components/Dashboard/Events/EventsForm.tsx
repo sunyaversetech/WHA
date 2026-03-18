@@ -207,7 +207,6 @@ export function EventForm() {
                       <Input
                         type="file"
                         accept="image/*"
-                        // Resetting value to empty string allows re-selecting the same file
                         onChange={(e) => onChange(e.target.files?.[0])}
                         {...fieldProps}
                       />
@@ -484,14 +483,7 @@ export function EventForm() {
                     value={field.value}
                     onValueChange={(val) => val && field.onChange(val)}
                     className="flex flex-wrap gap-2">
-                    {[
-                      "Australian",
-                      "Nepali",
-                      "Indian",
-                      "Bhutanese",
-                      "European",
-                      "Others",
-                    ].map((com) => (
+                    {["Australian", "Nepali", "Others"].map((com) => (
                       <ToggleGroupItem
                         key={com}
                         value={com}
@@ -504,6 +496,19 @@ export function EventForm() {
               </FormItem>
             )}
           />
+          {form.watch("community") === "Others" && (
+            <FormField
+              name="community_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Community Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}
@@ -520,13 +525,13 @@ export function EventForm() {
                     {[
                       "Sydney",
                       "Canberra",
-                      "Melbourne",
-                      "Brisbane",
-                      "Adelaide",
-                      "Gold Coast",
-                      "Perth",
-                      "Hobart",
-                      "Darwin",
+                      // "Melbourne",
+                      // "Brisbane",
+                      // "Adelaide",
+                      // "Gold Coast",
+                      // "Perth",
+                      // "Hobart",
+                      // "Darwin",
                       "others",
                     ].map((cat) => (
                       <ToggleGroupItem
@@ -541,6 +546,20 @@ export function EventForm() {
               </FormItem>
             )}
           />
+
+          {form.watch("city") === "others" && (
+            <FormField
+              name="city_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}

@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useSingup } from "@/services/Auth/auth.service";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "../ui/checkbox";
 
 const signupSchema = z
   .object({
@@ -29,6 +30,9 @@ const signupSchema = z
       .string()
       .min(6, "Confirm Password must be at least 6 characters"),
     category: z.enum(["user", "business"]),
+    accpetalltermsandcondition: z.boolean().refine((val) => val === true, {
+      message: "You must accept the Terms of Service",
+    }),
   })
   .refine((data) => data.password === data.cpassword, {
     message: "Passwords don't match",
@@ -41,7 +45,13 @@ export default function SignupPage() {
 
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { name: "", email: "", password: "", category: "user" },
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      category: "user",
+      accpetalltermsandcondition: false,
+    },
   });
 
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
@@ -137,7 +147,7 @@ export default function SignupPage() {
                     <FormControl>
                       <Input
                         className="focus:outline-none focus:ring-0 focus-visible:ring-0"
-                        placeholder="Password"
+                        placeholder="Confirm Password"
                         type={showPassword ? "text" : "password"}
                         {...field}
                       />
@@ -159,21 +169,44 @@ export default function SignupPage() {
                 </FormItem>
               )}
             />
-            <div className="text-sm">
-              <p>
-                I agree to the{" "}
-                <a className="text-red-500" href="">
-                  Privacy Policy
-                </a>
-                ,{" "}
-                <a className="text-red-500" href="">
-                  Terms of Service
-                </a>{" "}
-                and{" "}
-                <a className="text-red-500" href="">
-                  Terms of Business.
-                </a>
-              </p>
+            <div className="space-y-4 max-w-xl">
+              <FormField
+                control={form.control}
+                name="accpetalltermsandcondition"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="leading-none flex">
+                      <FormLabel className="text-sm font-normal flex">
+                        <div className="gap-2 space-x-2">
+                          I agree to the
+                          <a
+                            className="text-red-600 ml-2 hover:underline"
+                            href="/privacy">
+                            Privacy Policy,
+                          </a>
+                          <a
+                            className="text-red-600 hover:underline"
+                            href="/privacy">
+                            Terms of Service,
+                          </a>
+                          <a
+                            className="text-red-600 hover:underline"
+                            href="/privacy">
+                            Terms of Business
+                          </a>
+                        </div>
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
             </div>
 
             <Button type="submit" className="w-full">
