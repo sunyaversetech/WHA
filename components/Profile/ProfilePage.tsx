@@ -1,87 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
-import {
-  Trash2,
-  Plus,
-  User as UserIcon,
-  Building2,
-  CheckCircle2,
-  Mail,
-  Briefcase,
-  Pencil,
-} from "lucide-react";
+import { Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { signOut, useSession } from "next-auth/react";
 import ProfileAvatar from "../Dashboard/ProfilePic";
 import { DeleteConfirmDialog } from "../ui/DynamicDeleteButton";
-import { useQueryClient } from "@tanstack/react-query";
 import { useDeleteProfile } from "@/services/Auth/auth.service";
 import { toast } from "sonner";
 
 const ProfilePage = ({ userData }: { userData: any }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
-  const queryClient = useQueryClient();
   const { mutate: deleteAccount, isPending } = useDeleteProfile();
-
-  const form = useForm({
-    defaultValues: {
-      name: userData?.name || "",
-      image: userData?.image || "",
-      category: userData?.category || "user",
-      business_name: userData?.business_name || "",
-      business_category: userData?.business_category || "",
-      abn_number: userData?.abn_number || "",
-      service_category: userData?.service_category || "",
-      business_service: userData?.business_service || [],
-    },
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "business_service",
-  });
-
-  const profileImage = useWatch({
-    control: form.control,
-    name: "image",
-  });
-
-  const onSubmit = async (data: any) => {
-    try {
-      setIsOpen(false);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const handleDelete = (id: string) => {
     deleteAccount(
@@ -142,7 +72,7 @@ const ProfilePage = ({ userData }: { userData: any }) => {
             </div>
           </header>
           <div className="flex flex-col">
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            {/* <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
                   <Pencil className="w-4 h-4 mr-2" /> Edit Profile
@@ -306,7 +236,7 @@ const ProfilePage = ({ userData }: { userData: any }) => {
                   </form>
                 </Form>
               </DialogContent>
-            </Dialog>
+            </Dialog> */}
 
             <DeleteConfirmDialog
               onConfirm={() => handleDelete(session?.user.id ?? "")}

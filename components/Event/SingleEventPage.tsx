@@ -12,6 +12,7 @@ import {
   Heart,
   Dot,
   Phone,
+  Clock,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -154,10 +155,25 @@ export default function EventDetailPage() {
 
             <div className="flex items-center gap-1 sm:gap-2">
               <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
-              {/* <span className="font-medium text-foreground">{dateDisplay}</span> */}
+              <span className="font-medium text-foreground">
+                {event?.data.dateRange?.from
+                  ? `${formatDate(event?.data?.dateRange.from, "dd MMM yyyy")} - ${formatDate(
+                      event?.data.dateRange.to,
+                      "dd MMM yyyy",
+                    )}`
+                  : "Date TBA"}
+              </span>
             </div>
 
             <Dot className="hidden md:block h-4 w-4" />
+
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+              <span className="font-medium text-foreground">
+                {event?.data?.startTime || "Time TBA"} -{" "}
+                {event?.data?.endTime || "Time TBA"}
+              </span>
+            </div>
           </div>
         </div>
 
