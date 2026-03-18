@@ -111,7 +111,7 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
                 </div>
                 <div>
                   <h2 className="text-sm md:text-md font-bold flex items-center gap-2 cursor-pointer text-gray-900 ">
-                    {deal?.user?.name ?? "Business Name"}
+                    {deal?.user?.business_name ?? "Business Name"}
                     <SquareArrowOutUpRight
                       size={15}
                       onClick={() => router.push(`/deals/${deal._id}`)}

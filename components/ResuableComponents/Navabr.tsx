@@ -77,6 +77,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center bg-white/20 backdrop-blur-lg border border-primary rounded-full p-1 gap-1 text-sm font-medium shadow-md">
           {[
             { name: "Events", href: "/events" },
+            { name: "Deals", href: "/deals" },
             { name: "Businesses", href: "/businesses" },
           ].map((item) => (
             <Link

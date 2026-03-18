@@ -51,23 +51,19 @@ export default function DashboardNavbar() {
         <div className="flex items-center">
           {session ? (
             <div className="flex items-center gap-2">
-              {session.user.category === "user" &&
-              session.user.emailVerified ? (
+              {session.user.category === "business" && session.user.verified ? (
                 <Button variant={"outline"} size={"sm"} className="gap-2">
                   <BadgeCheck className="text-blue-300" fill="blue" />
                   Verified
                 </Button>
-              ) : session.user.category === "business" &&
-                session.user.verified ? (
-                <Button variant={"outline"} size={"sm"} className="gap-2">
-                  <BadgeCheck />
-                  Verified
-                </Button>
               ) : (
-                <Button variant={"outline"} size={"sm"} className="gap-2">
-                  <BadgeCheck />
-                  Pending Verification
-                </Button>
+                session.user.category === "business" &&
+                !session.user.verified && (
+                  <Button variant={"outline"} size={"sm"} className="gap-2">
+                    <BadgeCheck />
+                    Pending Verification
+                  </Button>
+                )
               )}
               <div className="px-2 py-2 hover:bg-[#f5f5f5] rounded-sm">
                 <Bell className="h-6 w-6" />
