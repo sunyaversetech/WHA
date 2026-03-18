@@ -1,20 +1,8 @@
 "use client";
 import React, { useEffect } from "react";
-import { useSession, signOut } from "next-auth/react";
-import {
-  ChevronLeft,
-  Plus,
-  Briefcase,
-  Users,
-  CheckSquare,
-  LogOut,
-  Handshake,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import ProfileAvatar from "./ProfilePic";
-import DashboardNavbar from "./DashboardNavbar";
 import MobileDashbaord from "./MobileDashboard";
 import { useRouter } from "next/navigation";
 
@@ -31,7 +19,6 @@ export default function Dashboard() {
     ?.business_name;
   const isUserOnly = !businessName;
 
-  console.log(session);
   useEffect(() => {
     if (session?.user?.category === "super-admin") {
       router.push("/super-admin");

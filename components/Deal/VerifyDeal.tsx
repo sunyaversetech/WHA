@@ -32,12 +32,19 @@ export default function VerifyDealPage() {
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm border">
-        {isScanning ? (
+        {isPending ? (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+            <Loader2 className="h-10 w-10 text-white animate-spin mb-2" />
+            <p className="text-white font-medium">Verifying Code...</p>
+          </div>
+        ) : isScanning ? (
           <div className="overflow-hidden rounded-lg">
             <Scanner
               onScan={(result) => {
                 if (result) handleVerify(result[0].rawValue);
               }}
+              scanDelay={2000}
+              allowMultiple={false}
               onError={(error) => console.log(error)}
             />
             <button
@@ -68,6 +75,7 @@ export default function VerifyDealPage() {
       <div className="space-y-4">
         <input
           type="text"
+          disabled={isPending}
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="ENTER UNIQUE CODE"

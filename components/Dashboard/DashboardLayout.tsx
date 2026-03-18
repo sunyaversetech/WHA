@@ -21,8 +21,6 @@ const DashboardLayoutContent = ({
   const pathname = usePathname();
   const router = useRouter();
 
-  console.log(session);
-
   useEffect(() => {
     const isProtectedPath = protectedPathnameFromUser.some((path) =>
       pathname.startsWith(path),

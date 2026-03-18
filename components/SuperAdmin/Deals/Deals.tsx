@@ -5,7 +5,6 @@ import DealsTable from "./DealsTable";
 
 const SuperAdminDeals = () => {
   const { data } = useSuperAdminGetALLDeal();
-  console.log(data);
   return (
     <div className="p-6">
       <div className="mb-6">

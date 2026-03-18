@@ -53,7 +53,6 @@ export default function LoginPage() {
       const sessionRes = await fetch("/api/auth/session");
       const session = await sessionRes.json();
 
-      console.log("Logged in user category:", session?.user?.category);
       if (session?.user?.category === "super-admin") {
         router.push("/super-admin");
       } else {

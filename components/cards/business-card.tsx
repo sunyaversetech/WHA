@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function BusinessCard({ business }: { business: any }) {
-  console.log(business);
   const getCategoryInfo = () => {
     switch (business.category) {
       case "restaurant":

@@ -6,8 +6,6 @@ import UserTable from "./UserTable";
 const SuperAdminUser = () => {
   const { data } = useSuperAdminGetALLUsers();
 
-  console.log(data);
-
   return (
     <div className="p-6">
       <div className="mb-6">

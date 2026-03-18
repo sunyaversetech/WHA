@@ -38,8 +38,6 @@ const UserTable = ({ data }: { data: UserBusinessType[] }) => {
   const { mutate: deleteBusiness, isPending: deleteisPending } =
     useDeleteBusinessOrUser();
 
-  console.log(data);
-
   const handleBlock = (id: string, currentStatus: boolean) => {
     blockBusiness(
       { id, isblocked: !currentStatus },
