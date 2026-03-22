@@ -1,10 +1,10 @@
 "use client";
 import {
-  LayoutDashboard,
   LucideIcon,
-  User,
-  HeartPlus,
   Ticket,
+  User2,
+  BriefcaseBusiness,
+  Handshake,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -40,14 +40,14 @@ const SuperAdminSidebar = () => {
       items: [
         {
           name: "Users",
-          icon: Ticket,
+          icon: User2,
           link: buildPath("/super-admin/users"),
           hasDropdown: false,
           active: pathname.startsWith("/super-admin/users"),
         },
         {
           name: "Businesses",
-          icon: Ticket,
+          icon: BriefcaseBusiness,
           link: buildPath("/super-admin/businesses"),
           hasDropdown: false,
           active: pathname.startsWith("/super-admin/businesses"),
@@ -61,7 +61,7 @@ const SuperAdminSidebar = () => {
         },
         {
           name: "Deals",
-          icon: Ticket,
+          icon: Handshake,
           link: buildPath("/super-admin/deals"),
           hasDropdown: false,
           active: pathname.startsWith("/super-admin/deals"),
