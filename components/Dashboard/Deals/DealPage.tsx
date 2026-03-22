@@ -1,22 +1,6 @@
 "use client";
-
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import {
-  Plus,
-  Home,
-  LayoutDashboard,
-  ChevronLeft,
-  PlusCircle,
-  ShieldCheck,
-} from "lucide-react";
-import { DealCard } from "./DealCard";
+import { ChevronLeft, PlusCircle, ShieldCheck } from "lucide-react";
+import { DealsTable } from "./DealCard";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useGetDeals } from "@/services/deal.service";
@@ -25,7 +9,7 @@ import { useRouter } from "next/navigation";
 export default function DealsPage() {
   const { data, isLoading } = useGetDeals();
   const router = useRouter();
-
+  console.log(data);
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex items-start justify-between md:hidden">
@@ -84,16 +68,13 @@ export default function DealsPage() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {data?.data?.map((deal: any) => (
-            <DealCard
-              key={deal._id}
-              deal={deal}
-              onDelete={(id: string) => {
-                toast.info(`Deleting deal ${id}...`);
-              }}
-            />
-          ))}
+        <div>
+          <DealsTable
+            data={data?.data}
+            // onDelete={(id: string) => {
+            //   toast.info(`Deleting deal ${id}...`);
+            // }}
+          />
           {data?.data?.length === 0 && (
             <div className="col-span-full text-center py-20 text-slate-500">
               No deals found. Click Create Deal to get started.

@@ -25,6 +25,7 @@ export type DealsGetValues = {
   user: UserBusinessType;
   terms_for_the_deal: string;
   deal_code: string;
+  verifiedRedemptions: number;
 };
 
 export const useCreateDeals = () => {

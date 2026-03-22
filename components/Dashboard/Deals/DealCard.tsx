@@ -1,31 +1,22 @@
 "use client";
-
-import Image from "next/image";
 import {
-  MoreVertical,
-  Edit2,
-  Trash2,
-  MapPin,
-  Building2,
-  Star,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { toast } from "sonner";
-import { useDeleteDeal } from "@/services/deal.service";
+import { DealsGetValues, useDeleteDeal } from "@/services/deal.service";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Edit } from "lucide-react";
+import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
 
-export function DealCard({ deal }: any) {
-  const today = new Date();
+export function DealsTable({ data }: { data?: DealsGetValues[] }) {
   const router = useRouter();
-  const dealValidTill = new Date(deal.valid_till);
   const queryClient = useQueryClient();
   const { mutate: deleteDeal } = useDeleteDeal();
 
@@ -44,75 +35,54 @@ export function DealCard({ deal }: any) {
     );
   };
   return (
-    <div className="group relative w-full max-w-sm overflow-hidden rounded-3xl border bg-white shadow-sm transition-all hover:shadow-md">
-      <div className="absolute right-4 top-4 z-10">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="rounded-full bg-white/80 p-1.5 backdrop-blur-sm hover:bg-white">
-            <MoreVertical className="h-5 w-5 text-slate-700" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem
-              onClick={() =>
-                router.push(`/dashboard/deals/edit?id=${deal._id}`)
-              }
-              className="cursor-pointer">
-              <Edit2 className="mr-2 h-4 w-4" /> Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handleDelete(deal._id)}
-              className="cursor-pointer text-red-600 focus:text-red-600">
-              <Trash2 className="mr-2 h-4 w-4" /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className="relative h-64 w-full">
-        <Image
-          src={deal.user.image}
-          alt={deal.title}
-          fill
-          className="object-cover"
-          unoptimized
-        />
-        <div className="absolute left-4 top-4 rounded-full bg-white/90 px-4 py-1.5 text-sm font-bold shadow-sm capitalize">
-          {deal.deals_for}
-        </div>
-      </div>
-
-      <div className="p-5">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-slate-500 font-medium">
-            Valid Till:{" "}
-            <span className="text-slate-900 font-bold">
-              {format(new Date(deal.valid_till), "eeee, dd MMMM yyyy")}
-            </span>
-          </p>
-          <Badge
-            className={`${dealValidTill < today ? "bg-red-500 hover:bg-red-500" : "bg-emerald-500 hover:bg-emerald-500"}`}>
-            {dealValidTill < today ? "Expired" : "Active"}
-          </Badge>
-        </div>
-
-        <div className="mt-4 flex items-center gap-2 text-slate-500 text-sm">
-          <Building2 className="h-4 w-4" />
-          <span>Building • {deal._id.slice(-5).toUpperCase()}</span>
-        </div>
-
-        <div className="mt-2 flex items-center gap-2 text-slate-500 text-sm">
-          <MapPin className="h-4 w-4" />
-          <span>{deal.user.city ?? deal.user.business_name}</span>
-        </div>
-
-        <div className="mt-4 flex gap-2">
-          <span className="rounded-md border px-3 py-1 text-xs text-slate-600">
-            Family
-          </span>
-          <span className="rounded-md border px-3 py-1 text-xs text-slate-600">
-            Garden
-          </span>
-        </div>
-      </div>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Title</TableHead>
+            <TableHead>Verified Redemptions</TableHead>
+            <TableHead>Current Redemptions</TableHead>
+            <TableHead>Max Redemptions</TableHead>
+            <TableHead>Expiry Date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data?.map((deal) => {
+            const expiryDate = new Date(deal.valid_till).toLocaleDateString();
+            const isExpired = new Date(deal.valid_till) < new Date();
+            return (
+              <TableRow key={deal._id}>
+                <TableCell className="font-medium">{deal.title}</TableCell>
+                <TableCell>{deal.verifiedRedemptions}</TableCell>
+                <TableCell>{deal.current_redemptions}</TableCell>
+                <TableCell>{deal.max_redemptions}</TableCell>
+                <TableCell>{expiryDate}</TableCell>
+                <TableCell>
+                  <Badge variant={isExpired ? "destructive" : "outline"}>
+                    {isExpired ? "Expired" : "Active"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex gap-2 justify-end">
+                    <Edit
+                      size={15}
+                      onClick={() =>
+                        router.push(`/dashboard/deals/edit?id=${deal._id}`)
+                      }
+                    />
+                    <DeleteConfirmDialog
+                      onConfirm={() => handleDelete(deal._id)}
+                      text={deal.title}
+                    />
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 }

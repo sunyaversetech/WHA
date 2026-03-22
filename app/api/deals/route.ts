@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectToDb } from "@/lib/db";
 import { Deal } from "@/server/models/DealSchema.model";
+import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
 
 export async function POST(req: NextRequest) {
   try {
@@ -65,14 +66,34 @@ export async function GET() {
   try {
     await connectToDb();
     const session = await getServerSession(authOptions);
-    if (!session)
+
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const deals = await Deal.find({ user: (session.user as any).id })
-      .populate("user")
-      .sort({
-        createdAt: -1,
-      });
-    return NextResponse.json({ message: "", data: deals });
+      .populate({
+        path: "user",
+        select: "-password -emailVerified -isblocked -updatedAt -verified -_id",
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const dealsWithCounts = await Promise.all(
+      deals.map(async (deal) => {
+        const verifiedCount = await Redemption.countDocuments({
+          deal: deal._id,
+          status: "verified",
+        });
+
+        return {
+          ...deal,
+          verifiedRedemptions: verifiedCount,
+        };
+      }),
+    );
+
+    return NextResponse.json({ message: "", data: dealsWithCounts });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
