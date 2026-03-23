@@ -36,6 +36,7 @@ export default function LandingPage() {
   const { data } = useGetLandingPageData();
 
   const businesses = useFilteredBusinesses(data?.data.business);
+  console.log("businesses", data);
 
   return (
     <div className="container-modern">
@@ -43,8 +44,8 @@ export default function LandingPage() {
         <CardSlider
           title=""
           icon={<Star className="h-3 w-3 md:h-5 md:w-5 text-white" />}>
-          {featuredItems.map((item) => (
-            <FeaturedCard key={item.id} item={item} />
+          {data?.data?.sponser?.map((item: any) => (
+            <FeaturedCard key={item._id} item={item} />
           ))}
         </CardSlider>
       </div>

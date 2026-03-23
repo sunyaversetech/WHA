@@ -69,7 +69,7 @@ const EventManagementTable = ({ data }: { data: EventType[] }) => {
             currentStatus ? "Event is not Sponsored" : "Event is Sponsored",
           );
           queryClient.invalidateQueries({
-            queryKey: ["getsuperadminbusinesses"],
+            queryKey: ["getSuperAdminEvents"],
           });
         },
         onError: () => toast.error("Action failed"),

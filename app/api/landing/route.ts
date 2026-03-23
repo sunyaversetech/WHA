@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
           upcomingevents,
           deals,
           business: businessesWithReviews,
-          sponser: { sponserEvent, sponserBusiness },
+          sponser: [...sponserEvent, ...sponserBusiness],
         },
         message: "Businesses retrieved successfully",
       },

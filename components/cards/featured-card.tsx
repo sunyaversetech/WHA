@@ -1,63 +1,25 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 
-import { Calendar, MapPin, Building, Tag, ArrowRight } from "lucide-react";
-import type { FeaturedItem } from "@/lib/types";
+import { Calendar, MapPin, Building } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const FeaturedCard = memo(function FeaturedCard({ item }: any) {
-  const [shouldNavigate, setShouldNavigate] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (shouldNavigate && shouldNavigate !== "#") {
-      window.location.href = shouldNavigate;
-    }
-  }, [shouldNavigate]);
-
-  const handleCardClick = () => {
-    const link = getLink(item);
-    setShouldNavigate(link);
-  };
-
-  const getLink = (item: FeaturedItem) => {
-    switch (item.type) {
-      case "event":
-        return `/events/${item.id}`;
-      case "business":
-        return `/businesses/${item.id}`;
-      case "deal":
-        return `/deals/${item.id}`;
-      default:
-        return "#";
-    }
-  };
-
-  // Get icon and color based on type
+  const router = useRouter();
   const getTypeInfo = () => {
-    switch (item.type) {
-      case "event":
-        return {
-          icon: Calendar,
-          color: "from-blue-500 to-purple-500",
-          label: "Event",
-        };
+    switch (item.category) {
       case "business":
         return {
           icon: Building,
           color: "from-purple-500 to-pink-500",
           label: "Business",
         };
-      case "deal":
-        return {
-          icon: Tag,
-          color: "from-green-500 to-emerald-500",
-          label: "Deal",
-        };
       default:
         return {
-          icon: ArrowRight,
-          color: "from-gray-500 to-gray-600",
+          icon: Calendar,
+          color: "from-blue-500 to-purple-500",
           label: "Featured",
         };
     }
@@ -66,10 +28,16 @@ const FeaturedCard = memo(function FeaturedCard({ item }: any) {
   const typeInfo = getTypeInfo();
   const IconComponent = typeInfo.icon;
 
+  const slug = item?.business_name?.toLowerCase().replace(/[^a-z0-9]/g, "");
+
   return (
     <div
       className="group relative overflow-hidden rounded-xl cursor-pointer"
-      onClick={handleCardClick}>
+      onClick={
+        item.category === "business"
+          ? () => router.push(`/businesses/${slug}`)
+          : () => router.push(`/events/${item._id}`)
+      }>
       <div className="relative w-full h-56 md:h-60 rounded-xl overflow-hidden group">
         <Image
           width={500}
@@ -93,11 +61,11 @@ const FeaturedCard = memo(function FeaturedCard({ item }: any) {
         <div className="absolute bottom-0 left-0 right-0 p-2">
           <div className="py-2 px-4">
             <h3 className="text-sm md:text-base mb-1 md:mb-2 line-clamp-2 text-white leading-tight ">
-              {item.business_name}
+              {item.business_name ?? item.title}
             </h3>
             <div className="flex items-center text-sm text-white">
               <MapPin className="w-3 h-3 mr-1  text-white" />
-              <span className="line-clamp-1 text-xs">this is location</span>
+              <span className="line-clamp-1 text-xs">{item.location}</span>
             </div>
           </div>
         </div>
