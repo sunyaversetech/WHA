@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       .limit(10);
 
     const sponserBusiness = business.filter(
-      (business) => business.sponser === true,
+      (business) => business.isSponsor === true,
     );
 
     return NextResponse.json(

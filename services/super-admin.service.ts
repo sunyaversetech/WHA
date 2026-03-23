@@ -86,6 +86,20 @@ export const useBlockBusinessOrUser = () => {
       }),
   });
 };
+export const useSponsorBusiness = () => {
+  return useMutation<
+    ApiResponseType<{ id: string; sponser: boolean }>,
+    any,
+    { id: string; sponser: boolean }
+  >({
+    mutationKey: ["sponsorBusiness"],
+    mutationFn: (data: { id: string; sponser: boolean }) =>
+      Post<{ id: string; sponser: boolean }, ApiResponseType<any>>({
+        url: `/api/super-admin/sponsor`,
+        data: data,
+      }),
+  });
+};
 
 export const useSuperAdminDeleteDeal = () => {
   return useMutation<ApiResponseType<{ id: string }>, any, { id: string }>({

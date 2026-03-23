@@ -7,9 +7,9 @@ export async function POST(req: Request) {
     await connectToDb();
     const body = await req.json();
     const { sponser, id } = body;
-    const newSponsor = await User.findOneAndUpdate(
-      { _id: id },
-      { sponser: sponser },
+    const newSponsor = await User.findByIdAndUpdate(
+      id,
+      { isSponsor: sponser },
       { upsert: true, new: true, runValidators: true },
     );
     return NextResponse.json(

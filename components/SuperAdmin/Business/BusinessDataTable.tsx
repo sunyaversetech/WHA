@@ -1,11 +1,19 @@
 "use client";
 
 import React from "react";
-import { Trash2, ShieldAlert, ShieldCheck, MoreHorizontal } from "lucide-react";
+import {
+  Trash2,
+  ShieldAlert,
+  ShieldCheck,
+  MoreHorizontal,
+  BanknoteArrowUp,
+  BanknoteArrowDown,
+} from "lucide-react";
 import { UserBusinessType } from "@/services/business.service";
 import {
   useBlockBusinessOrUser,
   useDeleteBusinessOrUser,
+  useSponsorBusiness,
   useVerifyBusiness,
 } from "@/services/super-admin.service";
 import { useQueryClient } from "@tanstack/react-query";
@@ -36,6 +44,7 @@ const BusinessTable = ({ data }: { data: UserBusinessType[] }) => {
   const queryClient = useQueryClient();
   const { mutate: blockBusiness } = useBlockBusinessOrUser();
   const { mutate: verifyBusiness } = useVerifyBusiness();
+  const { mutate: isSponsor } = useSponsorBusiness();
   const { mutate: deleteBusiness, isPending: deleteisPending } =
     useDeleteBusinessOrUser();
 
@@ -62,6 +71,25 @@ const BusinessTable = ({ data }: { data: UserBusinessType[] }) => {
         onSuccess: () => {
           toast.success(
             currentStatus ? "Business unblocked" : "Business blocked",
+          );
+          queryClient.invalidateQueries({
+            queryKey: ["getsuperadminbusinesses"],
+          });
+        },
+        onError: () => toast.error("Action failed"),
+      },
+    );
+  };
+  const handleisSponsor = (id: string, currentStatus: boolean) => {
+    console.log(id, currentStatus);
+    isSponsor(
+      { id, sponser: !currentStatus },
+      {
+        onSuccess: () => {
+          toast.success(
+            currentStatus
+              ? "Business is Sponsored"
+              : "Business is not Sponsored",
           );
           queryClient.invalidateQueries({
             queryKey: ["getsuperadminbusinesses"],
@@ -157,9 +185,28 @@ const BusinessTable = ({ data }: { data: UserBusinessType[] }) => {
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button
+                    variant={"outline"}
+                    size="sm"
+                    className={`h-8 gap-1`}
+                    onClick={() =>
+                      handleisSponsor(item._id ?? "", item.isSponsor)
+                    }>
+                    {item.isSponsor ? (
+                      <>
+                        <BanknoteArrowDown className="h-3.5 w-3.5 text-red-500" />
+                        Remove Sponsor
+                      </>
+                    ) : (
+                      <>
+                        <BanknoteArrowUp className="h-3.5 w-3.5 text-green-500" />
+                        Sponsor
+                      </>
+                    )}
+                  </Button>
+                  <Button
                     variant={item.isblocked ? "outline" : "default"}
                     size="sm"
-                    className="h-8 gap-1"
+                    className={`h-8 gap-1 `}
                     onClick={() => handleBlock(item._id ?? "", item.isblocked)}>
                     {item.isblocked ? (
                       <>

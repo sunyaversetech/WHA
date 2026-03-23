@@ -21,6 +21,7 @@ export type UserBusinessType = {
   longitude?: number;
   latitude?: number;
   isblocked: boolean;
+  isSponsor: boolean;
   business_name?: string;
   business_category?: string;
   abn_number?: string;
