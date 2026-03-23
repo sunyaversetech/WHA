@@ -19,7 +19,7 @@ const EventCard = memo(function EventCard({ event }: { event: any }) {
   const { mutate, isPending } = useCreateFavroite();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
-
+  const slug = event.title.toLowerCase().replace(/[^a-z0-9]/g, "");
   const eventId = event._id || "";
 
   const formatDate = (dateString: string) => {
@@ -67,8 +67,7 @@ const EventCard = memo(function EventCard({ event }: { event: any }) {
   return (
     <div
       className="group relative overflow-hidden rounded-lg cursor-pointer"
-      onClick={() => router.push(`/events/${eventId}`)}
-    >
+      onClick={() => router.push(`/events/${slug}`)}>
       {/* Full-Image Background */}
       <div className="relative h-56 md:h-60 w-full">
         <Image
@@ -98,8 +97,7 @@ const EventCard = memo(function EventCard({ event }: { event: any }) {
             handleAddRemoveFavorite();
           }}
           className="absolute top-3 right-3 p-2 bg-black/10 backdrop-blur-md border border-white/30 rounded-full
-           transition-colors duration-200 shadow-lg group/fav hover:bg-white/30 disabled:opacity-70"
-        >
+           transition-colors duration-200 shadow-lg group/fav hover:bg-white/30 disabled:opacity-70">
           {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin text-white" />
           ) : (
@@ -146,8 +144,7 @@ const EventCard = memo(function EventCard({ event }: { event: any }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg hover:bg-white/30 transition-colors duration-200"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                  onClick={(e) => e.stopPropagation()}>
                   <Ticket className="h-4 w-4 text-white" />
                   <span className="text-white font-medium md:text-sm">
                     ${event.ticket_price}
