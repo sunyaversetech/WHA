@@ -63,9 +63,18 @@ export async function GET(request: NextRequest) {
       .sort({ valid_till: 1 })
       .limit(10);
 
+    const sponserBusiness = business.filter(
+      (business) => business.sponser === true,
+    );
+
     return NextResponse.json(
       {
-        data: { upcomingevents, deals, business: businessesWithReviews },
+        data: {
+          upcomingevents,
+          deals,
+          business: businessesWithReviews,
+          sponser: sponserBusiness,
+        },
         message: "Businesses retrieved successfully",
       },
       { status: 200 },

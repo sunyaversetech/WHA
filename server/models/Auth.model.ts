@@ -48,6 +48,7 @@ const UserSchema = new Schema(
     verified: { type: Boolean, default: false },
     resetPasswordToken: { type: String },
     resetPasswordExpire: { type: Date },
+    isSponsor: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

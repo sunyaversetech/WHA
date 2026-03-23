@@ -32,7 +32,6 @@ export default function FavoritesPage() {
 
   const favorites = favoritesData?.data || {
     events: [],
-    services: [],
     deals: [],
     business: [],
   };
@@ -62,17 +61,11 @@ export default function FavoritesPage() {
       <hr className="border-slate-200" />
 
       <Tabs defaultValue="events" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-4 mb-8 bg-slate-100 p-1 rounded-xl">
+        <TabsList className="grid w-full max-w-md grid-cols-3 mb-8 bg-slate-100 p-1 rounded-xl">
           <TabsTrigger value="events" className="rounded-lg font-bold">
             Events{" "}
             <Badge variant="secondary" className="ml-2 bg-white">
               {favorites.events.length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="services" className="rounded-lg font-bold">
-            Services{" "}
-            <Badge variant="secondary" className="ml-2 bg-white">
-              {favorites.services.length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="deals" className="rounded-lg font-bold">
@@ -90,7 +83,7 @@ export default function FavoritesPage() {
         </TabsList>
 
         <TabsContent value="events">
-          {favorites.services && favorites.events.length > 0 ? (
+          {favorites.events && favorites.events.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {favorites.events.map((event) => {
                 if (!event) return null;
@@ -103,28 +96,6 @@ export default function FavoritesPage() {
             <EmptyState
               title="No Favorite Events"
               description="You haven't saved any events yet."
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="services">
-          {favorites.services && favorites.services.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favorites.services.map((service: any) => {
-                if (!service) return null;
-                return (
-                  <FavoriteCard
-                    key={service._id}
-                    item={service}
-                    type="service"
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            <EmptyState
-              title="No Favorite Services"
-              description="Looking for help? Save services here."
             />
           )}
         </TabsContent>
