@@ -117,10 +117,12 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
                       onClick={() => router.push(`/deals/${deal._id}`)}
                     />
                   </h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                  <div className="flex items-center gap-2 mt-1 ">
+                    <p className="text-xs text-gray-500 flex items-center gap-1  ">
                       <MapPin className="h-3 w-3" />
-                      {deal?.user?.location ?? "Business Location"}
+                      <span className="line-clamp-1 text-xs">
+                        {deal?.user?.location ?? "Business Location"}
+                      </span>
                     </p>
                   </div>
                 </div>

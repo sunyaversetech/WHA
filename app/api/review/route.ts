@@ -35,9 +35,10 @@ export async function POST(req: NextRequest) {
     const userId = (session.user as any).id;
 
     const body = await req.json();
+    const searchRegex = body.business_id.split("").join("\\s*");
 
     const existingReview = await Review.findOne({
-      business_id: new mongoose.Types.ObjectId(body.business_id),
+      business_id: searchRegex,
       user: new mongoose.Types.ObjectId(userId),
     });
 
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
     const { business_id, rating, comment } = body;
 
     const newReview = await Review.create({
-      business_id,
+      business_id: business_id,
       user: userId,
       rating,
       comment,
@@ -92,7 +93,6 @@ export async function GET(req: NextRequest) {
     const rawBusinessId = searchParams.get("business_id") || "";
 
     const businessId = rawBusinessId.replace(/\?+$/, "").trim();
-
     const query: any = {};
 
     if (businessId) {

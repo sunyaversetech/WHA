@@ -32,7 +32,10 @@ import BusinessHours from "./Hours";
 export default function BusinessPage() {
   const { data, isLoading } = useGetSingleBusiness();
   const { mutate, isPending } = useCreateFavroite();
-  const { data: reviews } = useGetReview(data?.data?._id ?? "");
+  const slug = data?.data?.business_name
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  const { data: reviews } = useGetReview(slug ?? "");
   const queryClient = useQueryClient();
   const router = useRouter();
   const { data: session } = useSession();

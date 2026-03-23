@@ -44,22 +44,31 @@ export async function GET(request: NextRequest) {
     }
 
     const businesses = await User.find(query).sort({ createdAt: -1 }).lean();
+    // const slug = businesses?.business_name
+    //   ?.toLowerCase()
+    //   .replace(/[^a-z0-9]/g, "");
 
-    const businessIds = businesses.map((b) => b._id);
+    const businessIds = businesses.map((b) =>
+      b.business_name?.toLowerCase().replace(/[^a-z0-9]/g, ""),
+    );
+
+    console.log(businessIds);
     const reviews = await Review.find({
       business_id: { $in: businessIds },
     })
       .sort({ createdAt: -1 })
       .lean();
 
-    const businessesWithReviews = businesses.map((business) => {
-      const businessIdStr = business._id?.toString();
+    const businessesWithReviews = businesses.map((business: any) => {
+      const currentBusinessSlug = business.business_name
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
       return {
         ...business,
         reviews: reviews.filter((review) => {
-          const reviewBusinessIdStr = review.business_id?.toString();
+          // const reviewBusinessIdStr = review.business_id?.toString();
 
-          return reviewBusinessIdStr === businessIdStr;
+          return review.business_id === currentBusinessSlug;
         }),
       };
     });

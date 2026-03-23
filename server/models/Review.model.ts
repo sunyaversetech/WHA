@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IReview extends Document {
-  business_id: mongoose.Types.ObjectId;
+  business_id: string;
   user: mongoose.Types.ObjectId;
   rating: number;
   comment: string;
@@ -12,7 +12,7 @@ export interface IReview extends Document {
 const ReviewSchema: Schema<IReview> = new Schema(
   {
     business_id: {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: "User",
       required: [true, "Review must belong to a business"],
     },
@@ -42,44 +42,44 @@ const ReviewSchema: Schema<IReview> = new Schema(
 
 ReviewSchema.index({ business_id: 1, user: 1 }, { unique: true });
 
-ReviewSchema.statics.calculateAverageRating = async function (businessId) {
-  const stats = await this.aggregate([
-    { $match: { business_id: businessId } },
-    {
-      $group: {
-        _id: "$business_id",
-        avg_rating: { $avg: "$rating" },
-        total_reviews: { $sum: 1 },
-      },
-    },
-  ]);
+// ReviewSchema.statics.calculateAverageRating = async function (businessId) {
+//   const stats = await this.aggregate([
+//     { $match: { business_id: businessId } },
+//     {
+//       $group: {
+//         _id: "$business_id",
+//         avg_rating: { $avg: "$rating" },
+//         total_reviews: { $sum: 1 },
+//       },
+//     },
+//   ]);
 
-  try {
-    if (stats.length > 0) {
-      await mongoose.model("Business").findByIdAndUpdate(businessId, {
-        average_rating: Math.round(stats[0].avg_rating * 10) / 10,
-        review_count: stats[0].total_reviews,
-      });
-    } else {
-      await mongoose.model("Business").findByIdAndUpdate(businessId, {
-        average_rating: 0,
-        review_count: 0,
-      });
-    }
-  } catch (err) {
-    console.error(err);
-  }
-};
+//   try {
+//     if (stats.length > 0) {
+//       await mongoose.model("Business").findByIdAndUpdate(businessId, {
+//         average_rating: Math.round(stats[0].avg_rating * 10) / 10,
+//         review_count: stats[0].total_reviews,
+//       });
+//     } else {
+//       await mongoose.model("Business").findByIdAndUpdate(businessId, {
+//         average_rating: 0,
+//         review_count: 0,
+//       });
+//     }
+//   } catch (err) {
+//     console.error(err);
+//   }
+// };
 
-ReviewSchema.post("save", function () {
-  (this.constructor as any).calculateAverageRating(this.business_id);
-});
+// ReviewSchema.post("save", function () {
+//   (this.constructor as any).calculateAverageRating(this.business_id);
+// });
 
-ReviewSchema.post("findOneAndDelete", async function (doc) {
-  if (doc) {
-    await doc.constructor.calculateAverageRating(doc.business_id);
-  }
-});
+// ReviewSchema.post("findOneAndDelete", async function (doc) {
+//   if (doc) {
+//     await doc.constructor.calculateAverageRating(doc.business_id);
+//   }
+// });
 
 export const Review =
   mongoose.models.Review || mongoose.model<IReview>("Review", ReviewSchema);

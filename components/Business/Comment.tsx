@@ -217,6 +217,9 @@ export default function BusinessReviewSection({
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex justify-between gap-2 items-center">
+                      <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-md h-6.5 text-sm font-medium">
+                        {review.user.name}
+                      </span>
                       {session?.user?.id === review.user?._id && (
                         <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-md h-6.5 text-sm font-medium">
                           You
