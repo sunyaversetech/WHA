@@ -28,6 +28,7 @@ const EventSchema = new Schema({
   endTime: { type: String },
   community: { type: String },
   community_name: { type: String },
+  isSponsor: { type: Boolean, default: false },
 });
 
 export const Event = models.Event || model("Event", EventSchema);

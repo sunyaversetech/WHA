@@ -35,6 +35,7 @@ export type EventType = {
   category: string;
   image: string;
   latitude: number;
+  isSponsor: boolean;
   longitude: number;
   ticket_link: string | null;
   ticket_price: string | null;

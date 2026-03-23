@@ -1,0 +1,22 @@
+import { connectToDb } from "@/lib/db";
+import Event from "@/server/models/Event.model";
+import { NextResponse } from "next/server";
+
+export async function POST(req: Request) {
+  try {
+    await connectToDb();
+    const body = await req.json();
+    const { sponser, id } = body;
+    const newSponsor = await Event.findByIdAndUpdate(
+      id,
+      { isSponsor: sponser },
+      { upsert: true, new: true, runValidators: true },
+    );
+    return NextResponse.json(
+      { data: newSponsor, message: "Sponsor Updated successfully" },
+      { status: 201 },
+    );
+  } catch (error: any) {
+    return NextResponse.json({ message: error.message }, { status: 400 });
+  }
+}

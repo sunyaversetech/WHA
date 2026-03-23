@@ -66,6 +66,9 @@ export async function GET(request: NextRequest) {
     const sponserBusiness = business.filter(
       (business) => business.isSponsor === true,
     );
+    const sponserEvent = upcomingevents.filter(
+      (event) => event.isSponsor === true,
+    );
 
     return NextResponse.json(
       {
@@ -73,7 +76,7 @@ export async function GET(request: NextRequest) {
           upcomingevents,
           deals,
           business: businessesWithReviews,
-          sponser: sponserBusiness,
+          sponser: { sponserEvent, sponserBusiness },
         },
         message: "Businesses retrieved successfully",
       },

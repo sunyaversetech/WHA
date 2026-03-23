@@ -100,6 +100,20 @@ export const useSponsorBusiness = () => {
       }),
   });
 };
+export const useSponsorEvent = () => {
+  return useMutation<
+    ApiResponseType<{ id: string; sponser: boolean }>,
+    any,
+    { id: string; sponser: boolean }
+  >({
+    mutationKey: ["sponsorEvent"],
+    mutationFn: (data: { id: string; sponser: boolean }) =>
+      Post<{ id: string; sponser: boolean }, ApiResponseType<any>>({
+        url: `/api/super-admin/sponsor/event`,
+        data: data,
+      }),
+  });
+};
 
 export const useSuperAdminDeleteDeal = () => {
   return useMutation<ApiResponseType<{ id: string }>, any, { id: string }>({

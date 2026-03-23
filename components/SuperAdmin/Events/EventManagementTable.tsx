@@ -6,6 +6,8 @@ import {
   ExternalLink,
   Calendar as CalendarIcon,
   MapPin,
+  BanknoteArrowDown,
+  BanknoteArrowUp,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -29,12 +31,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { EventType } from "@/services/event.service";
-import { useSuperAdminDeleteEvent } from "@/services/super-admin.service";
+import {
+  useSponsorEvent,
+  useSuperAdminDeleteEvent,
+} from "@/services/super-admin.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
 
 const EventManagementTable = ({ data }: { data: EventType[] }) => {
   const { mutate } = useSuperAdminDeleteEvent();
+  const { mutate: isSponsor } = useSponsorEvent();
   const queryClient = useQueryClient();
   const handleDeleteEvent = async (id: string) => {
     mutate(
@@ -49,6 +55,24 @@ const EventManagementTable = ({ data }: { data: EventType[] }) => {
             error.response?.data?.message || "Failed to delete event",
           );
         },
+      },
+    );
+  };
+
+  const handleisSponsor = (id: string, currentStatus: boolean) => {
+    console.log(id, currentStatus);
+    isSponsor(
+      { id, sponser: !currentStatus },
+      {
+        onSuccess: () => {
+          toast.success(
+            currentStatus ? "Event is not Sponsored" : "Event is Sponsored",
+          );
+          queryClient.invalidateQueries({
+            queryKey: ["getsuperadminbusinesses"],
+          });
+        },
+        onError: () => toast.error("Action failed"),
       },
     );
   };
@@ -146,6 +170,30 @@ const EventManagementTable = ({ data }: { data: EventType[] }) => {
 
                     <Tooltip>
                       <TooltipTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          size="sm"
+                          className={`h-8 gap-1`}
+                          onClick={() =>
+                            handleisSponsor(event._id ?? "", event.isSponsor)
+                          }>
+                          {event.isSponsor ? (
+                            <>
+                              <BanknoteArrowDown className="h-3.5 w-3.5 text-red-500" />
+                              Remove Sponsor
+                            </>
+                          ) : (
+                            <>
+                              <BanknoteArrowUp className="h-3.5 w-3.5 text-green-500" />
+                              Sponsor
+                            </>
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete Event</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                         <DeleteConfirmDialog
                           onConfirm={() => handleDeleteEvent(event._id)}
                           text={event.title}
@@ -153,8 +201,7 @@ const EventManagementTable = ({ data }: { data: EventType[] }) => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
-                              onClick={() => handleDeleteEvent(event._id)}>
+                              className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive">
                               <Trash2 size={16} />
                             </Button>
                           }
