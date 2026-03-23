@@ -11,10 +11,9 @@ export async function GET(request: NextRequest, { params }: Props) {
     const { id } = await params;
 
     const searchRegex = id.split("").join("\\s*");
-    const event = await Event.findOne({ title: searchRegex }).populate(
-      "user",
-      "email business_name",
-    );
+    const event = await Event.findOne({
+      title: { $regex: `^${searchRegex}$`, $options: "i" },
+    }).populate("user", "email business_name");
     if (!event) {
       return NextResponse.json({ message: "Event not found" }, { status: 404 });
     }
