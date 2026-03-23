@@ -12,14 +12,13 @@ export default function DealsPageClient() {
 
   const currentDate = new Date();
 
-  const data = deals?.data.filter(
-    (deal) => currentDate <= new Date(deal.valid_till),
-  );
+  const data =
+    deals?.data &&
+    deals?.data?.filter((deal) => currentDate <= new Date(deal.valid_till));
 
   return (
     <div className="min-h-screen bg-gradient-modern relative">
       <div className="relative z-10">
-        {/* HEADER */}
         <div className="container-modern py-3 md:py-6">
           <DealsHeader />
         </div>
