@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Home, Search, Calendar, User, Store } from "lucide-react";
+import { Home, Search, Calendar, User, Store, Handshake } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 export default function BottomNav() {
@@ -24,6 +24,7 @@ export default function BottomNav() {
     { name: "Home", path: buildPath("/"), icon: Home },
     { name: "Businesses", path: buildPath("/businesses"), icon: Store },
     { name: "Events", path: buildPath("/events"), icon: Calendar },
+    { name: "Deals", path: buildPath("/deals"), icon: Handshake },
   ];
 
   return (

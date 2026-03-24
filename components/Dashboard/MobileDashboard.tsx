@@ -40,6 +40,18 @@ export default function MobileDashboard() {
       link: "/dashboard/settings",
     },
   ];
+  const menuUser = [
+    {
+      name: "Favourites",
+      icon: Heart,
+      link: "/dashboard/favorite",
+    },
+    {
+      name: "Profile",
+      icon: User,
+      link: "/dashboard/profile",
+    },
+  ];
 
   const menu2 = [
     {
@@ -60,7 +72,7 @@ export default function MobileDashboard() {
   ];
 
   return (
-    <div className="min-h-screen pb-28">
+    <div className="min-h-[50vh] pb-28">
       {/* Header */}
       <div className="flex items-start justify-between  mb-6">
         <div>
@@ -88,51 +100,78 @@ export default function MobileDashboard() {
         </div>
       </div>
 
-      {/* Business Section */}
-      <div className="bg-white rounded-2xl p-5 border border-gray-200 mb-5">
-        {menu2.map((item, i) => {
-          const Icon = item.icon;
-          const active = pathname.startsWith(item.link);
+      {session?.user.category === "business" && (
+        <>
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 mb-5">
+            {menu2.map((item, i) => {
+              const Icon = item.icon;
+              const active = pathname.startsWith(item.link);
 
-          return (
-            <Link
-              key={i}
-              href={item.link}
-              className={`flex items-center gap-4 py-4 rounded-xl px-2 transition
+              return (
+                <Link
+                  key={i}
+                  href={item.link}
+                  className={`flex items-center gap-4 py-4 rounded-xl px-2 transition
               ${
                 active
                   ? "bg-gray-100 text-primary"
                   : "hover:bg-gray-50 text-gray-800"
               }`}>
-              <Icon size={22} />
-              <span className="text-lg">{item.name}</span>
-            </Link>
-          );
-        })}
-      </div>
+                  <Icon size={22} />
+                  <span className="text-lg">{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
 
-      {/* Account Section */}
-      <div className="bg-white rounded-2xl p-5 border border-gray-200 mb-5">
-        {menu1.map((item, i) => {
-          const Icon = item.icon;
-          const active = pathname.startsWith(item.link);
+          {/* Account Section */}
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 mb-5">
+            {menu1.map((item, i) => {
+              const Icon = item.icon;
+              const active = pathname.startsWith(item.link);
 
-          return (
-            <Link
-              key={i}
-              href={item.link}
-              className={`flex items-center gap-4 py-4 rounded-xl px-2 transition
+              return (
+                <Link
+                  key={i}
+                  href={item.link}
+                  className={`flex items-center gap-4 py-4 rounded-xl px-2 transition
               ${
                 active
                   ? "bg-gray-100 text-primary"
                   : "hover:bg-gray-50 text-gray-800"
               }`}>
-              <Icon size={22} />
-              <span className="text-lg">{item.name}</span>
-            </Link>
-          );
-        })}
-      </div>
+                  <Icon size={22} />
+                  <span className="text-lg">{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {session?.user.category === "user" && (
+        <div className="bg-white rounded-2xl p-5 border border-gray-200 mb-5">
+          {menuUser.map((item, i) => {
+            const Icon = item.icon;
+            const active = pathname.startsWith(item.link);
+
+            return (
+              <Link
+                key={i}
+                href={item.link}
+                className={`flex items-center gap-4 py-4 rounded-xl px-2 transition
+              ${
+                active
+                  ? "bg-gray-100 text-primary"
+                  : "hover:bg-gray-50 text-gray-800"
+              }`}>
+                <Icon size={22} />
+                <span className="text-lg">{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {/* Logout */}
       <div className="bg-white rounded-2xl p-5 border border-gray-200">
