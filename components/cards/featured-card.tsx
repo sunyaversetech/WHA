@@ -29,6 +29,7 @@ const FeaturedCard = memo(function FeaturedCard({ item }: any) {
   const IconComponent = typeInfo.icon;
 
   const slug = item?.business_name?.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const eventslug = item?.title?.toLowerCase().replace(/[^a-z0-9]/g, "");
 
   return (
     <div
@@ -36,7 +37,7 @@ const FeaturedCard = memo(function FeaturedCard({ item }: any) {
       onClick={
         item.category === "business"
           ? () => router.push(`/businesses/${slug}`)
-          : () => router.push(`/events/${item._id}`)
+          : () => router.push(`/events/${eventslug}`)
       }>
       <div className="relative w-full h-56 md:h-60 rounded-xl overflow-hidden group">
         <Image
