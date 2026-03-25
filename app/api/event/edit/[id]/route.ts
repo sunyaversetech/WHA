@@ -23,24 +23,25 @@ export const eventSchema = z.object({
     from: z.coerce.date(),
     to: z.coerce.date(),
   }),
-  email: z.email().min(1, "Email is required"),
-  phone_number: z.string().min(1, "Phone number is required"),
-  website_link: z.string().optional(),
+  email: z.email("Invalid email address").optional().or(z.literal("")),
+  phone_number: z.string().optional().or(z.literal("")),
+  website_link: z.union([z.string(), z.literal("")]).optional(),
   startTime: z.string().min(1, "Start time is required"),
-  endTime: z.string().min(1, "End time is required"),
+  endTime: z.string().optional(),
   category: z.string().min(1, "Category is required"),
   category_name: z.string().optional(),
   price_category: z.enum(["free", "paid"]),
   ticket_link: z.string().optional(),
-  ticket_price: z.string().optional(),
+  ticket_price: z.union([z.string(), z.literal("")]).optional(),
   community: z.string().min(1, "Community is required"),
   community_name: z.string().optional(),
   city: z.string().min(2, "City is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   location: z.string().min(2, "Location is required"),
-  latitude: z.string(),
-  longitude: z.string(),
+  latitude: z.coerce.number(),
+  longitude: z.coerce.number(),
 });
+
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
@@ -110,13 +111,27 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       finalImageUrl = s3Response.Location;
     }
 
+    const defaultEmptyFields = {
+      email: "",
+      phone_number: "",
+      website_link: "",
+      ticket_link: "",
+      ticket_price: "",
+      category_name: "",
+      community_name: "",
+      endTime: "",
+    };
+
+    const updatePayload = {
+      ...defaultEmptyFields,
+      ...validatedData,
+      image: finalImageUrl,
+    };
+
     const updatedEvent = await Event.findByIdAndUpdate(
       eventId,
       {
-        $set: {
-          ...validatedData,
-          image: finalImageUrl,
-        },
+        $set: updatePayload,
       },
       { new: true, runValidators: true },
     );

@@ -55,12 +55,12 @@ export const eventSchema = z.object({
   phone_number: z.string().optional().or(z.literal("")),
   website_link: z.union([z.string(), z.literal("")]).optional(),
   startTime: z.string().min(1, "Start time is required"),
-  endTime: z.string().min(1, "End time is required"),
+  endTime: z.string().optional(),
   category: z.string().min(1, "Category is required"),
   category_name: z.string().optional(),
   price_category: z.enum(["free", "paid"]),
   ticket_link: z.string().optional(),
-  ticket_price: z.union([z.string(), z.literal("")]).optional(),
+  ticket_price: z.union([z.number(), z.literal("")]).optional(),
   community: z.string().min(1, "Community is required"),
   community_name: z.string().optional(),
   city: z.string().min(2, "City is required"),
@@ -101,9 +101,9 @@ export function EventForm() {
       category: data?.category ?? "",
       category_name: data?.category_name ?? "",
       ticket_link: data?.ticket_link ?? "",
-      ticket_price: data?.ticket_price ?? "",
+      ticket_price: Number(data?.ticket_price) ?? "",
       email: data?.email ?? "",
-      phone_number: data?.phone_number ?? "",
+      phone_number: data?.phone_number ? String(data?.phone_number) : "",
       website_link: data?.website_link ?? "",
     },
   });
@@ -131,10 +131,11 @@ export function EventForm() {
       form.setValue("category_name", data.category_name);
       form.setValue("price_category", data.price_category);
       form.setValue("ticket_link", data.ticket_link ?? "");
-      if (data.ticket_price) form.setValue("ticket_price", data.ticket_price);
-      form.setValue("email", data.email);
-      form.setValue("phone_number", data.phone_number);
-      form.setValue("website_link", data.website_link);
+      if (data.ticket_price)
+        form.setValue("ticket_price", Number(data.ticket_price));
+      if (data?.email) form.setValue("email", data.email);
+      if (data?.phone_number) form.setValue("phone_number", data.phone_number);
+      if (data?.website_link) form.setValue("website_link", data.website_link);
       form.setValue("image", data.image);
     }
   }, [data, form]);
@@ -143,7 +144,7 @@ export function EventForm() {
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
       if (value === "" || value === null || value === undefined) {
-        return;
+        formData.append(key, "");
       }
 
       if (key === "dateRange" && value) {
@@ -576,7 +577,7 @@ export function EventForm() {
           <Button
             type="submit"
             className="w-full h-12 text-lg rounded-lg"
-            disabled={isPending}>
+            disabled={isPending || !form.formState.isDirty}>
             {isPending
               ? "Saving Event..."
               : data

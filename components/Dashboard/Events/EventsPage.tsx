@@ -96,14 +96,14 @@ export default function EventsBackend() {
                         day: "2-digit",
                         month: "short",
                       }).format(new Date(event?.dateRange?.from))
-                    : "-"}{" "}
-                  to{" "}
-                  {event?.dateRange?.to
-                    ? new Intl.DateTimeFormat("en-AU", {
+                    : ""}{" "}
+                  {event?.dateRange?.from !== event?.dateRange?.to &&
+                  event?.dateRange?.to
+                    ? `to ${new Intl.DateTimeFormat("en-AU", {
                         day: "2-digit",
                         month: "short",
-                      }).format(new Date(event?.dateRange?.to))
-                    : "-"}
+                      }).format(new Date(event?.dateRange?.to))}`
+                    : ""}
                 </p>
                 <p className="text-sm">
                   {event.ticket_price ? `$${event.ticket_price}` : "Free"}

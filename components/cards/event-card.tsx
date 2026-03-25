@@ -32,7 +32,7 @@ const EventCard = memo(function EventCard({ event }: { event: any }) {
 
   let dateDisplay = "TBA";
   if (event.dateRange?.from) {
-    dateDisplay = `${formatDate(event.dateRange.from)} - ${formatDate(event.dateRange.to)}`;
+    dateDisplay = `${formatDate(event.dateRange.from)}  ${event.dateRange.to !== event.dateRange.from ? `- ${formatDate(event.dateRange.to)}` : ""}`;
   } else if (event.date) {
     dateDisplay = formatDate(event.date);
   }
