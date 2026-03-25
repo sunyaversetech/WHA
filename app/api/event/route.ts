@@ -30,10 +30,8 @@ export async function POST(req: NextRequest) {
     const price_category = formData.get("price_category") as string;
     const ticket_link = formData.get("ticket_link") as string;
     const ticket_price = formData.get("ticket_price") as string;
-
     const startTime = formData.get("startTime") as string;
     const endTime = formData.get("endTime") as string;
-
     const latitude = parseFloat(formData.get("latitude") as string);
     const longitude = parseFloat(formData.get("longitude") as string);
 

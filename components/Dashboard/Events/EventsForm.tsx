@@ -177,7 +177,7 @@ export function EventForm() {
 
   return (
     <Form {...form}>
-      <div className="space-y-6 max-w-6xl mx-auto">
+      <div className="space-y-6 max-w-6xl mx-auto h-auto">
         <div className="flex items-start justify-start">
           <ChevronLeft
             onClick={() => router.back()}

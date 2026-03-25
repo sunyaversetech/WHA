@@ -25,14 +25,17 @@ export const eventSchema = z.object({
   }),
   email: z.email("Invalid email address").optional().or(z.literal("")),
   phone_number: z.string().optional().or(z.literal("")),
-  website_link: z.union([z.string(), z.literal("")]).optional(),
+  website_link: z.string().optional(),
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().optional(),
   category: z.string().min(1, "Category is required"),
   category_name: z.string().optional(),
   price_category: z.enum(["free", "paid"]),
   ticket_link: z.string().optional(),
-  ticket_price: z.union([z.string(), z.literal("")]).optional(),
+  ticket_price: z.preprocess(
+    (val) => (val === "" || val === "undefined" ? 0 : val),
+    z.coerce.number().optional(),
+  ),
   community: z.string().min(1, "Community is required"),
   community_name: z.string().optional(),
   city: z.string().min(2, "City is required"),
@@ -127,6 +130,15 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       ...validatedData,
       image: finalImageUrl,
     };
+
+    if (
+      updatePayload.ticket_price === "" ||
+      updatePayload.ticket_price === "undefined"
+    ) {
+      updatePayload.ticket_price = 0;
+    } else if (updatePayload.ticket_price) {
+      updatePayload.ticket_price = Number(updatePayload.ticket_price);
+    }
 
     const updatedEvent = await Event.findByIdAndUpdate(
       eventId,

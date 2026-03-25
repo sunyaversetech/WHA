@@ -131,6 +131,7 @@
   * {
     @apply border-border;
   }
+
   /* 
   html {
     scroll-behavior: smooth;
@@ -276,21 +277,17 @@
   /* Modern Gradient Text */
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(
-      to right,
-      var(--color-secondary),
-      var(--color-neutral)
-    );
+    background-image: linear-gradient(to right,
+        var(--color-secondary),
+        var(--color-neutral));
   }
 
   .gradient-text-primary {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(
-      to right,
-      var(--color-primary),
-      var(--color-secondary),
-      var(--color-neutral)
-    );
+    background-image: linear-gradient(to right,
+        var(--color-primary),
+        var(--color-secondary),
+        var(--color-neutral));
   }
 
   /* Modern Badge */
@@ -583,4 +580,18 @@
 
 .text-urbanist-button {
   @apply font-urbanist font-semibold text-sm md:text-base tracking-wide;
+}
+
+
+.no-scrollbar {
+  /* For Firefox */
+  scrollbar-width: none;
+
+  /* For Internet Explorer and Edge */
+  -ms-overflow-style: none;
+}
+
+/* For Chrome, Safari, and newer versions of Edge (WebKit/Blink) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

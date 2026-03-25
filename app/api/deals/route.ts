@@ -28,15 +28,7 @@ export async function POST(req: NextRequest) {
     const termsForTheDeal = terms_for_the_deal;
     const dealCode = deal_code;
 
-    if (
-      !validTill ||
-      !title ||
-      !dealsFor ||
-      !description ||
-      !termsForTheDeal ||
-      !dealCode ||
-      !city
-    ) {
+    if (!validTill || !title || !description || !termsForTheDeal || !city) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },

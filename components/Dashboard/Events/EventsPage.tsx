@@ -9,6 +9,7 @@ import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import "@/app/globals.css";
 
 export default function EventsBackend() {
   const { data } = useGetEvent();
@@ -34,8 +35,8 @@ export default function EventsBackend() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-start justify-between md:hidden">
+    <div className="space-y-6 max-w-6xl mx-auto no-scrollbar">
+      <div className="flex items-start justify-between no-scrollbar md:hidden">
         <ChevronLeft
           onClick={() => router.back()}
           className="h-10 w-10 cursor-pointer rounded-full  p-1 -ml-2
