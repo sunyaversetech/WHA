@@ -29,15 +29,15 @@ export type DealsGetValues = {
 };
 
 export const useCreateDeals = () => {
-  return useMutation<ApiResponseType<DealFormValues>, any, DealFormValues>({
+  return useMutation<ApiResponseType<DealFormValues>, any, FormData>({
     mutationKey: ["createDeal"],
-    mutationFn: (data: DealFormValues) =>
-      data._id
-        ? PATCH<DealFormValues, ApiResponseType<DealFormValues>>({
-            url: `/api/deals/edit/${data._id}`,
+    mutationFn: (data: FormData) =>
+      data.get("_id")
+        ? PATCH<FormData, ApiResponseType<DealFormValues>>({
+            url: `/api/deals/edit/${data.get("_id")}`,
             data: data,
           })
-        : Post<DealFormValues, ApiResponseType<DealFormValues>>({
+        : Post<FormData, ApiResponseType<DealFormValues>>({
             url: "/api/deals",
             data: data,
           }),

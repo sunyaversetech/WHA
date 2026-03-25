@@ -12,10 +12,8 @@ type RouteContext = {
 export const dealSchema = z.object({
   title: z.string().min(2, "Title is too short"),
   valid_till: z.coerce.date(),
-  deals_for: z.string().min(1, "Target audience is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   terms_for_the_deal: z.string().min(1, "Terms are required"),
-  deal_code: z.string().toUpperCase().min(3, "Code must be 3+ characters"),
 });
 
 export async function PATCH(req: NextRequest, { params }: RouteContext) {

@@ -35,10 +35,8 @@ export const dealSchema = z.object({
   _id: z.string().min(1, "ID is required"),
   title: z.string().min(2, "Title is too short"),
   valid_till: z.date().min(1, "Date must be in the future"),
-  deals_for: z.string().min(1, "Target audience is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   terms_for_the_deal: z.string().min(1, "Terms are required"),
-  deal_code: z.string().toUpperCase().min(3, "Code must be 3+ characters"),
 });
 
 export type DealFormValues = z.infer<typeof dealSchema>;
@@ -54,22 +52,21 @@ export default function EditDealForm() {
     defaultValues: {
       _id: data?.data._id || "",
       title: data?.data.title || "",
-      deals_for: data?.data.deals_for || "",
       description: data?.data.description || "",
       terms_for_the_deal: data?.data.terms_for_the_deal || "",
-      deal_code: data?.data.deal_code || "",
-      valid_till: data?.data.valid_till || new Date(),
+      valid_till: new Date(data?.data.valid_till ?? new Date()) || new Date(),
     },
   });
 
   useEffect(() => {
     form.setValue("_id", data?.data._id || "");
     form.setValue("title", data?.data.title || "");
-    form.setValue("deals_for", data?.data.deals_for || "");
     form.setValue("description", data?.data.description || "");
     form.setValue("terms_for_the_deal", data?.data.terms_for_the_deal || "");
-    form.setValue("deal_code", data?.data.deal_code || "");
-    form.setValue("valid_till", data?.data.valid_till || new Date());
+    form.setValue(
+      "valid_till",
+      new Date(data?.data.valid_till ?? new Date()) || new Date(),
+    );
   }, [data, form]);
 
   const { mutate } = useCreateDeals();
@@ -111,20 +108,6 @@ export default function EditDealForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="deal_code"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Promo Code</FormLabel>
-                <FormControl>
-                  <Input placeholder="SAVE50" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="valid_till"
             render={({ field }) => (
               <FormItem className="flex flex-col">
@@ -163,50 +146,6 @@ export default function EditDealForm() {
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="deals_for"
-          render={({ field }) => (
-            <FormItem className="space-y-3">
-              <FormLabel>Target Audience</FormLabel>
-              <FormControl>
-                <ToggleGroup
-                  type="single"
-                  variant="outline"
-                  onValueChange={(value) => {
-                    if (value) field.onChange(value);
-                  }}
-                  value={field.value}
-                  className="flex flex-wrap justify-start gap-2">
-                  <ToggleGroupItem
-                    value={"all"}
-                    className={cn(
-                      "!rounded-md !border border-input h-10 px-4",
-                      "min-w-[100px] transition-all",
-                      "hover:bg-accent hover:text-accent-foreground",
-                      "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:opacity-100",
-                      "first:rounded-md last:rounded-md",
-                    )}>
-                    All
-                  </ToggleGroupItem>
-                  <ToggleGroupItem
-                    value={"to_wha_user"}
-                    className={cn(
-                      "!rounded-md !border border-input h-10 px-4",
-                      "min-w-[100px] transition-all",
-                      "hover:bg-accent hover:text-accent-foreground",
-                      "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:opacity-100",
-                      "first:rounded-md last:rounded-md",
-                    )}>
-                    To WHA Users
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <FormField
           control={form.control}

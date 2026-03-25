@@ -217,7 +217,6 @@ export function EventForm() {
                         } else {
                           form.clearErrors("title");
                         }
-
                         field.onChange(rawValue);
                       }}
                     />
