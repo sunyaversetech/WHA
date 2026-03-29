@@ -1,0 +1,762 @@
+/* Brand Colors */
+.bg-wha-primary {
+    @apply bg-[#051e3a];
+}
+
+.bg-wha-secondary {
+    @apply bg-[#3771db];
+}
+
+.bg-wha-accent {
+    @apply bg-[#2a59b2];
+}
+
+.bg-wha-light {
+    @apply bg-[#f8fafc];
+}
+
+.bg-wha-dark {
+    @apply bg-[#020c1a];
+}
+
+.text-wha-primary {
+    @apply text-[#051e3a];
+}
+
+.text-wha-secondary {
+    @apply text-[#3771db];
+}
+
+.text-wha-accent {
+    @apply text-[#2a59b2];
+}
+
+.text-wha-light {
+    @apply text-[#f8fafc];
+}
+
+.text-wha-muted {
+    @apply text-slate-600;
+}
+
+.border-wha-primary {
+    @apply border border-[#051e3a];
+}
+
+.border-wha-secondary {
+    @apply border-[#3771db];
+}
+
+/* Gradient Backgrounds */
+.bg-wha-gradient-primary {
+    @apply bg-gradient-to-br from-[#051e3a] via-[#0a2d5a] to-[#3771db];
+}
+
+.bg-wha-gradient-secondary {
+    @apply bg-gradient-to-r from-[#2a59b2] to-[#3771db];
+}
+
+.bg-wha-gradient-light {
+    @apply bg-gradient-to-br from-white via-slate-50 to-blue-50;
+}
+
+/* ============================================
+   TYPOGRAPHY - MARCELLUS & MONTSERRAT FONTS
+   Fresh.com Inspired Typography
+   ============================================ */
+
+/* Display Text - Hero Headlines */
+.text-wha-display {
+    @apply font-marcellus font-normal text-4xl md:text-5xl lg:text-6xl xl:text-7xl tracking-tight leading-none;
+}
+
+.text-wha-display-sm {
+    @apply font-marcellus font-normal text-3xl md:text-4xl lg:text-5xl tracking-tight leading-none;
+}
+
+/* Headings */
+.text-wha-h1 {
+    @apply font-marcellus font-normal text-3xl md:text-4xl lg:text-5xl tracking-tight leading-tight;
+}
+
+.text-wha-h2 {
+    @apply font-marcellus font-normal text-2xl md:text-3xl lg:text-4xl tracking-tight leading-tight;
+}
+
+.text-wha-h3 {
+    @apply font-marcellus font-normal text-xl md:text-2xl lg:text-3xl tracking-tight leading-snug;
+}
+
+.text-wha-h4 {
+    @apply font-montserrat font-semibold text-lg md:text-xl lg:text-2xl tracking-tight leading-snug;
+}
+
+.text-wha-h5 {
+    @apply font-montserrat font-semibold text-base md:text-lg lg:text-xl tracking-normal leading-snug;
+}
+
+.text-wha-h6 {
+    @apply font-montserrat font-semibold text-sm md:text-base lg:text-lg tracking-normal leading-normal;
+}
+
+/* Body Text */
+.text-wha-body-lg {
+    @apply font-montserrat font-normal text-lg md:text-xl leading-relaxed tracking-normal;
+}
+
+.text-wha-body {
+    @apply font-montserrat font-normal text-base md:text-lg leading-relaxed tracking-normal;
+}
+
+.text-wha-body-sm {
+    @apply font-montserrat font-normal text-sm md:text-base leading-relaxed tracking-normal;
+}
+
+/* Paragraph */
+.text-wha-paragraph {
+    @apply font-montserrat font-normal text-base md:text-lg leading-7 md:leading-8 tracking-normal text-slate-700;
+}
+
+.text-wha-paragraph-sm {
+    @apply font-montserrat font-normal text-sm md:text-base leading-6 md:leading-7 tracking-normal text-slate-600;
+}
+
+/* Captions & Labels */
+.text-wha-caption {
+    @apply font-montserrat font-medium text-sm tracking-wide;
+}
+
+.text-wha-caption-sm {
+    @apply font-montserrat font-medium text-xs tracking-wider;
+}
+
+.text-wha-label {
+    @apply font-montserrat font-semibold text-sm tracking-wide uppercase;
+}
+
+.text-wha-label-sm {
+    @apply font-montserrat font-semibold text-xs tracking-widest uppercase;
+}
+
+/* Button Text */
+.text-wha-button {
+    @apply font-montserrat font-semibold text-sm md:text-base tracking-wide;
+}
+
+.text-wha-button-sm {
+    @apply font-montserrat font-semibold text-xs md:text-sm tracking-wide;
+}
+
+.text-wha-button-lg {
+    @apply font-montserrat font-semibold text-base md:text-lg tracking-wide;
+}
+
+/* Span & Small Text */
+.text-wha-span {
+    @apply font-montserrat font-normal text-sm md:text-base tracking-normal;
+}
+
+.text-wha-small {
+    @apply font-montserrat font-normal text-xs md:text-sm tracking-normal;
+}
+
+/* Link Text */
+.text-wha-link {
+    @apply cursor-pointer font-montserrat font-medium text-base tracking-normal text-[#3771db] hover:text-[#2a59b2] transition-colors duration-200 underline-offset-4 hover:underline;
+}
+
+.text-wha-link-sm {
+    @apply font-montserrat font-medium text-sm tracking-normal text-[#3771db] hover:text-[#2a59b2] transition-colors duration-200 underline-offset-4 hover:underline;
+}
+
+/* ============================================
+   BUTTON STYLES
+   ============================================ */
+
+/* Primary Buttons */
+.btn-wha-primary {
+    @apply font-montserrat font-semibold text-sm md:text-base tracking-wide px-6 py-3 bg-[#051e3a] text-white rounded-lg hover:bg-[#0a2d5a] active:bg-[#020c1a] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-wha-primary-lg {
+    @apply font-montserrat font-semibold text-base md:text-lg tracking-wide px-8 py-4 bg-[#051e3a] text-white rounded-lg hover:bg-[#0a2d5a] active:bg-[#020c1a] transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-wha-primary-sm {
+    @apply font-montserrat font-semibold text-xs md:text-sm tracking-wide px-4 py-2 bg-[#051e3a] text-white rounded-md hover:bg-[#0a2d5a] active:bg-[#020c1a] transition-all duration-200 shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Secondary Buttons */
+.btn-wha-secondary {
+    @apply font-montserrat font-semibold text-sm md:text-base tracking-wide px-6 py-3 bg-[#3771db] text-white rounded-lg hover:bg-[#2a59b2] active:bg-[#1e4a9a] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-wha-secondary-lg {
+    @apply font-montserrat font-semibold text-base md:text-lg tracking-wide px-8 py-4 bg-[#3771db] text-white rounded-lg hover:bg-[#2a59b2] active:bg-[#1e4a9a] transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-wha-secondary-sm {
+    @apply font-montserrat font-semibold text-xs md:text-sm tracking-wide px-4 py-2 bg-[#3771db] text-white rounded-md hover:bg-[#2a59b2] active:bg-[#1e4a9a] transition-all duration-200 shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Outline Buttons */
+.btn-wha-outline {
+    @apply font-montserrat font-semibold text-sm md:text-base tracking-wide px-6 py-3 bg-transparent text-[#051e3a] border-2 border-[#051e3a] rounded-lg hover:bg-[#051e3a] hover:text-white active:bg-[#020c1a] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-wha-outline-lg {
+    @apply font-montserrat font-semibold text-base md:text-lg tracking-wide px-8 py-4 bg-transparent text-[#051e3a] border-2 border-[#051e3a] rounded-lg hover:bg-[#051e3a] hover:text-white active:bg-[#020c1a] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-wha-outline-sm {
+    @apply font-montserrat font-semibold text-xs md:text-sm tracking-wide px-4 py-2 bg-transparent text-[#051e3a] border-2 border-[#051e3a] rounded-md hover:bg-[#051e3a] hover:text-white active:bg-[#020c1a] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Ghost Buttons */
+.btn-wha-ghost {
+    @apply font-montserrat font-semibold text-sm md:text-base tracking-wide px-6 py-3 bg-transparent text-[#051e3a] rounded-lg hover:bg-slate-100 active:bg-slate-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-wha-ghost-lg {
+    @apply font-montserrat font-semibold text-base md:text-lg tracking-wide px-8 py-4 bg-transparent text-[#051e3a] rounded-lg hover:bg-slate-100 active:bg-slate-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-wha-ghost-sm {
+    @apply font-montserrat font-semibold text-xs md:text-sm tracking-wide px-4 py-2 bg-transparent text-[#051e3a] rounded-md hover:bg-slate-100 active:bg-slate-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Icon Buttons */
+.btn-wha-icon {
+    @apply p-2 md:p-3 bg-transparent text-[#051e3a] rounded-lg hover:bg-slate-100 active:bg-slate-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-wha-icon-primary {
+    @apply p-2 md:p-3 bg-[#051e3a] text-white rounded-lg hover:bg-[#0a2d5a] active:bg-[#020c1a] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* ============================================
+   SPACING SYSTEM
+   ============================================ */
+
+/* Padding */
+.p-wha-xs {
+    @apply p-2 md:p-3;
+}
+
+.p-wha-sm {
+    @apply p-3 md:p-4;
+}
+
+.p-wha-md {
+    @apply p-4 md:p-6;
+}
+
+.p-wha-lg {
+    @apply p-6 md:p-8;
+}
+
+.p-wha-xl {
+    @apply p-8 md:p-12;
+}
+
+.p-wha-2xl {
+    @apply p-12 md:p-16;
+}
+
+/* Padding X */
+.px-wha-xs {
+    @apply px-2 md:px-3;
+}
+
+.px-wha-sm {
+    @apply px-3 md:px-4;
+}
+
+.px-wha-md {
+    @apply px-4 md:px-6;
+}
+
+.px-wha-lg {
+    @apply px-6 md:px-8;
+}
+
+.px-wha-xl {
+    @apply px-8 md:px-12;
+}
+
+.px-wha-2xl {
+    @apply px-12 md:px-16 lg:px-24;
+}
+
+/* Padding Y */
+.py-wha-xs {
+    @apply py-2 md:py-3;
+}
+
+.py-wha-sm {
+    @apply py-3 md:py-4;
+}
+
+.py-wha-md {
+    @apply py-4 md:py-6;
+}
+
+.py-wha-lg {
+    @apply py-6 md:py-8;
+}
+
+.py-wha-xl {
+    @apply py-8 md:py-12;
+}
+
+.py-wha-2xl {
+    @apply py-12 md:py-16 lg:py-24;
+}
+
+/* Margin */
+.m-wha-xs {
+    @apply m-2 md:m-3;
+}
+
+.m-wha-sm {
+    @apply m-3 md:m-4;
+}
+
+.m-wha-md {
+    @apply m-4 md:m-6;
+}
+
+.m-wha-lg {
+    @apply m-6 md:m-8;
+}
+
+.m-wha-xl {
+    @apply m-8 md:m-12;
+}
+
+.m-wha-2xl {
+    @apply m-12 md:m-16;
+}
+
+/* Margin X */
+.mx-wha-xs {
+    @apply mx-2 md:mx-3;
+}
+
+.mx-wha-sm {
+    @apply mx-3 md:mx-4;
+}
+
+.mx-wha-md {
+    @apply mx-4 md:mx-6;
+}
+
+.mx-wha-lg {
+    @apply mx-6 md:mx-8;
+}
+
+.mx-wha-xl {
+    @apply mx-8 md:mx-12;
+}
+
+.mx-wha-2xl {
+    @apply mx-12 md:mx-16 lg:mx-24;
+}
+
+/* Margin Y */
+.my-wha-xs {
+    @apply my-2 md:my-3;
+}
+
+.my-wha-sm {
+    @apply my-3 md:my-4;
+}
+
+.my-wha-md {
+    @apply my-4 md:my-6;
+}
+
+.my-wha-lg {
+    @apply my-6 md:my-8;
+}
+
+.my-wha-xl {
+    @apply my-8 md:my-12;
+}
+
+.my-wha-2xl {
+    @apply my-12 md:my-16 lg:my-24;
+}
+
+/* Gap */
+.gap-wha-xs {
+    @apply gap-2 md:gap-3;
+}
+
+.gap-wha-sm {
+    @apply gap-3 md:gap-4;
+}
+
+.gap-wha-md {
+    @apply gap-4 md:gap-6;
+}
+
+.gap-wha-lg {
+    @apply gap-6 md:gap-8;
+}
+
+.gap-wha-xl {
+    @apply gap-8 md:gap-12;
+}
+
+.gap-wha-2xl {
+    @apply gap-12 md:gap-16;
+}
+
+/* ============================================
+   CARD & CONTAINER STYLES
+   ============================================ */
+
+.card-wha {
+    @apply bg-white rounded-lg shadow-md border border-slate-200 p-4 md:p-6 transition-all duration-200 hover:shadow-lg;
+}
+
+.card-wha-lg {
+    @apply bg-white rounded-xl shadow-lg border border-slate-200 p-6 md:p-8 transition-all duration-200 hover:shadow-xl;
+}
+
+.card-wha-primary {
+    @apply bg-[#051e3a] text-white rounded-lg shadow-md p-4 md:p-6 transition-all duration-200 hover:shadow-lg;
+}
+
+.card-wha-gradient {
+    @apply bg-gradient-to-br from-[#051e3a] via-[#0a2d5a] to-[#3771db] text-white rounded-lg shadow-lg p-4 md:p-6 transition-all duration-200 hover:shadow-xl;
+}
+
+.container-wha {
+    @apply max-w-7xl mx-auto px-4 md:px-6 lg:px-8;
+}
+
+.container-wha-sm {
+    @apply max-w-4xl mx-auto px-4 md:px-6 lg:px-8;
+}
+
+.container-wha-lg {
+    @apply max-w-screen-2xl mx-auto px-4 md:px-6 lg:px-8;
+}
+
+.container-wha-full {
+    @apply w-full px-4 md:px-6 lg:px-8;
+}
+
+/* ============================================
+   FORM INPUT STYLES
+   ============================================ */
+
+.input-wha {
+    @apply font-montserrat w-full px-4 py-3 text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3771db] focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.input-wha-sm {
+    @apply font-montserrat w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3771db] focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.input-wha-lg {
+    @apply font-montserrat w-full px-5 py-4 text-lg border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3771db] focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.textarea-wha {
+    @apply font-montserrat w-full px-4 py-3 text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3771db] focus:border-transparent transition-all duration-200 resize-none disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.select-wha {
+    @apply font-montserrat w-full px-4 py-3 text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3771db] focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.label-wha {
+    @apply font-montserrat font-semibold text-sm md:text-base text-[#051e3a] mb-2 block tracking-wide;
+}
+
+.checkbox-wha {
+    @apply w-4 h-4 text-[#3771db] border-slate-300 rounded focus:ring-[#3771db] focus:ring-2;
+}
+
+.radio-wha {
+    @apply w-4 h-4 text-[#3771db] border-slate-300 focus:ring-[#3771db] focus:ring-2;
+}
+
+/* ============================================
+   BADGE & TAG STYLES
+   ============================================ */
+
+.badge-wha-primary {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#051e3a] text-white;
+}
+
+.badge-wha-secondary {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#3771db] text-white;
+}
+
+.badge-wha-outline {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border-2 border-[#051e3a] text-[#051e3a] bg-transparent;
+}
+
+.badge-wha-light {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-[#051e3a];
+}
+
+/* ============================================
+   SECTION & LAYOUT STYLES
+   ============================================ */
+
+.section-wha {
+    @apply py-12 md:py-16 lg:py-24;
+}
+
+.section-wha-sm {
+    @apply py-8 md:py-12 lg:py-16;
+}
+
+.section-wha-lg {
+    @apply py-16 md:py-24 lg:py-32;
+}
+
+.grid-wha-2 {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8;
+}
+
+.grid-wha-3 {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8;
+}
+
+.grid-wha-4 {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8;
+}
+
+.flex-wha-center {
+    @apply flex items-center justify-center;
+}
+
+.flex-wha-between {
+    @apply flex items-center justify-between;
+}
+
+.flex-wha-start {
+    @apply flex items-start justify-start;
+}
+
+.flex-wha-col {
+    @apply flex flex-col;
+}
+
+/* ============================================
+   SHADOW & ELEVATION
+   ============================================ */
+
+.shadow-wha-sm {
+    @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+.shadow-wha-md {
+    @apply shadow-md hover:shadow-lg transition-shadow duration-200;
+}
+
+.shadow-wha-lg {
+    @apply shadow-lg hover:shadow-xl transition-shadow duration-200;
+}
+
+.shadow-wha-xl {
+    @apply shadow-xl hover:shadow-2xl transition-shadow duration-200;
+}
+
+/* ============================================
+   BORDER & DIVIDER
+   ============================================ */
+
+.border-wha {
+    @apply border border-slate-200;
+}
+
+.border-wha-t {
+    @apply border-t border-slate-200;
+}
+
+.border-wha-b {
+    @apply border-b border-slate-200;
+}
+
+.divider-wha {
+    @apply w-full h-px bg-slate-200 my-4 md:my-6;
+}
+
+.divider-wha-thick {
+    @apply w-full h-0.5 bg-slate-300 my-6 md:my-8;
+}
+
+/* ============================================
+   ANIMATION & TRANSITION
+   ============================================ */
+
+.transition-wha {
+    @apply transition-all duration-200 ease-in-out;
+}
+
+.transition-wha-slow {
+    @apply transition-all duration-300 ease-in-out;
+}
+
+.transition-wha-fast {
+    @apply transition-all duration-150 ease-in-out;
+}
+
+.hover-wha-scale {
+    @apply hover:scale-105 transition-transform duration-200;
+}
+
+.hover-wha-lift {
+    @apply hover:-translate-y-1 transition-transform duration-200;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.rounded-wha {
+    @apply rounded-lg;
+}
+
+.rounded-wha-sm {
+    @apply rounded-md;
+}
+
+.rounded-wha-lg {
+    @apply rounded-xl;
+}
+
+.rounded-wha-full {
+    @apply rounded-full;
+}
+
+.truncate-wha {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+}
+
+.line-clamp-wha-2 {
+    @apply line-clamp-2;
+}
+
+.line-clamp-wha-3 {
+    @apply line-clamp-3;
+}
+
+/* ============================================
+   LOADING & SPINNER
+   ============================================ */
+
+.spinner-wha {
+    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-[#3771db];
+}
+
+.spinner-wha-sm {
+    @apply animate-spin rounded-full h-4 w-4 border-b-2 border-[#3771db];
+}
+
+.spinner-wha-lg {
+    @apply animate-spin rounded-full h-12 w-12 border-b-2 border-[#3771db];
+}
+
+.loading-dots-wha {
+    @apply flex gap-1.5;
+}
+
+.loading-dot-wha {
+    @apply w-2 h-2 rounded-full bg-[#3771db] animate-bounce;
+}
+
+/* ============================================
+   OVERLAY & BACKDROP
+   ============================================ */
+
+.overlay-wha {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40;
+}
+
+.overlay-wha-dark {
+    @apply fixed inset-0 bg-[#051e3a]/80 backdrop-blur-sm z-40;
+}
+
+.backdrop-wha {
+    @apply backdrop-blur-md bg-white/90;
+}
+
+/* ============================================
+   TABLE STYLES
+   ============================================ */
+
+.table-wha {
+    @apply w-full border-collapse;
+}
+
+.table-wha-header {
+    @apply bg-slate-50 border-b-2 border-slate-200;
+}
+
+.table-wha-th {
+    @apply font-montserrat font-semibold text-sm text-left px-4 py-3 text-[#051e3a] tracking-wide;
+}
+
+.table-wha-td {
+    @apply font-montserrat text-sm px-4 py-3 border-b border-slate-200;
+}
+
+.table-wha-row {
+    @apply hover:bg-slate-50 transition-colors duration-150;
+}
+
+/* ============================================
+   ALERT & NOTIFICATION STYLES
+   ============================================ */
+
+.alert-wha-info {
+    @apply bg-blue-50 border-l-4 border-[#3771db] p-4 rounded-r-lg;
+}
+
+.alert-wha-success {
+    @apply bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg;
+}
+
+.alert-wha-warning {
+    @apply bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg;
+}
+
+.alert-wha-error {
+    @apply bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg;
+}
+
+/* ============================================
+   RESPONSIVE VISIBILITY
+   ============================================ */
+
+.show-wha-mobile {
+    @apply block md:hidden;
+}
+
+.show-wha-tablet {
+    @apply hidden md:block lg:hidden;
+}
+
+.show-wha-desktop {
+    @apply hidden lg:block;
+}
+
+.hide-wha-mobile {
+    @apply hidden md:block;
+}
+
+.hide-wha-tablet {
+    @apply block md:hidden lg:block;
+}
+
+.hide-wha-desktop {
+    @apply block lg:hidden;
+}

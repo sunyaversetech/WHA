@@ -1,21 +1,27 @@
 import { type Metadata } from "next";
 
-import { Inter } from "next/font/google";
+import { Marcellus, Montserrat } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/Auth/SessionWrapper";
 import ReactQueryContext from "@/lib/ReactQueryContext";
 import { CityFilterProvider } from "@/contexts/city-filter-context";
-import { FavoritesProvider } from "@/contexts/favorites-context";
-import { RedeemProvider } from "@/contexts/redeem-context";
 import { Toaster } from "sonner";
 import BottomNav from "@/components/ResuableComponents/BottomNavbar";
 import NavbarProvider from "@/components/ResuableComponents/NavbarProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import FunctionalSearchBar from "@/components/ResuableComponents/SearchSection";
 
-const inter = Inter({
+const marcellus = Marcellus({
+  weight: "400",
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-marcellus",
+});
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-montserrat",
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
 
@@ -31,11 +37,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased bg-neutral-50`}>
+      <body
+        className={`${marcellus.variable} ${montserrat.variable} font-montserrat antialiased bg-neutral-50`}>
         <ReactQueryContext>
           <CityFilterProvider>
             <SessionWrapper>
               <NavbarProvider />
+              <FunctionalSearchBar />
               <TooltipProvider>
                 <div className="pb-16 md:pb-0">{children}</div>
               </TooltipProvider>

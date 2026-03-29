@@ -13,15 +13,6 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const { data } = useGetDashboardData();
   const router = useRouter();
-  const [analyticsData] = React.useState(() =>
-    ["Marketing", "Sales", "Support"].map(() =>
-      Math.floor(Math.random() * 100),
-    ),
-  );
-
-  const businessName = (session?.user as { business_name?: string })
-    ?.business_name;
-  const isUserOnly = !businessName;
 
   useEffect(() => {
     if (session?.user?.category === "super-admin") {

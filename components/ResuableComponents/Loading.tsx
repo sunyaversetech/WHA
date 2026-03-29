@@ -4,14 +4,6 @@ import Image from "next/image";
 const LoadingPage = () => {
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#051e3a]">
-      {/* <div
-        className="absolute inset-0 opacity-40"
-        style={{
-          background:
-            "radial-gradient(circle at center, #2a59b2 0%, transparent 70%)",
-        }}
-      /> */}
-
       <div className="relative flex flex-col items-center gap-8">
         <div className="relative w-32 h-32 md:w-40 md:h-40 animate-pulse">
           <Image

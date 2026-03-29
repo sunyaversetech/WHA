@@ -55,7 +55,6 @@ export const useGetDeals = () => {
 
 export const useGetAllDeals = () => {
   const param = useSearchParams();
-
   const category = param.get("category") || "";
   const search = param.get("search") || "";
   return useFetcher<ApiResponseType<DealsGetValues[]>>(

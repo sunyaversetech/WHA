@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import {
@@ -14,6 +14,34 @@ import { MapPin, ChevronDown } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+
+const navItems = [
+  {
+    id: "event",
+    label: "Event",
+    isNew: true,
+    activeImg: "/navbar/calendar.gif",
+    href: "/events",
+    img: "/navbar/calendar.png",
+  },
+  {
+    id: "deals",
+    label: "Deals",
+    isNew: true,
+    activeImg: "/navbar/agreement.gif",
+    href: "/deals",
+    img: "/navbar/agreement.png",
+  },
+  {
+    id: "business",
+    label: "Business",
+    isNew: true,
+    activeImg: "/navbar/corporate-culture.gif",
+    href: "/businesses",
+    img: "/navbar/corporate-culture.png",
+  },
+];
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -21,6 +49,7 @@ export default function Navbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCity = searchParams.get("city");
+  const [activeTab, setActiveTab] = useState("");
 
   const updateQuery = useCallback(
     (updates: Record<string, string | null>) => {
@@ -52,9 +81,6 @@ export default function Navbar() {
     }
   }, [currentCity, pathname, router, searchParams]);
 
-  const isActive = (path: string) =>
-    pathname.startsWith(path) || pathname === path;
-
   const buildPath = (href: string) => {
     if (!currentCity) return href;
     return `${href}?city=${currentCity}`;
@@ -62,7 +88,10 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-[9999] flex items-center justify-between px-6 py-3 bg-white/10 backdrop-blur-xl border-b border-white/20 shadow-lg">
-      <Link href={buildPath("/")} className="flex items-center">
+      <Link
+        href={buildPath("/")}
+        onClick={() => setActiveTab("")}
+        className="flex items-center">
         <Image
           src="/wha/logo.png"
           alt="logo"
@@ -72,10 +101,7 @@ export default function Navbar() {
           priority
         />
       </Link>
-
-      {!pathname.startsWith("/dashboard") && (
-        <div className="hidden md:flex items-center bg-white/20 backdrop-blur-lg border border-primary rounded-full p-1 gap-1 text-sm font-medium shadow-md">
-          {[
+      {/* {[
             { name: "Events", href: "/events" },
             { name: "Deals", href: "/deals" },
             { name: "Businesses", href: "/businesses" },
@@ -90,7 +116,45 @@ export default function Navbar() {
               }`}>
               {item.name}
             </Link>
-          ))}
+          ))} */}
+
+      {!pathname.startsWith("/dashboard") && (
+        <div className="hidden md:flex items-center gap-10 bg-white/20 backdrop-blur-lg  rounded-full p-1  text-sm font-medium">
+          {navItems.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  router.push(buildPath(item.href));
+                }}
+                className={`group relative flex items-center gap-2 pb-2 transition-colors ${
+                  isActive ? "text-black" : "text-gray-500 hover:text-black"
+                }`}>
+                <div className="flex gap-2 items-center">
+                  <div className="flex">
+                    <Image
+                      src={`${isActive ? item.activeImg : item.img}`}
+                      className={`${isActive ? "h-10 w-10" : "h-7 w-7"}`}
+                      width={isActive ? 100 : 28}
+                      height={isActive ? 100 : 28}
+                      alt={`${item.label} icon`}
+                    />
+                  </div>
+                  <span className="text-sm font-medium">{item.label}</span>
+                </div>
+
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-black"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
 

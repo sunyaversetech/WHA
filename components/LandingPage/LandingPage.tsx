@@ -53,7 +53,7 @@ export default function LandingPage() {
 
       <div className="mt-2 md:mt-4 bg-white text-black rounded-t-3xl px-4 md:px-6">
         <div className="container-modern py-4 md:py-6 border-b border-divider ">
-          <h2 className=" text-black text-sm md:text-md lg:text-lg font-bold mb-2 md:mb-4">
+          <h2 className="text-wha-link ">
             Explore whats active right now in your city
           </h2>
 
