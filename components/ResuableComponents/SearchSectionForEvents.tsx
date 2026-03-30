@@ -64,37 +64,33 @@ export default function EventSearchWithDates() {
   return (
     <div className="flex w-fit m-auto justify-center py-6" ref={containerRef}>
       <div
-        className={`relative flex items-center rounded-full border border-gray-200 transition-all duration-300 ${
+        className={`relative  flex items-center rounded-full border border-gray-200 transition-all duration-300 ${
           activeTab
             ? "bg-[#ebebeb] shadow-md"
             : "bg-white shadow-sm hover:shadow-md"
         }`}>
-        <SearchSection
-          label="Search"
-          value={inputValue || "Search Events"}
-          isActive={activeTab === "search"}
-          onClick={() => setActiveTab("search")}>
-          <div className="w-[400px] p-8  ">
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-wha-h6">
-              Search Events
-            </h3>
-            <div className=" flex items-center flex-1 border border-slate-200  rounded-full px-3 py-2">
-              <Search className=" text-slate-300" />
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Search Local Events"
-                className="w-full pl-10 pr-3 py-2 text-base border-none  focus:outline-none focus-within:ring-0"
-              />
-              <span
-                className="bg-wha-primary text-white p-1 rounded-full"
-                onClick={() => setActiveTab("where")}>
-                <ArrowRight />
-              </span>
-            </div>
+        <div className="w-52 flex flex-col rounded-full py-3 px-8 cursor-pointer transition-all duration-200">
+          <p className="uppercase tracking-wider text-[11px] mt-2 ">
+            Search Events
+          </p>
+          <div className="flex w-full justify-between">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Search Local Events"
+              className="w-full py-2 text-xs border-none outline-none focus:ring-0 focus:outline-none  
+             focus:border-none rounded-sm h-5 bg-transparent active:border-0"
+              onClick={() => setActiveTab("search")}
+            />
           </div>
-        </SearchSection>
+        </div>
+        {inputValue && (
+          <X
+            className="h-4 w-4 text-black cursor-pointer mr-2 hover:bg-black/10 backdrop-blur-md p-0.5 hover:shadow-lg  rounded-full  transition-all duration-200"
+            onClick={() => setInputValue("")}
+          />
+        )}
 
         <Divider hide={activeTab === "where" || activeTab === "when"} />
 
@@ -102,7 +98,12 @@ export default function EventSearchWithDates() {
           label="Where"
           value={location || "Select destinations"}
           isActive={activeTab === "where"}
-          onClick={() => setActiveTab("where")}>
+          onClick={() => setActiveTab("where")}
+          location={location}
+          date={date}
+          setLocation={setLocation}
+          setInputValue={setInputValue}
+          setDate={setDate}>
           <div className="w-[400px] p-8">
             {["sydney", "canberra"].map((city) => (
               <div
@@ -129,7 +130,10 @@ export default function EventSearchWithDates() {
           label="When"
           value={getDateDisplay()}
           isActive={activeTab === "when"}
-          onClick={() => setActiveTab("when")}>
+          onClick={() => setActiveTab("when")}
+          setLocation={setLocation}
+          setInputValue={setInputValue}
+          setDate={setDate}>
           <div className="p-4 bg-white rounded-3xl">
             <Calendar
               mode="range"
@@ -142,7 +146,7 @@ export default function EventSearchWithDates() {
           </div>
         </SearchSection>
 
-        <div className="pr-2">
+        <div className="pr-2 ml-3">
           <button
             className={`flex items-center gap-2 rounded-full bg-[#051e3a] text-white transition-all duration-300 ${
               activeTab ? "px-6 py-4" : "p-4"
@@ -162,15 +166,6 @@ export default function EventSearchWithDates() {
             </AnimatePresence>
           </button>
         </div>
-        <div className="pr-2">
-          <button
-            className={`flex items-center gap-2 rounded-full bg-[#051e3a] text-white transition-all duration-300 ${
-              activeTab ? "px-6 py-4" : "p-4"
-            }`}
-            onClick={handleClearSearch}>
-            <X className="h-4 w-4 stroke-[4px]" />
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -181,14 +176,19 @@ function SearchSection({
   value,
   isActive,
   onClick,
+  setLocation,
+  setDate,
   children,
   isLast,
+  location,
+  date,
 }: any) {
+  console.log("date", date);
   return (
     <div className="relative">
       <div
         onClick={onClick}
-        className={`flex flex-col rounded-full py-3 px-8 cursor-pointer transition-all duration-200 ${
+        className={`flex flex-col rounded-full w-52 py-3 px-8 cursor-pointer transition-all duration-200 ${
           isActive
             ? "bg-white shadow-xl scale-105 z-10"
             : "hover:bg-gray-200/60"
@@ -197,10 +197,36 @@ function SearchSection({
           {label}
         </span>
         <span
-          className={`text-sm truncate max-w-[140px] font-medium ${isActive ? "text-black" : "text-gray-500"}`}>
+          className={`text-sm flex gap-2 truncate max-w-[140px] font-medium ${isActive ? "text-black" : "text-gray-500"}`}>
           {value}
         </span>
       </div>
+      {label === "When" && (
+        <X
+          className="absolute z-50 top-1/2 -translate-y-1/2 right-2 h-4 w-4 text-black 
+               cursor-pointer hover:bg-black/10 backdrop-blur-md p-0.5 
+               hover:shadow-lg rounded-full transition-all duration-200"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            console.log("Clearing date..."); // Debugging
+            setDate(undefined);
+          }}
+        />
+      )}
+      {label === "Where" && location && (
+        <X
+          className="absolute top-5.5 right-0 h-4 w-4 text-black 
+        cursor-pointer mr-2 hover:bg-black/10 backdrop-blur-md p-0.5 
+        hover:shadow-lg   rounded-full  transition-all duration-200"
+          onClick={() => {
+            if (label === "Where") {
+              setLocation("");
+            }
+          }}
+        />
+      )}
 
       <AnimatePresence>
         {isActive && (

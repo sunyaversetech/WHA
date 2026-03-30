@@ -1,14 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  Search,
-  MapPin,
-  Calendar as CalendarIcon,
-  Building,
-  Tag,
-  X,
-} from "lucide-react";
+import { Search, MapPin, ArrowRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { addDays, format } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -17,7 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 type SearchState = "where" | "when" | "search" | null;
 
-export default function BusinessSearchWithDates() {
+export default function EventSearchWithDates() {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -57,7 +50,7 @@ export default function BusinessSearchWithDates() {
 
   const handleSearch = () => {
     router.push(
-      `/businesses?search=${inputValue}${date ? `&from=${date.from && format(date.from, "yyyy-MM-dd")}` : ""}${date?.to ? `&to=${format(date.to, "yyyy-MM-dd")}` : ""}${location ? `&city=${location}` : ""}`,
+      `/events?search=${inputValue}${date ? `&from=${date.from && format(date.from, "yyyy-MM-dd")}` : ""}${date?.to ? `&to=${format(date.to, "yyyy-MM-dd")}` : ""}${location ? `&city=${location}` : ""}`,
     );
   };
 
@@ -71,31 +64,37 @@ export default function BusinessSearchWithDates() {
   return (
     <div className="flex w-fit m-auto justify-center py-6" ref={containerRef}>
       <div
-        className={`relative  flex items-center rounded-full border border-gray-200 transition-all duration-300 ${
+        className={`relative flex items-center rounded-full border border-gray-200 transition-all duration-300 ${
           activeTab
             ? "bg-[#ebebeb] shadow-md"
             : "bg-white shadow-sm hover:shadow-md"
         }`}>
-        <div className="w-52 flex flex-col rounded-full py-3 px-8 cursor-pointer transition-all duration-200">
-          <p className="tracking-wider text-[12px] mt-2 ">Search Business</p>
-          <div className="flex w-full justify-between">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Search Business"
-              className="w-full py-2 text-xs border-none outline-none focus:ring-0 focus:outline-none  
-             focus:border-none rounded-sm h-5 bg-transparent active:border-0"
-              onClick={() => setActiveTab("search")}
-            />
+        <SearchSection
+          label="Search"
+          value={inputValue || "Search Events"}
+          isActive={activeTab === "search"}
+          onClick={() => setActiveTab("search")}>
+          <div className="w-[400px] p-8  ">
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-wha-h6">
+              Search Events
+            </h3>
+            <div className=" flex items-center flex-1 border border-slate-200  rounded-full px-3 py-2">
+              <Search className=" text-slate-300" />
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Search Local Events"
+                className="w-full pl-10 pr-3 py-2 text-base border-none  focus:outline-none focus-within:ring-0"
+              />
+              <span
+                className="bg-wha-primary text-white p-1 rounded-full"
+                onClick={() => setActiveTab("where")}>
+                <ArrowRight />
+              </span>
+            </div>
           </div>
-        </div>
-        {inputValue && (
-          <X
-            className="h-4 w-4 text-black cursor-pointer mr-2 hover:bg-black/10 backdrop-blur-md p-0.5 hover:shadow-lg  rounded-full  transition-all duration-200"
-            onClick={() => setInputValue("")}
-          />
-        )}
+        </SearchSection>
 
         <Divider hide={activeTab === "where" || activeTab === "when"} />
 
@@ -103,12 +102,7 @@ export default function BusinessSearchWithDates() {
           label="Where"
           value={location || "Select destinations"}
           isActive={activeTab === "where"}
-          onClick={() => setActiveTab("where")}
-          location={location}
-          date={date}
-          setLocation={setLocation}
-          setInputValue={setInputValue}
-          setDate={setDate}>
+          onClick={() => setActiveTab("where")}>
           <div className="w-[400px] p-8">
             {["sydney", "canberra"].map((city) => (
               <div
@@ -135,10 +129,7 @@ export default function BusinessSearchWithDates() {
           label="When"
           value={getDateDisplay()}
           isActive={activeTab === "when"}
-          onClick={() => setActiveTab("when")}
-          setLocation={setLocation}
-          setInputValue={setInputValue}
-          setDate={setDate}>
+          onClick={() => setActiveTab("when")}>
           <div className="p-4 bg-white rounded-3xl">
             <Calendar
               mode="range"
@@ -151,7 +142,7 @@ export default function BusinessSearchWithDates() {
           </div>
         </SearchSection>
 
-        <div className="pr-2 ml-3">
+        <div className="pr-2">
           <button
             className={`flex items-center gap-2 rounded-full bg-[#051e3a] text-white transition-all duration-300 ${
               activeTab ? "px-6 py-4" : "p-4"
@@ -169,6 +160,15 @@ export default function BusinessSearchWithDates() {
                 </motion.span>
               )}
             </AnimatePresence>
+          </button>
+        </div>
+        <div className="pr-2">
+          <button
+            className={`flex items-center gap-2 rounded-full bg-[#051e3a] text-white transition-all duration-300 ${
+              activeTab ? "px-6 py-4" : "p-4"
+            }`}
+            onClick={handleClearSearch}>
+            <X className="h-4 w-4 stroke-[4px]" />
           </button>
         </div>
       </div>

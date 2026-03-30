@@ -30,7 +30,7 @@ import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { useGetALLBusiness } from "@/services/business.service";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
 
-const CATEGORY_ICONS: Record<string, any> = {
+export const CATEGORY_ICONS: Record<string, any> = {
   all: Store,
   automotive: Car,
   barber: Scissors,
@@ -167,7 +167,7 @@ export default function BusinessHeader() {
   return (
     <div className="w-full bg-white px-4 py-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
       {/* Header + Tabs */}
-      <div className="flex items-center justify-between mb-2  gap-2">
+      {/* <div className="flex items-center justify-between mb-2  gap-2">
         <h1 className="text-lg md:text-xl font-bold text-slate-800">
           Local Businesses
         </h1>
@@ -180,10 +180,10 @@ export default function BusinessHeader() {
             <TabsTrigger value="map">Map</TabsTrigger>
           </TabsList>
         </Tabs>
-      </div>
+      </div> */}
 
       {/* Search + All Community */}
-      <div className="flex flex-col md:flex-row gap-2 mb-3">
+      {/* <div className="flex flex-col md:flex-row gap-2 mb-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
 
@@ -218,7 +218,7 @@ export default function BusinessHeader() {
             </SelectContent>
           </Select>
         </div>
-      </div>
+      </div> */}
 
       {/* Category Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">

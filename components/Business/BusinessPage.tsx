@@ -1,23 +1,61 @@
 "use client";
 
 import BusinessCard from "@/components/cards/business-card";
-import { Calendar } from "lucide-react";
+import { Calendar, Filter, Globe, Map, MapPin } from "lucide-react";
 
 import dynamic from "next/dynamic";
 import BusinessHeader from "./BusinessFilter";
 import { useGetBusiness } from "@/services/business.service";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { useSearchParams } from "next/navigation";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import BusinessSearchWithDates from "../ResuableComponents/SearchSectionforBusiness";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { useCallback, useState } from "react";
+import { Separator } from "../ui/separator";
 
 const BusinessMap = dynamic(() => import("./business-map"), {
   ssr: false,
 });
 
+const COMMUNITIES = [
+  { name: "All Community", value: "All", icon: Globe },
+  { name: "Australian", value: "Australian", icon: MapPin },
+  { name: "Nepali", value: "Nepali", icon: MapPin },
+];
+
 export default function BusinessesClientPage() {
   const { data, isLoading } = useGetBusiness();
   const searchParams = useSearchParams();
   const view = searchParams.get("view") || "list";
+  const [currentCommunity, setCurrentCommunity] = useState("All");
+  const router = useRouter();
+  const handleTabChange = (value: string) => {
+    updateQuery({ view: value });
+  };
+
+  const updateQuery = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value && value !== "all") {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
+      });
+
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
   return (
     // <div className="min-h-screen bg-gradient-modern relative">
     //   <div className="relative z-10">
@@ -196,8 +234,116 @@ export default function BusinessesClientPage() {
     // </div>
 
     <div className="min-h-screen bg-neutral-50 pb-20 mx-4 md:mx-6">
+      <BusinessSearchWithDates />
+      <Separator />
       <div className="container-modern py-4 md:py-8  w-auto">
-        <BusinessHeader />
+        {/* <BusinessHeader /> */}
+
+        <div className="flex items-end justify-end ">
+          <Dialog>
+            {view === "list" && (
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={`flex items-center gap-2 rounded-md btn-wha-outline 
+                    ${
+                      currentCommunity !== "All" || searchParams.get("category")
+                        ? "btn-wha-outline text-white"
+                        : "border border-gray-300! text-gray-700 hover:bg-gray-100"
+                    }  
+                   h-12 mr-2`}>
+                  <Filter className="h-4 w-4" />
+                  Filter
+                </Button>
+              </DialogTrigger>
+            )}
+            <DialogContent className="max-w-4xl w-full">
+              <DialogTitle className="text-lg font-bold mb-4">
+                Filter Events
+              </DialogTitle>
+              <Tabs
+                defaultValue="categories"
+                className="w-full overflow-scroll no-scrollbar rounded-lg border bg-white ">
+                <TabsList className="w-full border-none ">
+                  <TabsTrigger
+                    value="categories"
+                    className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p 
+                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!">
+                    Categories
+                  </TabsTrigger>
+                  <TabsTrigger
+                    className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p 
+                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!"
+                    value="communities">
+                    Communities
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="categories">
+                  <BusinessHeader />
+                </TabsContent>
+                <TabsContent
+                  value="communities"
+                  className="flex flex-wrap gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
+                  {/* <EventMap events={events} /> */}
+                  <div className="flex gap-2 justify-center items-center m-auto">
+                    {COMMUNITIES.map((com) => {
+                      const Icon = com.icon;
+                      const isActive =
+                        (currentCommunity ?? "All") === com.value;
+
+                      return (
+                        <Button
+                          key={com.value}
+                          onClick={() => {
+                            updateQuery({
+                              community: com.value === "All" ? null : com.value,
+                            });
+                            setCurrentCommunity(com.value);
+                          }}
+                          className={`flex flex-col items-center justify-center h-15 md:min-w-[80px] py-5 px-3 rounded-md md:rounded-xl transition-all border shrink-0 ${
+                            isActive
+                              ? "bg-primary border-primary text-white"
+                              : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                          }`}>
+                          <Icon
+                            className={`h-4 w-4 sm:h-5 sm:w-5 mb-1 ${
+                              isActive ? "text-white" : "text-slate-500"
+                            }`}
+                          />
+
+                          <span className="text-[9px] sm:text-[10px] uppercase font-bold whitespace-nowrap text-center">
+                            {com.name}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </TabsContent>
+              </Tabs>
+              {/* <EventMap events={events} /> */}
+            </DialogContent>
+          </Dialog>
+          <Tabs onValueChange={handleTabChange} value={view}>
+            <TabsList className="border-none">
+              <TabsTrigger
+                value={`${view === "list" ? "map" : "list"}`}
+                className=" -mt-5">
+                {view === "list" ? (
+                  <span className="btn-wha-primary flex items-center gap-1 text-sm mt-2 cursor-pointer transition-wha-slow">
+                    <Map className=" flex justify-end  h-5 w-5 text-wha-light" />
+                    Show Map
+                  </span>
+                ) : (
+                  <span className="btn-wha-primary flex items-center gap-1 text-sm mt-2 cursor-pointer transition-wha-slow">
+                    <Calendar className=" flex justify-end  h-5 w-5 text-wha-light" />
+                    Show List
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
         <Tabs value={view}>
           <TabsContent value="list">
             {isLoading ? (
