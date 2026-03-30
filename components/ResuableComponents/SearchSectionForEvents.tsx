@@ -7,17 +7,26 @@ import {
   Calendar as CalendarIcon,
   Building,
   Tag,
+  ArrowRight,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { addDays, format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
+import { useRouter, useSearchParams } from "next/navigation";
 
-type SearchState = "where" | "when" | "what" | null;
+type SearchState = "where" | "when" | "search" | null;
 
 export default function EventSearchWithDates() {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [location, setLocation] = useState("");
+  const [inputValue, setInputValue] = useState(
+    searchParams.get("search") || "",
+  );
+
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(),
     to: addDays(new Date(), 7),
@@ -49,8 +58,21 @@ export default function EventSearchWithDates() {
     return "Add dates";
   };
 
+  const handleSearch = () => {
+    router.push(
+      `/events?search=${inputValue}${date ? `&from=${date.from && format(date.from, "yyyy-MM-dd")}` : ""}${date?.to ? `&to=${format(date.to, "yyyy-MM-dd")}` : ""}${location ? `&city=${location}` : ""}`,
+    );
+  };
+
+  const handleClearSearch = () => {
+    setInputValue("");
+    setLocation("");
+    setDate(undefined);
+    router.push("/events");
+  };
+
   return (
-    <div className="flex justify-center py-6" ref={containerRef}>
+    <div className="flex w-fit m-auto justify-center py-6" ref={containerRef}>
       <div
         className={`relative flex items-center rounded-full border border-gray-200 transition-all duration-300 ${
           activeTab
@@ -58,14 +80,40 @@ export default function EventSearchWithDates() {
             : "bg-white shadow-sm hover:shadow-md"
         }`}>
         <SearchSection
+          label="Search"
+          value={inputValue || "Search Events"}
+          isActive={activeTab === "search"}
+          onClick={() => setActiveTab("search")}>
+          <div className="w-[400px] p-8  ">
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-wha-h6">
+              Search Events
+            </h3>
+            <div className=" flex items-center flex-1 border border-slate-200  rounded-full px-3 py-2">
+              <Search className=" text-slate-300" />
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Search Local Events"
+                className="w-full pl-10 pr-3 py-2 text-base border-none  focus:outline-none focus-within:ring-0"
+              />
+              <span
+                className="bg-wha-primary text-white p-1 rounded-full"
+                onClick={() => setActiveTab("where")}>
+                <ArrowRight />
+              </span>
+            </div>
+          </div>
+        </SearchSection>
+
+        <Divider hide={activeTab === "where" || activeTab === "when"} />
+
+        <SearchSection
           label="Where"
-          value={location || "Search destinations"}
+          value={location || "Select destinations"}
           isActive={activeTab === "where"}
           onClick={() => setActiveTab("where")}>
           <div className="w-[400px] p-8">
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider">
-              Recent searches
-            </h3>
             {["sydney", "canberra"].map((city) => (
               <div
                 key={city}
@@ -77,7 +125,7 @@ export default function EventSearchWithDates() {
                 <div className="rounded-lg bg-gray-200 p-3">
                   <MapPin className="h-5 w-5" />
                 </div>
-                <span className="font-medium text-gray-700">
+                <span className="font-medium text-gray-700 text-wha-h6">
                   {city}, Australia
                 </span>
               </div>
@@ -85,7 +133,7 @@ export default function EventSearchWithDates() {
           </div>
         </SearchSection>
 
-        <Divider hide={activeTab === "where" || activeTab === "when"} />
+        <Divider hide={activeTab === "when" || activeTab === "search"} />
 
         <SearchSection
           label="When"
@@ -94,47 +142,13 @@ export default function EventSearchWithDates() {
           onClick={() => setActiveTab("when")}>
           <div className="p-4 bg-white rounded-3xl">
             <Calendar
-              initialFocus
               mode="range"
               defaultMonth={date?.from}
               selected={date}
               onSelect={setDate}
               numberOfMonths={2}
-              className="rounded-md border-none"
+              className="rounded-md border-none text-wha-h6"
             />
-          </div>
-        </SearchSection>
-
-        <Divider hide={activeTab === "when" || activeTab === "what"} />
-
-        <SearchSection
-          label="what"
-          value={what ? what : "Add What"}
-          isActive={activeTab === "what"}
-          onClick={() => setActiveTab("what")}
-          isLast>
-          <div className="w-[380px] p-8 space-y-6">
-            {["events", "businesses", "deals"].map((city) => (
-              <div
-                key={city}
-                onClick={() => {
-                  setWhat(city);
-                }}
-                className="flex items-center gap-4 rounded-xl p-3 hover:bg-gray-100 cursor-pointer transition">
-                <div className="rounded-lg bg-gray-200 p-3">
-                  {city === "events" ? (
-                    <CalendarIcon className="h-5 w-5" />
-                  ) : city === "businesses" ? (
-                    <Building className="h-5 w-5" />
-                  ) : (
-                    <Tag className="h-5 w-5" />
-                  )}
-                </div>
-                <span className="font-medium text-gray-700 capitalize">
-                  {city}
-                </span>
-              </div>
-            ))}
           </div>
         </SearchSection>
 
@@ -142,7 +156,8 @@ export default function EventSearchWithDates() {
           <button
             className={`flex items-center gap-2 rounded-full bg-[#051e3a] text-white transition-all duration-300 ${
               activeTab ? "px-6 py-4" : "p-4"
-            }`}>
+            }`}
+            onClick={handleSearch}>
             <Search className="h-4 w-4 stroke-[4px]" />
             <AnimatePresence>
               {activeTab && (
@@ -152,6 +167,26 @@ export default function EventSearchWithDates() {
                   exit={{ opacity: 0, width: 0 }}
                   className="font-bold overflow-hidden whitespace-nowrap">
                   Search
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
+        <div className="pr-2">
+          <button
+            className={`flex items-center gap-2 rounded-full bg-[#051e3a] text-white transition-all duration-300 ${
+              activeTab ? "px-6 py-4" : "p-4"
+            }`}
+            onClick={handleClearSearch}>
+            <X className="h-4 w-4 stroke-[4px]" />
+            <AnimatePresence>
+              {activeTab && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="font-bold overflow-hidden whitespace-nowrap">
+                  Clear Search
                 </motion.span>
               )}
             </AnimatePresence>

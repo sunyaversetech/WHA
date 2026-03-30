@@ -17,16 +17,36 @@ export async function GET(request: NextRequest) {
     const rawSearch = searchParams.get("search") || "";
     const rawCity = searchParams.get("city") || "";
     const rawCommunity = searchParams.get("community") || "";
+    const rawFrom = searchParams.get("from") || "";
+    const rawTo = searchParams.get("to") || "";
 
     const category = rawCategory.replace(/\?+$/, "").trim();
     const search = rawSearch.replace(/\?+$/, "").trim();
     const city = rawCity.replace(/\?+$/, "").trim();
     const community = rawCommunity.replace(/\?+$/, "").trim();
+    const from = rawFrom.replace(/\?+$/, "").trim();
+    const to = rawTo.replace(/\?+$/, "").trim();
 
     const query: any = {};
 
     if (category && category !== "all") {
       query.category = category;
+    }
+    if (from || to) {
+      const searchFrom = from ? new Date(from) : null;
+      const searchTo = to ? new Date(to) : null;
+
+      const dateQuery: any = {};
+
+      if (searchFrom) {
+        dateQuery["dateRange.to"] = { $gte: searchFrom };
+      }
+
+      if (searchTo) {
+        dateQuery["dateRange.from"] = { $lte: searchTo };
+      }
+
+      Object.assign(query, dateQuery);
     }
 
     if (search) {

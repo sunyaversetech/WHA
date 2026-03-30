@@ -92,20 +92,24 @@ export default function EventsPageClient() {
 
   return (
     <div className="min-h-screen bg-neutral-50 mx-4 md:mx-6 pb-20">
-      <EventSearchWithDates />
+      <div className="flex items-center justify-center md:mr-30">
+        <EventSearchWithDates />
+      </div>
       <Separator />
       <div className="container-modern py-4 md:py-8  w-auto">
         {/* <EventHeader /> */}
         <div className="flex items-end justify-end ">
           <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
-            </DialogTrigger>
+            {view === "list" && (
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2">
+                  <Filter className="h-4 w-4" />
+                  Filter
+                </Button>
+              </DialogTrigger>
+            )}
             <DialogContent className="max-w-4xl w-full">
               <DialogTitle className="text-lg font-bold mb-4">
                 Filter Events
