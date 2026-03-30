@@ -172,15 +172,22 @@ export default function EventsPageClient() {
               {/* <EventMap events={events} /> */}
             </DialogContent>
           </Dialog>
-          <Tabs onValueChange={handleTabChange} value="">
-            <TabsList>
-              <TabsTrigger value="map">
-                <span
-                // className="btn-wha-primary flex items-center gap-1 text-sm mt-2 cursor-pointer transition-wha-slow"
-                >
-                  Show Map
-                  <Map className=" flex justify-end  h-5 w-5 text-wha-light" />
-                </span>
+          <Tabs onValueChange={handleTabChange} value={view}>
+            <TabsList className="border-none">
+              <TabsTrigger
+                value={`${view === "list" ? "map" : "list"}`}
+                className=" -mt-5">
+                {view === "list" ? (
+                  <span className="btn-wha-primary flex items-center gap-1 text-sm mt-2 cursor-pointer transition-wha-slow">
+                    Show Map
+                    <Map className=" flex justify-end  h-5 w-5 text-wha-light" />
+                  </span>
+                ) : (
+                  <span className="btn-wha-primary flex items-center gap-1 text-sm mt-2 cursor-pointer transition-wha-slow">
+                    Show List
+                    <Calendar className=" flex justify-end  h-5 w-5 text-wha-light" />
+                  </span>
+                )}
               </TabsTrigger>
             </TabsList>
           </Tabs>
