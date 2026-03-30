@@ -15,7 +15,7 @@ import { Calendar } from "@/components/ui/calendar";
 
 type SearchState = "where" | "when" | "what" | null;
 
-export default function AirbnbSearchWithDates() {
+export default function HomePageSearchWithDates() {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const [location, setLocation] = useState("");
   const [date, setDate] = useState<DateRange | undefined>({

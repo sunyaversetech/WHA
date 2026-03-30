@@ -7,9 +7,9 @@ import PlaceholderCard from "@/components/cards/placeholder-card";
 import CardSlider from "@/components/ui/card-slider";
 import FeaturedCard from "@/components/cards/featured-card";
 import { useFilteredBusinesses } from "@/hooks/use-filtered-data";
+import FunctionalSearchBar from "@/components/ResuableComponents/SearchSection";
 
 import { useGetLandingPageData } from "@/services/landing.service";
-import Loading from "@/app/businesses/loading";
 import LandingPageSkeleton from "./LandingPageSkeleton";
 
 export default function LandingPage() {
@@ -20,6 +20,7 @@ export default function LandingPage() {
   if (isLoading) return <LandingPageSkeleton />;
   return (
     <div className="container-modern">
+      <FunctionalSearchBar />
       <div className=" px-4 pt-2 md:pt-6">
         <CardSlider
           title=""

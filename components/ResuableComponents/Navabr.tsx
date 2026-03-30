@@ -87,7 +87,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-[9999] flex items-center justify-between px-6 py-3 bg-white/10 backdrop-blur-xl border-b border-white/20 shadow-lg">
+    <nav className="sticky top-0 z-[9999] flex items-center justify-between px-6 py-3 border-white/20 ">
       <Link
         href={buildPath("/")}
         onClick={() => setActiveTab("")}
