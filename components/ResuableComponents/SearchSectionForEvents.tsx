@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  Search,
-  MapPin,
-  Calendar as CalendarIcon,
-  Building,
-  Tag,
-  ArrowRight,
-  X,
-} from "lucide-react";
+import { Search, MapPin, ArrowRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { addDays, format } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -31,8 +23,6 @@ export default function EventSearchWithDates() {
     from: new Date(),
     to: addDays(new Date(), 7),
   });
-  const [what, setWhat] = useState("");
-
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -179,17 +169,6 @@ export default function EventSearchWithDates() {
             }`}
             onClick={handleClearSearch}>
             <X className="h-4 w-4 stroke-[4px]" />
-            <AnimatePresence>
-              {activeTab && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="font-bold overflow-hidden whitespace-nowrap">
-                  Clear Search
-                </motion.span>
-              )}
-            </AnimatePresence>
           </button>
         </div>
       </div>
