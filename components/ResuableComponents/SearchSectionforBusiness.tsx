@@ -68,6 +68,7 @@ export default function BusinessSearchWithDates() {
   const [location, setLocation] = useState("");
   const { data } = useGetALLBusiness();
   const [categories, setCategories] = useState<string[]>([]);
+  const [isSticky, setIsSticky] = useState(false);
   const [isactiveCategory, setActiveCategory] = useState(
     searchParams.get("category") || "all",
   );
@@ -92,6 +93,20 @@ export default function BusinessSearchWithDates() {
       setCategories(Array.from(discoveredCategories.current));
     }
   }, [data?.data]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 100) {
+        setIsSticky(true);
+      } else {
+        setIsSticky(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const CATEGORIES = useMemo(() => {
     const base = [{ name: "All", value: "all", icon: Store }];
@@ -118,16 +133,6 @@ export default function BusinessSearchWithDates() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
-
-  const getDateDisplay = () => {
-    if (date?.from) {
-      if (date.to) {
-        return `${format(date.from, "MMM d")} – ${format(date.to, "MMM d")}`;
-      }
-      return format(date.from, "MMM d");
-    }
-    return "Add dates";
-  };
 
   const handleSearch = () => {
     router.push(
@@ -268,7 +273,6 @@ function SearchSection({
   setActiveCategory,
   isActiveCategory,
 }: any) {
-  console.log("isActiveCategory", isActiveCategory);
   return (
     <div className="relative">
       <div

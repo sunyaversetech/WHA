@@ -92,8 +92,13 @@ export default function EventsPageClient() {
 
   return (
     <div className="min-h-screen bg-neutral-50 mx-4 md:mx-6 pb-20">
-      <div className="flex items-center justify-center md:mr-30">
-        <EventSearchWithDates />
+      <div className={`h-32 w-full flex items-center justify-center relative`}>
+        <div
+          className={`
+          transition-all duration-300 ease-in-out z-[100]
+        `}>
+          <EventSearchWithDates />
+        </div>
       </div>
       <Separator />
       <div className="container-modern py-4 md:py-8  w-auto">

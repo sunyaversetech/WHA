@@ -15,6 +15,7 @@ export default function EventSearchWithDates() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [location, setLocation] = useState("");
+
   const [inputValue, setInputValue] = useState(
     searchParams.get("search") || "",
   );
@@ -54,15 +55,8 @@ export default function EventSearchWithDates() {
     );
   };
 
-  const handleClearSearch = () => {
-    setInputValue("");
-    setLocation("");
-    setDate(undefined);
-    router.push("/events");
-  };
-
   return (
-    <div className="flex w-fit m-auto justify-center py-6" ref={containerRef}>
+    <div className="flex  w-fit m-auto justify-center py-6" ref={containerRef}>
       <div
         className={`relative  flex items-center rounded-full border border-gray-200 transition-all duration-300 ${
           activeTab
@@ -183,12 +177,11 @@ function SearchSection({
   location,
   date,
 }: any) {
-  console.log("date", date);
   return (
     <div className="relative">
       <div
         onClick={onClick}
-        className={`flex flex-col rounded-full w-52 py-3 px-8 cursor-pointer transition-all duration-200 ${
+        className={`flex bg-white flex-col rounded-full w-52 py-3 px-8 cursor-pointer transition-all duration-200 ${
           isActive
             ? "bg-white shadow-xl scale-105 z-10"
             : "hover:bg-gray-200/60"

@@ -15,6 +15,9 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import EventSearchWithDates from "./SearchSectionForEvents";
+import HomePageSearchWithDates from "./SearchSection";
+import BusinessSearchWithDates from "./SearchSectionforBusiness";
 
 const navItems = [
   {
@@ -49,7 +52,34 @@ export default function Navbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCity = searchParams.get("city");
-  const [activeTab, setActiveTab] = useState("");
+  const [activeTab, setActiveTab] = useState(
+    pathname.startsWith("/events")
+      ? "event"
+      : pathname.startsWith("/deals")
+        ? "deals"
+        : pathname.startsWith("/businesses")
+          ? "business"
+          : "",
+  );
+
+  const [isSticky, setIsSticky] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsSticky(false);
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY > 165) {
+        setIsSticky(true);
+      } else {
+        setIsSticky(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [pathname]);
 
   const updateQuery = useCallback(
     (updates: Record<string, string | null>) => {
@@ -58,10 +88,10 @@ export default function Navbar() {
       Object.entries(updates).forEach(([key, value]) => {
         if (value && value !== "all") {
           params.set(key, value);
-          if (key === "city") localStorage.setItem("preferredCity", value); // Save
+          if (key === "city") localStorage.setItem("preferredCity", value);
         } else {
           params.delete(key);
-          if (key === "city") localStorage.removeItem("preferredCity"); // Clear if 'Australia'
+          if (key === "city") localStorage.removeItem("preferredCity");
         }
       });
 
@@ -70,10 +100,8 @@ export default function Navbar() {
     [router, searchParams, pathname],
   );
 
-  // 2. Initialize from localStorage on load
   useEffect(() => {
     const savedCity = localStorage.getItem("preferredCity");
-    // Only push if there's a saved city AND no city is currently in the URL
     if (savedCity && !currentCity) {
       const params = new URLSearchParams(searchParams.toString());
       params.set("city", savedCity);
@@ -87,7 +115,8 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-[9999] flex items-center justify-between px-6 py-3 border-white/20 ">
+    <nav
+      className={`${isSticky ? "fixed bg-white w-full" : ""} top-0 z-[9999] flex items-center justify-between px-6 py-3 border-white/20`}>
       <Link
         href={buildPath("/")}
         onClick={() => setActiveTab("")}
@@ -117,44 +146,58 @@ export default function Navbar() {
               {item.name}
             </Link>
           ))} */}
-
+      {/* || pathname.startsWith("/deals") || pathname.startsWith("/businesses") */}
       {!pathname.startsWith("/dashboard") && (
         <div className="hidden md:flex items-center gap-10 bg-white/20 backdrop-blur-lg  rounded-full p-1  text-sm font-medium">
-          {navItems.map((item) => {
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  router.push(buildPath(item.href));
-                }}
-                className={`group relative flex items-center gap-2 pb-2 transition-colors ${
-                  isActive ? "text-black" : "text-gray-500 hover:text-black"
-                }`}>
-                <div className="flex gap-2 items-center">
-                  <div className="flex">
-                    <Image
-                      src={`${isActive ? item.activeImg : item.img}`}
-                      className={`${isActive ? "h-10 w-10" : "h-7 w-7"}`}
-                      width={isActive ? 100 : 28}
-                      height={isActive ? 100 : 28}
-                      alt={`${item.label} icon`}
-                    />
+          {isSticky && pathname === "/" ? (
+            <HomePageSearchWithDates />
+          ) : isSticky && pathname.startsWith("/events") ? (
+            <EventSearchWithDates />
+          ) : isSticky && pathname.startsWith("/deals") ? (
+            <EventSearchWithDates />
+          ) : isSticky && pathname.startsWith("/businesses") ? (
+            <BusinessSearchWithDates />
+          ) : (
+            navItems.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    router.push(buildPath(item.href));
+                  }}
+                  className={`group relative flex items-center gap-2 pb-2 transition-colors ${
+                    isActive ? "text-black" : "text-gray-500 hover:text-black"
+                  }`}>
+                  <div className="flex gap-2 items-center">
+                    <div className="flex">
+                      <Image
+                        src={`${isActive ? item.activeImg : item.img}`}
+                        className={`${isActive ? "h-10 w-10" : "h-7 w-7"}`}
+                        width={isActive ? 100 : 28}
+                        height={isActive ? 100 : 28}
+                        alt={`${item.label} icon`}
+                      />
+                    </div>
+                    <span className="text-sm font-medium">{item.label}</span>
                   </div>
-                  <span className="text-sm font-medium">{item.label}</span>
-                </div>
 
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-black"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </button>
-            );
-          })}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-black"
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 30,
+                      }}
+                    />
+                  )}
+                </button>
+              );
+            })
+          )}
         </div>
       )}
 

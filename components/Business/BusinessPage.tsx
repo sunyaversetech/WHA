@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Separator } from "../ui/separator";
 
 const BusinessMap = dynamic(() => import("./business-map"), {
@@ -36,9 +36,26 @@ export default function BusinessesClientPage() {
   const view = searchParams.get("view") || "list";
   const [currentCommunity, setCurrentCommunity] = useState("All");
   const router = useRouter();
+  const [isSticky, setIsSticky] = useState(false);
+  const [scroll, setIsScroll] = useState(window.scrollY);
+
   const handleTabChange = (value: string) => {
     updateQuery({ view: value });
   };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 100) {
+        setIsSticky(true);
+      } else {
+        setIsSticky(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const updateQuery = useCallback(
     (updates: Record<string, string | null>) => {
