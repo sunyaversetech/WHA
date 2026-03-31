@@ -64,7 +64,7 @@ export const CATEGORY_ICONS: Record<string, any> = {
 export default function BusinessSearchWithDates({
   sticky,
 }: {
-  sticky: boolean;
+  sticky?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const searchParams = useSearchParams();

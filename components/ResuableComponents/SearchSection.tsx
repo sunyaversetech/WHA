@@ -19,7 +19,7 @@ type SearchState = "where" | "when" | "what" | null;
 export default function HomePageSearchWithDates({
   sticky,
 }: {
-  sticky: boolean;
+  sticky?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const [location, setLocation] = useState("");
