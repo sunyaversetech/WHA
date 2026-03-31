@@ -116,7 +116,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`${isSticky ? "fixed bg-white w-full" : ""} top-0 z-[9999] flex items-center justify-between px-6 py-3 border-white/20`}>
+      className={`${isSticky ? "fixed bg-white w-full h-22" : ""} top-0 z-[9999] flex items-center justify-between px-6 py-3 border-white/20`}>
       <Link
         href={buildPath("/")}
         onClick={() => setActiveTab("")}
@@ -148,7 +148,7 @@ export default function Navbar() {
           ))} */}
       {/* || pathname.startsWith("/deals") || pathname.startsWith("/businesses") */}
       {!pathname.startsWith("/dashboard") && (
-        <div className="hidden md:flex items-center gap-10 bg-white/20 backdrop-blur-lg  rounded-full p-1  text-sm font-medium">
+        <div className="hidden md:flex items-center gap-10  rounded-full p-1 - text-sm font-medium">
           {isSticky && pathname === "/" ? (
             <HomePageSearchWithDates />
           ) : isSticky && pathname.startsWith("/events") ? (
