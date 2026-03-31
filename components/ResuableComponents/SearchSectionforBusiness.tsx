@@ -1,27 +1,77 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import {
-  Search,
-  MapPin,
-  Calendar as CalendarIcon,
-  Building,
-  Tag,
-  X,
-} from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { addDays, format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Calendar } from "@/components/ui/calendar";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Search,
+  MapPin,
+  X,
+  Store,
+  Car,
+  Scissors,
+  Coffee,
+  Eraser,
+  Briefcase,
+  Zap,
+  Truck,
+  Calendar,
+  ShoppingBasket,
+  Paintbrush,
+  Camera,
+  Pipette,
+  Move,
+  Utensils,
+  Sparkles,
+  ShoppingBag,
+  Users,
+  Plane,
+  MoreHorizontal,
+} from "lucide-react";
+import { useGetALLBusiness } from "@/services/business.service";
 
-type SearchState = "where" | "when" | "search" | null;
+type SearchState = "where" | "cat" | "search" | null;
+
+export const CATEGORY_ICONS: Record<string, any> = {
+  all: Store,
+  automotive: Car,
+  barber: Scissors,
+  cafe: Coffee,
+  cleaning: Eraser,
+  consultancy: Briefcase,
+  "driving school": Car,
+  electrician: Zap,
+  "event-organizer": Calendar,
+  "food truck": Truck,
+  grocery: ShoppingBasket,
+  painter: Paintbrush,
+  photography: Camera,
+  plumber: Pipette,
+  pujari: Users,
+  event: Calendar,
+  removalists: Move,
+  cafes: Coffee,
+  restaurant: Utensils,
+  "saloon and makeup": Sparkles,
+  shop: ShoppingBag,
+  "social club": Users,
+  "travel and tours": Plane,
+  others: MoreHorizontal,
+};
 
 export default function BusinessSearchWithDates() {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
   const [location, setLocation] = useState("");
+  const { data } = useGetALLBusiness();
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isactiveCategory, setActiveCategory] = useState(
+    searchParams.get("category") || "all",
+  );
+  const discoveredCategories = useRef<Set<string>>(new Set());
   const [inputValue, setInputValue] = useState(
     searchParams.get("search") || "",
   );
@@ -31,6 +81,30 @@ export default function BusinessSearchWithDates() {
     to: addDays(new Date(), 7),
   });
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (data?.data) {
+      data.data.forEach((item: any) => {
+        if (item.business_category) {
+          discoveredCategories.current.add(item.business_category);
+        }
+      });
+      setCategories(Array.from(discoveredCategories.current));
+    }
+  }, [data?.data]);
+
+  const CATEGORIES = useMemo(() => {
+    const base = [{ name: "All", value: "all", icon: Store }];
+
+    const dynamic = categories.map((cat) => ({
+      name: cat,
+      value: cat,
+      icon: CATEGORY_ICONS[cat.toLowerCase()] || Store,
+    }));
+
+    return [...base, ...dynamic];
+  }, [categories]);
+  const activeCategory = searchParams.get("category") || "all";
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -57,15 +131,8 @@ export default function BusinessSearchWithDates() {
 
   const handleSearch = () => {
     router.push(
-      `/businesses?search=${inputValue}${date ? `&from=${date.from && format(date.from, "yyyy-MM-dd")}` : ""}${date?.to ? `&to=${format(date.to, "yyyy-MM-dd")}` : ""}${location ? `&city=${location}` : ""}`,
+      `/businesses?search=${inputValue}${isactiveCategory !== "all" ? `&category=${isactiveCategory}` : ""}${location ? `&city=${location}` : ""}`,
     );
-  };
-
-  const handleClearSearch = () => {
-    setInputValue("");
-    setLocation("");
-    setDate(undefined);
-    router.push("/events");
   };
 
   return (
@@ -97,7 +164,7 @@ export default function BusinessSearchWithDates() {
           />
         )}
 
-        <Divider hide={activeTab === "where" || activeTab === "when"} />
+        <Divider hide={activeTab === "where" || activeTab === "cat"} />
 
         <SearchSection
           label="Where"
@@ -108,14 +175,15 @@ export default function BusinessSearchWithDates() {
           date={date}
           setLocation={setLocation}
           setInputValue={setInputValue}
-          setDate={setDate}>
+          setDate={setDate}
+          isActiveCategory={isactiveCategory}>
           <div className="w-[400px] p-8">
             {["sydney", "canberra"].map((city) => (
               <div
                 key={city}
                 onClick={() => {
                   setLocation(city);
-                  setActiveTab("when");
+                  setActiveTab("cat");
                 }}
                 className="flex items-center gap-4 rounded-xl p-3 hover:bg-gray-100 cursor-pointer transition">
                 <div className="rounded-lg bg-gray-200 p-3">
@@ -129,25 +197,37 @@ export default function BusinessSearchWithDates() {
           </div>
         </SearchSection>
 
-        <Divider hide={activeTab === "when" || activeTab === "search"} />
+        <Divider hide={activeTab === "cat" || activeTab === "search"} />
 
         <SearchSection
-          label="When"
-          value={getDateDisplay()}
-          isActive={activeTab === "when"}
-          onClick={() => setActiveTab("when")}
-          setLocation={setLocation}
-          setInputValue={setInputValue}
-          setDate={setDate}>
-          <div className="p-4 bg-white rounded-3xl">
-            <Calendar
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={setDate}
-              numberOfMonths={2}
-              className="rounded-md border-none text-wha-h6"
-            />
+          label="Category"
+          value={activeCategory === "all" ? "All Categories" : activeCategory}
+          isActive={activeTab === "cat"}
+          onClick={() => setActiveTab("cat")}
+          isActiveCategory={isactiveCategory}>
+          <div className="p-4 flex flex-wrap gap-2 bg-white rounded-3xl">
+            {CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              const isActive = isactiveCategory === cat?.value;
+
+              return (
+                <button
+                  onClick={() => setActiveCategory(cat.value)}
+                  key={cat.value}
+                  className={`flex flex-col items-center justify-center  md:min-w-[80px] py-2 px-3 rounded-md md:rounded-xl transition-all border shrink-0 ${
+                    isActive
+                      ? "bg-primary border-primary text-white"
+                      : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  }`}>
+                  <Icon
+                    className={`h-4 w-4 sm:h-5 sm:w-5 mb-1 ${isActive ? "text-white" : "text-slate-500"}`}
+                  />
+                  <span className="text-[9px] sm:text-[10px] uppercase font-bold whitespace-nowrap text-center">
+                    {cat.name}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </SearchSection>
 
@@ -183,12 +263,17 @@ function SearchSection({
   onClick,
   children,
   isLast,
+  location,
+  setLocation,
+  setActiveCategory,
+  isActiveCategory,
 }: any) {
+  console.log("isActiveCategory", isActiveCategory);
   return (
     <div className="relative">
       <div
         onClick={onClick}
-        className={`flex flex-col rounded-full py-3 px-8 cursor-pointer transition-all duration-200 ${
+        className={`flex flex-col rounded-full py-3 w-52 px-8 cursor-pointer transition-all duration-200 ${
           isActive
             ? "bg-white shadow-xl scale-105 z-10"
             : "hover:bg-gray-200/60"
@@ -201,6 +286,29 @@ function SearchSection({
           {value}
         </span>
       </div>
+
+      {label === "Where" && location && (
+        <X
+          className="absolute z-50 top-1/2 -translate-y-1/2 right-2 h-4 w-4 text-black 
+               cursor-pointer hover:bg-black/10 backdrop-blur-md p-0.5 
+               hover:shadow-lg rounded-full transition-all duration-200"
+          onClick={() => {
+            setLocation("");
+          }}
+        />
+      )}
+      {label === "Category" && isActiveCategory !== "all" && (
+        <X
+          className="absolute top-5.5 right-0 h-4 w-4 text-black 
+        cursor-pointer mr-2 hover:bg-black/10 backdrop-blur-md p-0.5 
+        hover:shadow-lg   rounded-full  transition-all duration-200"
+          onClick={() => {
+            if (label === "cat") {
+              setActiveCategory("");
+            }
+          }}
+        />
+      )}
 
       <AnimatePresence>
         {isActive && (

@@ -26,9 +26,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import debounce from "lodash.debounce";
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { useGetALLBusiness } from "@/services/business.service";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
 
 export const CATEGORY_ICONS: Record<string, any> = {
   all: Store,

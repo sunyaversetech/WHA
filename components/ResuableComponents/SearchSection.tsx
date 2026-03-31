@@ -7,6 +7,7 @@ import {
   Calendar as CalendarIcon,
   Building,
   Tag,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { addDays, format } from "date-fns";
@@ -169,6 +170,9 @@ function SearchSection({
   onClick,
   children,
   isLast,
+  isActiveCategory,
+  setLocation,
+  setActiveCategory,
 }: any) {
   return (
     <div className="relative">
@@ -187,6 +191,29 @@ function SearchSection({
           {value}
         </span>
       </div>
+
+      {label === "Where" && location && (
+        <X
+          className="absolute z-50 top-1/2 -translate-y-1/2 right-2 h-4 w-4 text-black 
+               cursor-pointer hover:bg-black/10 backdrop-blur-md p-0.5 
+               hover:shadow-lg rounded-full transition-all duration-200"
+          onClick={() => {
+            setLocation("");
+          }}
+        />
+      )}
+      {label === "cat" && isActiveCategory !== "all" && (
+        <X
+          className="absolute top-5.5 right-0 h-4 w-4 text-black 
+        cursor-pointer mr-2 hover:bg-black/10 backdrop-blur-md p-0.5 
+        hover:shadow-lg   rounded-full  transition-all duration-200"
+          onClick={() => {
+            if (label === "cat") {
+              setActiveCategory("");
+            }
+          }}
+        />
+      )}
 
       <AnimatePresence>
         {isActive && (
