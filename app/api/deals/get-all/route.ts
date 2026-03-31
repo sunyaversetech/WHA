@@ -13,12 +13,37 @@ export async function GET(request: NextRequest) {
     const category = rawCategory.replace(/\?+$/, "").trim();
     const rawSearch = searchParams.get("search") || "";
     const search = rawSearch.replace(/\?+$/, "").trim();
+    const rawFrom = searchParams.get("from") || "";
+    const rawTo = searchParams.get("to") || "";
+    const from = rawFrom.replace(/\?+$/, "").trim();
+    const to = rawTo.replace(/\?+$/, "").trim();
+    const rawCity = searchParams.get("city") || "";
+    const city = rawCity.replace(/\?+$/, "").trim();
 
     const query: any = {};
 
     if (search) {
       const safeSearch = escapeRegex(search);
       query.title = { $regex: safeSearch, $options: "i" };
+    }
+
+    if (city) {
+      query.city = { $regex: `^${escapeRegex(city)}$`, $options: "i" };
+    }
+
+    if (from || to) {
+      const searchFrom = from ? new Date(from) : null;
+      const searchTo = to ? new Date(to) : null;
+
+      const dateQuery: any = {};
+
+      if (searchFrom) {
+        dateQuery.$gte = searchFrom;
+      }
+      if (searchTo) {
+        dateQuery.$lte = searchTo;
+      }
+      query.valid_till = dateQuery;
     }
 
     if (category && category !== "all") {

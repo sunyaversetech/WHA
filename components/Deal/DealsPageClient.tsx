@@ -2,25 +2,57 @@
 
 import DealCard from "@/components/cards/deal-card";
 
-import { Tag } from "lucide-react";
+import { Calendar, Filter, Map, Tag } from "lucide-react";
 import { useGetAllDeals } from "@/services/deal.service";
 import DealsHeader from "./DealFilter";
 import { Skeleton } from "../ui/skeleton";
+import DealsSearchWithDates from "../ResuableComponents/SearchSectionForDeals";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { useSearchParams } from "next/navigation";
+import { Separator } from "../ui/separator";
 
 export default function DealsPageClient() {
   const { data: deals, isLoading } = useGetAllDeals();
-
+  const searchParams = useSearchParams();
+  const view = searchParams.get("view") || "list";
   const currentDate = new Date();
-
   const data =
     deals?.data &&
     deals?.data?.filter((deal) => currentDate <= new Date(deal.valid_till));
 
   return (
     <div className="min-h-screen bg-gradient-modern relative max-xl:px-6">
+      <DealsSearchWithDates />
+      <Separator />
       <div className="relative z-10">
         <div className="container-modern  md:py-6">
-          <DealsHeader />
+          {/* <DealsHeader /> */}
+          <div className="flex items-end justify-end ">
+            <Dialog>
+              {view === "list" && (
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2">
+                    <Filter className="h-4 w-4" />
+                    Filter
+                  </Button>
+                </DialogTrigger>
+              )}
+              <DialogContent className="max-w-4xl w-full">
+                <DialogTitle className="text-lg font-bold mb-4">
+                  Filter Deals
+                </DialogTitle>
+                <DealsHeader />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
         <div className="container-modern pb-8">
           {isLoading ? (

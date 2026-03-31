@@ -95,11 +95,11 @@ export default function DealsHeader() {
   }, []);
 
   return (
-    <div className="w-full bg-white px-4 py-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
+    <div className="w-full  px-4 py-2 md:px-6 md:py-4 rounded-xl md:rounded-2xl ">
       {/* Header */}
       <div className="flex items-center justify-between mb-2 gap-2">
         <h1 className="text-lg md:text-xl font-bold text-slate-800">
-          Hot Deals
+          Select Category
         </h1>
 
         {/* <Tabs value={currentTab} onValueChange={handleTabChange}>
@@ -112,7 +112,7 @@ export default function DealsHeader() {
 
       {/* Search */}
       <div className="flex flex-row gap-2 mb-3">
-        <div className="relative flex-1">
+        {/* <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
 
           <input
@@ -122,7 +122,7 @@ export default function DealsHeader() {
             placeholder="Search Deals"
             className="w-full pl-10 pr-3 py-2 text-base border border-slate-200 rounded-full focus:outline-none"
           />
-        </div>
+        </div> */}
 
         {/* <div className="flex-none">
           <div className="text-center px-3 py-2 text-sm md:text-base bg-primary border text-white rounded-full cursor-pointer transition hover:bg-white hover:text-primary">
@@ -131,7 +131,7 @@ export default function DealsHeader() {
         </div> */}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
+      <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon;
           const isActive = activeCategory === cat.value;

@@ -57,10 +57,13 @@ export const useGetAllDeals = () => {
   const param = useSearchParams();
   const category = param.get("category") || "";
   const search = param.get("search") || "";
+  const from = param.get("from") || "";
+  const to = param.get("to") || "";
+  const city = param.get("city") || "";
   return useFetcher<ApiResponseType<DealsGetValues[]>>(
-    ["all-deals", category, search],
+    ["all-deals", category, search, from, to, city],
     null,
-    `/api/deals/get-all?category=${category}&search=${search}`,
+    `/api/deals/get-all?category=${category}&search=${search}&from=${from}&to=${to}&city=${city}`,
   );
 };
 
