@@ -10,7 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 type SearchState = "where" | "when" | "search" | null;
 
-export default function EventSearchWithDates() {
+export default function EventSearchWithDates({ sticky }: { sticky: boolean }) {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -63,8 +63,9 @@ export default function EventSearchWithDates() {
             ? "bg-[#ebebeb] shadow-md"
             : "bg-white shadow-sm hover:shadow-md"
         }`}>
-        <div className="w-52 flex flex-col rounded-full py-3 px-8 cursor-pointer transition-all duration-200">
-          <p className="uppercase tracking-wider text-[11px] mt-2 ">
+        <div
+          className={`${sticky ? "w-32" : "w-52"} flex flex-col rounded-full py-3 px-8 cursor-pointer transition-all duration-200`}>
+          <p className="uppercase tracking-wider text-[11px] mt-2 text-clip-1 truncate ">
             Search Events
           </p>
           <div className="flex w-full justify-between">
@@ -95,6 +96,7 @@ export default function EventSearchWithDates() {
           onClick={() => setActiveTab("where")}
           location={location}
           date={date}
+          sticky={sticky}
           setLocation={setLocation}
           setInputValue={setInputValue}
           setDate={setDate}>
@@ -127,6 +129,7 @@ export default function EventSearchWithDates() {
           onClick={() => setActiveTab("when")}
           setLocation={setLocation}
           setInputValue={setInputValue}
+          sticky={sticky}
           setDate={setDate}>
           <div className="p-4 bg-white rounded-3xl">
             <Calendar
@@ -174,6 +177,7 @@ function SearchSection({
   setDate,
   children,
   isLast,
+  sticky,
   location,
   date,
 }: any) {
@@ -181,7 +185,7 @@ function SearchSection({
     <div className="relative">
       <div
         onClick={onClick}
-        className={`flex bg-white flex-col rounded-full w-52 py-3 px-8 cursor-pointer transition-all duration-200 ${
+        className={`flex  flex-col rounded-full ${sticky ? "w-32" : "w-52"} py-3 px-8 cursor-pointer transition-all duration-200 ${
           isActive
             ? "bg-white shadow-xl scale-105 z-10"
             : "hover:bg-gray-200/60"

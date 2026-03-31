@@ -16,7 +16,11 @@ import { Calendar } from "@/components/ui/calendar";
 
 type SearchState = "where" | "when" | "what" | null;
 
-export default function HomePageSearchWithDates() {
+export default function HomePageSearchWithDates({
+  sticky,
+}: {
+  sticky: boolean;
+}) {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const [location, setLocation] = useState("");
   const [date, setDate] = useState<DateRange | undefined>({
@@ -62,7 +66,9 @@ export default function HomePageSearchWithDates() {
           label="Where"
           value={location || "Search destinations"}
           isActive={activeTab === "where"}
-          onClick={() => setActiveTab("where")}>
+          location={location}
+          onClick={() => setActiveTab("where")}
+          sticky={sticky}>
           <div className="w-[400px] p-8">
             <h3 className="mb-4 text-xs font-bold uppercase tracking-wider">
               Recent searches
@@ -92,7 +98,8 @@ export default function HomePageSearchWithDates() {
           label="When"
           value={getDateDisplay()}
           isActive={activeTab === "when"}
-          onClick={() => setActiveTab("when")}>
+          onClick={() => setActiveTab("when")}
+          sticky={sticky}>
           <div className="p-4 bg-white rounded-3xl">
             <Calendar
               initialFocus
@@ -113,6 +120,7 @@ export default function HomePageSearchWithDates() {
           value={what ? what : "Add What"}
           isActive={activeTab === "what"}
           onClick={() => setActiveTab("what")}
+          sticky={sticky}
           isLast>
           <div className="w-[380px] p-8 space-y-6">
             {["events", "businesses", "deals"].map((city) => (
@@ -170,6 +178,8 @@ function SearchSection({
   onClick,
   children,
   isLast,
+  sticky,
+  location,
   isActiveCategory,
   setLocation,
   setActiveCategory,
@@ -178,7 +188,7 @@ function SearchSection({
     <div className="relative">
       <div
         onClick={onClick}
-        className={`flex flex-col rounded-full py-3 px-8 cursor-pointer transition-all duration-200 ${
+        className={`flex flex-col ${sticky ? "w-32" : ""} rounded-full py-3 px-8 cursor-pointer transition-all duration-200 ${
           isActive
             ? "bg-white shadow-xl scale-105 z-10"
             : "hover:bg-gray-200/60"

@@ -61,7 +61,11 @@ export const CATEGORY_ICONS: Record<string, any> = {
   others: MoreHorizontal,
 };
 
-export default function BusinessSearchWithDates() {
+export default function BusinessSearchWithDates({
+  sticky,
+}: {
+  sticky: boolean;
+}) {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -148,7 +152,8 @@ export default function BusinessSearchWithDates() {
             ? "bg-[#ebebeb] shadow-md"
             : "bg-white shadow-sm hover:shadow-md"
         }`}>
-        <div className="w-52 flex flex-col rounded-full py-3 px-8 cursor-pointer transition-all duration-200">
+        <div
+          className={`w-52 flex flex-col rounded-full py-3 px-8 cursor-pointer transition-all duration-200 ${sticky ? "w-32" : ""}`}>
           <p className="tracking-wider text-[12px] mt-2 ">Search Business</p>
           <div className="flex w-full justify-between">
             <input
@@ -181,6 +186,7 @@ export default function BusinessSearchWithDates() {
           setLocation={setLocation}
           setInputValue={setInputValue}
           setDate={setDate}
+          sticky={sticky}
           isActiveCategory={isactiveCategory}>
           <div className="w-[400px] p-8">
             {["sydney", "canberra"].map((city) => (
@@ -208,6 +214,7 @@ export default function BusinessSearchWithDates() {
           label="Category"
           value={activeCategory === "all" ? "All Categories" : activeCategory}
           isActive={activeTab === "cat"}
+          sticky={sticky}
           onClick={() => setActiveTab("cat")}
           isActiveCategory={isactiveCategory}>
           <div className="p-4 flex flex-wrap gap-2 bg-white rounded-3xl">
@@ -267,6 +274,7 @@ function SearchSection({
   isActive,
   onClick,
   children,
+  sticky,
   isLast,
   location,
   setLocation,
@@ -277,7 +285,7 @@ function SearchSection({
     <div className="relative">
       <div
         onClick={onClick}
-        className={`flex flex-col rounded-full py-3 w-52 px-8 cursor-pointer transition-all duration-200 ${
+        className={`flex flex-col rounded-full py-3 ${sticky ? "w-32" : "w-52"} px-8 cursor-pointer transition-all duration-200 ${
           isActive
             ? "bg-white shadow-xl scale-105 z-10"
             : "hover:bg-gray-200/60"

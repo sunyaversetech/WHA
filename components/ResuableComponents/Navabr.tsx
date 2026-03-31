@@ -150,13 +150,13 @@ export default function Navbar() {
       {!pathname.startsWith("/dashboard") && (
         <div className="hidden md:flex items-center gap-10  rounded-full p-1 - text-sm font-medium">
           {isSticky && pathname === "/" ? (
-            <HomePageSearchWithDates />
+            <HomePageSearchWithDates sticky={isSticky} />
           ) : isSticky && pathname.startsWith("/events") ? (
-            <EventSearchWithDates />
+            <EventSearchWithDates sticky={isSticky} />
           ) : isSticky && pathname.startsWith("/deals") ? (
-            <EventSearchWithDates />
+            <EventSearchWithDates sticky={isSticky} />
           ) : isSticky && pathname.startsWith("/businesses") ? (
-            <BusinessSearchWithDates />
+            <BusinessSearchWithDates sticky={isSticky} />
           ) : (
             navItems.map((item) => {
               const isActive = activeTab === item.id;

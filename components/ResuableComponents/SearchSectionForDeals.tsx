@@ -10,7 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 type SearchState = "where" | "when" | "search" | null;
 
-export default function DealsSearchWithDates() {
+export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
