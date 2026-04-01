@@ -250,7 +250,7 @@ export default function EventSearchWithDates({ sticky }: { sticky?: boolean }) {
                   selected={date}
                   onSelect={setDate}
                   numberOfMonths={1}
-                  className="rounded-md border-none z-50 bg-white p-4"
+                  className="rounded-md border-none z-49 bg-white p-4"
                   classNames={{
                     range_start:
                       "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white",
@@ -392,7 +392,7 @@ function SegmentSection({
         {isActive && (
           <motion.div
             className={[
-              "absolute top-[calc(100%+18px)] z-[100] bg-white rounded-[2rem] overflow-hidden",
+              "absolute top-[calc(100%+18px)] z-49 bg-white rounded-[2rem] overflow-hidden",
               "shadow-[0_20px_60px_rgba(15,14,23,0.13),0_0_0_1.5px_rgba(15,14,23,0.06)]",
               panelAlign === "right" ? "right-0" : "left-1/2 -translate-x-1/2",
             ].join(" ")}
