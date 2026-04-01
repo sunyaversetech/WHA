@@ -234,7 +234,7 @@ export default function Navbar() {
       )}
 
       <div className="flex items-center gap-3">
-        <DropdownMenu>
+        {/* <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-primary text-primary text-sm hover:bg-white/30 transition focus:outline-none">
               <MapPin className="h-4 w-4" />
@@ -255,7 +255,7 @@ export default function Navbar() {
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu> */}
 
         {session ? (
           <DropdownMenu>

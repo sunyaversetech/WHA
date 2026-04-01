@@ -55,137 +55,138 @@ export default function HomePageSearchWithDates({
   };
 
   return (
-    <div
-      className="flex w-fit m-auto justify-center py-8 z-[9999]"
-      ref={containerRef}>
-      <motion.div
-        layout
-        className={`relative flex items-center p-2 rounded-full border z-[9999] border-gray-200/80 transition-all duration-500 ${
-          activeTab
-            ? "bg-gray-100/80 backdrop-blur-xl shadow-2xl"
-            : "bg-white shadow-lg hover:shadow-xl hover:border-gray-300"
-        }`}>
-        {/* WHERE SECTION */}
-        <SearchSection
-          label="Where"
-          value={location || "Search destinations"}
-          isActive={activeTab === "where"}
-          onClick={() => setActiveTab("where")}
-          sticky={sticky}
-          onClear={() => setLocation("")}
-          showClear={!!location}>
-          <div className="w-[320px] p-3">
-            <p className="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-              Recent searches
-            </p>
-            {["Sydney", "Canberra"].map((city) => (
-              <motion.div
-                whileHover={{ x: 5 }}
-                key={city}
-                onClick={() => {
-                  setLocation(city);
-                  setActiveTab("when");
-                }}
-                className="flex items-center gap-4 rounded-2xl p-3 hover:bg-blue-50/50 cursor-pointer transition-all group">
-                <div className="rounded-xl bg-gray-100 p-2.5 group-hover:bg-blue-100 transition-colors">
-                  <MapPin className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
-                </div>
-                <span className="font-semibold text-gray-700">
-                  {city}, Australia
-                </span>
-              </motion.div>
-            ))}
+    <div>
+      <div
+        className="flex w-fit m-auto justify-center py-8 z-[9999] my-0"
+        ref={containerRef}>
+        <motion.div
+          layout
+          className={`relative flex items-center p-2 rounded-full border z-[9999] border-gray-200/80 transition-all duration-500 ${
+            activeTab
+              ? "bg-gray-100/80 backdrop-blur-xl shadow-2xl"
+              : "bg-white shadow-lg hover:shadow-xl hover:border-gray-300"
+          }`}>
+          <SearchSection
+            label="Where"
+            value={location || "Search destinations"}
+            isActive={activeTab === "where"}
+            onClick={() => setActiveTab("where")}
+            sticky={sticky}
+            onClear={() => setLocation("")}
+            showClear={!!location}>
+            <div className="w-[320px] p-3" onBlur={() => setActiveTab(null)}>
+              <p className="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                Recent searches
+              </p>
+              {["Sydney", "Canberra"].map((city) => (
+                <motion.div
+                  whileHover={{ x: 5 }}
+                  key={city}
+                  onClick={() => {
+                    setLocation(city);
+                    setActiveTab("when");
+                  }}
+                  className="flex items-center gap-4 rounded-2xl p-3 hover:bg-blue-50/50 cursor-pointer transition-all group">
+                  <div className="rounded-xl bg-gray-100 p-2.5 group-hover:bg-blue-100 transition-colors">
+                    <MapPin className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
+                  </div>
+                  <span className="font-semibold text-gray-700">
+                    {city}, Australia
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+          </SearchSection>
+
+          <Divider hide={activeTab === "where" || activeTab === "when"} />
+
+          {/* WHEN SECTION */}
+          <SearchSection
+            label="When"
+            value={getDateDisplay()}
+            isActive={activeTab === "when"}
+            onClick={() => setActiveTab("when")}
+            sticky={sticky}
+            onClear={() => setDate(undefined)}
+            showClear={!!date?.from}>
+            <div className="p-6 bg-white rounded-3xl">
+              <Calendar
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={setDate}
+                numberOfMonths={2}
+                className="rounded-md border-none"
+              />
+            </div>
+          </SearchSection>
+
+          <Divider hide={activeTab === "when" || activeTab === "what"} />
+
+          {/* WHAT SECTION */}
+          <SearchSection
+            label="What"
+            value={what || "Add category"}
+            isActive={activeTab === "what"}
+            onClick={() => setActiveTab("what")}
+            sticky={sticky}
+            isLast
+            onClear={() => setWhat("")}
+            showClear={!!what}>
+            <div className="w-[320px] p-3">
+              <p className="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                Browse Categories
+              </p>
+              {["events", "businesses", "deals"].map((item) => (
+                <motion.div
+                  whileHover={{ x: 5 }}
+                  key={item}
+                  onClick={() => {
+                    setWhat(item);
+                    setActiveTab(null); // Close on select
+                  }}
+                  className="flex items-center gap-4 rounded-2xl p-3 hover:bg-blue-50/50 cursor-pointer transition-all group">
+                  <div className="rounded-xl bg-gray-100 p-2.5 group-hover:bg-blue-100 transition-colors">
+                    {item === "events" ? (
+                      <CalendarIcon className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
+                    ) : item === "businesses" ? (
+                      <Building className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
+                    ) : (
+                      <Tag className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
+                    )}
+                  </div>
+                  <span className="font-semibold text-gray-700 capitalize">
+                    {item}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+          </SearchSection>
+
+          {/* SEARCH BUTTON */}
+          <div className="pl-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`flex items-center justify-center gap-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all duration-300 ${
+                activeTab ? "px-8 py-4" : "p-4"
+              }`}>
+              <Search className="h-5 w-5 stroke-[3px]" />
+              <AnimatePresence>
+                {activeTab && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="font-bold text-sm tracking-tight overflow-hidden whitespace-nowrap">
+                    Search
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </div>
-        </SearchSection>
-
-        <Divider hide={activeTab === "where" || activeTab === "when"} />
-
-        {/* WHEN SECTION */}
-        <SearchSection
-          label="When"
-          value={getDateDisplay()}
-          isActive={activeTab === "when"}
-          onClick={() => setActiveTab("when")}
-          sticky={sticky}
-          onClear={() => setDate(undefined)}
-          showClear={!!date?.from}>
-          <div className="p-6 bg-white rounded-3xl">
-            <Calendar
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={setDate}
-              numberOfMonths={2}
-              className="rounded-md border-none"
-            />
-          </div>
-        </SearchSection>
-
-        <Divider hide={activeTab === "when" || activeTab === "what"} />
-
-        {/* WHAT SECTION */}
-        <SearchSection
-          label="What"
-          value={what || "Add category"}
-          isActive={activeTab === "what"}
-          onClick={() => setActiveTab("what")}
-          sticky={sticky}
-          isLast
-          onClear={() => setWhat("")}
-          showClear={!!what}>
-          <div className="w-[320px] p-3">
-            <p className="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-              Browse Categories
-            </p>
-            {["events", "businesses", "deals"].map((item) => (
-              <motion.div
-                whileHover={{ x: 5 }}
-                key={item}
-                onClick={() => {
-                  setWhat(item);
-                  setActiveTab(null); // Close on select
-                }}
-                className="flex items-center gap-4 rounded-2xl p-3 hover:bg-blue-50/50 cursor-pointer transition-all group">
-                <div className="rounded-xl bg-gray-100 p-2.5 group-hover:bg-blue-100 transition-colors">
-                  {item === "events" ? (
-                    <CalendarIcon className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
-                  ) : item === "businesses" ? (
-                    <Building className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
-                  ) : (
-                    <Tag className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
-                  )}
-                </div>
-                <span className="font-semibold text-gray-700 capitalize">
-                  {item}
-                </span>
-              </motion.div>
-            ))}
-          </div>
-        </SearchSection>
-
-        {/* SEARCH BUTTON */}
-        <div className="pl-2">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`flex items-center justify-center gap-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all duration-300 ${
-              activeTab ? "px-8 py-4" : "p-4"
-            }`}>
-            <Search className="h-5 w-5 stroke-[3px]" />
-            <AnimatePresence>
-              {activeTab && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="font-bold text-sm tracking-tight overflow-hidden whitespace-nowrap">
-                  Search
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }

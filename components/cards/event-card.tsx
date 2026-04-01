@@ -76,17 +76,14 @@ const EventCard = memo(function EventCard({ event }: { event: any }) {
           className="w-full h-full object-cover"
         />
 
-        {/* Gradient overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
 
-        {/* Category Badge - Top Left */}
         <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-semibold px-2 py-1 rounded-lg shadow-lg">
           {event.category
             ? event.category.charAt(0).toUpperCase() + event.category.slice(1)
             : "Event"}
         </div>
 
-        {/* Favorite Button - Top Right */}
         <button
           disabled={isPending}
           onClick={(e) => {
