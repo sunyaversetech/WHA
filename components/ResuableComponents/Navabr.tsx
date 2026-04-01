@@ -14,7 +14,7 @@ import { MapPin, ChevronDown } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import EventSearchWithDates from "./SearchSectionForEvents";
 import HomePageSearchWithDates from "./SearchSection";
 import BusinessSearchWithDates from "./SearchSectionforBusiness";
@@ -148,13 +148,45 @@ export default function Navbar() {
           ))} */}
       {/* || pathname.startsWith("/deals") || pathname.startsWith("/businesses") */}
       {!pathname.startsWith("/dashboard") && (
-        <div className="hidden md:flex items-center gap-10  rounded-full p-1 - text-sm font-medium">
+        <div className="hidden md:flex items-center gap-10  rounded-full p-1 - text-sm font-medium transition-all duration-300">
           {isSticky && pathname === "/" ? (
-            <HomePageSearchWithDates sticky={isSticky} />
+            <AnimatePresence>
+              {isSticky && pathname === "/" && (
+                <motion.div
+                  key="sticky-search"
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: 50, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  className="absolute left-0 right-0">
+                  <HomePageSearchWithDates sticky={isSticky} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           ) : isSticky && pathname.startsWith("/events") ? (
-            <EventSearchWithDates sticky={isSticky} />
+            <AnimatePresence>
+              <motion.div
+                key="sticky-search"
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 50, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="absolute left-0 right-0">
+                <EventSearchWithDates sticky={isSticky} />
+              </motion.div>
+            </AnimatePresence>
           ) : isSticky && pathname.startsWith("/deals") ? (
-            <EventSearchWithDates sticky={isSticky} />
+            <AnimatePresence>
+              <motion.div
+                key="sticky-search"
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 50, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="absolute left-0 right-0">
+                <EventSearchWithDates sticky={isSticky} />
+              </motion.div>
+            </AnimatePresence>
           ) : isSticky && pathname.startsWith("/businesses") ? (
             <BusinessSearchWithDates sticky={isSticky} />
           ) : (
