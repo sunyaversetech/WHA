@@ -70,7 +70,7 @@ export default function EventsPageClient() {
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2">
+                  className="flex items-center gap-2 rounded-full! btn-wha-outline h-12 mr-2 ">
                   <Filter className="h-4 w-4" />
                   Filter
                 </Button>
@@ -152,7 +152,7 @@ export default function EventsPageClient() {
             {!isMapExpanded && (
               <Button
                 onClick={() => setShowMap(!showMap)}
-                className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2">
+                className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2 rounded-full!">
                 <MapIcon /> {showMap ? "Hide Map" : "Show Map"}
               </Button>
             )}

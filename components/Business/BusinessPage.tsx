@@ -74,13 +74,13 @@ export default function BusinessesClientPage() {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2">
+                className="flex items-center gap-2  btn-wha-outline h-12 mr-2 rounded-full!">
                 <Filter className="h-4 w-4" />
                 Filter
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl w-full z-[110]">
-              <DialogTitle className="text-lg font-bold mb-4">
+              <DialogTitle className="text-lg font-bold mb-4 ">
                 Filter Businesses
               </DialogTitle>
               <Tabs
@@ -150,7 +150,7 @@ export default function BusinessesClientPage() {
           {!isMapExpanded && (
             <Button
               onClick={() => setShowMap(!showMap)}
-              className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2">
+              className="flex items-center gap-2 btn-wha-outline h-12 mr-2 rounded-full!">
               <MapIcon /> {showMap ? "Hide Map" : "Show Map"}
             </Button>
           )}

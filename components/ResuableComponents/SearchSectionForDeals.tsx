@@ -43,8 +43,8 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
     searchParams.get("search") || "",
   );
   const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(),
-    to: addDays(new Date(), 7),
+    from: undefined,
+    to: undefined,
   });
 
   const now = new Date();

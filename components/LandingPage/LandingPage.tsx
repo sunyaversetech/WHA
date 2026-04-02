@@ -20,7 +20,6 @@ export default function LandingPage() {
   if (isLoading) return <LandingPageSkeleton />;
   return (
     <div className="container-modern">
-      <FunctionalSearchBar />
       <div className=" px-4 pt-2 md:pt-6">
         <CardSlider
           title=""

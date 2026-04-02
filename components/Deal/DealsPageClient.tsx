@@ -32,14 +32,13 @@ export default function DealsPageClient() {
       <Separator />
       <div className="relative z-10">
         <div className="container-modern  md:py-6">
-          {/* <DealsHeader /> */}
           <div className="flex items-end justify-end ">
             <Dialog>
               {view === "list" && (
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2">
+                    className="flex items-center gap-2 btn-wha-outline h-12 mr-2 rounded-full!">
                     <Filter className="h-4 w-4" />
                     Filter
                   </Button>
