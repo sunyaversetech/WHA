@@ -7,7 +7,6 @@ import L from "leaflet";
 import { ExternalLink, Maximize2, Minimize2 } from "lucide-react";
 import Link from "next/link";
 
-// Fix for Leaflet icons
 if (typeof window !== "undefined") {
   delete (L.Icon.Default.prototype as any)._getIconUrl;
   L.Icon.Default.mergeOptions({

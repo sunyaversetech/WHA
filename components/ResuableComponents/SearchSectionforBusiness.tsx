@@ -207,24 +207,29 @@ export default function BusinessSearchWithDates({
             placeholder="Select location"
             onClear={() => setLocation("")}
             segW={segW}>
-            <div className="p-2 py-3 min-w-[280px]">
-              {["Sydney", "Canberra", "Melbourne"].map((city) => (
+            <div className="p-2 py-3">
+              {[
+                { city: "sydney", country: "Australia", emoji: "🌉" },
+                { city: "canberra", country: "Australia", emoji: "🏛️" },
+              ].map(({ city, country, emoji }) => (
                 <motion.div
                   key={city}
                   whileHover={{ x: 2 }}
-                  className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors"
+                  className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors duration-150 min-w-[280px]"
                   onClick={() => {
                     setLocation(city);
                     setActiveTab("cat");
                   }}>
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#f5f4f8] group-hover:bg-[#ede8ff] transition-colors">
-                    <MapPin size={18} className="text-[#6c47ff]" />
+                  <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#f5f4f8] shrink-0 group-hover:bg-[#ede8ff] transition-colors duration-150">
+                    <span className="text-[18px] leading-none">{emoji}</span>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-[#0f0e17]">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#0f0e17] capitalize leading-tight">
                       {city}
                     </p>
-                    <p className="text-xs text-[#9896aa]">Australia</p>
+                    <p className="text-xs text-[#9896aa] leading-tight mt-0.5">
+                      {country}
+                    </p>
                   </div>
                   <ChevronRight
                     size={14}
@@ -237,7 +242,6 @@ export default function BusinessSearchWithDates({
 
           <Divider hide={activeTab === "cat" || activeTab === "where"} />
 
-          {/* CATEGORY SEGMENT */}
           <SegmentSection
             label="Category"
             isActive={activeTab === "cat"}

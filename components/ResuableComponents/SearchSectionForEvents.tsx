@@ -105,7 +105,6 @@ export default function EventSearchWithDates({ sticky }: { sticky?: boolean }) {
               ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
               : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
           ].join(" ")}>
-          {/* SEARCH SEGMENT */}
           <div
             onClick={() => setActiveTab("search")}
             className={[
@@ -148,7 +147,6 @@ export default function EventSearchWithDates({ sticky }: { sticky?: boolean }) {
 
           <Divider hide={activeTab === "where" || activeTab === "search"} />
 
-          {/* WHERE SEGMENT */}
           <SegmentSection
             label="Where"
             isActive={activeTab === "where"}
