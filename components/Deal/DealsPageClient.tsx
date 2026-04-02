@@ -27,7 +27,7 @@ export default function DealsPageClient() {
     deals?.data?.filter((deal) => currentDate <= new Date(deal.valid_till));
 
   return (
-    <div className="min-h-screen bg-gradient-modern relative max-xl:px-6">
+    <div className="min-h-screen bg-gradient-modern relative -mt-2 max-xl:px-6">
       <DealsSearchWithDates />
       <Separator />
       <div className="relative z-10">

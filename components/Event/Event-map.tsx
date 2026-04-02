@@ -98,7 +98,7 @@ export default function EventMap({
   );
 
   return (
-    <div className="h-full w-full relative z-0 bg-gray-100">
+    <div className="h-full w-full relative z-0 ">
       <button
         onClick={onToggleExpand}
         className="absolute top-4 right-4 z-[1000] p-3 bg-white rounded-xl shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95"
@@ -113,7 +113,7 @@ export default function EventMap({
         center={WIDE_VIEW}
         zoom={WIDE_ZOOM}
         zoomControl={false}
-        className="h-full w-full"
+        className="h-full w-full rounded-xl"
         style={{ height: "100%", width: "100%" }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

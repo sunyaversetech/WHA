@@ -71,7 +71,7 @@ export default function BusinessMap({
         center={WIDE_VIEW}
         zoom={WIDE_ZOOM}
         zoomControl={false}
-        className="h-full w-full">
+        className="h-full w-full rounded-xl ">
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="© OpenStreetMap"

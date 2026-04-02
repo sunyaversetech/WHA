@@ -33,7 +33,6 @@ import { useGetALLBusiness } from "@/services/business.service";
 
 type SearchState = "where" | "cat" | "search" | null;
 
-// --- STYLING CONSTANTS (Matched to Reference) ---
 const FontImport = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@1,9..144,300&display=swap');
@@ -86,7 +85,6 @@ export default function BusinessSearchWithDates({
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Data & State
   const { data } = useGetALLBusiness();
   const [location, setLocation] = useState("");
   const [inputValue, setInputValue] = useState(
@@ -156,7 +154,6 @@ export default function BusinessSearchWithDates({
               ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
               : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
           ].join(" ")}>
-          {/* SEARCH INPUT SEGMENT */}
           <div
             onClick={() => setActiveTab("search")}
             className={[
@@ -279,7 +276,6 @@ export default function BusinessSearchWithDates({
             </div>
           </SegmentSection>
 
-          {/* SEARCH BUTTON */}
           <button
             onClick={handleSearch}
             className="flex ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-w-[48px] min-h-[48px] justify-center overflow-hidden shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none">

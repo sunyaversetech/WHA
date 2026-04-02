@@ -59,15 +59,13 @@ export default function BusinessesClientPage() {
   );
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-white">
-      {/* Search Header */}
-      <div className="flex-none border-b z-[100]">
+    <div className="flex flex-col h-screen overflow-hidden">
+      <div className="flex-none border-b z-49">
         <BusinessSearchWithDates />
       </div>
 
-      {/* Filter Bar */}
-      <div className="flex-none px-6 py-4 flex justify-between items-center z-[90] border-b bg-white">
-        <div className="text-sm font-medium text-slate-500">
+      <div className="flex-none px-6 py-4 flex justify-between items-center   ">
+        <div className="text-sm font-medium text-slate-500 pl-5">
           {data.length} businesses in {selectedCity || "Australia"}
         </div>
 
@@ -76,8 +74,9 @@ export default function BusinessesClientPage() {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="flex items-center gap-2 rounded-md h-12">
-                <Filter className="h-4 w-4" /> Filter
+                className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2">
+                <Filter className="h-4 w-4" />
+                Filter
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl w-full z-[110]">
@@ -87,15 +86,20 @@ export default function BusinessesClientPage() {
               <Tabs
                 defaultValue="categories"
                 className="w-full rounded-lg border bg-white">
-                <TabsList className="w-full border-none">
+                <TabsList className="w-full border-none ">
                   <TabsTrigger
                     value="categories"
-                    className="data-[state=active]:text-wha-primary">
+                    className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
+
+                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!">
                     Categories
                   </TabsTrigger>
+
                   <TabsTrigger
-                    value="communities"
-                    className="data-[state=active]:text-wha-primary">
+                    className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
+
+                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!"
+                    value="communities">
                     Communities
                   </TabsTrigger>
                 </TabsList>
@@ -106,20 +110,32 @@ export default function BusinessesClientPage() {
                   <div className="flex gap-2 justify-center flex-wrap">
                     {COMMUNITIES.map((com) => {
                       const Icon = com.icon;
-                      const isActive = currentCommunity === com.value;
+
+                      const isActive =
+                        (currentCommunity ?? "All") === com.value;
+
                       return (
                         <Button
                           key={com.value}
-                          variant={isActive ? "default" : "outline"}
                           onClick={() => {
                             updateQuery({
                               community: com.value === "All" ? null : com.value,
                             });
+
                             setCurrentCommunity(com.value);
                           }}
-                          className="flex flex-col h-20 w-24 gap-1">
-                          <Icon className="h-5 w-5" />
-                          <span className="text-[10px] uppercase font-bold">
+                          className={`flex flex-col items-center justify-center h-15 md:min-w-[80px] py-5 px-3 rounded-md md:rounded-xl transition-all border shrink-0 ${
+                            isActive
+                              ? "bg-primary border-primary text-white"
+                              : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                          }`}>
+                          <Icon
+                            className={`h-4 w-4 sm:h-5 sm:w-5 mb-1 ${
+                              isActive ? "text-white" : "text-slate-500"
+                            }`}
+                          />
+
+                          <span className="text-[9px] sm:text-[10px] uppercase font-bold whitespace-nowrap text-center">
                             {com.name}
                           </span>
                         </Button>
@@ -134,21 +150,17 @@ export default function BusinessesClientPage() {
           {!isMapExpanded && (
             <Button
               onClick={() => setShowMap(!showMap)}
-              variant="outline"
-              className="flex items-center gap-2 rounded-md h-12">
-              <MapIcon className="h-4 w-4" />{" "}
-              {showMap ? "Hide Map" : "Show Map"}
+              className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2">
+              <MapIcon /> {showMap ? "Hide Map" : "Show Map"}
             </Button>
           )}
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* List Side */}
+      <div className="flex flex-1 overflow-hidden relative pl-5">
         {!isMapExpanded && (
           <div
-            className={`transition-all duration-300 overflow-y-auto px-4 py-6 no-scrollbar ${showMap ? "w-full lg:w-[55%]" : "w-full"}`}>
+            className={`transition-all duration-300 overflow-y-auto px-4 pb-6 no-scrollbar ${showMap ? "w-full lg:w-[55%]" : "w-full"}`}>
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[1, 2, 3, 4].map((i) => (
@@ -161,7 +173,7 @@ export default function BusinessesClientPage() {
               </div>
             ) : (
               <div
-                className={`grid gap-6 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
+                className={`grid gap-6  ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
                 {data.map((business: any) => (
                   <BusinessCard key={business._id} business={business} />
                 ))}
@@ -171,7 +183,7 @@ export default function BusinessesClientPage() {
         )}
 
         <div
-          className={`transition-all duration-500 border-l bg-gray-100 ${
+          className={`transition-all duration-500 pr-7.5  ${
             isMapExpanded
               ? "w-full"
               : showMap

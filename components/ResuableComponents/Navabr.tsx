@@ -130,23 +130,6 @@ export default function Navbar() {
           priority
         />
       </Link>
-      {/* {[
-            { name: "Events", href: "/events" },
-            { name: "Deals", href: "/deals" },
-            { name: "Businesses", href: "/businesses" },
-          ].map((item) => (
-            <Link
-              key={item.href}
-              href={buildPath(item.href)}
-              className={`px-5 py-2 rounded-full transition-colors ${
-                isActive(item.href)
-                  ? "bg-primary text-white shadow"
-                  : "text-primary hover:bg-white/20"
-              }`}>
-              {item.name}
-            </Link>
-          ))} */}
-      {/* || pathname.startsWith("/deals") || pathname.startsWith("/businesses") */}
       {!pathname.startsWith("/dashboard") && (
         <div className="hidden md:flex items-center gap-10  rounded-full p-1 - text-sm font-medium transition-all duration-300">
           {isSticky && pathname === "/" ? (
@@ -206,9 +189,9 @@ export default function Navbar() {
                     <div className="flex">
                       <Image
                         src={`${isActive ? item.activeImg : item.img}`}
-                        className={`${isActive ? "h-10 w-10" : "h-7 w-7"}`}
-                        width={isActive ? 100 : 28}
-                        height={isActive ? 100 : 28}
+                        className={`${isActive ? "h-7 w-7" : "h-7 w-7"}`}
+                        width={isActive ? 80 : 28}
+                        height={isActive ? 80 : 28}
                         alt={`${item.label} icon`}
                       />
                     </div>
@@ -218,7 +201,7 @@ export default function Navbar() {
                   {isActive && (
                     <motion.div
                       layoutId="activeTab"
-                      className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-black"
+                      className="absolute -bottom-[5px] left-0 right-0 h-[2px] bg-black"
                       transition={{
                         type: "spring",
                         stiffness: 380,

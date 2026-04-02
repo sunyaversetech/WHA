@@ -58,11 +58,11 @@ export default function EventsPageClient() {
   return (
     <div className="flex flex-col h-screen overflow-hidden ">
       <>
-        <div className="flex-none h-32 border-b flex items-center justify-center z-[100]">
+        <div className="flex-none h-32 -mt-1 border-b flex items-center justify-center">
           <EventSearchWithDates />
         </div>
-        <div className="flex-none px-6 py-4 flex justify-between items-center   z-[90]">
-          <div className="text-sm font-medium text-slate-500">
+        <div className="flex-none px-6 py-4 flex justify-between items-center  ">
+          <div className="text-sm font-medium text-slate-500 pl-5">
             {apiResponse?.data.length} results in {selectedCity}
           </div>
           <div className="flex gap-2">
@@ -160,10 +160,10 @@ export default function EventsPageClient() {
         </div>
       </>
 
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden relative pl-5">
         {!isMapExpanded && (
           <div
-            className={`transition-all duration-300 overflow-y-auto px-4 py-6 no-scrollbar ${showMap ? "w-full lg:w-[55%]" : "w-full"}`}>
+            className={`transition-all duration-300 overflow-y-auto px-4 pb-6 no-scrollbar ${showMap ? "w-full lg:w-[55%]" : "w-full"}`}>
             <div
               className={`grid gap-6 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
               {apiResponse?.data.map((event: any) => (
@@ -174,7 +174,7 @@ export default function EventsPageClient() {
         )}
 
         <div
-          className={`transition-all duration-500 border-l bg-gray-100 ${
+          className={`transition-all duration-500 pr-7.5 ${
             isMapExpanded
               ? "w-full"
               : showMap
