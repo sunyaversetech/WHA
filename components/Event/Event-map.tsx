@@ -21,25 +21,6 @@ if (typeof window !== "undefined") {
   });
 }
 
-const CITY_COORDS: Record<string, [number, number]> = {
-  sydney: [-33.8688, 151.2093],
-  canberra: [-35.2809, 149.13],
-  wide: [-34.57, 150.17],
-  default: [-35.2809, 149.13],
-};
-
-function CityCenterHandler({ city }: { city: string }) {
-  const map = useMap();
-
-  useEffect(() => {
-    const key = city?.toLowerCase();
-    const coords = CITY_COORDS[key] || CITY_COORDS.default;
-    map.flyTo(coords, 12, { duration: 1.5 });
-  }, [city, map]);
-
-  return null;
-}
-
 function MapRefresher({
   isVisible,
   city,

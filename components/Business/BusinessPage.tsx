@@ -35,7 +35,6 @@ export default function BusinessesClientPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Map States from Event Page
   const [showMap, setShowMap] = useState(true);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [currentCommunity, setCurrentCommunity] = useState("All");
@@ -192,7 +191,7 @@ export default function BusinessesClientPage() {
           }`}>
           <BusinessMap
             businesses={data}
-            currentCity={selectedCity || ""}
+            currentCity={searchParams.get("city") || ""}
             isVisible={showMap}
             isExpanded={isMapExpanded}
             onToggleExpand={toggleExpand}
