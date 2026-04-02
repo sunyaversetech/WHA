@@ -38,7 +38,7 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(searchParams.get("city") || "");
   const [inputValue, setInputValue] = useState(
     searchParams.get("search") || "",
   );
@@ -110,7 +110,6 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
               ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
               : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
           ].join(" ")}>
-          {/* SEARCH DEALS INPUT SECTION */}
           <div className="relative">
             <div
               onClick={() => setActiveTab("search")}
@@ -146,7 +145,6 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
 
           <Divider hide={activeTab === "search" || activeTab === "where"} />
 
-          {/* WHERE SECTION */}
           <SegmentSection
             label="Where"
             isActive={activeTab === "where"}
@@ -185,7 +183,6 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
 
           <Divider hide={activeTab === "where" || activeTab === "when"} />
 
-          {/* WHEN SECTION */}
           <SegmentSection
             label="When"
             isActive={activeTab === "when"}

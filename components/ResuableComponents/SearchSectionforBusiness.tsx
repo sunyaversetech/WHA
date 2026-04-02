@@ -86,7 +86,7 @@ export default function BusinessSearchWithDates({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { data } = useGetALLBusiness();
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(searchParams.get("city") || "");
   const [inputValue, setInputValue] = useState(
     searchParams.get("search") || "",
   );

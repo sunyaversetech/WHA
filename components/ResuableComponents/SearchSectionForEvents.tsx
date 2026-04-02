@@ -36,7 +36,7 @@ export default function EventSearchWithDates({ sticky }: { sticky?: boolean }) {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(searchParams.get("city") || "");
   const [inputValue, setInputValue] = useState(
     searchParams.get("search") || "",
   );
