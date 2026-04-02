@@ -238,12 +238,6 @@ export default function EventSearchWithDates({ sticky }: { sticky?: boolean }) {
               </div>
 
               <div className="p-5">
-                {/* <div className="flex items-center gap-2 mb-4 pl-1">
-                  <CalendarDays size={14} className="text-[#6c47ff]" />
-                  <span className="text-[11px] font-semibold text-[#5a5872] tracking-[0.06em] uppercase">
-                    Pick your dates
-                  </span>
-                </div> */}
                 <Calendar
                   mode="range"
                   defaultMonth={date?.from}

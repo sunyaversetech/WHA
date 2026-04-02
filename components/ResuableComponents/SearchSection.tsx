@@ -8,13 +8,37 @@ import {
   Building,
   Tag,
   X,
+  ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { addDays, format } from "date-fns";
+import {
+  format,
+  addDays,
+  formatDate,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
+import { Button } from "../ui/button";
 
 type SearchState = "where" | "when" | "what" | null;
+
+// --- STYLING CONSTANTS ---
+const FontImport = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@1,9..144,300&display=swap');
+    .esw-root, .esw-root * { font-family: 'DM Sans', sans-serif; }
+    .esw-placeholder::placeholder {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-weight: 300;
+      color: #9896aa;
+    }
+    .esw-seg:hover .esw-clear-show { opacity: 0.6; }
+    .esw-seg.esw-active .esw-clear-show { opacity: 0.6; }
+  `}</style>
+);
 
 export default function HomePageSearchWithDates({
   sticky,
@@ -28,8 +52,19 @@ export default function HomePageSearchWithDates({
     to: addDays(new Date(), 7),
   });
   const [what, setWhat] = useState("");
-
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const now = new Date();
+
+  const handleQuickSelect = (type: "today" | "week" | "month") => {
+    if (type === "today") {
+      setDate({ from: now, to: now });
+    } else if (type === "week") {
+      setDate({ from: now, to: addDays(now, 7) });
+    } else if (type === "month") {
+      setDate({ from: startOfMonth(now), to: endOfMonth(now) });
+    }
+  };
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -46,205 +81,293 @@ export default function HomePageSearchWithDates({
 
   const getDateDisplay = () => {
     if (date?.from) {
-      if (date.to) {
+      if (date.to)
         return `${format(date.from, "MMM d")} – ${format(date.to, "MMM d")}`;
-      }
       return format(date.from, "MMM d");
     }
-    return "Add dates";
+    return "";
   };
 
+  const handleSearch = () => {
+    console.log("Searching for:", { location, date, what });
+    setActiveTab(null);
+  };
+
+  const isExpanded = activeTab !== null;
+  const segW = sticky ? "w-[130px]" : "w-[180px]";
+
   return (
-    <div>
+    <>
+      <FontImport />
       <div
-        className="flex w-fit m-auto justify-center py-8 z-[9999] my-0"
+        className="esw-root flex w-fit items-center justify-center m-auto py-8"
         ref={containerRef}>
-        <motion.div
-          layout
-          className={`relative flex items-center p-2 rounded-full border z-[9999] border-gray-200/80 transition-all duration-500 ${
-            activeTab
-              ? "bg-gray-100/80 backdrop-blur-xl shadow-2xl"
-              : "bg-white shadow-lg hover:shadow-xl hover:border-gray-300"
-          }`}>
-          <SearchSection
+        <div
+          className={[
+            "relative flex items-center rounded-full p-1.5 transition-all duration-300",
+            isExpanded
+              ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
+              : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
+          ].join(" ")}>
+          {/* WHERE SECTION */}
+          <SegmentSection
             label="Where"
-            value={location || "Search destinations"}
             isActive={activeTab === "where"}
-            onClick={() => setActiveTab("where")}
-            sticky={sticky}
+            onClick={() => setActiveTab(activeTab === "where" ? null : "where")}
+            displayValue={location}
+            placeholder="Search destinations"
             onClear={() => setLocation("")}
-            showClear={!!location}>
-            <div className="w-[320px] p-3" onBlur={() => setActiveTab(null)}>
-              <p className="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                Recent searches
-              </p>
+            segW={segW}>
+            <div className="p-2 py-3 min-w-[280px]">
               {["Sydney", "Canberra"].map((city) => (
                 <motion.div
-                  whileHover={{ x: 5 }}
                   key={city}
+                  whileHover={{ x: 2 }}
+                  className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors"
                   onClick={() => {
                     setLocation(city);
                     setActiveTab("when");
-                  }}
-                  className="flex items-center gap-4 rounded-2xl p-3 hover:bg-blue-50/50 cursor-pointer transition-all group">
-                  <div className="rounded-xl bg-gray-100 p-2.5 group-hover:bg-blue-100 transition-colors">
-                    <MapPin className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
+                  }}>
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#f5f4f8] group-hover:bg-[#ede8ff] transition-colors">
+                    <MapPin size={18} className="text-[#6c47ff]" />
                   </div>
-                  <span className="font-semibold text-gray-700">
-                    {city}, Australia
-                  </span>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-[#0f0e17]">
+                      {city}
+                    </p>
+                    <p className="text-xs text-[#9896aa]">Australia</p>
+                  </div>
+                  <ChevronRight
+                    size={14}
+                    className="text-[#9896aa] group-hover:translate-x-0.5 transition-all"
+                  />
                 </motion.div>
               ))}
             </div>
-          </SearchSection>
+          </SegmentSection>
 
           <Divider hide={activeTab === "where" || activeTab === "when"} />
 
-          {/* WHEN SECTION */}
-          <SearchSection
+          <SegmentSection
             label="When"
-            value={getDateDisplay()}
             isActive={activeTab === "when"}
-            onClick={() => setActiveTab("when")}
-            sticky={sticky}
+            onClick={() => setActiveTab(activeTab === "when" ? null : "when")}
+            displayValue={getDateDisplay()}
+            placeholder="Add dates"
             onClear={() => setDate(undefined)}
-            showClear={!!date?.from}>
-            <div className="p-6 bg-white rounded-3xl">
-              <Calendar
-                mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={setDate}
-                numberOfMonths={2}
-                className="rounded-md border-none"
-              />
+            segW={segW}
+            hasValue={!!date?.from}
+            panelAlign="right">
+            <div className="flex flex-row overflow-hidden pl-4">
+              <div className="w-[190px] border-r border-black/5 p-4 flex flex-col gap-5 ">
+                <div className="flex flex-col mt-7 gap-2  px-1"></div>
+                {[
+                  { label: "Today", id: "today" },
+                  { label: "This Week", id: "week" },
+                  { label: "This Month", id: "month" },
+                ].map((btn) => (
+                  <Button
+                    variant={"outline"}
+                    key={btn.id}
+                    onClick={() => handleQuickSelect(btn.id as any)}
+                    className={`w-full text-left items-start  px-4 py-2.5 rounded-xl text-[12px] font-semibold text-[#5a5872] hover:bg-[#6c47ff]/10 
+                    hover:text-[#6c47ff] transition-all duration-200 border border-slate-300 cursor-pointer active:scale-[0.96] h-25 flex flex-col`}>
+                    <span className="text-[18px] font-bold text-black">
+                      {" "}
+                      {btn.label}
+                    </span>
+                    <p>
+                      {btn && btn.id === "week" ? (
+                        <>
+                          {`${formatDate(now, "dd")} - ${formatDate(addDays(now, 7), "dd")}`}
+                        </>
+                      ) : btn.id === "month" ? (
+                        <>
+                          {`${formatDate(startOfMonth(now), "dd")} - ${formatDate(endOfMonth(now), "dd")}`}
+                        </>
+                      ) : (
+                        <>{`${formatDate(now, "dd")} `}</>
+                      )}
+                    </p>
+                  </Button>
+                ))}
+              </div>
+
+              <div className="p-5">
+                <Calendar
+                  mode="range"
+                  defaultMonth={date?.from}
+                  selected={date}
+                  onSelect={setDate}
+                  numberOfMonths={1}
+                  className="rounded-md border-none z-49 bg-white p-4"
+                  classNames={{
+                    range_start:
+                      "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white",
+                    range_end:
+                      "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white",
+                    range_middle:
+                      "aria-selected:bg-blue-100 aria-selected:text-blue-900",
+                    selected:
+                      "bg-blue-400/10! text-white hover:bg-white hover:text-white focus:bg-blue-500 focus:text-white",
+                  }}
+                />
+              </div>
             </div>
-          </SearchSection>
+          </SegmentSection>
 
           <Divider hide={activeTab === "when" || activeTab === "what"} />
 
           {/* WHAT SECTION */}
-          <SearchSection
+          <SegmentSection
             label="What"
-            value={what || "Add category"}
             isActive={activeTab === "what"}
-            onClick={() => setActiveTab("what")}
-            sticky={sticky}
-            isLast
+            onClick={() => setActiveTab(activeTab === "what" ? null : "what")}
+            displayValue={what}
+            placeholder="Add category"
             onClear={() => setWhat("")}
-            showClear={!!what}>
-            <div className="w-[320px] p-3">
-              <p className="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                Browse Categories
-              </p>
-              {["events", "businesses", "deals"].map((item) => (
+            segW={segW}
+            panelAlign="right">
+            <div className="p-2 py-3 min-w-[240px]">
+              {[
+                { id: "events", icon: CalendarIcon },
+                { id: "businesses", icon: Building },
+                { id: "deals", icon: Tag },
+              ].map((item) => (
                 <motion.div
-                  whileHover={{ x: 5 }}
-                  key={item}
+                  key={item.id}
+                  whileHover={{ x: 2 }}
+                  className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors"
                   onClick={() => {
-                    setWhat(item);
-                    setActiveTab(null); // Close on select
-                  }}
-                  className="flex items-center gap-4 rounded-2xl p-3 hover:bg-blue-50/50 cursor-pointer transition-all group">
-                  <div className="rounded-xl bg-gray-100 p-2.5 group-hover:bg-blue-100 transition-colors">
-                    {item === "events" ? (
-                      <CalendarIcon className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
-                    ) : item === "businesses" ? (
-                      <Building className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
-                    ) : (
-                      <Tag className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
-                    )}
+                    setWhat(item.id);
+                    setActiveTab(null);
+                  }}>
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#f5f4f8] group-hover:bg-[#ede8ff] transition-colors">
+                    <item.icon size={18} className="text-[#6c47ff]" />
                   </div>
-                  <span className="font-semibold text-gray-700 capitalize">
-                    {item}
+                  <span className="text-sm font-semibold text-[#0f0e17] capitalize">
+                    {item.id}
                   </span>
                 </motion.div>
               ))}
             </div>
-          </SearchSection>
+          </SegmentSection>
 
           {/* SEARCH BUTTON */}
-          <div className="pl-2">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`flex items-center justify-center gap-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all duration-300 ${
-                activeTab ? "px-8 py-4" : "p-4"
-              }`}>
-              <Search className="h-5 w-5 stroke-[3px]" />
-              <AnimatePresence>
-                {activeTab && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    className="font-bold text-sm tracking-tight overflow-hidden whitespace-nowrap">
-                    Search
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
-          </div>
-        </motion.div>
+          <button
+            onClick={handleSearch}
+            className="flex ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-w-[48px] min-h-[48px] justify-center overflow-hidden shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none">
+            <span className="flex items-center justify-center px-3.5">
+              <Search size={16} strokeWidth={3} />
+            </span>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden block">
+                  Search
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
-function SearchSection({
+// --- SHARED UI COMPONENTS (Consistent with your system) ---
+
+function SegmentSection({
   label,
-  value,
   isActive,
   onClick,
-  children,
-  isLast,
-  sticky,
+  displayValue,
+  placeholder,
   onClear,
-  showClear,
+  children,
+  segW,
+  panelAlign = "left",
 }: any) {
+  const [ripple, setRipple] = useState<{
+    x: number;
+    y: number;
+    id: number;
+  } | null>(null);
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setRipple({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+      id: Date.now(),
+    });
+    onClick();
+  };
+
+  const hasValue = !!displayValue;
+
   return (
     <div className="relative">
       <div
-        onClick={onClick}
-        className={`flex flex-col justify-center rounded-full transition-all duration-300 cursor-pointer ${
-          sticky ? "w-36" : "w-52"
-        } py-3 px-8 ${
+        onClick={handleClick}
+        className={[
+          "esw-seg relative flex flex-col justify-center rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
+          segW,
           isActive
-            ? "bg-white shadow-md scale-[1.02] z-10"
-            : "hover:bg-gray-200/40"
-        }`}>
-        <span className="uppercase tracking-[0.1em] text-[10px] font-bold text-gray-400 mb-0.5">
-          {label}
-        </span>
-        <div className="flex items-center justify-between gap-1 overflow-hidden">
-          <span
-            className={`text-sm font-semibold truncate ${
-              isActive ? "text-blue-600" : "text-gray-700"
-            }`}>
-            {value}
-          </span>
-          {showClear && isActive && (
-            <X
-              className="h-3.5 w-3.5 text-gray-400 hover:text-black shrink-0 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClear();
-              }}
+            ? "esw-active bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
+            : "hover:bg-[#eeecf5]",
+        ].join(" ")}>
+        <AnimatePresence>
+          {ripple && (
+            <motion.span
+              key={ripple.id}
+              className="absolute w-16 h-16 -ml-8 -mt-8 rounded-full bg-[#6c47ff]/[0.15] pointer-events-none"
+              style={{ left: ripple.x, top: ripple.y }}
+              initial={{ scale: 0, opacity: 0.6 }}
+              animate={{ scale: 5, opacity: 0 }}
+              onAnimationComplete={() => setRipple(null)}
             />
           )}
-        </div>
+        </AnimatePresence>
+        <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none">
+          {label}
+        </span>
+        <span
+          className={[
+            "text-[13px] truncate max-w-[140px] leading-snug",
+            hasValue
+              ? "text-[#0f0e17] font-medium"
+              : "font-light italic text-[#9896aa]",
+          ].join(" ")}
+          style={!hasValue ? { fontFamily: "'Fraunces', serif" } : undefined}>
+          {hasValue ? displayValue : placeholder}
+        </span>
+        {hasValue && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear();
+            }}
+            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer">
+            <X size={10} strokeWidth={3} />
+          </button>
+        )}
       </div>
-
       <AnimatePresence>
         {isActive && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 12, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            className={`absolute top-full z-[100] bg-white/95 backdrop-blur-md rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden ${
-              isLast ? "right-0" : "left-1/2 -translate-x-1/2"
-            }`}>
+            className={[
+              "absolute top-[calc(100%+18px)] z-[100] bg-white rounded-[2rem] overflow-hidden",
+              "shadow-[0_20px_60px_rgba(15,14,23,0.13),0_0_0_1.5px_rgba(15,14,23,0.06)]",
+              panelAlign === "right" ? "right-0" : "left-1/2 -translate-x-1/2",
+            ].join(" ")}
+            initial={{ opacity: 0, y: 12, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}>
             {children}
           </motion.div>
         )}
@@ -256,9 +379,10 @@ function SearchSection({
 function Divider({ hide }: { hide: boolean }) {
   return (
     <div
-      className={`h-10 w-[1px] bg-gray-200 self-center transition-opacity duration-300 ${
-        hide ? "opacity-0" : "opacity-100"
-      }`}
+      className={[
+        "w-px h-7 bg-black/10 mx-0.5 shrink-0 rounded-full transition-opacity duration-200",
+        hide ? "opacity-0" : "opacity-100",
+      ].join(" ")}
     />
   );
 }
