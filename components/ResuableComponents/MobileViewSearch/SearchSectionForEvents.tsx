@@ -442,31 +442,31 @@ export function CalendarSegment({
       <AnimatePresence>
         {isActive && (
           <motion.div
-            className="mt-2 md:mt-0 md:absolute md:top-[calc(100%+18px)] md:right-0 z-[60] bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden w-full md:w-auto md:shadow-xl border md:border-black/5"
+            className="mt-2 md:mt-0 md:absolute md:top-[calc(100%+18px)] md:right-0 z-[60] bg-white rounded-sm w-[91vw] md:rounded-[2rem] 
+            overflow-hidden  md:w-auto md:shadow-xl border md:border-black/5"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}>
             <div className="flex flex-col md:flex-row">
-              {/* Quick Select Sidebar */}
-              <div className="w-full md:w-[140px] border-b md:border-b-0 md:border-r border-black/5 p-3 flex flex-row md:flex-col gap-2 overflow-x-auto">
+              <div className="w-full md:w-[140px] border-b mt-1 md:border-b-0 md:border-r border-black/5 p-3 flex flex-row md:flex-col gap-2 overflow-x-auto">
                 {["today", "week", "month"].map((id) => (
                   <Button
                     key={id}
                     variant="ghost"
                     onClick={() => handleQuickSelect(id as any)}
-                    className="flex-1 md:w-full justify-start text-xs font-bold capitalize hover:bg-[#f5f4f8]">
+                    className="flex-1 md:w-full border-gray-200! rounded-sm! text-xs font-bold capitalize text-center justify-center btn-wha-outline hover:bg-[#f5f4f8]">
                     {id}
                   </Button>
                 ))}
               </div>
 
-              <div className="p-2 md:p-4 flex justify-center bg-white">
+              <div className="p-2 pt-0 md:p-4 flex justify-center bg-white">
                 <Calendar
                   mode="range"
                   selected={date}
                   onSelect={setDate}
                   numberOfMonths={1}
-                  className="rounded-md bg-white w-full"
+                  className="rounded-sm bg-white w-full"
                 />
               </div>
             </div>
