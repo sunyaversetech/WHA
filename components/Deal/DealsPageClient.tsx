@@ -16,6 +16,7 @@ import {
 import { Button } from "../ui/button";
 import { useSearchParams } from "next/navigation";
 import { Separator } from "../ui/separator";
+import MobileDealsSearchWithDates from "../ResuableComponents/MobileViewSearch/SearchSectionForDeals";
 
 export default function DealsPageClient() {
   const { data: deals, isLoading } = useGetAllDeals();
@@ -28,7 +29,14 @@ export default function DealsPageClient() {
 
   return (
     <div className="min-h-screen bg-gradient-modern relative -mt-2 max-xl:px-6">
-      <DealsSearchWithDates />
+      <div className="flex-none h-32 max-sm:h-fit  -mt-1 border-b flex items-center justify-center">
+        <div className="w-full max-sm:hidden">
+          <DealsSearchWithDates />
+        </div>
+        <div className="w-full hidden max-sm:block">
+          <MobileDealsSearchWithDates />
+        </div>
+      </div>
       <Separator />
       <div className="relative z-10">
         <div className="container-modern  md:py-6">

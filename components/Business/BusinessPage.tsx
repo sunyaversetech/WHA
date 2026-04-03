@@ -69,7 +69,7 @@ export default function BusinessesClientPage() {
         </div>
       </div>
 
-      <div className="flex-none px-6 py-4 flex justify-between items-center   ">
+      <div className="flex-none px-6 py-4 flex max-sm:flex-col gap-2 justify-between items-center   ">
         <div className="text-sm font-medium text-slate-500 pl-5">
           {data.length} businesses in {selectedCity || "Australia"}
         </div>

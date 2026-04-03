@@ -35,7 +35,11 @@ const FontImport = () => (
   `}</style>
 );
 
-export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
+export default function MobileDealsSearchWithDates({
+  sticky,
+}: {
+  sticky?: boolean;
+}) {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const [open, setOpen] = useState(false);
   const searchParams = useSearchParams();
