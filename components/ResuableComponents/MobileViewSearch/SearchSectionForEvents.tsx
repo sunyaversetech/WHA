@@ -157,7 +157,7 @@ export default function MobileEventSearchWithDates({
                       setInputValue("");
                     }}
                     className="opacity-50 hover:opacity-100">
-                    <X size={14} />
+                    <X size={15} />
                   </button>
                 )}
               </div>
@@ -171,14 +171,14 @@ export default function MobileEventSearchWithDates({
               placeholder="Select destination"
               onClear={() => setLocation("")}
               segW={segW}>
-              <div className="p-2 py-3 w-full md:min-w-[300px] ">
+              <div className="p-2 py-3 -mt-1 w-full md:min-w-[300px]">
                 {[
                   { city: "sydney", country: "Australia", emoji: "🌉" },
                   { city: "canberra", country: "Australia", emoji: "🏛️" },
                 ].map(({ city, country, emoji }) => (
                   <div
                     key={city}
-                    className="flex items-center gap-3.5 rounded-2xl w-[87vw] px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8]"
+                    className="flex items-center gap-3.5 rounded-2xl w-[90vw] px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8]"
                     onClick={() => {
                       setLocation(city);
                       setActiveTab("when");
@@ -325,8 +325,8 @@ function SegmentSection({
               e.stopPropagation();
               onClear();
             }}
-            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all duration-150 z-20 border-none bg-transparent cursor-pointer">
-            <X size={10} strokeWidth={3} />
+            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-4 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all duration-150 z-20 border-none bg-transparent cursor-pointer">
+            <X size={14} strokeWidth={3} />
           </button>
         )}
       </div>
@@ -335,7 +335,7 @@ function SegmentSection({
         {isActive && (
           <motion.div
             className={[
-              "absolute top-[calc(100%+18px)] z-49 bg-white rounded-[2rem] overflow-hidden",
+              "absolute top-[calc(100%+11px)] z-49 bg-white rounded-md overflow-hidden",
               "shadow-[0_20px_60px_rgba(15,14,23,0.13),0_0_0_1.5px_rgba(15,14,23,0.06)]",
               panelAlign === "right" ? "right-0" : "left-1/2 -translate-x-1/2",
             ].join(" ")}
@@ -433,8 +433,8 @@ export function CalendarSegment({
               e.stopPropagation();
               onClear();
             }}
-            className="absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full hover:bg-black/10 transition-all">
-            <X size={10} strokeWidth={3} />
+            className="absolute top-1/2 -translate-y-1/2 right-4 flex items-center justify-center w-[18px] h-[18px] rounded-full hover:bg-black/10 transition-all">
+            <X size={14} strokeWidth={3} />
           </button>
         )}
       </div>
