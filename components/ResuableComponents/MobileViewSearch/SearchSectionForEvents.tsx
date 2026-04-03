@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, X, CalendarDays, ChevronRight, Clock } from "lucide-react";
+import {
+  Search,
+  X,
+  CalendarDays,
+  ChevronRight,
+  Clock,
+  SearchIcon,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   addDays,
@@ -22,6 +29,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
 
 type SearchState = "where" | "when" | "search" | null;
 
@@ -141,14 +149,15 @@ export default function MobileEventSearchWithDates({
               <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
                 Search Events
               </span>
-              <div className="flex items-center gap-1.5">
-                <input
+              <div className="flex items-center gap-1.5 border p-1 rounded-sm">
+                <SearchIcon size={15} />
+                <Input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   placeholder="Concerts, markets…"
-                  className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0"
+                  className="esw-placeholder flex-1 min-w-0 bg-transparent shadow-none border-none focus:outline-none  focus-visible:ring-0 outline-none text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0"
                 />
                 {inputValue && (
                   <button

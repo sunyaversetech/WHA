@@ -18,7 +18,6 @@ export default function AuthPage() {
 
   return (
     <div className="flex w-full bg-gray-50  ">
-      {/* LEFT SIDE */}
       <div className=" flex w-full  items-center justify-center p-4 md:p-6 overflow-y-auto">
         <Card className="w-full max-w-md shadow-lg border-none bg-white flex flex-col">
           <CardHeader className="text-center pb-4">
@@ -33,8 +32,7 @@ export default function AuthPage() {
           <CardContent className="flex-1">
             <Tabs
               defaultValue={params.get("tab") === "signup" ? "signup" : "login"}
-              className="flex flex-col"
-            >
+              className="flex flex-col">
               <TabsList className="grid w-full grid-cols-2 rounded-full bg-gray-100 mb-4">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
