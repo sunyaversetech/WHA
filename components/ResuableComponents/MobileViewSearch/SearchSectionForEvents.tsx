@@ -129,7 +129,7 @@ export default function MobileEventSearchWithDates({
         </DrawerHeader>
         <FontImport />
         <div
-          className="esw-root flex w-full md:w-fit items-center    px-4 md:px-0"
+          className="esw-root flex w-full md:w-fit items-center  overflow-y-scroll  px-4 md:px-0"
           ref={containerRef}>
           <div
             className={[
@@ -207,41 +207,14 @@ export default function MobileEventSearchWithDates({
               </div>
             </SegmentSection>
 
-            {/* <Divider hide={activeTab === "when" || activeTab === "where"} /> */}
-            <SegmentSection
-              label="When"
+            <CalendarSegment
+              date={date}
+              setDate={setDate}
               isActive={activeTab === "when"}
               onClick={() => setActiveTab("when")}
-              displayValue={getDateDisplay()}
-              placeholder="Add dates"
               onClear={() => setDate(undefined)}
-              segW={segW}
-              panelAlign="right">
-              <div className="flex flex-col md:flex-row overflow-y-auto max-h-[70vh] md:max-h-none">
-                <div className="w-full md:w-[180px] border-b md:border-b-0 md:border-r border-black/5 p-4 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-x-visible">
-                  {["today", "week", "month"].map((id) => (
-                    <Button
-                      key={id}
-                      variant="outline"
-                      onClick={() => handleQuickSelect(id as any)}
-                      className="flex-1 md:w-full flex-col items-start h-auto py-2 px-3 rounded-xl min-w-[100px]">
-                      <span className="font-bold text-black capitalize">
-                        {id}
-                      </span>
-                    </Button>
-                  ))}
-                </div>
-                <div className="p-2 md:p-5 flex justify-center">
-                  <Calendar
-                    mode="range"
-                    selected={date}
-                    onSelect={setDate}
-                    numberOfMonths={1}
-                    className="bg-white"
-                  />
-                </div>
-              </div>
-            </SegmentSection>
+              segW="w-full"
+            />
 
             <button
               onClick={() => {
@@ -389,13 +362,130 @@ function SegmentSection({
   );
 }
 
-function Divider({ hide }: { hide: boolean }) {
+interface CalendarSegmentProps {
+  date: DateRange | undefined;
+  setDate: (date: DateRange | undefined) => void;
+  isActive: boolean;
+  onClick: () => void;
+  onClear: () => void;
+  segW: string;
+}
+
+export function CalendarSegment({
+  date,
+  setDate,
+  isActive,
+  onClick,
+  onClear,
+  segW,
+}: CalendarSegmentProps) {
+  const [ripple, setRipple] = useState<{
+    x: number;
+    y: number;
+    id: number;
+  } | null>(null);
+
+  const getDateDisplay = () => {
+    if (date?.from) {
+      if (date.to)
+        return `${format(date.from, "MMM d")} – ${format(date.to, "MMM d")}`;
+      return format(date.from, "MMM d");
+    }
+    return "Add dates";
+  };
+
+  const handleQuickSelect = (type: "today" | "week" | "month") => {
+    const now = new Date();
+    if (type === "today") setDate({ from: now, to: now });
+    else if (type === "week") setDate({ from: now, to: addDays(now, 7) });
+    else if (type === "month")
+      setDate({ from: startOfMonth(now), to: endOfMonth(now) });
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setRipple({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+      id: Date.now(),
+    });
+    onClick();
+  };
+
+  const hasValue = !!date?.from;
+
   return (
-    <div
-      className={[
-        "w-px h-7 bg-black/10 mx-0.5 shrink-0 rounded-full transition-opacity duration-200",
-        hide ? "opacity-0" : "opacity-100",
-      ].join(" ")}
-    />
+    <div className="relative w-full md:w-auto">
+      <div
+        onClick={handleClick}
+        className={[
+          "esw-seg relative flex flex-col justify-center rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
+          segW,
+          isActive
+            ? "bg-white shadow-md scale-[1.02] z-10"
+            : "hover:bg-[#eeecf5]",
+        ].join(" ")}>
+        <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none">
+          When
+        </span>
+        <span
+          className={[
+            "text-[13px] truncate leading-snug",
+            hasValue
+              ? "text-[#0f0e17] font-medium"
+              : "font-light italic text-[#9896aa]",
+          ].join(" ")}>
+          {getDateDisplay()}
+        </span>
+
+        {hasValue && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear();
+            }}
+            className="absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full hover:bg-black/10 transition-all">
+            <X size={10} strokeWidth={3} />
+          </button>
+        )}
+      </div>
+
+      {/* THE CALENDAR PANEL */}
+      <AnimatePresence>
+        {isActive && (
+          <motion.div
+            className="mt-2 md:mt-0 md:absolute md:top-[calc(100%+18px)] md:right-0 z-[60] bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden w-full md:w-auto md:shadow-xl border md:border-black/5"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}>
+            <div className="flex flex-col md:flex-row">
+              {/* Quick Select Sidebar */}
+              <div className="w-full md:w-[140px] border-b md:border-b-0 md:border-r border-black/5 p-3 flex flex-row md:flex-col gap-2 overflow-x-auto">
+                {["today", "week", "month"].map((id) => (
+                  <Button
+                    key={id}
+                    variant="ghost"
+                    onClick={() => handleQuickSelect(id as any)}
+                    className="flex-1 md:w-full justify-start text-xs font-bold capitalize hover:bg-[#f5f4f8]">
+                    {id}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Actual Calendar */}
+              <div className="p-2 md:p-4 flex justify-center bg-white">
+                <Calendar
+                  mode="range"
+                  selected={date}
+                  onSelect={setDate}
+                  numberOfMonths={1}
+                  className="rounded-md"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
