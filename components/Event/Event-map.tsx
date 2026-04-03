@@ -100,23 +100,30 @@ export default function EventMap({
   );
 
   return (
-    <div className="h-full w-full relative z-0 ">
+    <div className="h-full w-full relative z-0">
       <button
         onClick={onToggleExpand}
-        className="absolute top-4 right-4 z-[1000] p-3 bg-white rounded-xl shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-sm:hidden"
-        title={isExpanded ? "Exit Fullscreen" : "Expand Map"}>
+        className="absolute top-6 right-6 z-[1000] p-3 bg-white rounded-full shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-md:hidden"
+        title={isExpanded ? "Exit Fullscreen" : "Expand Map"}
+      >
         {isExpanded ? (
-          <Minimize2 className="h-5 w-5 text-[#6c47ff]" />
+          <Minimize2 className="h-5 w-5 text-primary" />
         ) : (
-          <Maximize2 className="h-5 w-5 text-[#6c47ff]" />
+          <Maximize2 className="h-5 w-5 text-primary" />
         )}
       </button>
+
+      <button className="absolute bottom-22 right-6 z-[1000] p-3 bg-white rounded-full shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-md:hidden">
+        <Navigation className="h-5 w-5 text-primary" />
+      </button>
+
       <MapContainer
         center={WIDE_VIEW}
         zoom={WIDE_ZOOM}
         zoomControl={false}
-        className="h-full w-full rounded-xl"
-        style={{ height: "100%", width: "100%", position: "absolute" }}>
+        className="h-full w-full rounded-xl "
+        style={{ height: "100%", width: "100%", position: "absolute" }}
+      >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
@@ -134,24 +141,24 @@ export default function EventMap({
           return (
             <Marker
               key={business._id}
-              position={[
-                Number(business.latitude),
-                Number(business.longitude),
-              ]}>
+              position={[Number(business.latitude), Number(business.longitude)]}
+            >
               <Popup>
                 <div className="p-2 ">
                   <h4 className="font-bold">{business.title}</h4>
                   <div className="flex gap-4">
                     <Link
                       href={`/events/${slug}`}
-                      className="text-[#6c47ff] text-xs font-bold underline">
+                      className="text-[#6c47ff] text-xs font-bold underline"
+                    >
                       View Event
                     </Link>
                     <Link
                       href={`https://www.google.com/maps/?q=${business.latitude},${business.longitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#6c47ff] text-xs font-bold underline flex">
+                      className="text-[#6c47ff] text-xs font-bold underline flex"
+                    >
                       Get Direction <ExternalLink size={15} />
                     </Link>
                   </div>

@@ -40,7 +40,7 @@ import { cn } from "@/lib/utils";
 // )
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-full font-semibold leading-5 transition-all duration-300 ease-in-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0 [&_svg]:pointer-events-none outline-none",
+  "inline-flex gap-1 items-center justify-center whitespace-nowrap rounded-full font-semibold leading-5 transition-all duration-300 ease-in-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0 [&_svg]:pointer-events-none outline-none",
   {
     variants: {
       variant: {
@@ -54,7 +54,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-10 px-5 text-md ",
-        sm: "h-9 px-4 text-sm",
+        sm: "h-7 px-2 text-sm md:h-9 md:px-4",
         lg: "h-12 px-6 text-lg",
         icon: "h-10 w-10",
       },

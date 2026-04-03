@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { Filter, Globe, MapIcon, MapPin } from "lucide-react";
+import { Filter, Globe, MapIcon, MapPin, SlidersVertical } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import EventHeader from "./EventFilter";
 import {
@@ -69,27 +69,25 @@ export default function EventsPageClient() {
   return (
     <div className="flex flex-col h-screen overflow-hidden ">
       <>
-        <div className="flex-none h-32 max-sm:h-fit  -mt-1 border-b flex items-center justify-center">
-          <div className="w-full max-sm:hidden">
+        <div className="flex-none h-22 max-md:h-fit  -mt-1 border-b pb-1 flex items-center justify-center">
+          <div className="w-full max-md:hidden">
             <EventSearchWithDates />
           </div>
-          <div className="w-full hidden max-sm:block">
+          <div className="w-full hidden max-md:block">
             <MobileEventSearchWithDates />
           </div>
         </div>
-        <div className="flex-none px-6 py-4 flex justify-between items-center  max-sm:flex-col max-sm:gap-2">
-          <div className="text-sm font-medium text-slate-500 pl-5 capitalize">
-            {apiResponse?.data.length} results in{" "}
-            {searchParams.get("city") ?? "All "} City
+        <div className="flex-none px-6 py-4 flex justify-between items-center ">
+          <div className="text-sm font-medium text-slate-500 ">
+            {apiResponse?.data.length} events in{" "}
+            {searchParams.get("city") ?? "australia "}
           </div>
           <div className="flex gap-2">
             <Dialog>
               <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 rounded-full! btn-wha-outline h-12 mr-2 ">
-                  <Filter className="h-4 w-4" />
-                  Filter
+                <Button variant="outline" size="sm">
+                  <SlidersVertical className="h-4 w-4" />
+                  Filters
                 </Button>
               </DialogTrigger>
 
@@ -100,13 +98,15 @@ export default function EventsPageClient() {
 
                 <Tabs
                   defaultValue="categories"
-                  className="w-full overflow-scroll no-scrollbar rounded-lg border bg-white ">
+                  className="w-full overflow-scroll no-scrollbar rounded-lg border bg-white "
+                >
                   <TabsList className="w-full border-none ">
                     <TabsTrigger
                       value="categories"
                       className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
 
-                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!">
+                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!"
+                    >
                       Categories
                     </TabsTrigger>
 
@@ -114,7 +114,8 @@ export default function EventsPageClient() {
                       className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
 
                     data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!"
-                      value="communities">
+                      value="communities"
+                    >
                       Communities
                     </TabsTrigger>
                   </TabsList>
@@ -125,7 +126,8 @@ export default function EventsPageClient() {
 
                   <TabsContent
                     value="communities"
-                    className="flex flex-wrap gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
+                    className="flex flex-wrap gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth"
+                  >
                     <div className="flex gap-2 justify-center items-center m-auto">
                       {COMMUNITIES.map((com) => {
                         const Icon = com.icon;
@@ -148,14 +150,15 @@ export default function EventsPageClient() {
                               isActive
                                 ? "bg-primary border-primary text-white"
                                 : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                            }`}>
+                            }`}
+                          >
                             <Icon
-                              className={`h-4 w-4 sm:h-5 sm:w-5 mb-1 ${
+                              className={`h-4 w-4 md:h-5 md:w-5 mb-1 ${
                                 isActive ? "text-white" : "text-slate-500"
                               }`}
                             />
 
-                            <span className="text-[9px] sm:text-[10px] uppercase font-bold whitespace-nowrap text-center">
+                            <span className="text-[9px] md:text-[10px] uppercase font-bold whitespace-nowrap text-center">
                               {com.name}
                             </span>
                           </Button>
@@ -168,26 +171,36 @@ export default function EventsPageClient() {
             </Dialog>
             {!isMapExpanded && (
               <Button
+                variant="outline"
                 onClick={() => setShowMap(!showMap)}
-                className="flex items-center gap-2  btn-wha-outline h-12 mr-2 rounded-full! max-sm:hidden">
-                <MapIcon /> {showMap ? "Hide Map" : "Show Map"}
+                className=" max-md:hidden"
+                size="sm"
+              >
+                <MapIcon className="h-4 w-4" />{" "}
+                {showMap ? "Hide map" : "Show map"}
               </Button>
             )}
             <Button
+              variant="outline"
               onClick={() => setIsMapExpanded(!isMapExpanded)}
-              className="hidden   items-center gap-2btn-wha-outline h-12 mr-2  max-sm:flex rounded-full!">
-              <MapIcon /> {isMapExpanded ? "Hide Map" : "Show Map"}
+              className="hidden   max-md:flex"
+              size="sm"
+            >
+              <MapIcon className="h-4 w-4" />{" "}
+              {isMapExpanded ? "Hide map" : "Show map"}
             </Button>
           </div>
         </div>
       </>
 
-      <div className="flex flex-1 overflow-hidden relative pl-5">
+      <div className="flex md:gap-4 gap-0 flex-1 overflow-hidden relative px-5 h-[calc(100vh-80px)]">
         {!isMapExpanded && (
           <div
-            className={`transition-all duration-300 overflow-y-auto px-4 pb-6 no-scrollbar ${showMap ? "w-full lg:w-[55%]" : "w-full"}`}>
+            className={`transition-all duration-300 overflow-y-auto pb-6 no-scrollbar h-full ${showMap ? "w-full lg:w-[55%]" : "w-full"}`}
+          >
             <div
-              className={`grid gap-6 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
+              className={`grid gap-6 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}
+            >
               {apiResponse?.data.map((event: any) => (
                 <EventCard key={event._id} event={event} />
               ))}
@@ -196,13 +209,14 @@ export default function EventsPageClient() {
         )}
 
         <div
-          className={`transition-all duration-500 pr-7.5 max-sm:hidden ${
+          className={`transition-all duration-500  max-md:hidden h-full ${
             isMapExpanded
               ? "w-full"
               : showMap
                 ? "w-[45%]"
                 : "w-0 border-none opacity-0"
-          }`}>
+          }`}
+        >
           <EventMap
             businesses={data}
             currentCity={searchParams.get("city") || ""}
@@ -213,9 +227,10 @@ export default function EventsPageClient() {
         </div>
 
         <div
-          className={`transition-all flex md:hidden duration-500 pr-7.5  ${
+          className={`transition-all flex md:hidden duration-500 ${
             isMapExpanded ? "w-full" : ""
-          }`}>
+          }`}
+        >
           <EventMap
             businesses={data}
             currentCity={searchParams.get("city") || ""}
