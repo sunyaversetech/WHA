@@ -128,6 +128,7 @@ function Calendar({
           "text-muted-foreground opacity-50",
           defaultClassNames.disabled,
         ),
+        selected: cn("bg-blue-950/10", defaultClassNames.selected),
         hidden: cn("invisible", defaultClassNames.hidden),
         ...classNames,
       }}
@@ -214,7 +215,7 @@ function CalendarDayButton({
 
         "data-[range-end=true]:bg-[#051e3a] data-[range-end=true]:text-white data-[range-end=true]:rounded-full data-[range-end=true]:shadow-[0_4px_16px_rgba(5,30,58,0.35)]",
 
-        `data-[range-middle=true]:bg-transparent data-[range-middle=true]:text-[#3d2ea8] data-[range-middle=true]:rounded-full 
+        `data-[range-middle=true]:bg-transparent data-[range-middle=true]:text-[#4831e0] data-[range-middle=true]:rounded-full 
         data-[range-middle=true]:font-medium`,
 
         // ── focus ring ──

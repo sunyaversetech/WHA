@@ -154,7 +154,6 @@ export default function BusinessSearchWithDates({
               ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
               : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
           ].join(" ")}>
-          {/* SEARCH INPUT */}
           <div
             onClick={() => setActiveTab("search")}
             className={[
@@ -196,7 +195,6 @@ export default function BusinessSearchWithDates({
 
           <Divider hide={activeTab === "where" || activeTab === "search"} />
 
-          {/* WHERE SEGMENT */}
           <SegmentSection
             label="Where"
             isActive={activeTab === "where"}
@@ -240,7 +238,6 @@ export default function BusinessSearchWithDates({
 
           <Divider hide={activeTab === "cat" || activeTab === "where"} />
 
-          {/* CATEGORY SEGMENT */}
           <SegmentSection
             label="Category"
             isActive={activeTab === "cat"}
@@ -278,7 +275,6 @@ export default function BusinessSearchWithDates({
             </div>
           </SegmentSection>
 
-          {/* SEARCH BUTTON */}
           <button
             onClick={handleSearch}
             className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center overflow-hidden shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none w-full md:w-auto md:min-w-[48px]">

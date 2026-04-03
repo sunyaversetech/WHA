@@ -60,7 +60,7 @@ export default function BusinessesClientPage() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <div className="flex-none h-32 max-sm:h-fit  -mt-1 border-b flex items-center justify-center">
+      <div className="flex-none h-32 max-sm:h-fit -mt-1 border-b flex items-center justify-center">
         <div className="w-full max-sm:hidden">
           <BusinessSearchWithDates />
         </div>

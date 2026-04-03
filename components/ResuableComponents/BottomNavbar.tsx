@@ -28,7 +28,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 z-[9999] w-full">
+    <nav className="md:hidden fixed bottom-0 z-[99] w-full">
       <div
         className="flex items-center justify-between p-2  
       bg-white/60 backdrop-blur-2xl

@@ -247,8 +247,6 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
   );
 }
 
-// --- SHARED UI COMPONENTS ---
-
 function SegmentSection({
   label,
   isActive,

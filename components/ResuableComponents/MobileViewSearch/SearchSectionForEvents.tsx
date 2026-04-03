@@ -114,32 +114,25 @@ export default function MobileEventSearchWithDates({
           <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
             Search Events
           </span>
-          <div className="flex items-center gap-1.5">
-            <span className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0">
-              Concerts, markets…
-            </span>
-          </div>
         </div>
       </DrawerTrigger>
-      <DrawerContent className="fixed inset-0 top-0 h-screen max-h-screen flex pb-20 flex-col rounded-none border-none">
+      <DrawerContent className="h-screen bg-white flex  flex-col rounded-none border-none z-999 shadow-none!">
         <DrawerHeader>
           <DrawerTitle>Search Events</DrawerTitle>
         </DrawerHeader>
         <FontImport />
         <div
-          className="esw-root flex w-full md:w-fit   overflow-y-scroll h-full  px-4 md:px-0"
+          className="esw-root flex w-full md:w-fit   overflow-y-scroll h-full gap-5 px-4 md:px-0 no-scrollbar"
           ref={containerRef}>
           <div
             className={[
-              "relative flex flex-col  md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full",
-              isExpanded
-                ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
-                : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
+              "relative flex flex-col  gap-5  md:flex-row items-stretch md:items-center rounded-[1rem] md:rounded-full p-1.5 transition-all duration-300 w-full",
+              isExpanded ? "  " : "bg-white  ",
             ].join(" ")}>
             <div
               onClick={() => setActiveTab("search")}
               className={[
-                "relative flex flex-col justify-center max-sm:w-full rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer transition-all duration-200",
+                "relative flex flex-col justify-center max-sm:w-full rounded-md px-6 py-2.5 bg-slate-100/80 min-h-[60px] cursor-pointer transition-all duration-200",
                 segW,
                 activeTab === "search"
                   ? "bg-white shadow-md scale-[1.02] z-10"
@@ -170,8 +163,6 @@ export default function MobileEventSearchWithDates({
               </div>
             </div>
 
-            {/* <Divider hide={activeTab === "where" || activeTab === "search"} /> */}
-
             <SegmentSection
               label="Where"
               isActive={activeTab === "where"}
@@ -180,14 +171,14 @@ export default function MobileEventSearchWithDates({
               placeholder="Select destination"
               onClear={() => setLocation("")}
               segW={segW}>
-              <div className="p-2 py-3 w-full md:min-w-[300px]">
+              <div className="p-2 py-3 w-full md:min-w-[300px] ">
                 {[
                   { city: "sydney", country: "Australia", emoji: "🌉" },
                   { city: "canberra", country: "Australia", emoji: "🏛️" },
                 ].map(({ city, country, emoji }) => (
                   <div
                     key={city}
-                    className="flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8]"
+                    className="flex items-center gap-3.5 rounded-2xl w-[87vw] px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8]"
                     onClick={() => {
                       setLocation(city);
                       setActiveTab("when");
@@ -213,32 +204,31 @@ export default function MobileEventSearchWithDates({
               onClear={() => setDate(undefined)}
               segW="w-full"
             />
-
-            <button
-              onClick={() => {
-                handleSearch();
-                setActiveTab(null);
-                setOpen(false);
-              }}
-              className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all w-full md:w-auto md:px-2">
-              <Search size={18} className="md:mx-2" />
-              <span className="md:hidden font-bold text-[15px] ml-2">
-                Search Events
-              </span>
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    className="hidden md:block pr-4 font-bold text-[13px] whitespace-nowrap">
-                    Search
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </button>
           </div>
         </div>
+        <button
+          onClick={() => {
+            handleSearch();
+            setActiveTab(null);
+            setOpen(false);
+          }}
+          className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all w-full md:w-auto md:px-2">
+          <Search size={18} className="md:mx-2" />
+          <span className="md:hidden font-bold text-[15px] ml-2">
+            Search Events
+          </span>
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.span
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: "auto" }}
+                exit={{ opacity: 0, width: 0 }}
+                className="hidden md:block pr-4 font-bold text-[13px] whitespace-nowrap">
+                Search
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
       </DrawerContent>
     </Drawer>
   );
@@ -290,7 +280,7 @@ function SegmentSection({
       <div
         onClick={handleClick}
         className={[
-          "esw-seg relative flex flex-col justify-center rounded-full max-sm:w-full px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
+          "esw-seg relative flex flex-col bg-slate-100/80 justify-center rounded-md max-sm:w-full px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
           segW,
           isActive
             ? "esw-active bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
@@ -417,7 +407,7 @@ export function CalendarSegment({
       <div
         onClick={handleClick}
         className={[
-          "esw-seg relative flex flex-col justify-center rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
+          "esw-seg relative flex flex-col bg-slate-100/80 justify-center rounded-md px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
           segW,
           isActive
             ? "bg-white shadow-md scale-[1.02] z-10"
@@ -448,7 +438,6 @@ export function CalendarSegment({
         )}
       </div>
 
-      {/* THE CALENDAR PANEL */}
       <AnimatePresence>
         {isActive && (
           <motion.div
@@ -470,14 +459,13 @@ export function CalendarSegment({
                 ))}
               </div>
 
-              {/* Actual Calendar */}
               <div className="p-2 md:p-4 flex justify-center bg-white">
                 <Calendar
                   mode="range"
                   selected={date}
                   onSelect={setDate}
                   numberOfMonths={1}
-                  className="rounded-md"
+                  className="rounded-md bg-white w-full"
                 />
               </div>
             </div>
