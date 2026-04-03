@@ -10,7 +10,6 @@ import Link from "next/link";
 const WIDE_VIEW: [number, number] = [-34.57, 150.17];
 const WIDE_ZOOM = 7;
 
-// Fix for Leaflet marker icons in Next.js
 if (typeof window !== "undefined") {
   delete (L.Icon.Default.prototype as any)._getIconUrl;
   L.Icon.Default.mergeOptions({
@@ -32,30 +31,52 @@ function MapRefresher({
 }) {
   const map = useMap();
 
+  // 1. Handle Mobile Resize & Drawer Opening
   useEffect(() => {
-    const resizeInterval = setInterval(() => {
-      map.invalidateSize();
-    }, 100);
-    const timer = setTimeout(() => {
-      clearInterval(resizeInterval);
-      map.invalidateSize();
-    }, 600);
-    return () => {
-      clearInterval(resizeInterval);
-      clearTimeout(timer);
-    };
-  }, [isVisible, map, isExpanded]);
+    if (!map) return;
 
+    // Trigger immediate refresh
+    map.invalidateSize();
+
+    // Trigger delayed refresh to catch the end of CSS transitions/drawer animations
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [isVisible, isExpanded, map]);
+
+  // 2. Handle City Flying (with NaN protection)
   useEffect(() => {
-    if (!city || city === "All Cities") {
-      map.flyTo(WIDE_VIEW, WIDE_ZOOM, { duration: 1.5 });
-    } else {
-      const coords =
-        city.toLowerCase() === "sydney"
-          ? [-33.8688, 151.2093]
-          : [-35.2809, 149.13];
-      map.flyTo(coords as [number, number], 12, { duration: 1.5 });
+    if (!map) return;
+
+    let coords: [number, number] = WIDE_VIEW;
+    let zoom = WIDE_ZOOM;
+
+    if (city && city !== "All Cities") {
+      const lowerCity = city.toLowerCase().trim();
+      if (lowerCity === "sydney") {
+        coords = [-33.8688, 151.2093];
+        zoom = 12;
+      } else if (lowerCity === "canberra") {
+        coords = [-35.2809, 149.13];
+        zoom = 12;
+      }
     }
+
+    if (!coords || isNaN(coords[0]) || isNaN(coords[1])) return;
+
+    const timer = setTimeout(() => {
+      try {
+        const center = map.getCenter();
+        if (!center || isNaN(center.lat) || isNaN(center.lng)) {
+          map.invalidateSize();
+        }
+        map.flyTo(coords, zoom, { duration: 1.5 });
+      } catch (e) {}
+    }, 520);
+
+    return () => clearTimeout(timer);
   }, [city, map]);
 
   return null;
@@ -82,7 +103,7 @@ export default function EventMap({
     <div className="h-full w-full relative z-0 ">
       <button
         onClick={onToggleExpand}
-        className="absolute top-4 right-4 z-[1000] p-3 bg-white rounded-xl shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95"
+        className="absolute top-4 right-4 z-[1000] p-3 bg-white rounded-xl shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-sm:hidden"
         title={isExpanded ? "Exit Fullscreen" : "Expand Map"}>
         {isExpanded ? (
           <Minimize2 className="h-5 w-5 text-[#6c47ff]" />
@@ -95,7 +116,7 @@ export default function EventMap({
         zoom={WIDE_ZOOM}
         zoomControl={false}
         className="h-full w-full rounded-xl"
-        style={{ height: "100%", width: "100%" }}>
+        style={{ height: "100%", width: "100%", position: "absolute" }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"

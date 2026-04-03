@@ -96,22 +96,23 @@ export default function EventSearchWithDates({ sticky }: { sticky?: boolean }) {
     <>
       <FontImport />
       <div
-        className="esw-root flex w-fit items-center justify-center m-auto"
+        className="esw-root flex w-full md:w-fit items-center justify-center m-auto px-4 md:px-0"
         ref={containerRef}>
         <div
           className={[
-            "relative flex items-center rounded-full p-1.5 overflow-visible transition-all duration-300",
+            "relative flex flex-col md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full",
             isExpanded
               ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
               : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
           ].join(" ")}>
+          {/* SEARCH SEGMENT */}
           <div
             onClick={() => setActiveTab("search")}
             className={[
               "relative flex flex-col justify-center rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer transition-all duration-200",
-              sticky ? "min-w-[130px]" : "min-w-[200px]",
+              segW,
               activeTab === "search"
-                ? "bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
+                ? "bg-white shadow-md scale-[1.02] z-10"
                 : "hover:bg-[#eeecf5]",
             ].join(" ")}>
             <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
@@ -124,155 +125,110 @@ export default function EventSearchWithDates({ sticky }: { sticky?: boolean }) {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 placeholder="Concerts, markets…"
-                className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none ring-0 text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0 focus:outline-none"
+                className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0"
               />
-              <AnimatePresence>
-                {inputValue && (
-                  <motion.button
-                    key="clr-search"
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.5 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInputValue("");
-                    }}
-                    className="flex items-center justify-center w-5 h-5 shrink-0 rounded-full opacity-50 hover:opacity-100 hover:bg-black/10 transition-all duration-150 border-none bg-transparent cursor-pointer">
-                    <X size={11} strokeWidth={3} />
-                  </motion.button>
-                )}
-              </AnimatePresence>
+              {inputValue && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setInputValue("");
+                  }}
+                  className="opacity-50 hover:opacity-100">
+                  <X size={14} />
+                </button>
+              )}
             </div>
           </div>
 
           <Divider hide={activeTab === "where" || activeTab === "search"} />
 
+          {/* WHERE SEGMENT */}
           <SegmentSection
             label="Where"
             isActive={activeTab === "where"}
-            onClick={() => setActiveTab(activeTab === "where" ? null : "where")}
+            onClick={() => setActiveTab("where")}
             displayValue={location}
             placeholder="Select destination"
             onClear={() => setLocation("")}
             segW={segW}>
-            <div className="p-2 py-3">
+            <div className="p-2 py-3 w-full md:min-w-[300px]">
               {[
                 { city: "sydney", country: "Australia", emoji: "🌉" },
                 { city: "canberra", country: "Australia", emoji: "🏛️" },
               ].map(({ city, country, emoji }) => (
-                <motion.div
+                <div
                   key={city}
-                  whileHover={{ x: 2 }}
-                  className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors duration-150 min-w-[280px]"
+                  className="flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8]"
                   onClick={() => {
                     setLocation(city);
                     setActiveTab("when");
                   }}>
-                  <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#f5f4f8] shrink-0 group-hover:bg-[#ede8ff] transition-colors duration-150">
-                    <span className="text-[18px] leading-none">{emoji}</span>
+                  <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-xl">
+                    {emoji}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#0f0e17] capitalize leading-tight">
-                      {city}
-                    </p>
-                    <p className="text-xs text-[#9896aa] leading-tight mt-0.5">
-                      {country}
-                    </p>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold capitalize">{city}</p>
+                    <p className="text-xs text-gray-500">{country}</p>
                   </div>
-                  <ChevronRight
-                    size={14}
-                    className="text-[#9896aa] group-hover:translate-x-0.5 transition-all"
-                  />
-                </motion.div>
+                  <ChevronRight size={14} className="text-gray-400" />
+                </div>
               ))}
             </div>
           </SegmentSection>
 
           <Divider hide={activeTab === "when" || activeTab === "where"} />
 
+          {/* WHEN SEGMENT */}
           <SegmentSection
             label="When"
             isActive={activeTab === "when"}
-            onClick={() => setActiveTab(activeTab === "when" ? null : "when")}
+            onClick={() => setActiveTab("when")}
             displayValue={getDateDisplay()}
             placeholder="Add dates"
             onClear={() => setDate(undefined)}
             segW={segW}
-            hasValue={!!date?.from}
             panelAlign="right">
-            <div className="flex flex-row overflow-hidden pl-4">
-              <div className="w-[190px] border-r border-black/5 p-4 flex flex-col gap-5 ">
-                <div className="flex flex-col mt-7 gap-2  px-1"></div>
-                {[
-                  { label: "Today", id: "today" },
-                  { label: "This Week", id: "week" },
-                  { label: "This Month", id: "month" },
-                ].map((btn) => (
+            <div className="flex flex-col md:flex-row overflow-y-auto max-h-[70vh] md:max-h-none">
+              <div className="w-full md:w-[180px] border-b md:border-b-0 md:border-r border-black/5 p-4 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-x-visible">
+                {["today", "week", "month"].map((id) => (
                   <Button
-                    variant={"outline"}
-                    key={btn.id}
-                    onClick={() => handleQuickSelect(btn.id as any)}
-                    className={`w-full text-left items-start  px-4 py-2.5 rounded-xl text-[12px] font-semibold text-[#5a5872] hover:bg-[#6c47ff]/10 
-                    hover:text-[#6c47ff] transition-all duration-200 border border-slate-300 cursor-pointer active:scale-[0.96] h-25 flex flex-col`}>
-                    <span className="text-[18px] font-bold text-black">
-                      {" "}
-                      {btn.label}
+                    key={id}
+                    variant="outline"
+                    onClick={() => handleQuickSelect(id as any)}
+                    className="flex-1 md:w-full flex-col items-start h-auto py-2 px-3 rounded-xl min-w-[100px]">
+                    <span className="font-bold text-black capitalize">
+                      {id}
                     </span>
-                    <p>
-                      {btn && btn.id === "week" ? (
-                        <>
-                          {`${formatDate(now, "dd")} - ${formatDate(addDays(now, 7), "dd")}`}
-                        </>
-                      ) : btn.id === "month" ? (
-                        <>
-                          {`${formatDate(startOfMonth(now), "dd")} - ${formatDate(endOfMonth(now), "dd")}`}
-                        </>
-                      ) : (
-                        <>{`${formatDate(now, "dd")} `}</>
-                      )}
-                    </p>
                   </Button>
                 ))}
               </div>
-
-              <div className="p-5">
+              <div className="p-2 md:p-5 flex justify-center">
                 <Calendar
                   mode="range"
-                  defaultMonth={date?.from}
                   selected={date}
                   onSelect={setDate}
                   numberOfMonths={1}
-                  className="rounded-md border-none z-49 bg-white p-4"
-                  classNames={{
-                    range_start:
-                      "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white",
-                    range_end:
-                      "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white",
-                    range_middle:
-                      "aria-selected:bg-blue-100 aria-selected:text-blue-900",
-                    selected:
-                      "bg-blue-400/10! text-white hover:bg-white hover:text-white focus:bg-blue-500 focus:text-white",
-                  }}
+                  className="bg-white"
                 />
               </div>
             </div>
           </SegmentSection>
 
+          {/* SEARCH BUTTON */}
           <button
             onClick={handleSearch}
-            className="flex ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-w-[48px] min-h-[48px] justify-center overflow-hidden 
-            shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all duration-200 cursor-pointer border-none">
-            <span className="flex items-center justify-center px-3.5">
-              <Search size={16} strokeWidth={3} />
+            className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all w-full md:w-auto md:px-2">
+            <Search size={18} className="md:mx-2" />
+            <span className="md:hidden font-bold text-[15px] ml-2">
+              Search Events
             </span>
             <AnimatePresence>
               {isExpanded && (
                 <motion.span
-                  key="search-label"
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: "auto" }}
                   exit={{ opacity: 0, width: 0 }}
-                  className="pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden block">
+                  className="hidden md:block pr-4 font-bold text-[13px] whitespace-nowrap">
                   Search
                 </motion.span>
               )}
@@ -330,7 +286,7 @@ function SegmentSection({
       <div
         onClick={handleClick}
         className={[
-          "esw-seg relative flex flex-col justify-center rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
+          "esw-seg relative flex flex-col justify-center rounded-full max-sm:w-full px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
           segW,
           isActive
             ? "esw-active bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"

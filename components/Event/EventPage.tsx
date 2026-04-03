@@ -17,6 +17,17 @@ import {
 import { Filter, Globe, MapIcon, MapPin } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import EventHeader from "./EventFilter";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "../ui/drawer";
+import MobileEventSearchWithDates from "../ResuableComponents/MobileViewSearch/SearchSectionForEvents";
 
 const COMMUNITIES = [
   { name: "All Community", value: "All", icon: Globe }, // Replace 'Globe' with your preferred icon component
@@ -58,12 +69,18 @@ export default function EventsPageClient() {
   return (
     <div className="flex flex-col h-screen overflow-hidden ">
       <>
-        <div className="flex-none h-32 -mt-1 border-b flex items-center justify-center">
-          <EventSearchWithDates />
+        <div className="flex-none h-32 max-sm:h-fit  -mt-1 border-b flex items-center justify-center">
+          <div className="w-full max-sm:hidden">
+            <EventSearchWithDates />
+          </div>
+          <div className="w-full hidden max-sm:block">
+            <MobileEventSearchWithDates />
+          </div>
         </div>
-        <div className="flex-none px-6 py-4 flex justify-between items-center  ">
-          <div className="text-sm font-medium text-slate-500 pl-5">
-            {apiResponse?.data.length} results in {selectedCity}
+        <div className="flex-none px-6 py-4 flex justify-between items-center  max-sm:flex-col max-sm:gap-2">
+          <div className="text-sm font-medium text-slate-500 pl-5 capitalize">
+            {apiResponse?.data.length} results in{" "}
+            {searchParams.get("city") ?? "All "} City
           </div>
           <div className="flex gap-2">
             <Dialog>
@@ -152,10 +169,15 @@ export default function EventsPageClient() {
             {!isMapExpanded && (
               <Button
                 onClick={() => setShowMap(!showMap)}
-                className="flex items-center gap-2 rounded-md btn-wha-outline h-12 mr-2 rounded-full!">
+                className="flex items-center gap-2  btn-wha-outline h-12 mr-2 rounded-full! max-sm:hidden">
                 <MapIcon /> {showMap ? "Hide Map" : "Show Map"}
               </Button>
             )}
+            <Button
+              onClick={() => setIsMapExpanded(!isMapExpanded)}
+              className="hidden   items-center gap-2btn-wha-outline h-12 mr-2  max-sm:flex rounded-full!">
+              <MapIcon /> {isMapExpanded ? "Hide Map" : "Show Map"}
+            </Button>
           </div>
         </div>
       </>
@@ -174,12 +196,25 @@ export default function EventsPageClient() {
         )}
 
         <div
-          className={`transition-all duration-500 pr-7.5 ${
+          className={`transition-all duration-500 pr-7.5 max-sm:hidden ${
             isMapExpanded
               ? "w-full"
               : showMap
                 ? "w-[45%]"
                 : "w-0 border-none opacity-0"
+          }`}>
+          <EventMap
+            businesses={data}
+            currentCity={searchParams.get("city") || ""}
+            isVisible={showMap}
+            isExpanded={isMapExpanded}
+            onToggleExpand={toggleExpand}
+          />
+        </div>
+
+        <div
+          className={`transition-all flex md:hidden duration-500 pr-7.5  ${
+            isMapExpanded ? "w-full" : ""
           }`}>
           <EventMap
             businesses={data}

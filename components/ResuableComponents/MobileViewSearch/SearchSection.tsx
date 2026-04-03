@@ -1,51 +1,58 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, MapPin, X, ChevronRight } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  Calendar as CalendarIcon,
+  Building,
+  Tag,
+  X,
+  ChevronRight,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  addDays,
-  endOfMonth,
   format,
+  addDays,
   formatDate,
   startOfMonth,
+  endOfMonth,
 } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 
-type SearchState = "where" | "when" | "search" | null;
+type SearchState = "where" | "when" | "what" | null;
 
 // --- STYLING CONSTANTS ---
 const FontImport = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@1,9..144,300&display=swap');
-    .ds-root, .ds-root * { font-family: 'DM Sans', sans-serif; }
-    .ds-placeholder::placeholder {
+    .esw-root, .esw-root * { font-family: 'DM Sans', sans-serif; }
+    .esw-placeholder::placeholder {
       font-family: 'Fraunces', serif;
       font-style: italic;
       font-weight: 300;
       color: #9896aa;
     }
-    .ds-seg:hover .ds-clear-show { opacity: 0.6; }
-    .ds-seg.ds-active .ds-clear-show { opacity: 0.6; }
+    .esw-seg:hover .esw-clear-show { opacity: 0.6; }
+    .esw-seg.esw-active .esw-clear-show { opacity: 0.6; }
   `}</style>
 );
 
-export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
+export default function HomePageSearchWithDates({
+  sticky,
+}: {
+  sticky?: boolean;
+}) {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  const [location, setLocation] = useState(searchParams.get("city") || "");
-  const [inputValue, setInputValue] = useState(
-    searchParams.get("search") || "",
-  );
+  const [location, setLocation] = useState("");
   const [date, setDate] = useState<DateRange | undefined>({
-    from: undefined,
-    to: undefined,
+    from: new Date(),
+    to: addDays(new Date(), 7),
   });
+  const [what, setWhat] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const now = new Date();
 
@@ -58,8 +65,6 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
       setDate({ from: startOfMonth(now), to: endOfMonth(now) });
     }
   };
-
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -84,69 +89,36 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
   };
 
   const handleSearch = () => {
-    const fromStr = date?.from
-      ? `&from=${format(date.from, "yyyy-MM-dd")}`
-      : "";
-    const toStr = date?.to ? `&to=${format(date.to, "yyyy-MM-dd")}` : "";
-    const locStr = location ? `&city=${location}` : "";
-
-    router.push(`/deals?search=${inputValue}${fromStr}${toStr}${locStr}`);
+    console.log("Searching for:", { location, date, what });
     setActiveTab(null);
   };
 
   const isExpanded = activeTab !== null;
-  const segW = sticky ? "w-[130px]" : "w-[190px]";
+  const segW = sticky ? "w-[130px]" : "w-[180px]";
 
   return (
     <>
       <FontImport />
       <div
-        className="ds-root flex w-full md:w-fit items-center justify-center m-auto py-4 md:py-8 max-sm:px-0 max-sm:mt-2 max-sm:w-full px-4 md:px-0"
+        className="esw-root flex w-fit items-center justify-center m-auto py-8"
         ref={containerRef}>
         <div
           className={[
-            "relative flex flex-col md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full md:w-auto",
+            "relative flex items-center rounded-full p-1.5 transition-all duration-300",
             isExpanded
               ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
               : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
           ].join(" ")}>
-          {/* SEARCH INPUT */}
-          <div className="relative w-full md:w-auto">
-            <div
-              onClick={() => setActiveTab("search")}
-              className={[
-                "ds-seg relative flex flex-col justify-center rounded-full px-7 py-2.5 min-h-[60px] cursor-pointer transition-all duration-200",
-                sticky ? "md:w-[130px]" : "md:w-[190px]",
-                activeTab === "search"
-                  ? "bg-white shadow-md scale-[1.02] z-10"
-                  : "hover:bg-[#eeecf5]",
-              ].join(" ")}>
-              <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-0.5 leading-none">
-                Search Deals
-              </span>
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Search local events"
-                className="ds-placeholder w-full bg-transparent border-none outline-none text-[13px] text-[#0f0e17] p-0 font-medium h-5 focus:ring-0"
-              />
-              {/* ... clear button ... */}
-            </div>
-          </div>
-
-          <Divider hide={activeTab === "search" || activeTab === "where"} />
-
-          {/* WHERE SEGMENT */}
+          {/* WHERE SECTION */}
           <SegmentSection
             label="Where"
             isActive={activeTab === "where"}
-            onClick={() => setActiveTab("where")}
+            onClick={() => setActiveTab(activeTab === "where" ? null : "where")}
             displayValue={location}
-            placeholder="Select destinations"
+            placeholder="Search destinations"
             onClear={() => setLocation("")}
             segW={segW}>
-            <div className="p-2 py-3 w-full md:min-w-[300px]">
+            <div className="p-2 py-3 min-w-[280px]">
               {["Sydney", "Canberra"].map((city) => (
                 <motion.div
                   key={city}
@@ -159,13 +131,16 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
                   <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#f5f4f8] group-hover:bg-[#ede8ff] transition-colors">
                     <MapPin size={18} className="text-[#6c47ff]" />
                   </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-semibold text-[#0f0e17] capitalize">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-[#0f0e17]">
                       {city}
                     </p>
                     <p className="text-xs text-[#9896aa]">Australia</p>
                   </div>
-                  <ChevronRight size={14} className="text-[#9896aa]" />
+                  <ChevronRight
+                    size={14}
+                    className="text-[#9896aa] group-hover:translate-x-0.5 transition-all"
+                  />
                 </motion.div>
               ))}
             </div>
@@ -173,7 +148,6 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
 
           <Divider hide={activeTab === "where" || activeTab === "when"} />
 
-          {/* WHEN SEGMENT */}
           <SegmentSection
             label="When"
             isActive={activeTab === "when"}
@@ -182,10 +156,11 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
             placeholder="Add dates"
             onClear={() => setDate(undefined)}
             segW={segW}
+            hasValue={!!date?.from}
             panelAlign="right">
-            <div className="flex flex-col md:flex-row overflow-y-auto md:overflow-hidden max-h-[70vh] md:max-h-none">
-              {/* Quick Select Sidebar */}
-              <div className="w-full md:w-[190px] border-b md:border-b-0 md:border-r border-black/5 p-4 flex flex-row md:flex-col gap-2 md:gap-5 overflow-x-auto md:overflow-x-visible">
+            <div className="flex flex-row overflow-hidden pl-4">
+              <div className="w-[190px] border-r border-black/5 p-4 flex flex-col gap-5 ">
+                <div className="flex flex-col mt-7 gap-2  px-1"></div>
                 {[
                   { label: "Today", id: "today" },
                   { label: "This Week", id: "week" },
@@ -195,39 +170,95 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
                     variant={"outline"}
                     key={btn.id}
                     onClick={() => handleQuickSelect(btn.id as any)}
-                    className="flex-1 md:w-full text-left items-start px-4 py-2 rounded-xl h-auto flex flex-col min-w-[100px]">
-                    <span className="text-[14px] md:text-[18px] font-bold text-black">
+                    className={`w-full text-left items-start  px-4 py-2.5 rounded-xl text-[12px] font-semibold text-[#5a5872] hover:bg-[#6c47ff]/10 
+                    hover:text-[#6c47ff] transition-all duration-200 border border-slate-300 cursor-pointer active:scale-[0.96] h-25 flex flex-col`}>
+                    <span className="text-[18px] font-bold text-black">
+                      {" "}
                       {btn.label}
                     </span>
-                    <p className="text-[10px] hidden md:block">
-                      {/* ... existing date formatting logic ... */}
+                    <p>
+                      {btn && btn.id === "week" ? (
+                        <>
+                          {`${formatDate(now, "dd")} - ${formatDate(addDays(now, 7), "dd")}`}
+                        </>
+                      ) : btn.id === "month" ? (
+                        <>
+                          {`${formatDate(startOfMonth(now), "dd")} - ${formatDate(endOfMonth(now), "dd")}`}
+                        </>
+                      ) : (
+                        <>{`${formatDate(now, "dd")} `}</>
+                      )}
                     </p>
                   </Button>
                 ))}
               </div>
 
-              {/* Calendar Area */}
-              <div className="p-2 md:p-5 flex justify-center">
+              <div className="p-5">
                 <Calendar
                   mode="range"
+                  defaultMonth={date?.from}
                   selected={date}
                   onSelect={setDate}
                   numberOfMonths={1}
-                  className="bg-white"
+                  className="rounded-md border-none z-49 bg-white p-4"
+                  classNames={{
+                    range_start:
+                      "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white",
+                    range_end:
+                      "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white",
+                    range_middle:
+                      "aria-selected:bg-blue-100 aria-selected:text-blue-900",
+                    selected:
+                      "bg-blue-400/10! text-white hover:bg-white hover:text-white focus:bg-blue-500 focus:text-white",
+                  }}
                 />
               </div>
+            </div>
+          </SegmentSection>
+
+          <Divider hide={activeTab === "when" || activeTab === "what"} />
+
+          {/* WHAT SECTION */}
+          <SegmentSection
+            label="What"
+            isActive={activeTab === "what"}
+            onClick={() => setActiveTab(activeTab === "what" ? null : "what")}
+            displayValue={what}
+            placeholder="Add category"
+            onClear={() => setWhat("")}
+            segW={segW}
+            panelAlign="right">
+            <div className="p-2 py-3 min-w-[240px]">
+              {[
+                { id: "events", icon: CalendarIcon },
+                { id: "businesses", icon: Building },
+                { id: "deals", icon: Tag },
+              ].map((item) => (
+                <motion.div
+                  key={item.id}
+                  whileHover={{ x: 2 }}
+                  className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors"
+                  onClick={() => {
+                    setWhat(item.id);
+                    setActiveTab(null);
+                  }}>
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#f5f4f8] group-hover:bg-[#ede8ff] transition-colors">
+                    <item.icon size={18} className="text-[#6c47ff]" />
+                  </div>
+                  <span className="text-sm font-semibold text-[#0f0e17] capitalize">
+                    {item.id}
+                  </span>
+                </motion.div>
+              ))}
             </div>
           </SegmentSection>
 
           {/* SEARCH BUTTON */}
           <button
             onClick={handleSearch}
-            className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none w-full md:w-auto md:min-w-[48px]">
+            className="flex ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-w-[48px] min-h-[48px] justify-center overflow-hidden shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none">
             <span className="flex items-center justify-center px-3.5">
-              <Search size={18} strokeWidth={3} />
-            </span>
-            <span className="md:hidden font-bold text-[15px]">
-              Search Deals
+              <Search size={16} strokeWidth={3} />
             </span>
             <AnimatePresence>
               {isExpanded && (
@@ -235,7 +266,7 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: "auto" }}
                   exit={{ opacity: 0, width: 0 }}
-                  className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden">
+                  className="pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden block">
                   Search
                 </motion.span>
               )}
@@ -247,7 +278,7 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
   );
 }
 
-// --- SHARED UI COMPONENTS ---
+// --- SHARED UI COMPONENTS (Consistent with your system) ---
 
 function SegmentSection({
   label,
@@ -260,18 +291,47 @@ function SegmentSection({
   segW,
   panelAlign = "left",
 }: any) {
+  const [ripple, setRipple] = useState<{
+    x: number;
+    y: number;
+    id: number;
+  } | null>(null);
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setRipple({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+      id: Date.now(),
+    });
+    onClick();
+  };
+
   const hasValue = !!displayValue;
+
   return (
     <div className="relative">
       <div
-        onClick={onClick}
+        onClick={handleClick}
         className={[
-          "ds-seg relative flex flex-col justify-center max-sm:w-full rounded-full px-7 py-2.5 min-h-[60px] cursor-pointer select-none transition-all duration-200",
+          "esw-seg relative flex flex-col justify-center rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
           segW,
           isActive
-            ? "ds-active bg-white shadow-md scale-[1.02] z-10"
+            ? "esw-active bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
             : "hover:bg-[#eeecf5]",
         ].join(" ")}>
+        <AnimatePresence>
+          {ripple && (
+            <motion.span
+              key={ripple.id}
+              className="absolute w-16 h-16 -ml-8 -mt-8 rounded-full bg-[#6c47ff]/[0.15] pointer-events-none"
+              style={{ left: ripple.x, top: ripple.y }}
+              initial={{ scale: 0, opacity: 0.6 }}
+              animate={{ scale: 5, opacity: 0 }}
+              onAnimationComplete={() => setRipple(null)}
+            />
+          )}
+        </AnimatePresence>
         <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none">
           {label}
         </span>
@@ -291,7 +351,7 @@ function SegmentSection({
               e.stopPropagation();
               onClear();
             }}
-            className="ds-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer">
+            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer">
             <X size={10} strokeWidth={3} />
           </button>
         )}
