@@ -116,17 +116,17 @@ export default function MobileEventSearchWithDates({
           </span>
         </div>
       </DrawerTrigger>
-      <DrawerContent className="h-screen bg-white flex  flex-col rounded-none border-none z-999 shadow-none!">
+      <DrawerContent className="h-screen w-full bg-white flex  flex-col rounded-t-4xl! border-none z-999 shadow-none!">
         <DrawerHeader>
           <DrawerTitle>Search Events</DrawerTitle>
         </DrawerHeader>
         <FontImport />
         <div
-          className="esw-root flex w-full md:w-fit   overflow-y-scroll h-full gap-5 px-4 md:px-0 no-scrollbar"
+          className="esw-root flex w-full md:w-fit   overflow-y-scroll h-full gap-2 px-4 md:px-0 no-scrollbar"
           ref={containerRef}>
           <div
             className={[
-              "relative flex flex-col  gap-5  md:flex-row items-stretch md:items-center rounded-[1rem] md:rounded-full p-1.5 transition-all duration-300 w-full",
+              "relative flex flex-col  gap-3  md:flex-row items-stretch md:items-center rounded-[1rem] md:rounded-full p-1.5 transition-all duration-300 w-full",
               isExpanded ? "  " : "bg-white  ",
             ].join(" ")}>
             <div
@@ -212,7 +212,8 @@ export default function MobileEventSearchWithDates({
             setActiveTab(null);
             setOpen(false);
           }}
-          className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all w-full md:w-auto md:px-2">
+          className="flex w-[92vw] mb-4 m-auto mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] 
+          md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all  md:w-auto md:px-2">
           <Search size={18} className="md:mx-2" />
           <span className="md:hidden font-bold text-[15px] ml-2">
             Search Events
@@ -223,7 +224,7 @@ export default function MobileEventSearchWithDates({
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
-                className="hidden md:block pr-4 font-bold text-[13px] whitespace-nowrap">
+                className="hidden md:block pr-4 font-bold text-[13px] whitespace-nowrap ">
                 Search
               </motion.span>
             )}
