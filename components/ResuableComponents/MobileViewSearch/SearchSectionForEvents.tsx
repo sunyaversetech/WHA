@@ -115,15 +115,13 @@ export default function MobileEventSearchWithDates({
             Search Events
           </span>
           <div className="flex items-center gap-1.5">
-            <input
-              type="text"
-              placeholder="Concerts, markets…"
-              className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0"
-            />
+            <span className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0">
+              Concerts, markets…
+            </span>
           </div>
         </div>
       </DrawerTrigger>
-      <DrawerContent className="fixed inset-0 top-0 h-screen max-h-screen flex flex-col rounded-none border-none">
+      <DrawerContent className="fixed inset-0 top-0 h-screen max-h-screen flex pb-20 flex-col rounded-none border-none">
         <DrawerHeader>
           <DrawerTitle>Search Events</DrawerTitle>
         </DrawerHeader>

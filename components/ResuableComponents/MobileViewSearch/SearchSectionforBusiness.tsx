@@ -30,6 +30,13 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { useGetALLBusiness } from "@/services/business.service";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 type SearchState = "where" | "cat" | "search" | null;
 
@@ -75,7 +82,7 @@ export const CATEGORY_ICONS: Record<string, any> = {
   others: MoreHorizontal,
 };
 
-export default function BusinessSearchWithDates({
+export default function MobileBusinessSearchWithDates({
   sticky,
 }: {
   sticky?: boolean;
@@ -83,6 +90,7 @@ export default function BusinessSearchWithDates({
   const [activeTab, setActiveTab] = useState<SearchState>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { data } = useGetALLBusiness();
@@ -142,167 +150,186 @@ export default function BusinessSearchWithDates({
   const segW = sticky ? "w-[130px]" : "w-[180px]";
 
   return (
-    <>
-      <FontImport />
-      <div
-        className="esw-root flex w-full md:w-fit items-center justify-center m-auto py-4 md:py-6 px-4 md:px-0"
-        ref={containerRef}>
+    <Drawer open={open} onOpenChange={setOpen}>
+      <DrawerTrigger className="w-11/12 flex my-2 m-auto">
         <div
-          className={[
-            "relative flex flex-col md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full md:w-auto",
-            isExpanded
-              ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
-              : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
-          ].join(" ")}>
-          {/* SEARCH INPUT */}
-          <div
-            onClick={() => setActiveTab("search")}
-            className={[
-              "relative flex flex-col justify-center rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer transition-all duration-200",
-              sticky ? "md:min-w-[130px]" : "md:min-w-[200px]",
-              activeTab === "search"
-                ? "bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
-                : "hover:bg-[#eeecf5]",
-            ].join(" ")}>
-            <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
-              Search Business
+          onClick={() => setActiveTab("search")}
+          className="flex flex-col bg-white rounded-2xl gap-1.5 cursor-pointer w-full text-center items-center shadow-md py-2.5">
+          <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
+            Search Business
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0">
+              Name, Barber, Cafe, Cleaning, etc..
             </span>
-            <div className="flex items-center gap-1.5">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Name, service..."
-                className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none ring-0 text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0 focus:outline-none"
-              />
+          </div>
+        </div>
+      </DrawerTrigger>
+      <DrawerContent className="fixed inset-0 top-0 h-screen max-h-screen flex pb-10 flex-col rounded-none border-none ">
+        <DrawerHeader>
+          <DrawerTitle>Search Business</DrawerTitle>
+        </DrawerHeader>
+        <FontImport />
+        <div
+          className="esw-root flex w-full md:w-fit items-center justify-center overflow-scroll no-scrollbar m-auto py-4 md:py-6 px-4 md:px-0"
+          ref={containerRef}>
+          <div
+            className={[
+              "relative flex flex-col md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full md:w-auto",
+              isExpanded
+                ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
+                : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
+            ].join(" ")}>
+            {/* SEARCH INPUT */}
+            <div
+              onClick={() => setActiveTab("search")}
+              className={[
+                "relative flex flex-col justify-center rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer transition-all duration-200",
+                sticky ? "md:min-w-[130px]" : "md:min-w-[200px]",
+                activeTab === "search"
+                  ? "bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
+                  : "hover:bg-[#eeecf5]",
+              ].join(" ")}>
+              <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
+                Search Business
+              </span>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  placeholder="Name, service..."
+                  className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none ring-0 text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0 focus:outline-none"
+                />
+                <AnimatePresence>
+                  {inputValue && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInputValue("");
+                      }}
+                      className="flex items-center justify-center w-5 h-5 shrink-0 rounded-full opacity-50 hover:opacity-100 hover:bg-black/10 transition-all border-none bg-transparent cursor-pointer">
+                      <X size={11} strokeWidth={3} />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            <Divider hide={activeTab === "where" || activeTab === "search"} />
+
+            {/* WHERE SEGMENT */}
+            <SegmentSection
+              label="Where"
+              isActive={activeTab === "where"}
+              onClick={() =>
+                setActiveTab(activeTab === "where" ? null : "where")
+              }
+              displayValue={location}
+              placeholder="Select location"
+              onClear={() => setLocation("")}
+              segW={segW}>
+              <div className="p-2 py-3 w-full md:w-auto">
+                {[
+                  { city: "sydney", country: "Australia", emoji: "🌉" },
+                  { city: "canberra", country: "Australia", emoji: "🏛️" },
+                ].map(({ city, country, emoji }) => (
+                  <motion.div
+                    key={city}
+                    whileHover={{ x: 2 }}
+                    className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors duration-150 min-w-full md:min-w-[280px]"
+                    onClick={() => {
+                      setLocation(city);
+                      setActiveTab("cat");
+                    }}>
+                    <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#f5f4f8] shrink-0 group-hover:bg-[#ede8ff] transition-colors duration-150">
+                      <span className="text-[18px] leading-none">{emoji}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#0f0e17] capitalize leading-tight">
+                        {city}
+                      </p>
+                      <p className="text-xs text-[#9896aa] leading-tight mt-0.5">
+                        {country}
+                      </p>
+                    </div>
+                    <ChevronRight
+                      size={14}
+                      className="text-[#9896aa] group-hover:translate-x-0.5 transition-all"
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </SegmentSection>
+
+            <Divider hide={activeTab === "cat" || activeTab === "where"} />
+
+            <SegmentSection
+              label="Category"
+              isActive={activeTab === "cat"}
+              onClick={() => setActiveTab(activeTab === "cat" ? null : "cat")}
+              displayValue={activeCategory === "all" ? "" : activeCategory}
+              placeholder="All Categories"
+              onClear={() => setActiveCategory("all")}
+              segW={segW}
+              panelAlign="center">
+              <div className="p-4 w-[80vw] gap-4 grid grid-cols-3 xs:grid-cols-3   md:w-[340px] max-h-[60vh] md:max-h-[400px] overflow-y-auto">
+                {CATEGORIES.map((cat) => {
+                  const Icon = cat.icon;
+                  const isActive = activeCategory === cat.value;
+                  return (
+                    <button
+                      key={cat.value}
+                      onClick={() => {
+                        setActiveCategory(cat.value);
+                        setActiveTab(null);
+                      }}
+                      className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all border shrink-0 group ${
+                        isActive
+                          ? "bg-[#051e3a] border-[#051e3a] text-white shadow-lg"
+                          : "bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50"
+                      }`}>
+                      <Icon
+                        className={`h-5 w-5 mb-1.5 transition-colors ${isActive ? "text-white" : "text-slate-500 group-hover:text-[#6c47ff]"}`}
+                      />
+                      <span className="text-[10px] uppercase font-bold text-center leading-tight">
+                        {cat.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </SegmentSection>
+
+            <button
+              onClick={handleSearch}
+              className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center overflow-hidden shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none w-full md:w-auto md:min-w-[48px]">
+              <span className="flex items-center justify-center px-3.5">
+                <Search size={18} strokeWidth={3} />
+              </span>
+              <span className="md:hidden font-bold text-[15px]">
+                Search Businesses
+              </span>
               <AnimatePresence>
-                {inputValue && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.5 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInputValue("");
-                    }}
-                    className="flex items-center justify-center w-5 h-5 shrink-0 rounded-full opacity-50 hover:opacity-100 hover:bg-black/10 transition-all border-none bg-transparent cursor-pointer">
-                    <X size={11} strokeWidth={3} />
-                  </motion.button>
+                {isExpanded && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden">
+                    Search
+                  </motion.span>
                 )}
               </AnimatePresence>
-            </div>
+            </button>
           </div>
-
-          <Divider hide={activeTab === "where" || activeTab === "search"} />
-
-          {/* WHERE SEGMENT */}
-          <SegmentSection
-            label="Where"
-            isActive={activeTab === "where"}
-            onClick={() => setActiveTab(activeTab === "where" ? null : "where")}
-            displayValue={location}
-            placeholder="Select location"
-            onClear={() => setLocation("")}
-            segW={segW}>
-            <div className="p-2 py-3 w-full md:w-auto">
-              {[
-                { city: "sydney", country: "Australia", emoji: "🌉" },
-                { city: "canberra", country: "Australia", emoji: "🏛️" },
-              ].map(({ city, country, emoji }) => (
-                <motion.div
-                  key={city}
-                  whileHover={{ x: 2 }}
-                  className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors duration-150 min-w-full md:min-w-[280px]"
-                  onClick={() => {
-                    setLocation(city);
-                    setActiveTab("cat");
-                  }}>
-                  <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#f5f4f8] shrink-0 group-hover:bg-[#ede8ff] transition-colors duration-150">
-                    <span className="text-[18px] leading-none">{emoji}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#0f0e17] capitalize leading-tight">
-                      {city}
-                    </p>
-                    <p className="text-xs text-[#9896aa] leading-tight mt-0.5">
-                      {country}
-                    </p>
-                  </div>
-                  <ChevronRight
-                    size={14}
-                    className="text-[#9896aa] group-hover:translate-x-0.5 transition-all"
-                  />
-                </motion.div>
-              ))}
-            </div>
-          </SegmentSection>
-
-          <Divider hide={activeTab === "cat" || activeTab === "where"} />
-
-          {/* CATEGORY SEGMENT */}
-          <SegmentSection
-            label="Category"
-            isActive={activeTab === "cat"}
-            onClick={() => setActiveTab(activeTab === "cat" ? null : "cat")}
-            displayValue={activeCategory === "all" ? "" : activeCategory}
-            placeholder="All Categories"
-            onClear={() => setActiveCategory("all")}
-            segW={segW}
-            panelAlign="right">
-            <div className="p-4 grid grid-cols-2 xs:grid-cols-3 gap-2 w-full md:w-[340px] max-h-[60vh] md:max-h-[400px] overflow-y-auto">
-              {CATEGORIES.map((cat) => {
-                const Icon = cat.icon;
-                const isActive = activeCategory === cat.value;
-                return (
-                  <button
-                    key={cat.value}
-                    onClick={() => {
-                      setActiveCategory(cat.value);
-                      setActiveTab(null);
-                    }}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all border shrink-0 group ${
-                      isActive
-                        ? "bg-[#051e3a] border-[#051e3a] text-white shadow-lg"
-                        : "bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50"
-                    }`}>
-                    <Icon
-                      className={`h-5 w-5 mb-1.5 transition-colors ${isActive ? "text-white" : "text-slate-500 group-hover:text-[#6c47ff]"}`}
-                    />
-                    <span className="text-[10px] uppercase font-bold text-center leading-tight">
-                      {cat.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </SegmentSection>
-
-          {/* SEARCH BUTTON */}
-          <button
-            onClick={handleSearch}
-            className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center overflow-hidden shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none w-full md:w-auto md:min-w-[48px]">
-            <span className="flex items-center justify-center px-3.5">
-              <Search size={18} strokeWidth={3} />
-            </span>
-            <span className="md:hidden font-bold text-[15px]">
-              Search Businesses
-            </span>
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden">
-                  Search
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
         </div>
-      </div>
-    </>
+      </DrawerContent>
+    </Drawer>
   );
 }
 

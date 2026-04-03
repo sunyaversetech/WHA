@@ -3,17 +3,19 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, MapPin, X, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  addDays,
-  endOfMonth,
-  format,
-  formatDate,
-  startOfMonth,
-} from "date-fns";
+import { addDays, endOfMonth, format, startOfMonth } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CalendarSegment } from "./SearchSectionForEvents";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 type SearchState = "where" | "when" | "search" | null;
 
@@ -35,6 +37,7 @@ const FontImport = () => (
 
 export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
   const [activeTab, setActiveTab] = useState<SearchState>(null);
+  const [open, setOpen] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -92,158 +95,140 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
 
     router.push(`/deals?search=${inputValue}${fromStr}${toStr}${locStr}`);
     setActiveTab(null);
+    setOpen(false);
   };
 
   const isExpanded = activeTab !== null;
   const segW = sticky ? "w-[130px]" : "w-[190px]";
 
   return (
-    <>
-      <FontImport />
-      <div
-        className="ds-root flex w-full md:w-fit items-center justify-center m-auto py-4 md:py-8 max-sm:px-0 max-sm:mt-2 max-sm:w-full px-4 md:px-0"
-        ref={containerRef}>
+    <Drawer open={open} onOpenChange={setOpen}>
+      <DrawerTrigger className="w-11/12 flex my-2 m-auto">
         <div
-          className={[
-            "relative flex flex-col md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full md:w-auto",
-            isExpanded
-              ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
-              : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
-          ].join(" ")}>
-          {/* SEARCH INPUT */}
-          <div className="relative w-full md:w-auto">
-            <div
-              onClick={() => setActiveTab("search")}
-              className={[
-                "ds-seg relative flex flex-col justify-center rounded-full px-7 py-2.5 min-h-[60px] cursor-pointer transition-all duration-200",
-                sticky ? "md:w-[130px]" : "md:w-[190px]",
-                activeTab === "search"
-                  ? "bg-white shadow-md scale-[1.02] z-10"
-                  : "hover:bg-[#eeecf5]",
-              ].join(" ")}>
-              <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-0.5 leading-none">
-                Search Deals
-              </span>
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Search local events"
-                className="ds-placeholder w-full bg-transparent border-none outline-none text-[13px] text-[#0f0e17] p-0 font-medium h-5 focus:ring-0"
-              />
-              {/* ... clear button ... */}
-            </div>
+          onClick={() => setActiveTab("search")}
+          className="flex flex-col bg-white rounded-2xl gap-1.5 cursor-pointer w-full text-center items-center shadow-md py-2.5">
+          <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
+            Search Events
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0">
+              Concerts, markets…
+            </span>
           </div>
-
-          <Divider hide={activeTab === "search" || activeTab === "where"} />
-
-          {/* WHERE SEGMENT */}
-          <SegmentSection
-            label="Where"
-            isActive={activeTab === "where"}
-            onClick={() => setActiveTab("where")}
-            displayValue={location}
-            placeholder="Select destinations"
-            onClear={() => setLocation("")}
-            segW={segW}>
-            <div className="p-2 py-3 w-full md:min-w-[300px]">
-              {["Sydney", "Canberra"].map((city) => (
-                <motion.div
-                  key={city}
-                  whileHover={{ x: 2 }}
-                  className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors"
-                  onClick={() => {
-                    setLocation(city);
-                    setActiveTab("when");
-                  }}>
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#f5f4f8] group-hover:bg-[#ede8ff] transition-colors">
-                    <MapPin size={18} className="text-[#6c47ff]" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-semibold text-[#0f0e17] capitalize">
-                      {city}
-                    </p>
-                    <p className="text-xs text-[#9896aa]">Australia</p>
-                  </div>
-                  <ChevronRight size={14} className="text-[#9896aa]" />
-                </motion.div>
-              ))}
+        </div>
+      </DrawerTrigger>
+      <DrawerContent className="fixed inset-0 top-0 h-screen max-h-screen flex pb-20 flex-col rounded-none border-none">
+        <DrawerHeader>
+          <DrawerTitle>Search Deals</DrawerTitle>
+        </DrawerHeader>
+        <FontImport />
+        <div
+          className="ds-root flex w-full md:w-fit items-center justify-center m-auto py-4 md:py-8 max-sm:px-0 max-sm:mt-2 max-sm:w-full px-4 md:px-0"
+          ref={containerRef}>
+          <div
+            className={[
+              "relative flex flex-col md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full md:w-auto",
+              isExpanded
+                ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
+                : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
+            ].join(" ")}>
+            {/* SEARCH INPUT */}
+            <div className="relative w-full md:w-auto">
+              <div
+                onClick={() => setActiveTab("search")}
+                className={[
+                  "ds-seg relative flex flex-col justify-center rounded-full px-7 py-2.5 min-h-[60px] cursor-pointer transition-all duration-200",
+                  sticky ? "md:w-[130px]" : "md:w-[190px]",
+                  activeTab === "search"
+                    ? "bg-white shadow-md scale-[1.02] z-10"
+                    : "hover:bg-[#eeecf5]",
+                ].join(" ")}>
+                <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-0.5 leading-none">
+                  Search Deals
+                </span>
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Search local events"
+                  className="ds-placeholder w-full bg-transparent border-none outline-none text-[13px] text-[#0f0e17] p-0 font-medium h-5 focus:ring-0"
+                />
+                {/* ... clear button ... */}
+              </div>
             </div>
-          </SegmentSection>
 
-          <Divider hide={activeTab === "where" || activeTab === "when"} />
+            <Divider hide={activeTab === "search" || activeTab === "where"} />
 
-          {/* WHEN SEGMENT */}
-          <SegmentSection
-            label="When"
-            isActive={activeTab === "when"}
-            onClick={() => setActiveTab(activeTab === "when" ? null : "when")}
-            displayValue={getDateDisplay()}
-            placeholder="Add dates"
-            onClear={() => setDate(undefined)}
-            segW={segW}
-            panelAlign="right">
-            <div className="flex flex-col md:flex-row overflow-y-auto md:overflow-hidden max-h-[70vh] md:max-h-none">
-              {/* Quick Select Sidebar */}
-              <div className="w-full md:w-[190px] border-b md:border-b-0 md:border-r border-black/5 p-4 flex flex-row md:flex-col gap-2 md:gap-5 overflow-x-auto md:overflow-x-visible">
-                {[
-                  { label: "Today", id: "today" },
-                  { label: "This Week", id: "week" },
-                  { label: "This Month", id: "month" },
-                ].map((btn) => (
-                  <Button
-                    variant={"outline"}
-                    key={btn.id}
-                    onClick={() => handleQuickSelect(btn.id as any)}
-                    className="flex-1 md:w-full text-left items-start px-4 py-2 rounded-xl h-auto flex flex-col min-w-[100px]">
-                    <span className="text-[14px] md:text-[18px] font-bold text-black">
-                      {btn.label}
-                    </span>
-                    <p className="text-[10px] hidden md:block">
-                      {/* ... existing date formatting logic ... */}
-                    </p>
-                  </Button>
+            {/* WHERE SEGMENT */}
+            <SegmentSection
+              label="Where"
+              isActive={activeTab === "where"}
+              onClick={() => setActiveTab("where")}
+              displayValue={location}
+              placeholder="Select destinations"
+              onClear={() => setLocation("")}
+              segW={segW}>
+              <div className="p-2 py-3 w-full md:min-w-[300px]">
+                {["Sydney", "Canberra"].map((city) => (
+                  <motion.div
+                    key={city}
+                    whileHover={{ x: 2 }}
+                    className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors"
+                    onClick={() => {
+                      setLocation(city);
+                      setActiveTab("when");
+                    }}>
+                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#f5f4f8] group-hover:bg-[#ede8ff] transition-colors">
+                      <MapPin size={18} className="text-[#6c47ff]" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-semibold text-[#0f0e17] capitalize">
+                        {city}
+                      </p>
+                      <p className="text-xs text-[#9896aa]">Australia</p>
+                    </div>
+                    <ChevronRight size={14} className="text-[#9896aa]" />
+                  </motion.div>
                 ))}
               </div>
+            </SegmentSection>
 
-              {/* Calendar Area */}
-              <div className="p-2 md:p-5 flex justify-center">
-                <Calendar
-                  mode="range"
-                  selected={date}
-                  onSelect={setDate}
-                  numberOfMonths={1}
-                  className="bg-white"
-                />
-              </div>
-            </div>
-          </SegmentSection>
+            <Divider hide={activeTab === "where" || activeTab === "when"} />
 
-          {/* SEARCH BUTTON */}
-          <button
-            onClick={handleSearch}
-            className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none w-full md:w-auto md:min-w-[48px]">
-            <span className="flex items-center justify-center px-3.5">
-              <Search size={18} strokeWidth={3} />
-            </span>
-            <span className="md:hidden font-bold text-[15px]">
-              Search Deals
-            </span>
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden">
-                  Search
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
+            <CalendarSegment
+              date={date}
+              setDate={setDate}
+              isActive={activeTab === "when"}
+              onClick={() => setActiveTab("when")}
+              onClear={() => setDate(undefined)}
+              segW="w-full"
+            />
+
+            <button
+              onClick={handleSearch}
+              className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none w-full md:w-auto md:min-w-[48px]">
+              <span className="flex items-center justify-center px-3.5">
+                <Search size={18} strokeWidth={3} />
+              </span>
+              <span className="md:hidden font-bold text-[15px]">
+                Search Deals
+              </span>
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden">
+                    Search
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+          </div>
         </div>
-      </div>
-    </>
+      </DrawerContent>
+    </Drawer>
   );
 }
 

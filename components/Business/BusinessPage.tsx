@@ -20,6 +20,7 @@ import {
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { useCityFilter } from "@/contexts/city-filter-context"; // Assuming you use this same context
+import MobileBusinessSearchWithDates from "../ResuableComponents/MobileViewSearch/SearchSectionforBusiness";
 
 const BusinessMap = dynamic(() => import("./business-map"), { ssr: false });
 
@@ -59,8 +60,13 @@ export default function BusinessesClientPage() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <div className="flex-none border-b z-49">
-        <BusinessSearchWithDates />
+      <div className="flex-none h-32 max-sm:h-fit  -mt-1 border-b flex items-center justify-center">
+        <div className="w-full max-sm:hidden">
+          <BusinessSearchWithDates />
+        </div>
+        <div className="w-full hidden max-sm:block">
+          <MobileBusinessSearchWithDates />
+        </div>
       </div>
 
       <div className="flex-none px-6 py-4 flex justify-between items-center   ">
@@ -149,10 +155,15 @@ export default function BusinessesClientPage() {
           {!isMapExpanded && (
             <Button
               onClick={() => setShowMap(!showMap)}
-              className="flex items-center gap-2 btn-wha-outline h-12 mr-2 rounded-full!">
+              className="flex items-center gap-2  btn-wha-outline h-12 mr-2 rounded-full! max-sm:hidden">
               <MapIcon /> {showMap ? "Hide Map" : "Show Map"}
             </Button>
           )}
+          <Button
+            onClick={() => setIsMapExpanded(!isMapExpanded)}
+            className="hidden   items-center gap-2btn-wha-outline h-12 mr-2  max-sm:flex rounded-full!">
+            <MapIcon /> {isMapExpanded ? "Hide Map" : "Show Map"}
+          </Button>
         </div>
       </div>
 
@@ -182,12 +193,25 @@ export default function BusinessesClientPage() {
         )}
 
         <div
-          className={`transition-all duration-500 pr-7.5  ${
+          className={`transition-all duration-500 pr-7.5 max-sm:hidden ${
             isMapExpanded
               ? "w-full"
               : showMap
                 ? "w-[45%]"
                 : "w-0 border-none opacity-0"
+          }`}>
+          <BusinessMap
+            businesses={data}
+            currentCity={searchParams.get("city") || ""}
+            isVisible={showMap}
+            isExpanded={isMapExpanded}
+            onToggleExpand={toggleExpand}
+          />
+        </div>
+
+        <div
+          className={`transition-all flex md:hidden duration-500 pr-7.5  ${
+            isMapExpanded ? "w-full" : ""
           }`}>
           <BusinessMap
             businesses={data}
