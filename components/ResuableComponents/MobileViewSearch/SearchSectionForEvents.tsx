@@ -164,7 +164,7 @@ export default function MobileEventSearchWithDates({
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   placeholder="Concerts, markets…"
-                  className="esw-placeholder flex-1 min-w-0 bg-transparent shadow-none border-none focus:outline-none  focus-visible:ring-0 outline-none text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0"
+                  className="esw-placeholder flex-1 min-w-0 bg-transparent shadow-none border-none focus:outline-none  focus-visible:ring-0 outline-none text-base font-medium text-[#0f0e17] p-0 focus:ring-0"
                 />
                 {inputValue && (
                   <button
