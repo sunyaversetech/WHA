@@ -129,7 +129,7 @@ export default function MobileEventSearchWithDates({
         </DrawerHeader>
         <FontImport />
         <div
-          className="esw-root flex w-full md:w-fit items-center  overflow-y-scroll  px-4 md:px-0"
+          className="esw-root flex w-full md:w-fit   overflow-y-scroll h-full  px-4 md:px-0"
           ref={containerRef}>
           <div
             className={[
