@@ -1,15 +1,14 @@
 "use client";
 
-import { ChevronLeft, Trash2 } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
+import { ChevronLeft, Home, Briefcase, Plus, Trash2 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 import ProfileAvatar from "../Dashboard/ProfilePic";
+import { Button } from "../ui/button";
 import { DeleteConfirmDialog } from "../ui/DynamicDeleteButton";
 import { useDeleteProfile } from "@/services/Auth/auth.service";
-import { toast } from "sonner";
-import { Button } from "../ui/button";
-import { useRouter } from "next/navigation";
 
 const ProfilePage = ({ userData }: { userData: any }) => {
   const { data: session } = useSession();
@@ -25,260 +24,130 @@ const ProfilePage = ({ userData }: { userData: any }) => {
         },
         onError: (error: any) => {
           toast.error(
-            error.response?.data?.message || "Failed to delete service",
+            error.response?.data?.message || "Failed to delete account",
           );
         },
       },
     );
   };
 
-  return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <Button
-        className="h-5 w-5 mt-7 mr-2"
-        variant="ghost"
-        onClick={() => router.back()}>
-        <ChevronLeft className="h-8 w-8 cursor-pointer rounded-full p-1 -ml-2 text-[#ODODOD] transition-all hover:scale-105 active:scale-95" />
-      </Button>
-      <div className="relative bg-white border rounded-2xl p-8 shadow-sm">
-        <div className="bg-white flex justify-between rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <ProfileAvatar currentImage={session?.user?.image || ""} />
-              </div>
-              <div className="flex-1">
-                <div className="flex  flex-col sm:flex-row sm:items-center gap-2">
-                  <h1 className="text-xl font-bold text-slate-800">
-                    {session?.user?.business_name}
-                  </h1>
+  // Helper for info rows
+  const InfoRow = ({ label, value }: { label: string; value?: string }) => (
+    <div className="py-3 border-b border-gray-50 last:border-0">
+      <p className="text-xs font-semibold text-gray-900 mb-0.5">{label}</p>
+      <p className="text-sm text-gray-500">{value || "-"}</p>
+    </div>
+  );
 
-                  {/* Badges */}
-                  <div className="flex flex-wrap gap-2 mt-1 sm:mt-0">
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] uppercase tracking-tighter">
-                      {session?.user?.category || "Personal Account"}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] uppercase tracking-tighter">
-                      {session?.user?.verified
-                        ? "Verified"
-                        : "Business Not Verified"}
-                    </Badge>
+  return (
+    <div className="min-h-screen bg-gray-50/50 p-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.back()}
+            className="rounded-full h-10 w-10"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+          <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+        </div>
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Personal Info Card */}
+          <div className="lg:col-span-7 xl:col-span-6">
+            <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm relative">
+              <button className="absolute top-6 right-8 text-[#7C3AED] font-semibold text-sm hover:opacity-70 transition-opacity">
+                Edit
+              </button>
+
+              <div className="flex flex-col items-center text-center mb-8">
+                <div className="relative mb-4">
+                  <ProfileAvatar currentImage={session?.user?.image || ""} />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {session?.user?.business_name || "User Name"}
+                </h2>
+              </div>
+
+              <div className="space-y-1">
+                <InfoRow label="Full name" value={session?.user?.name} />
+                <InfoRow label="Email" value={session?.user?.email} />
+
+                <InfoRow label="Mobile number" value={userData?.phone} />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Addresses & Security */}
+          <div className="lg:col-span-5 xl:col-span-6 space-y-6">
+            {/* Address Card */}
+            <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-6">
+                My addresses
+              </h3>
+
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center p-4 border border-gray-100 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer group">
+                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-4 group-hover:bg-white">
+                    <Home className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-900 text-sm">Home</p>
+                    <p className="text-xs text-gray-400 font-medium">
+                      Add a home address
+                    </p>
                   </div>
                 </div>
 
-                {/* Email */}
-                <p className="text-sm text-slate-500 mt-2">
-                  {session?.user?.email}
-                  {/* Optional pending approvals */}
-                  {/* • <span className="text-orange-500 font-semibold underline">21</span> Pending Approvals */}
-                </p>
-              </div>
-            </div>
-          </header>
-          <div className="flex flex-col">
-            {/* <Dialog open={isOpen} onOpenChange={setIsOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Pencil className="w-4 h-4 mr-2" /> Edit Profile
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Edit Profile Information</DialogTitle>
-                </DialogHeader>
-
-                <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-6">
-                    <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage src={profileImage} />
-                        <AvatarFallback>
-                          <UserIcon />
-                        </AvatarFallback>
-                      </Avatar>
-                      <FormField
-                        control={form.control}
-                        name="image"
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormLabel>Profile Image URL</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://..." {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      {session?.user?.category === "business" && (
-                        <FormField
-                          control={form.control}
-                          name="abn_number"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>ABN Number</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      )}
-                    </div>
-
-                    {session?.user?.category === "business" && (
-                      <div className="space-y-6 border-t pt-4">
-                        <h3 className="font-semibold text-lg flex items-center gap-2">
-                          <Building2 className="w-4 h-4" /> Business Details
-                        </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="business_name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Business Name</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="business_category"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Category</FormLabel>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="restaurants">
-                                      Restaurants
-                                    </SelectItem>
-                                    <SelectItem value="cafes">Cafes</SelectItem>
-                                    <SelectItem value="others">
-                                      Others
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <FormLabel>Services</FormLabel>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                append({ name: "", price_category: "hr" })
-                              }>
-                              <Plus className="w-3 h-3 mr-1" /> Add
-                            </Button>
-                          </div>
-                          {fields.map((field, index) => (
-                            <div
-                              key={field.id}
-                              className="p-4 border rounded-md bg-white relative">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-1 right-1 h-7 w-7"
-                                onClick={() => remove(index)}>
-                                <Trash2 className="w-4 h-4 text-red-500" />
-                              </Button>
-                              <div className="grid grid-cols-2 gap-2">
-                                <Input
-                                  placeholder="Service name"
-                                  {...form.register(
-                                    `business_service.${index}.name`,
-                                  )}
-                                />
-                                <Input
-                                  placeholder="Price category"
-                                  {...form.register(
-                                    `business_service.${index}.price_category`,
-                                  )}
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <DialogFooter>
-                      <Button type="submit" className="w-full">
-                        Update Records
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog> */}
-
-            <DeleteConfirmDialog
-              onConfirm={() => handleDelete(session?.user.id ?? "")}
-              text="This Account"
-              isPending={isPending}
-              header={
-                <div className="flex items-center gap-2 mt-2 text-sm border border-blue-950 px-4 py-2 rounded-full cursor-pointer">
-                  Delete Account
-                  <Trash2 className="w-4 h-4 text-red-500" />
+                <div className="flex items-center p-4 border border-gray-100 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer group">
+                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-4 group-hover:bg-white">
+                    <Briefcase className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-900 text-sm">Work</p>
+                    <p className="text-xs text-gray-400 font-medium">
+                      Add a work address
+                    </p>
+                  </div>
                 </div>
-              }
-            />
+              </div>
+
+              <Button
+                variant="outline"
+                className="rounded-full px-5 py-2 h-auto text-sm font-bold border-gray-200 flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" /> Add
+              </Button>
+            </div>
+
+            {/* Account Management Card */}
+            <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Account Management
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Warning: Deleting your account is permanent.
+              </p>
+
+              <DeleteConfirmDialog
+                onConfirm={() => handleDelete(session?.user.id ?? "")}
+                text="This Account"
+                isPending={isPending}
+                header={
+                  <div className="inline-flex items-center gap-2 px-4 py-2 border border-red-100 bg-red-50 text-red-600 rounded-full text-sm font-semibold cursor-pointer hover:bg-red-100 transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                    Delete My Account
+                  </div>
+                }
+              />
+            </div>
           </div>
         </div>
       </div>
-
-      {userData?.category === "business" &&
-        userData?.business_service?.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {userData.business_service.map(({ service, i }: any) => (
-              <div
-                key={i}
-                className="p-4 border rounded-xl shadow-sm hover:border-blue-200 transition-colors">
-                <h4 className="font-bold text-lg">{service.name}</h4>
-                <Badge variant="secondary" className="mt-1 mb-2">
-                  Per {service.price_category}
-                </Badge>
-                <p className="text-sm text-slate-600 line-clamp-2">
-                  {service.item_description}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
     </div>
   );
 };
