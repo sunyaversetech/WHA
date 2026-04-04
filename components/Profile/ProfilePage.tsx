@@ -74,8 +74,8 @@ const ProfilePage = ({ userData }: { userData: any }) => {
               </div>
 
               <div className="space-y-1">
-                <InfoRow label="Full name" value={session?.user?.name} />
-                <InfoRow label="Email" value={session?.user?.email} />
+                <InfoRow label="Full name" />
+                <InfoRow label="Email" />
 
                 <InfoRow label="Mobile number" value={userData?.phone} />
               </div>
