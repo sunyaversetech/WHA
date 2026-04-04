@@ -42,6 +42,7 @@ const UserSchema = new Schema(
       sparse: true,
     },
     business_name: { type: String, unique: true },
+    phone_number: { type: String },
     business_category: { type: String },
     isblocked: { type: Boolean, default: false },
     abn_number: { type: String },

@@ -10,6 +10,7 @@ declare module "next-auth" {
       emailVerified?: Date | string;
       verified?: Date | string;
       isblocked?: boolean;
+      location?: string;
     } & DefaultSession["user"];
   }
 
@@ -20,6 +21,7 @@ declare module "next-auth" {
     business_name?: string;
     emailVerified?: Date | string;
     isblocked?: boolean;
+    location?: string;
   }
 }
 
@@ -30,5 +32,6 @@ declare module "next-auth/jwt" {
     business_category?: string;
     business_name?: string;
     emailVerified?: Date | string;
+    location?: string;
   }
 }
