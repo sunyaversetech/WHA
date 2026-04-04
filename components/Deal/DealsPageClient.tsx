@@ -2,7 +2,7 @@
 
 import DealCard from "@/components/cards/deal-card";
 
-import { Calendar, Filter, Map, Tag } from "lucide-react";
+import { Calendar, Filter, Map, SlidersVertical, Tag } from "lucide-react";
 import { useGetAllDeals } from "@/services/deal.service";
 import DealsHeader from "./DealFilter";
 import { Skeleton } from "../ui/skeleton";
@@ -17,6 +17,12 @@ import { Button } from "../ui/button";
 import { useSearchParams } from "next/navigation";
 import { Separator } from "../ui/separator";
 import MobileDealsSearchWithDates from "../ResuableComponents/MobileViewSearch/SearchSectionForDeals";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerTrigger,
+} from "../ui/drawer";
 
 export default function DealsPageClient() {
   const { data: deals, isLoading } = useGetAllDeals();
@@ -41,14 +47,27 @@ export default function DealsPageClient() {
       <div className="relative z-10">
         <div className="container-modern mt-2  md:py-6">
           <div className="flex items-end justify-end ">
+            <Drawer>
+              <DrawerTrigger asChild className="hidden max-md:flex">
+                <Button variant="outline" size="sm">
+                  <SlidersVertical className="h-4 w-4" />
+                  Filters
+                </Button>
+              </DrawerTrigger>
+
+              <DrawerContent className="max-w-4xl w-full z-9999 min-h-[40vh] p-4">
+                <DrawerTitle className="text-lg font-bold mb-4">
+                  Filter Events
+                </DrawerTitle>
+                <DealsHeader />
+              </DrawerContent>
+            </Drawer>
             <Dialog>
               {view === "list" && (
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2 btn-wha-outline h-12 mr-2 rounded-full!">
-                    <Filter className="h-4 w-4" />
-                    Filter
+                <DialogTrigger asChild className="flex max-md:hidden">
+                  <Button variant="outline" size="sm">
+                    <SlidersVertical className="h-4 w-4" />
+                    Filters
                   </Button>
                 </DialogTrigger>
               )}
