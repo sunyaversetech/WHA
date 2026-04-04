@@ -80,7 +80,7 @@ export default function EventsPageClient() {
         <div className="flex-none px-6 py-4 flex justify-between items-center ">
           <div className="text-sm font-medium text-slate-500 ">
             {apiResponse?.data.length} events in{" "}
-            {searchParams.get("city") ?? "australia "}
+            {searchParams.get("city") ?? "Australia "}
           </div>
           <div className="flex gap-2">
             <Drawer>

@@ -73,21 +73,21 @@ export default function BusinessesClientPage() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <div className="flex-none h-32 max-sm:h-fit -mt-1 border-b flex items-center justify-center">
-        <div className="w-full max-sm:hidden">
+      <div className="flex-none h-32 max-md:h-fit -mt-1 border-b flex items-center justify-center">
+        <div className="w-full max-md:hidden">
           <BusinessSearchWithDates />
         </div>
-        <div className="w-full hidden max-sm:block">
+        <div className="w-full hidden max-md:block">
           <MobileBusinessSearchWithDates />
         </div>
       </div>
 
-      <div className="flex-none px-6 py-4 flex justify-between items-center   ">
-        <div className="text-sm font-medium text-slate-500 pl-5">
-          {data.length} businesses in {selectedCity || "Australia"}
+      <div className="flex-none px-7 py-4 flex justify-between items-center   ">
+        <div className="text-sm font-medium text-slate-500">
+          {data.length} businesses in {searchParams.get("city") ?? "Australia "}
         </div>
 
-        <div className="flex gap-2 mr-6">
+        <div className="flex gap-2 ">
           <Drawer>
             <DrawerTrigger asChild>
               <Button variant="outline" size="sm">
@@ -184,10 +184,10 @@ export default function BusinessesClientPage() {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden relative pl-5">
+      <div className="flex flex-1 overflow-hidden relative pl-5 max-md:pl-2 w-[98vw]">
         {!isMapExpanded && (
           <div
-            className={`transition-all duration-300 overflow-y-auto px-4 pb-6 no-scrollbar ${showMap ? "w-full lg:w-[55%]" : "w-full"}`}>
+            className={`transition-all duration-300 overflow-y-auto px-4 w-[95vw] max-md:pr-0 pb-6 no-scrollbar ${showMap ? "lg:w-[55%]" : ""}`}>
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[1, 2, 3, 4].map((i) => (
@@ -210,7 +210,7 @@ export default function BusinessesClientPage() {
         )}
 
         <div
-          className={`transition-all duration-500 pr-7.5 max-sm:hidden ${
+          className={`transition-all duration-500 pr-7.5 max-md:hidden ${
             isMapExpanded
               ? "w-full"
               : showMap

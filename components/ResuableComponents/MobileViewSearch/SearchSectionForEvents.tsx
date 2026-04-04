@@ -164,7 +164,9 @@ export default function MobileEventSearchWithDates({
             <SegmentSection
               label="Where"
               isActive={activeTab === "where"}
-              onClick={() => setActiveTab("where")}
+              onClick={() =>
+                setActiveTab(activeTab === "where" ? null : "where")
+              }
               displayValue={location}
               placeholder="Select destination"
               onClear={() => setLocation("")}
@@ -198,7 +200,7 @@ export default function MobileEventSearchWithDates({
               date={date}
               setDate={setDate}
               isActive={activeTab === "when"}
-              onClick={() => setActiveTab("when")}
+              onClick={() => setActiveTab(activeTab === "when" ? null : "when")}
               onClear={() => setDate(undefined)}
               segW="w-full"
             />

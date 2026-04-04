@@ -386,7 +386,7 @@ export default function BusinessMap({
     <div className="h-full w-full relative z-0 ">
       <button
         onClick={onToggleExpand}
-        className="absolute top-4 right-4 z-[1000] p-3 bg-white rounded-xl shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-sm:hidden"
+        className="absolute top-4 right-4 z-[1000] p-3 bg-white rounded-xl shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-md:hidden"
         title={isExpanded ? "Exit Fullscreen" : "Expand Map"}>
         {isExpanded ? (
           <Minimize2 className="h-5 w-5 text-[#6c47ff]" />
