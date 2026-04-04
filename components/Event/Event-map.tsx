@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { ExternalLink, Maximize2, Minimize2, Navigation } from "lucide-react";
 import Link from "next/link";
+import { UserLocationButton } from "../Business/business-map";
 
 const WIDE_VIEW: [number, number] = [-34.57, 150.17];
 const WIDE_ZOOM = 7;
@@ -112,10 +113,6 @@ export default function EventMap({
         )}
       </button>
 
-      <button className="absolute bottom-10 right-5 z-[1000] p-3 bg-white rounded-full shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-md:hidden">
-        <Navigation className="h-5 w-5 text-primary" />
-      </button>
-
       <MapContainer
         center={WIDE_VIEW}
         zoom={WIDE_ZOOM}
@@ -126,6 +123,8 @@ export default function EventMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
         />
+
+        <UserLocationButton />
 
         <MapRefresher
           isVisible={isVisible}

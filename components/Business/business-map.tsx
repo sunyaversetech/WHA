@@ -293,6 +293,40 @@ import Link from "next/link";
 const WIDE_VIEW: [number, number] = [-34.57, 150.17];
 const WIDE_ZOOM = 7;
 
+export function UserLocationButton() {
+  const map = useMap();
+
+  const handleLocationClick = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        map.flyTo([latitude, longitude], 14, {
+          duration: 2,
+        });
+      },
+      (error) => {
+        console.error("Error fetching location:", error);
+        alert("Unable to retrieve your location. Please check permissions.");
+      },
+      { enableHighAccuracy: true },
+    );
+  };
+
+  return (
+    <button
+      onClick={handleLocationClick}
+      className="absolute bottom-10 right-5 z-[1000] p-3 bg-white rounded-full shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-md:hidden"
+      title="My Location">
+      <Navigation className="h-5 w-5 text-[#6c47ff]" />
+    </button>
+  );
+}
+
 if (typeof window !== "undefined") {
   delete (L.Icon.Default.prototype as any)._getIconUrl;
   L.Icon.Default.mergeOptions({
@@ -395,10 +429,6 @@ export default function BusinessMap({
         )}
       </button>
 
-      <button className="absolute bottom-10 right-5 z-[1000] p-3 bg-white rounded-full shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-md:hidden">
-        <Navigation className="h-5 w-5 text-primary" />
-      </button>
-
       <MapContainer
         center={WIDE_VIEW}
         zoom={WIDE_ZOOM}
@@ -409,6 +439,7 @@ export default function BusinessMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
         />
+        <UserLocationButton />
 
         <MapRefresher
           isVisible={isVisible}
