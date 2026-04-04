@@ -10,6 +10,14 @@ import { Button } from "../ui/button";
 import { DeleteConfirmDialog } from "../ui/DynamicDeleteButton";
 import { useDeleteProfile } from "@/services/Auth/auth.service";
 
+// InfoRow component moved outside to avoid 'components created during render' error
+const InfoRow = ({ label, value }: { label: string; value?: string }) => (
+  <div className="py-3 border-b border-gray-50 last:border-0">
+    <p className="text-xs font-semibold text-gray-900 mb-0.5">{label}</p>
+    <p className="text-sm text-gray-500">{value || "-"}</p>
+  </div>
+);
+
 const ProfilePage = ({ userData }: { userData: any }) => {
   const { data: session } = useSession();
   const { mutate: deleteAccount, isPending } = useDeleteProfile();
@@ -17,7 +25,7 @@ const ProfilePage = ({ userData }: { userData: any }) => {
 
   const handleDelete = (id: string) => {
     deleteAccount(
-      { id: id },
+      { id },
       {
         onSuccess: () => {
           signOut({ callbackUrl: "/" });
@@ -30,14 +38,6 @@ const ProfilePage = ({ userData }: { userData: any }) => {
       },
     );
   };
-
-  // Helper for info rows
-  const InfoRow = ({ label, value }: { label: string; value?: string }) => (
-    <div className="py-3 border-b border-gray-50 last:border-0">
-      <p className="text-xs font-semibold text-gray-900 mb-0.5">{label}</p>
-      <p className="text-sm text-gray-500">{value || "-"}</p>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50/50 p-4">
@@ -76,7 +76,6 @@ const ProfilePage = ({ userData }: { userData: any }) => {
               <div className="space-y-1">
                 <InfoRow label="Full name" />
                 <InfoRow label="Email" />
-
                 <InfoRow label="Mobile number" value={userData?.phone} />
               </div>
             </div>
@@ -91,6 +90,7 @@ const ProfilePage = ({ userData }: { userData: any }) => {
               </h3>
 
               <div className="space-y-4 mb-6">
+                {/* Home Address */}
                 <div className="flex items-center p-4 border border-gray-100 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer group">
                   <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-4 group-hover:bg-white">
                     <Home className="h-5 w-5 text-gray-400" />
@@ -103,6 +103,7 @@ const ProfilePage = ({ userData }: { userData: any }) => {
                   </div>
                 </div>
 
+                {/* Work Address */}
                 <div className="flex items-center p-4 border border-gray-100 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer group">
                   <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-4 group-hover:bg-white">
                     <Briefcase className="h-5 w-5 text-gray-400" />
