@@ -91,7 +91,7 @@ export default function EventsPageClient() {
                 </Button>
               </DrawerTrigger>
 
-              <DrawerContent className="max-w-4xl w-full z-50">
+              <DrawerContent className="max-w-4xl w-full z-9999 min-h-[40vh] p-4">
                 <DrawerTitle className="text-lg font-bold mb-4">
                   Filter Events
                 </DrawerTitle>
