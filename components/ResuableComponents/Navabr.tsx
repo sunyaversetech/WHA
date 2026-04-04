@@ -141,7 +141,7 @@ export default function Navbar() {
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: 50, opacity: 0 }}
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  className="absolute left-0 right-0">
+                  className="absolute left-0 right-0 max-md:hidden">
                   <HomePageSearchWithDates sticky={isSticky} />
                 </motion.div>
               )}
@@ -154,7 +154,7 @@ export default function Navbar() {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 50, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="absolute left-0 right-0 max-sm:hidden">
+                className="absolute left-0 right-0 max-md:hidden">
                 <EventSearchWithDates sticky={isSticky} />
               </motion.div>
             </AnimatePresence>
@@ -166,7 +166,7 @@ export default function Navbar() {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 50, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="absolute left-0 right-0">
+                className="absolute left-0 right-0 max-md:hidden">
                 <EventSearchWithDates sticky={isSticky} />
               </motion.div>
             </AnimatePresence>

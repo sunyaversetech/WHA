@@ -29,17 +29,17 @@ export default function DealsPageClient() {
 
   return (
     <div className="min-h-screen bg-gradient-modern relative -mt-2 max-xl:px-6">
-      <div className="flex-none h-32 max-sm:h-fit  -mt-1 border-b flex items-center justify-center">
-        <div className="w-full max-sm:hidden">
+      <div className="flex-none h-32 max-md::h-fit  -mt-1 border-b flex items-center justify-center">
+        <div className="w-full max-md:hidden">
           <DealsSearchWithDates />
         </div>
-        <div className="w-full hidden max-sm:block">
+        <div className="w-full hidden max-md:flex">
           <MobileDealsSearchWithDates />
         </div>
       </div>
       <Separator />
       <div className="relative z-10">
-        <div className="container-modern  md:py-6">
+        <div className="container-modern mt-2  md:py-6">
           <div className="flex items-end justify-end ">
             <Dialog>
               {view === "list" && (
