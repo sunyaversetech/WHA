@@ -143,8 +143,6 @@ export function EventForm() {
     }
   }, [data, form]);
 
-  console.log("form values", form.formState.errors);
-
   const onSubmit = (values: EventFormValues) => {
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
@@ -176,439 +174,447 @@ export function EventForm() {
     });
   };
 
-  console.log("form errors", form.formState.errors);
-
   return (
-    <Form {...form}>
-      <div className="space-y-6 max-w-6xl mx-auto h-auto">
-        <div className="flex items-start justify-start">
-          <ChevronLeft
-            onClick={() => router.back()}
-            className="h-10 w-10 cursor-pointer rounded-full  p-1 -ml-2
+    <div className="flex-1 h-auto overflow-y-auto mb-20">
+      <Form {...form}>
+        <div className="space-y-6 max-w-6xl mx-auto h-full ">
+          <div className="flex items-start justify-start ">
+            <ChevronLeft
+              onClick={() => router.back()}
+              className="h-10 w-10 cursor-pointer rounded-full  p-1 -ml-2
                text-[#ODODOD] 
                transition-all hover:scale-105 active:scale-95"
-          />
-        </div>
-        <h1 className="text-2xl text-[#ODODOD] font-bold mb-4 ">
-          {data ? "Edit event" : "Add new event"}{" "}
-        </h1>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
-          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 items-start space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Event Name"
-                      {...field}
-                      onChange={(e) => {
-                        const rawValue = e.target.value;
-
-                        const hasSpecialChars = /[^a-zA-Z0-9\s]/.test(rawValue);
-
-                        if (hasSpecialChars) {
-                          form.setError("title", {
-                            type: "manual",
-                            message: "Special characters are not allowed",
-                          });
-                        } else {
-                          form.clearErrors("title");
-                        }
-                        field.onChange(rawValue);
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
             />
-            <div className="flex flex-col">
+          </div>
+          <h1 className="text-2xl text-[#ODODOD] font-bold mb-4 ">
+            {data ? "Edit event" : "Add new event"}{" "}
+          </h1>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 items-start space-y-4">
               <FormField
                 control={form.control}
-                name="image"
-                render={({ field: { value, onChange, ...fieldProps } }) => (
+                name="title"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Event Image</FormLabel>
+                    <FormLabel>Title</FormLabel>
                     <FormControl>
                       <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => onChange(e.target.files?.[0])}
-                        {...fieldProps}
+                        placeholder="Event Name"
+                        {...field}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+
+                          const hasSpecialChars = /[^a-zA-Z0-9\s]/.test(
+                            rawValue,
+                          );
+
+                          if (hasSpecialChars) {
+                            form.setError("title", {
+                              type: "manual",
+                              message: "Special characters are not allowed",
+                            });
+                          } else {
+                            form.clearErrors("title");
+                          }
+                          field.onChange(rawValue);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              <div className="flex flex-col">
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field: { value, onChange, ...fieldProps } }) => (
+                    <FormItem>
+                      <FormLabel>Event Image</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => onChange(e.target.files?.[0])}
+                          {...fieldProps}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {form.watch("image") && (
-                <div className="mt-2">
-                  <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md bg-transparent border-slate-200 w-fit max-w-[250px]">
-                    <button
-                      type="button"
-                      className="text-sm text-blue-600 hover:underline truncate cursor-pointer"
-                      onClick={() => {
-                        const file = form.getValues("image");
-                        const url =
-                          typeof file === "string"
-                            ? file
-                            : URL.createObjectURL(file);
-                        window.open(url, "_blank");
-                      }}>
-                      {typeof form.watch("image") === "string"
-                        ? form.watch("image").split("/").pop()
-                        : form.watch("image")?.name}
-                    </button>
+                {form.watch("image") && (
+                  <div className="mt-2">
+                    <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md bg-transparent border-slate-200 w-fit max-w-[250px]">
+                      <button
+                        type="button"
+                        className="text-sm text-blue-600 hover:underline truncate cursor-pointer"
+                        onClick={() => {
+                          const file = form.getValues("image");
+                          const url =
+                            typeof file === "string"
+                              ? file
+                              : URL.createObjectURL(file);
+                          window.open(url, "_blank");
+                        }}>
+                        {typeof form.watch("image") === "string"
+                          ? form.watch("image").split("/").pop()
+                          : form.watch("image")?.name}
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => form.setValue("image", undefined)}
-                      className="flex-shrink-0 ml-1 text-slate-400 hover:text-red-500 transition-colors">
-                      <span className="text-lg font-bold leading-none">
-                        &times;
-                      </span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => form.setValue("image", undefined)}
+                        className="flex-shrink-0 ml-1 text-slate-400 hover:text-red-500 transition-colors">
+                        <span className="text-lg font-bold leading-none">
+                          &times;
+                        </span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <FormField
-              control={form.control}
-              name="venue"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Venue</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Grand Ballroom" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. hello@gmail.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. +61 234 567 890" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="website_link"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Website Link</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="dateRange"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>From and to Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start border rounded-lg">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value?.from ? (
-                          field.value.to ? (
-                            `${format(field.value.from, "PP")} - ${format(field.value.to, "PP")}`
-                          ) : (
-                            format(field.value.from, "PP")
-                          )
-                        ) : (
-                          <span>Pick Dates</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="range"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        numberOfMonths={2}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="startTime"
-              render={({ field }) => (
-                <FormItem className="mt-1 gap-1 flex flex-col">
-                  <FormLabel>Time From</FormLabel>
-                  <FormControl>
-                    <Input type="time" className="rounded-lg" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="endTime"
-              render={({ field }) => (
-                <FormItem className="mt-1 gap-1 flex flex-col">
-                  <FormLabel>Time To</FormLabel>
-                  <FormControl>
-                    <Input type="time" className="rounded-lg" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <FormControl>
-                  <ToggleGroup
-                    type="single"
-                    value={field.value}
-                    onValueChange={(val) => val && field.onChange(val)}
-                    className="flex flex-wrap w-full gap-2">
-                    {[
-                      "Concert",
-                      "Festival",
-                      "Educational Seminar",
-                      "Cultural Event",
-                      "Food Event",
-                      "Others",
-                    ].map((cat) => (
-                      <ToggleGroupItem
-                        key={cat}
-                        value={cat}
-                        className={toggleItemStyles}>
-                        {cat}
-                      </ToggleGroupItem>
-                    ))}
-                  </ToggleGroup>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          {form.watch("category") === "Others" && (
-            <FormField
-              control={form.control}
-              name="category_name"
-              render={({ field }) => (
-                <FormItem className="mt-1 gap-1 flex flex-col">
-                  <FormLabel>Category Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          )}
-
-          <FormField
-            control={form.control}
-            name="price_category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Price Category</FormLabel>
-                <FormControl>
-                  <ToggleGroup
-                    type="single"
-                    value={field.value}
-                    onValueChange={(val) => val && field.onChange(val)}
-                    className="flex w-full gap-2">
-                    <ToggleGroupItem value="free" className={toggleItemStyles}>
-                      Free
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="paid" className={toggleItemStyles}>
-                      Paid
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          {form.watch("price_category") === "paid" && (
-            <div className="grid grid-cols-2  gap-4 animate-in fade-in slide-in-from-top-1">
               <FormField
-                name="ticket_price"
+                control={form.control}
+                name="venue"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price</FormLabel>
+                    <FormLabel>Venue</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input placeholder="e.g. Grand Ballroom" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. hello@gmail.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. +61 234 567 890" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="website_link"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website Link</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
 
               <FormField
-                name="ticket_link"
+                control={form.control}
+                name="dateRange"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ticket Link</FormLabel>
+                  <FormItem className="flex flex-col">
+                    <FormLabel>From and to Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start border rounded-lg">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value?.from ? (
+                            field.value.to ? (
+                              `${format(field.value.from, "PP")} - ${format(field.value.to, "PP")}`
+                            ) : (
+                              format(field.value.from, "PP")
+                            )
+                          ) : (
+                            <span>Pick Dates</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="range"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          numberOfMonths={2}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="startTime"
+                render={({ field }) => (
+                  <FormItem className="mt-1 gap-1 flex flex-col">
+                    <FormLabel>Time From</FormLabel>
+                    <FormControl>
+                      <Input type="time" className="rounded-lg" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field }) => (
+                  <FormItem className="mt-1 gap-1 flex flex-col">
+                    <FormLabel>Time To</FormLabel>
+                    <FormControl>
+                      <Input type="time" className="rounded-lg" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <ToggleGroup
+                      type="single"
+                      value={field.value}
+                      onValueChange={(val) => val && field.onChange(val)}
+                      className="flex flex-wrap w-full gap-2">
+                      {[
+                        "Concert",
+                        "Festival",
+                        "Educational Seminar",
+                        "Cultural Event",
+                        "Food Event",
+                        "Others",
+                      ].map((cat) => (
+                        <ToggleGroupItem
+                          key={cat}
+                          value={cat}
+                          className={toggleItemStyles}>
+                          {cat}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {form.watch("category") === "Others" && (
+              <FormField
+                control={form.control}
+                name="category_name"
+                render={({ field }) => (
+                  <FormItem className="mt-1 gap-1 flex flex-col">
+                    <FormLabel>Category Name</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
                   </FormItem>
                 )}
               />
-            </div>
-          )}
-
-          <FormField
-            control={form.control}
-            name="community"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Community</FormLabel>
-                <FormControl>
-                  <ToggleGroup
-                    type="single"
-                    value={field.value}
-                    onValueChange={(val) => val && field.onChange(val)}
-                    className="flex flex-wrap gap-2">
-                    {["Australian", "Nepali", "Others"].map((com) => (
-                      <ToggleGroupItem
-                        key={com}
-                        value={com}
-                        className={toggleItemStyles}>
-                        {com}
-                      </ToggleGroupItem>
-                    ))}
-                  </ToggleGroup>
-                </FormControl>
-              </FormItem>
             )}
-          />
-          {form.watch("community") === "Others" && (
+
             <FormField
-              name="community_name"
+              control={form.control}
+              name="price_category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Community Name</FormLabel>
+                  <FormLabel>Price Category</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <ToggleGroup
+                      type="single"
+                      value={field.value}
+                      onValueChange={(val) => val && field.onChange(val)}
+                      className="flex w-full gap-2">
+                      <ToggleGroupItem
+                        value="free"
+                        className={toggleItemStyles}>
+                        Free
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        value="paid"
+                        className={toggleItemStyles}>
+                        Paid
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </FormControl>
                 </FormItem>
               )}
             />
-          )}
 
-          <FormField
-            control={form.control}
-            name="city"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>City</FormLabel>
-                <FormControl>
-                  <ToggleGroup
-                    type="single"
-                    value={field.value}
-                    onValueChange={(val) => val && field.onChange(val)}
-                    className="flex flex-wrap gap-4">
-                    {[
-                      "Sydney",
-                      "Canberra",
-                      // "Melbourne",
-                      // "Brisbane",
-                      // "Adelaide",
-                      // "Gold Coast",
-                      // "Perth",
-                      // "Hobart",
-                      // "Darwin",
-                      "others",
-                    ].map((cat) => (
-                      <ToggleGroupItem
-                        key={cat}
-                        value={cat}
-                        className={toggleItemStyles}>
-                        {cat}
-                      </ToggleGroupItem>
-                    ))}
-                  </ToggleGroup>
-                </FormControl>
-              </FormItem>
+            {form.watch("price_category") === "paid" && (
+              <div className="grid grid-cols-2  gap-4 animate-in fade-in slide-in-from-top-1">
+                <FormField
+                  name="ticket_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  name="ticket_link"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ticket Link</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
             )}
-          />
 
-          {form.watch("city") === "others" && (
             <FormField
-              name="city_name"
+              control={form.control}
+              name="community"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>City Name</FormLabel>
+                  <FormLabel>Community</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <ToggleGroup
+                      type="single"
+                      value={field.value}
+                      onValueChange={(val) => val && field.onChange(val)}
+                      className="flex flex-wrap gap-2">
+                      {["Australian", "Nepali", "Others"].map((com) => (
+                        <ToggleGroupItem
+                          key={com}
+                          value={com}
+                          className={toggleItemStyles}>
+                          {com}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
                   </FormControl>
                 </FormItem>
               )}
             />
-          )}
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea className="rounded-lg" {...field} />
-                </FormControl>
-              </FormItem>
+            {form.watch("community") === "Others" && (
+              <FormField
+                name="community_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Community Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             )}
-          />
 
-          <MapPicker form={form} />
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <ToggleGroup
+                      type="single"
+                      value={field.value}
+                      onValueChange={(val) => val && field.onChange(val)}
+                      className="flex flex-wrap gap-4">
+                      {[
+                        "Sydney",
+                        "Canberra",
+                        // "Melbourne",
+                        // "Brisbane",
+                        // "Adelaide",
+                        // "Gold Coast",
+                        // "Perth",
+                        // "Hobart",
+                        // "Darwin",
+                        "others",
+                      ].map((cat) => (
+                        <ToggleGroupItem
+                          key={cat}
+                          value={cat}
+                          className={toggleItemStyles}>
+                          {cat}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-          <Button
-            type="submit"
-            className="w-full h-12 text-lg rounded-lg"
-            disabled={isPending || !form.formState.isDirty}>
-            {isPending
-              ? "Saving Event..."
-              : data
-                ? "Update Event"
-                : "Create Event"}
-          </Button>
-        </form>
-      </div>
-    </Form>
+            {form.watch("city") === "others" && (
+              <FormField
+                name="city_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea className="rounded-lg" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <MapPicker form={form} />
+
+            <Button
+              type="submit"
+              className="w-full h-12 text-lg rounded-lg"
+              disabled={isPending || !form.formState.isDirty}>
+              {isPending
+                ? "Saving Event..."
+                : data
+                  ? "Update Event"
+                  : "Create Event"}
+            </Button>
+          </form>
+        </div>
+      </Form>
+    </div>
   );
 }

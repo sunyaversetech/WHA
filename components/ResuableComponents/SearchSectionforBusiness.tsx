@@ -145,7 +145,7 @@ export default function BusinessSearchWithDates({
     <>
       <FontImport />
       <div
-        className="esw-root flex w-full md:w-fit items-center justify-center m-auto py-4 md:py-6 px-4 md:px-0"
+        className="esw-root flex w-full md:w-fit items-center justify-center m-auto py-4 md:py-6 md:pt-0 px-4 md:px-0"
         ref={containerRef}>
         <div
           className={[

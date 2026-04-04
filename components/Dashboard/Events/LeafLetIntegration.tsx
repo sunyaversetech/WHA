@@ -49,6 +49,12 @@ export default function MapPicker({ form }: MapPickerProps) {
     return () => debouncedFetch.cancel();
   }, [debouncedFetch]);
 
+  useEffect(() => {
+    if (locationName !== searchQuery) {
+      setSearchQuery(locationName || "");
+    }
+  }, [locationName]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
@@ -98,7 +104,7 @@ export default function MapPicker({ form }: MapPickerProps) {
         <div className="relative flex-1">
           <Input
             placeholder="Search for a location..."
-            value={searchQuery ? searchQuery : form.getValues("location")}
+            value={searchQuery}
             onChange={handleInputChange}
             className="pr-10 rounded-lg"
           />
@@ -119,8 +125,7 @@ export default function MapPicker({ form }: MapPickerProps) {
                   className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 transition-colors border-b last:border-0"
                   onClick={() =>
                     handleSelectLocation(res.display_name, res.lat, res.lon)
-                  }
-                >
+                  }>
                   <p className="font-medium truncate">{res.display_name}</p>
                 </button>
               ))}
@@ -132,8 +137,7 @@ export default function MapPicker({ form }: MapPickerProps) {
           variant={"outline"}
           size="icon"
           onClick={handleGeolocation}
-          className="shrink-0 rounded-lg border"
-        >
+          className="shrink-0 rounded-lg border">
           <Navigation className="h-4 w-4" />
         </Button>
       </div>

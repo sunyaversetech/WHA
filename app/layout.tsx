@@ -37,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${marcellus.variable} ${montserrat.variable} font-montserrat antialiased bg-neutral-50`}>
+        className={`${marcellus.variable} ${montserrat.variable} font-montserrat antialiased bg-neutral-50 overflow-scroll no-scrollbar`}>
         <ReactQueryContext>
           <CityFilterProvider>
             <SessionWrapper>

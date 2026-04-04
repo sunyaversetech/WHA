@@ -383,22 +383,27 @@ export default function BusinessMap({
   );
 
   return (
-    <div className="h-full w-full relative z-0 ">
+    <div className="h-full w-full relative z-0">
       <button
         onClick={onToggleExpand}
-        className="absolute top-4 right-4 z-[1000] p-3 bg-white rounded-xl shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-md:hidden"
+        className="absolute top-6 right-6 z-[1000] p-3 bg-white rounded-full shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-md:hidden"
         title={isExpanded ? "Exit Fullscreen" : "Expand Map"}>
         {isExpanded ? (
-          <Minimize2 className="h-5 w-5 text-[#6c47ff]" />
+          <Minimize2 className="h-5 w-5 text-primary" />
         ) : (
-          <Maximize2 className="h-5 w-5 text-[#6c47ff]" />
+          <Maximize2 className="h-5 w-5 text-primary" />
         )}
       </button>
+
+      <button className="absolute bottom-10 right-5 z-[1000] p-3 bg-white rounded-full shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 max-md:hidden">
+        <Navigation className="h-5 w-5 text-primary" />
+      </button>
+
       <MapContainer
         center={WIDE_VIEW}
         zoom={WIDE_ZOOM}
         zoomControl={false}
-        className="h-full w-full rounded-xl"
+        className="h-full w-full rounded-xl "
         style={{ height: "100%", width: "100%", position: "absolute" }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -80,18 +80,18 @@ export default function EventsPageClient() {
         <div className="flex-none px-6 py-4 flex justify-between items-center ">
           <div className="text-sm font-medium text-slate-500 ">
             {apiResponse?.data.length} events in{" "}
-            {searchParams.get("city") ?? "Australia "}
+            {searchParams.get("city") ?? "australia "}
           </div>
           <div className="flex gap-2">
             <Drawer>
-              <DrawerTrigger asChild>
+              <DrawerTrigger asChild className="hidden max-md:flex">
                 <Button variant="outline" size="sm">
                   <SlidersVertical className="h-4 w-4" />
                   Filters
                 </Button>
               </DrawerTrigger>
 
-              <DrawerContent className="max-w-4xl w-full z-9999 min-h-[40vh] p-4">
+              <DrawerContent className="max-w-4xl w-full z-50">
                 <DrawerTitle className="text-lg font-bold mb-4">
                   Filter Events
                 </DrawerTitle>
@@ -164,6 +164,87 @@ export default function EventsPageClient() {
                 </Tabs>
               </DrawerContent>
             </Drawer>
+            <Dialog>
+              <DialogTrigger asChild className="flex max-md:hidden">
+                <Button variant="outline" size="sm">
+                  <SlidersVertical className="h-4 w-4" />
+                  Filters
+                </Button>
+              </DialogTrigger>
+
+              <DialogContent className="max-w-4xl w-full z-50">
+                <DrawerTitle className="text-lg font-bold mb-4">
+                  Filter Events
+                </DrawerTitle>
+
+                <Tabs
+                  defaultValue="categories"
+                  className="w-full overflow-scroll no-scrollbar rounded-lg border bg-white ">
+                  <TabsList className="w-full border-none ">
+                    <TabsTrigger
+                      value="categories"
+                      className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
+
+                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!">
+                      Categories
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                      className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
+
+                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!"
+                      value="communities">
+                      Communities
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="categories">
+                    <EventHeader />
+                  </TabsContent>
+
+                  <TabsContent
+                    value="communities"
+                    className="flex flex-wrap gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
+                    <div className="flex gap-2 justify-center items-center m-auto">
+                      {COMMUNITIES.map((com) => {
+                        const Icon = com.icon;
+
+                        const isActive =
+                          (currentCommunity ?? "All") === com.value;
+
+                        return (
+                          <Button
+                            key={com.value}
+                            onClick={() => {
+                              updateQuery({
+                                community:
+                                  com.value === "All" ? null : com.value,
+                              });
+
+                              setCurrentCommunity(com.value);
+                            }}
+                            className={`flex flex-col items-center justify-center h-15 md:min-w-[80px] py-5 px-3 rounded-md md:rounded-xl transition-all border shrink-0 ${
+                              isActive
+                                ? "bg-primary border-primary text-white"
+                                : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                            }`}>
+                            <Icon
+                              className={`h-4 w-4 md:h-5 md:w-5 mb-1 ${
+                                isActive ? "text-white" : "text-slate-500"
+                              }`}
+                            />
+
+                            <span className="text-[9px] md:text-[10px] uppercase font-bold whitespace-nowrap text-center">
+                              {com.name}
+                            </span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </DialogContent>
+            </Dialog>
             {!isMapExpanded && (
               <Button
                 variant="outline"

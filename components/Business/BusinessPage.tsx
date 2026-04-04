@@ -72,8 +72,8 @@ export default function BusinessesClientPage() {
   );
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <div className="flex-none h-32 max-md:h-fit -mt-1 border-b flex items-center justify-center">
+    <div className="flex flex-col h-screen overflow-hidden ">
+      <div className="lex-none h-22 max-md:h-fit  -mt-1 border-b pb-1 flex items-center justify-center">
         <div className="w-full max-md:hidden">
           <BusinessSearchWithDates />
         </div>
@@ -82,14 +82,14 @@ export default function BusinessesClientPage() {
         </div>
       </div>
 
-      <div className="flex-none px-7 py-4 flex justify-between items-center   ">
+      <div className="flex-none px-6 pr-2 py-4 flex justify-between items-center">
         <div className="text-sm font-medium text-slate-500">
           {data.length} businesses in {searchParams.get("city") ?? "Australia "}
         </div>
 
-        <div className="flex gap-2 ">
+        <div className="flex gap-2 md:mr-5">
           <Drawer>
-            <DrawerTrigger asChild>
+            <DrawerTrigger asChild className="hidden max-md:flex">
               <Button variant="outline" size="sm">
                 <SlidersVertical className="h-4 w-4" />
                 Filters
@@ -162,6 +162,80 @@ export default function BusinessesClientPage() {
               </Tabs>
             </DrawerContent>
           </Drawer>
+          <Dialog>
+            <DialogTrigger asChild className="flex max-md:hidden">
+              <Button variant="outline" size="sm">
+                <SlidersVertical className="h-4 w-4" />
+                Filters
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl w-full z-9999 min-h-[40vh] p-4">
+              <DrawerTitle className="text-lg font-bold mb-4 ">
+                Filter Businesses
+              </DrawerTitle>
+              <Tabs
+                defaultValue="categories"
+                className="w-full rounded-lg border bg-white">
+                <TabsList className="w-full border-none ">
+                  <TabsTrigger
+                    value="categories"
+                    className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
+
+                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!">
+                    Categories
+                  </TabsTrigger>
+
+                  <TabsTrigger
+                    className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
+
+                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!"
+                    value="communities">
+                    Communities
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="categories">
+                  <BusinessHeader />
+                </TabsContent>
+                <TabsContent value="communities" className="p-4">
+                  <div className="flex gap-2 justify-center flex-wrap">
+                    {COMMUNITIES.map((com) => {
+                      const Icon = com.icon;
+
+                      const isActive =
+                        (currentCommunity ?? "All") === com.value;
+
+                      return (
+                        <Button
+                          key={com.value}
+                          onClick={() => {
+                            updateQuery({
+                              community: com.value === "All" ? null : com.value,
+                            });
+
+                            setCurrentCommunity(com.value);
+                          }}
+                          className={`flex flex-col items-center justify-center h-15 md:min-w-[80px] py-5 px-3 rounded-md md:rounded-xl transition-all border shrink-0 ${
+                            isActive
+                              ? "bg-primary border-primary text-white"
+                              : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                          }`}>
+                          <Icon
+                            className={`h-4 w-4 sm:h-5 sm:w-5 mb-1 ${
+                              isActive ? "text-white" : "text-slate-500"
+                            }`}
+                          />
+
+                          <span className="text-[9px] sm:text-[10px] uppercase font-bold whitespace-nowrap text-center">
+                            {com.name}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </DialogContent>
+          </Dialog>
 
           {!isMapExpanded && (
             <Button
@@ -184,10 +258,10 @@ export default function BusinessesClientPage() {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden relative pl-5 max-md:pl-2 w-[98vw]">
+      <div className="flex flex-1 overflow-hidden relative pl-2  w-[98vw] ">
         {!isMapExpanded && (
           <div
-            className={`transition-all duration-300 overflow-y-auto px-4 w-[95vw] max-md:pr-0 pb-6 no-scrollbar ${showMap ? "lg:w-[55%]" : ""}`}>
+            className={`transition-all duration-300 overflow-y-scroll h-full px-4 w-[95vw] max-md:pr-0 pb-6 no-scrollbar ${showMap ? "lg:w-[55%]" : ""}`}>
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[1, 2, 3, 4].map((i) => (
@@ -200,7 +274,7 @@ export default function BusinessesClientPage() {
               </div>
             ) : (
               <div
-                className={`grid gap-6  ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
+                className={`grid gap-6 mb-40  ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
                 {data.map((business: any) => (
                   <BusinessCard key={business._id} business={business} />
                 ))}
@@ -210,7 +284,7 @@ export default function BusinessesClientPage() {
         )}
 
         <div
-          className={`transition-all duration-500 pr-7.5 max-md:hidden ${
+          className={`transition-all duration-500   pb-23 max-md:hidden ${
             isMapExpanded
               ? "w-full"
               : showMap
