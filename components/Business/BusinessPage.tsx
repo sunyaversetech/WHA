@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Filter, Globe, MapIcon, MapPin, Search } from "lucide-react";
+import {
+  Filter,
+  Globe,
+  MapIcon,
+  MapPin,
+  Search,
+  SlidersVertical,
+} from "lucide-react";
 
 import BusinessCard from "@/components/cards/business-card";
 import BusinessHeader from "./BusinessFilter";
@@ -21,6 +28,12 @@ import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { useCityFilter } from "@/contexts/city-filter-context"; // Assuming you use this same context
 import MobileBusinessSearchWithDates from "../ResuableComponents/MobileViewSearch/SearchSectionforBusiness";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerTrigger,
+} from "../ui/drawer";
 
 const BusinessMap = dynamic(() => import("./business-map"), { ssr: false });
 
@@ -69,25 +82,23 @@ export default function BusinessesClientPage() {
         </div>
       </div>
 
-      <div className="flex-none px-6 py-4 flex max-sm:flex-col gap-2 justify-between items-center   ">
+      <div className="flex-none px-6 py-4 flex justify-between items-center   ">
         <div className="text-sm font-medium text-slate-500 pl-5">
           {data.length} businesses in {selectedCity || "Australia"}
         </div>
 
-        <div className="flex gap-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex items-center gap-2  btn-wha-outline h-12 mr-2 rounded-full!">
-                <Filter className="h-4 w-4" />
-                Filter
+        <div className="flex gap-2 mr-6">
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button variant="outline" size="sm">
+                <SlidersVertical className="h-4 w-4" />
+                Filters
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl w-full z-[110]">
-              <DialogTitle className="text-lg font-bold mb-4 ">
+            </DrawerTrigger>
+            <DrawerContent className="max-w-4xl w-full z-9999 min-h-[40vh] p-4">
+              <DrawerTitle className="text-lg font-bold mb-4 ">
                 Filter Businesses
-              </DialogTitle>
+              </DrawerTitle>
               <Tabs
                 defaultValue="categories"
                 className="w-full rounded-lg border bg-white">
@@ -149,20 +160,26 @@ export default function BusinessesClientPage() {
                   </div>
                 </TabsContent>
               </Tabs>
-            </DialogContent>
-          </Dialog>
+            </DrawerContent>
+          </Drawer>
 
           {!isMapExpanded && (
             <Button
+              variant="outline"
               onClick={() => setShowMap(!showMap)}
-              className="flex items-center gap-2  btn-wha-outline h-12 mr-2 rounded-full! max-sm:hidden">
-              <MapIcon /> {showMap ? "Hide Map" : "Show Map"}
+              className=" max-md:hidden"
+              size="sm">
+              <MapIcon className="h-4 w-4" />{" "}
+              {showMap ? "Hide map" : "Show map"}
             </Button>
           )}
           <Button
+            variant="outline"
             onClick={() => setIsMapExpanded(!isMapExpanded)}
-            className="hidden   items-center gap-2btn-wha-outline h-12 mr-2  max-sm:flex rounded-full!">
-            <MapIcon /> {isMapExpanded ? "Hide Map" : "Show Map"}
+            className="hidden   max-md:flex"
+            size="sm">
+            <MapIcon className="h-4 w-4" />{" "}
+            {isMapExpanded ? "Hide map" : "Show map"}
           </Button>
         </div>
       </div>

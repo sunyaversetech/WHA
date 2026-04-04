@@ -83,30 +83,28 @@ export default function EventsPageClient() {
             {searchParams.get("city") ?? "australia "}
           </div>
           <div className="flex gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
+            <Drawer>
+              <DrawerTrigger asChild>
                 <Button variant="outline" size="sm">
                   <SlidersVertical className="h-4 w-4" />
                   Filters
                 </Button>
-              </DialogTrigger>
+              </DrawerTrigger>
 
-              <DialogContent className="max-w-4xl w-full z-50">
-                <DialogTitle className="text-lg font-bold mb-4">
+              <DrawerContent className="max-w-4xl w-full z-9999 min-h-[40vh] p-4">
+                <DrawerTitle className="text-lg font-bold mb-4">
                   Filter Events
-                </DialogTitle>
+                </DrawerTitle>
 
                 <Tabs
                   defaultValue="categories"
-                  className="w-full overflow-scroll no-scrollbar rounded-lg border bg-white "
-                >
+                  className="w-full overflow-scroll no-scrollbar rounded-lg border bg-white ">
                   <TabsList className="w-full border-none ">
                     <TabsTrigger
                       value="categories"
                       className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
 
-                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!"
-                    >
+                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!">
                       Categories
                     </TabsTrigger>
 
@@ -114,8 +112,7 @@ export default function EventsPageClient() {
                       className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
 
                     data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!"
-                      value="communities"
-                    >
+                      value="communities">
                       Communities
                     </TabsTrigger>
                   </TabsList>
@@ -126,8 +123,7 @@ export default function EventsPageClient() {
 
                   <TabsContent
                     value="communities"
-                    className="flex flex-wrap gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth"
-                  >
+                    className="flex flex-wrap gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
                     <div className="flex gap-2 justify-center items-center m-auto">
                       {COMMUNITIES.map((com) => {
                         const Icon = com.icon;
@@ -150,8 +146,7 @@ export default function EventsPageClient() {
                               isActive
                                 ? "bg-primary border-primary text-white"
                                 : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                            }`}
-                          >
+                            }`}>
                             <Icon
                               className={`h-4 w-4 md:h-5 md:w-5 mb-1 ${
                                 isActive ? "text-white" : "text-slate-500"
@@ -167,15 +162,14 @@ export default function EventsPageClient() {
                     </div>
                   </TabsContent>
                 </Tabs>
-              </DialogContent>
-            </Dialog>
+              </DrawerContent>
+            </Drawer>
             {!isMapExpanded && (
               <Button
                 variant="outline"
                 onClick={() => setShowMap(!showMap)}
                 className=" max-md:hidden"
-                size="sm"
-              >
+                size="sm">
                 <MapIcon className="h-4 w-4" />{" "}
                 {showMap ? "Hide map" : "Show map"}
               </Button>
@@ -184,8 +178,7 @@ export default function EventsPageClient() {
               variant="outline"
               onClick={() => setIsMapExpanded(!isMapExpanded)}
               className="hidden   max-md:flex"
-              size="sm"
-            >
+              size="sm">
               <MapIcon className="h-4 w-4" />{" "}
               {isMapExpanded ? "Hide map" : "Show map"}
             </Button>
@@ -196,11 +189,9 @@ export default function EventsPageClient() {
       <div className="flex md:gap-4 gap-0 flex-1 overflow-hidden relative px-5 h-[calc(100vh-80px)]">
         {!isMapExpanded && (
           <div
-            className={`transition-all duration-300 overflow-y-auto pb-6 no-scrollbar h-full ${showMap ? "w-full lg:w-[55%]" : "w-full"}`}
-          >
+            className={`transition-all duration-300 overflow-y-auto pb-6 no-scrollbar h-full ${showMap ? "w-full lg:w-[55%]" : "w-full"}`}>
             <div
-              className={`grid gap-6 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}
-            >
+              className={`grid gap-6 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
               {apiResponse?.data.map((event: any) => (
                 <EventCard key={event._id} event={event} />
               ))}
@@ -215,8 +206,7 @@ export default function EventsPageClient() {
               : showMap
                 ? "w-[45%]"
                 : "w-0 border-none opacity-0"
-          }`}
-        >
+          }`}>
           <EventMap
             businesses={data}
             currentCity={searchParams.get("city") || ""}
@@ -229,8 +219,7 @@ export default function EventsPageClient() {
         <div
           className={`transition-all flex md:hidden duration-500 ${
             isMapExpanded ? "w-full" : ""
-          }`}
-        >
+          }`}>
           <EventMap
             businesses={data}
             currentCity={searchParams.get("city") || ""}

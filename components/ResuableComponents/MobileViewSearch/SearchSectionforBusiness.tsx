@@ -28,6 +28,7 @@ import {
   Users,
   Plane,
   MoreHorizontal,
+  SearchIcon,
 } from "lucide-react";
 import { useGetALLBusiness } from "@/services/business.service";
 import {
@@ -37,6 +38,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
 
 type SearchState = "where" | "cat" | "search" | null;
 
@@ -154,53 +156,49 @@ export default function MobileBusinessSearchWithDates({
       <DrawerTrigger className="w-11/12 flex my-2 m-auto">
         <div
           onClick={() => setActiveTab("search")}
-          className="flex flex-col bg-white rounded-2xl gap-1.5 cursor-pointer w-full text-center items-center shadow-md py-2.5">
-          <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
-            Search Business
-          </span>
-          <div className="flex items-center gap-1.5">
-            <span className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0">
-              Name, Barber, Cafe, Cleaning, etc..
+          className="flex flex-col bg-white rounded-full gap-1.5 cursor-pointer w-full text-center items-center shadow-md py-2.5">
+          <div className="flex items-center justify-center gap-1.5 py-1">
+            <SearchIcon size={15} />
+            <span className="text-[12px] font-medium  tracking-[0.08em] text-[#0f0e17]  leading-none select-none">
+              Search Business
             </span>
           </div>
         </div>
       </DrawerTrigger>
-      <DrawerContent className="fixed inset-0 top-0 h-screen max-h-screen flex pb-10 flex-col rounded-none border-none ">
+      <DrawerContent className="h-screen w-full bg-white flex  flex-col rounded-t-4xl! border-none z-999 shadow-none!">
         <DrawerHeader>
           <DrawerTitle>Search Business</DrawerTitle>
         </DrawerHeader>
         <FontImport />
         <div
-          className="esw-root flex w-full md:w-fit items-center justify-center overflow-scroll no-scrollbar m-auto py-4 md:py-6 px-4 md:px-0"
+          className="esw-root flex w-full md:w-fit   overflow-y-scroll h-full gap-2 px-4 md:px-0 no-scrollbar"
           ref={containerRef}>
           <div
             className={[
-              "relative flex flex-col md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full md:w-auto",
-              isExpanded
-                ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
-                : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
+              "relative flex flex-col md:flex-row gap-3 items-stretch  md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full md:w-auto",
+              isExpanded ? "  " : "bg-white  ",
             ].join(" ")}>
-            {/* SEARCH INPUT */}
             <div
               onClick={() => setActiveTab("search")}
               className={[
-                "relative flex flex-col justify-center rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer transition-all duration-200",
+                "relative flex flex-col justify-center rounded-md bg-slate-100/80 px-6 py-2.5 min-h-[60px] cursor-pointer transition-all duration-200",
                 sticky ? "md:min-w-[130px]" : "md:min-w-[200px]",
                 activeTab === "search"
-                  ? "bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
+                  ? "bg-white shadow-md scale-[1.02] z-10"
                   : "hover:bg-[#eeecf5]",
               ].join(" ")}>
               <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
                 Search Business
               </span>
               <div className="flex items-center gap-1.5">
-                <input
+                <Input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   placeholder="Name, service..."
-                  className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none ring-0 text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0 focus:outline-none"
+                  className="esw-placeholder flex-1 min-w-0 bg-transparent border-none shadow-none outline-none ring-0 text-base font-medium text-[#0f0e17] p-0 
+                  focus:ring-0 focus-visible:ring-0 focus-visible:outline-none focus-visible:border-none"
                 />
                 <AnimatePresence>
                   {inputValue && (
@@ -220,9 +218,6 @@ export default function MobileBusinessSearchWithDates({
               </div>
             </div>
 
-            <Divider hide={activeTab === "where" || activeTab === "search"} />
-
-            {/* WHERE SEGMENT */}
             <SegmentSection
               label="Where"
               isActive={activeTab === "where"}
@@ -241,7 +236,8 @@ export default function MobileBusinessSearchWithDates({
                   <motion.div
                     key={city}
                     whileHover={{ x: 2 }}
-                    className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors duration-150 min-w-full md:min-w-[280px]"
+                    className="group flex items-center gap-3.5 rounded-md px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors duration-150 min-w-full 
+                    w-[90vw]"
                     onClick={() => {
                       setLocation(city);
                       setActiveTab("cat");
@@ -266,8 +262,6 @@ export default function MobileBusinessSearchWithDates({
               </div>
             </SegmentSection>
 
-            <Divider hide={activeTab === "cat" || activeTab === "where"} />
-
             <SegmentSection
               label="Category"
               isActive={activeTab === "cat"}
@@ -277,7 +271,7 @@ export default function MobileBusinessSearchWithDates({
               onClear={() => setActiveCategory("all")}
               segW={segW}
               panelAlign="center">
-              <div className="p-4 w-[80vw] gap-4 grid grid-cols-3 xs:grid-cols-3   md:w-[340px] max-h-[60vh] md:max-h-[400px] overflow-y-auto">
+              <div className="p-4 w-[94vw] gap-4 grid grid-cols-3 xs:grid-cols-3   md:w-[90vh] max-h-[60vh]  overflow-y-auto">
                 {CATEGORIES.map((cat) => {
                   const Icon = cat.icon;
                   const isActive = activeCategory === cat.value;
@@ -288,7 +282,7 @@ export default function MobileBusinessSearchWithDates({
                         setActiveCategory(cat.value);
                         setActiveTab(null);
                       }}
-                      className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all border shrink-0 group ${
+                      className={`flex flex-col items-center justify-center p-3 rounded-md transition-all border shrink-0 group ${
                         isActive
                           ? "bg-[#051e3a] border-[#051e3a] text-white shadow-lg"
                           : "bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50"
@@ -304,30 +298,30 @@ export default function MobileBusinessSearchWithDates({
                 })}
               </div>
             </SegmentSection>
-
-            <button
-              onClick={handleSearch}
-              className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center overflow-hidden shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none w-full md:w-auto md:min-w-[48px]">
-              <span className="flex items-center justify-center px-3.5">
-                <Search size={18} strokeWidth={3} />
-              </span>
-              <span className="md:hidden font-bold text-[15px]">
-                Search Businesses
-              </span>
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden">
-                    Search
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </button>
           </div>
         </div>
+        <button
+          onClick={handleSearch}
+          className="flex w-[92vw] mb-4 m-auto mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] 
+          md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all  md:w-auto md:px-2">
+          <span className="flex items-center justify-center px-3.5">
+            <Search size={18} strokeWidth={3} />
+          </span>
+          <span className="md:hidden font-bold text-[15px]">
+            Search Businesses
+          </span>
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.span
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: "auto" }}
+                exit={{ opacity: 0, width: 0 }}
+                className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden">
+                Search
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
       </DrawerContent>
     </Drawer>
   );
@@ -369,7 +363,7 @@ function SegmentSection({
       <div
         onClick={handleClick}
         className={[
-          "esw-seg relative flex flex-col justify-center max-sm:w-full rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
+          "esw-seg relative flex flex-col justify-center max-sm:w-full rounded-md bg-slate-100/80 px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
           segW,
           isActive
             ? "esw-active bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
@@ -415,7 +409,7 @@ function SegmentSection({
         {isActive && (
           <motion.div
             className={[
-              "absolute top-[calc(100%+18px)] z-50 bg-white rounded-[2rem] overflow-hidden",
+              "absolute top-[calc(100%+12px)] z-50 bg-white rounded-md overflow-hidden",
               "shadow-[0_20px_60px_rgba(15,14,23,0.13),0_0_0_1.5px_rgba(15,14,23,0.06)]",
               panelAlign === "right" ? "right-0" : "left-1/2 -translate-x-1/2",
             ].join(" ")}

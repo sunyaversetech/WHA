@@ -1,22 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  Search,
-  X,
-  CalendarDays,
-  ChevronRight,
-  Clock,
-  SearchIcon,
-} from "lucide-react";
+import { Search, X, ChevronRight, SearchIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  addDays,
-  format,
-  startOfMonth,
-  endOfMonth,
-  formatDate,
-} from "date-fns";
+import { addDays, format, startOfMonth, endOfMonth } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -24,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
-  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -118,8 +104,7 @@ export default function MobileEventSearchWithDates({
       <DrawerTrigger className="w-11/12 flex my-2 m-auto">
         <div
           onClick={() => setActiveTab("search")}
-          className="flex flex-col bg-white rounded-full gap-1.5 cursor-pointer w-full text-center items-center shadow-md py-2.5"
-        >
+          className="flex flex-col bg-white rounded-full gap-1.5 cursor-pointer w-full text-center items-center shadow-md py-2.5">
           <div className="flex items-center justify-center gap-1.5 py-1">
             <SearchIcon size={15} />
             <span className="text-[12px] font-medium  tracking-[0.08em] text-[#0f0e17]  leading-none select-none">
@@ -135,14 +120,12 @@ export default function MobileEventSearchWithDates({
         <FontImport />
         <div
           className="esw-root flex w-full md:w-fit   overflow-y-scroll h-full gap-2 px-4 md:px-0 no-scrollbar"
-          ref={containerRef}
-        >
+          ref={containerRef}>
           <div
             className={[
               "relative flex flex-col  gap-3  md:flex-row items-stretch md:items-center rounded-[1rem] md:rounded-full p-1.5 transition-all duration-300 w-full",
               isExpanded ? "  " : "bg-white  ",
-            ].join(" ")}
-          >
+            ].join(" ")}>
             <div
               onClick={() => setActiveTab("search")}
               className={[
@@ -151,12 +134,11 @@ export default function MobileEventSearchWithDates({
                 activeTab === "search"
                   ? "bg-white shadow-md scale-[1.02] z-10"
                   : "hover:bg-[#eeecf5]",
-              ].join(" ")}
-            >
+              ].join(" ")}>
               <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
                 Search Events
               </span>
-              <div className="flex items-center gap-1.5 border p-1 rounded-sm">
+              <div className="flex items-center gap-1.5 border px-1 rounded-sm">
                 <SearchIcon size={15} />
                 <Input
                   type="text"
@@ -172,8 +154,7 @@ export default function MobileEventSearchWithDates({
                       e.stopPropagation();
                       setInputValue("");
                     }}
-                    className="opacity-50 hover:opacity-100"
-                  >
+                    className="opacity-50 hover:opacity-100">
                     <X size={15} />
                   </button>
                 )}
@@ -187,8 +168,7 @@ export default function MobileEventSearchWithDates({
               displayValue={location}
               placeholder="Select destination"
               onClear={() => setLocation("")}
-              segW={segW}
-            >
+              segW={segW}>
               <div className="p-2 py-3 -mt-1 w-full md:min-w-[300px]">
                 {[
                   { city: "sydney", country: "Australia", emoji: "🌉" },
@@ -200,8 +180,7 @@ export default function MobileEventSearchWithDates({
                     onClick={() => {
                       setLocation(city);
                       setActiveTab("when");
-                    }}
-                  >
+                    }}>
                     <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-xl">
                       {emoji}
                     </div>
@@ -232,8 +211,7 @@ export default function MobileEventSearchWithDates({
             setOpen(false);
           }}
           className="flex w-[92vw] mb-4 m-auto mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] 
-          md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all  md:w-auto md:px-2"
-        >
+          md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all  md:w-auto md:px-2">
           <Search size={18} className="md:mx-2" />
           <span className="md:hidden font-bold text-[15px] ml-2">
             Search Events
@@ -244,8 +222,7 @@ export default function MobileEventSearchWithDates({
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
-                className="hidden md:block pr-4 font-bold text-[13px] whitespace-nowrap "
-              >
+                className="hidden md:block pr-4 font-bold text-[13px] whitespace-nowrap">
                 Search
               </motion.span>
             )}
@@ -307,8 +284,7 @@ function SegmentSection({
           isActive
             ? "esw-active bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
             : "hover:bg-[#eeecf5]",
-        ].join(" ")}
-      >
+        ].join(" ")}>
         <AnimatePresence>
           {ripple && (
             <motion.span
@@ -337,8 +313,7 @@ function SegmentSection({
           ].join(" ")}
           style={
             !isValuePresent ? { fontFamily: "'Fraunces', serif" } : undefined
-          }
-        >
+          }>
           {isValuePresent ? displayValue : placeholder}
         </span>
 
@@ -348,8 +323,7 @@ function SegmentSection({
               e.stopPropagation();
               onClear();
             }}
-            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-4 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all duration-150 z-20 border-none bg-transparent cursor-pointer"
-          >
+            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-4 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all duration-150 z-20 border-none bg-transparent cursor-pointer">
             <X size={14} strokeWidth={3} />
           </button>
         )}
@@ -366,8 +340,7 @@ function SegmentSection({
             initial={{ opacity: 0, y: 12, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}
-          >
+            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}>
             {children}
           </motion.div>
         )}
@@ -438,8 +411,7 @@ export function CalendarSegment({
           isActive
             ? "bg-white shadow-md scale-[1.02] z-10"
             : "hover:bg-[#eeecf5]",
-        ].join(" ")}
-      >
+        ].join(" ")}>
         <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none">
           When
         </span>
@@ -449,8 +421,7 @@ export function CalendarSegment({
             hasValue
               ? "text-[#0f0e17] font-medium"
               : "font-light italic text-[#9896aa]",
-          ].join(" ")}
-        >
+          ].join(" ")}>
           {getDateDisplay()}
         </span>
 
@@ -460,8 +431,7 @@ export function CalendarSegment({
               e.stopPropagation();
               onClear();
             }}
-            className="absolute top-1/2 -translate-y-1/2 right-4 flex items-center justify-center w-[18px] h-[18px] rounded-full hover:bg-black/10 transition-all"
-          >
+            className="absolute top-1/2 -translate-y-1/2 right-4 flex items-center justify-center w-[18px] h-[18px] rounded-full hover:bg-black/10 transition-all">
             <X size={14} strokeWidth={3} />
           </button>
         )}
@@ -474,8 +444,7 @@ export function CalendarSegment({
             overflow-hidden  md:w-auto md:shadow-xl border md:border-black/5"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-          >
+            exit={{ opacity: 0, height: 0 }}>
             <div className="flex flex-col md:flex-row">
               <div className="w-full md:w-[140px] border-b mt-1 md:border-b-0 md:border-r border-black/5 p-3 flex flex-row md:flex-col gap-2 overflow-x-auto">
                 {["today", "week", "month"].map((id) => (
@@ -483,8 +452,7 @@ export function CalendarSegment({
                     key={id}
                     variant="ghost"
                     onClick={() => handleQuickSelect(id as any)}
-                    className="flex-1 md:w-full border-gray-200! rounded-sm! text-xs font-bold capitalize text-center justify-center btn-wha-outline hover:bg-[#f5f4f8]"
-                  >
+                    className="flex-1 md:w-full border-gray-200! rounded-sm! text-xs font-bold capitalize text-center justify-center btn-wha-outline hover:bg-[#f5f4f8]">
                     {id}
                   </Button>
                 ))}
