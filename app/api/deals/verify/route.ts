@@ -50,9 +50,7 @@ export async function POST(request: NextRequest) {
     redemption.verifiedAt = new Date();
     await redemption.save();
 
-    await Deal.findByIdAndUpdate(redemption.deal, {
-      $inc: { current_redemptions: 1 },
-    });
+    await Deal.findByIdAndUpdate(redemption.deal);
 
     return NextResponse.json(
       {

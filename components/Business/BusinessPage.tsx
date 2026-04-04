@@ -87,7 +87,7 @@ export default function BusinessesClientPage() {
           {data.length} businesses in {searchParams.get("city") ?? "Australia "}
         </div>
 
-        <div className="flex gap-2 md:mr-5">
+        <div className="flex gap-2 md:mr-5 max-md:mr-5">
           <Drawer>
             <DrawerTrigger asChild className="hidden max-md:flex">
               <Button variant="outline" size="sm">
