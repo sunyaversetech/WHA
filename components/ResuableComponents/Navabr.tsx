@@ -134,17 +134,18 @@ export default function Navbar() {
         <div className="flex items-center gap-10  rounded-full p-1 - text-sm font-medium transition-all duration-300">
           {isSticky && pathname === "/" ? (
             <AnimatePresence>
-              {isSticky && pathname === "/" && (
-                <motion.div
-                  key="sticky-search"
-                  initial={{ y: 50, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: 50, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  className="absolute left-0 right-0 max-md:hidden">
-                  <HomePageSearchWithDates sticky={isSticky} />
-                </motion.div>
-              )}
+              {isSticky &&
+                pathname === "/" &&
+                // <motion.div
+                //   key="sticky-search"
+                //   initial={{ y: 50, opacity: 0 }}
+                //   animate={{ y: 0, opacity: 1 }}
+                //   exit={{ y: 50, opacity: 0 }}
+                //   transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                //   className="absolute left-0 right-0 max-md:hidden">
+                //   <HomePageSearchWithDates sticky={isSticky} />
+                // </motion.div>
+                ""}
             </AnimatePresence>
           ) : isSticky && pathname.startsWith("/events") ? (
             <AnimatePresence>

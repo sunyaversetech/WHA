@@ -281,7 +281,7 @@ export default function EventsPageClient() {
         )}
 
         <div
-          className={`transition-all duration-500  max-md:hidden h-full ${
+          className={`transition-all duration-500 pb-23 max-md:hidden h-full ${
             isMapExpanded
               ? "w-full"
               : showMap

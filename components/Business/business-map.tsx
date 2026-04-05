@@ -348,14 +348,11 @@ function MapRefresher({
 }) {
   const map = useMap();
 
-  // 1. Handle Mobile Resize & Drawer Opening
   useEffect(() => {
     if (!map) return;
 
-    // Trigger immediate refresh
     map.invalidateSize();
 
-    // Trigger delayed refresh to catch the end of CSS transitions/drawer animations
     const timer = setTimeout(() => {
       map.invalidateSize();
     }, 500);
@@ -363,7 +360,6 @@ function MapRefresher({
     return () => clearTimeout(timer);
   }, [isVisible, isExpanded, map]);
 
-  // 2. Handle City Flying (with NaN protection)
   useEffect(() => {
     if (!map) return;
 

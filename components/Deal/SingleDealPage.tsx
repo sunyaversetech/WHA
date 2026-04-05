@@ -173,7 +173,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                       </div>
                       <div className="flex-1">
                         <h2 className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
-                          {deal.data.user.name}
+                          {deal.data.user.business_name}
                         </h2>
                         <div className="flex items-center gap-2 mt-2">
                           <p className="text-sm text-gray-500 flex items-center gap-1">

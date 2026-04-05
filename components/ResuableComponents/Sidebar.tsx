@@ -57,13 +57,13 @@ const Sidebar = () => {
           hasDropdown: false,
           active: pathname === "/dashboard",
         },
-        {
-          name: "booking",
-          icon: Calendar,
-          link: buildPath("/dashboard/bookings"),
-          hasDropdown: false,
-          active: pathname === "/dashboard/bookings",
-        },
+        // {
+        //   name: "booking",
+        //   icon: Calendar,
+        //   link: buildPath("/dashboard/bookings"),
+        //   hasDropdown: false,
+        //   active: pathname === "/dashboard/bookings",
+        // },
         {
           name: "deals",
           icon: BadgeDollarSign,
@@ -80,18 +80,18 @@ const Sidebar = () => {
         },
       ],
     },
-    {
-      groupLabel: "Inventory",
-      items: [
-        {
-          name: "inventory",
-          icon: CirclePile,
-          link: buildPath("/dashboard/inventory"),
-          hasDropdown: false,
-          active: pathname.startsWith("/dashboard/inventory"),
-        },
-      ],
-    },
+    // {
+    //   groupLabel: "Inventory",
+    //   items: [
+    //     {
+    //       name: "inventory",
+    //       icon: CirclePile,
+    //       link: buildPath("/dashboard/inventory"),
+    //       hasDropdown: false,
+    //       active: pathname.startsWith("/dashboard/inventory"),
+    //     },
+    //   ],
+    // },
     {
       groupLabel: "Profile",
       items: [

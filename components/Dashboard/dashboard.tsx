@@ -162,7 +162,7 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900 pt-6 px-6">
                 Upcoming Events
@@ -191,7 +191,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Card 2 - Deals */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900 pt-6 px-6">
                 Recent Deals
@@ -223,7 +222,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
