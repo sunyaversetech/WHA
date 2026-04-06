@@ -116,11 +116,13 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`${isSticky ? "fixed bg-white w-full h-22" : ""} top-0 z-[9999] flex items-center md:justify-between justify-center px-6 py-3 border-white/20`}>
+      className={`${isSticky ? "fixed bg-white w-full h-22" : ""} top-0 z-[9999] hidden md:flex items-center md:justify-between justify-center px-6 py-3 border-white/20`}
+    >
       <Link
         href={buildPath("/")}
         onClick={() => setActiveTab("")}
-        className="md:flex hidden items-center">
+        className="md:flex hidden items-center"
+      >
         <Image
           src="/wha/logo.png"
           alt="logo"
@@ -155,7 +157,8 @@ export default function Navbar() {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 50, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="absolute left-0 right-0 max-md:hidden">
+                className="absolute left-0 right-0 max-md:hidden"
+              >
                 <EventSearchWithDates sticky={isSticky} />
               </motion.div>
             </AnimatePresence>
@@ -167,7 +170,8 @@ export default function Navbar() {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 50, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="absolute left-0 right-0 max-md:hidden">
+                className="absolute left-0 right-0 max-md:hidden"
+              >
                 <EventSearchWithDates sticky={isSticky} />
               </motion.div>
             </AnimatePresence>
@@ -185,7 +189,8 @@ export default function Navbar() {
                   }}
                   className={`group relative flex items-center gap-2 pb-2 transition-colors ${
                     isActive ? "text-black" : "text-gray-500 hover:text-black"
-                  }`}>
+                  }`}
+                >
                   <div className="flex gap-2 items-center">
                     <div className="flex">
                       <Image
@@ -254,7 +259,8 @@ export default function Navbar() {
 
             <DropdownMenuContent
               align="end"
-              className="w-64 p-3 rounded-2xl bg-white/90 backdrop-blur-lg shadow-xl">
+              className="w-64 p-3 rounded-2xl bg-white/90 backdrop-blur-lg shadow-xl"
+            >
               <p className="font-semibold">{session.user?.name}</p>
               <p className="text-sm text-muted-foreground mb-2">
                 {session.user?.email}
@@ -262,12 +268,14 @@ export default function Navbar() {
               <div className="border-t my-2" />
               <Link
                 href={buildPath("/dashboard")}
-                className="block px-2 py-2 rounded-md hover:bg-gray-100">
+                className="block px-2 py-2 rounded-md hover:bg-gray-100"
+              >
                 Dashboard
               </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
-                className="w-full text-left px-2 py-2 rounded-md hover:bg-gray-100">
+                className="w-full text-left px-2 py-2 rounded-md hover:bg-gray-100"
+              >
                 Logout
               </button>
             </DropdownMenuContent>

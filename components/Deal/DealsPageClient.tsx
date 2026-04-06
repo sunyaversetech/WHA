@@ -34,8 +34,8 @@ export default function DealsPageClient() {
     deals?.data?.filter((deal) => currentDate <= new Date(deal.valid_till));
 
   return (
-    <div className="min-h-screen bg-gradient-modern relative -mt-2 max-xl:px-6">
-      <div className="flex-none h-32 max-md::h-fit  -mt-1 border-b flex items-center justify-center">
+    <div className="flex flex-col h-screen overflow-hidden ">
+      <div className="flex-none h-22 max-md:h-fit  -mt-1 border-b pb-1 flex items-center justify-center">
         <div className="w-full max-md:hidden">
           <DealsSearchWithDates />
         </div>

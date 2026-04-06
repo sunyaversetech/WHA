@@ -10,6 +10,9 @@ import {
   Store,
   Handshake,
   Heart,
+  CalendarDays,
+  Tag,
+  Building2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
@@ -30,6 +33,9 @@ export default function BottomNav() {
 
   const navLinks = [
     { name: "Home", path: "/", icon: Home },
+    { name: "Events", path: "/events", icon: CalendarDays },
+    { name: "Deals", path: "/deals", icon: Tag },
+    { name: "Businesses", path: "/businesses", icon: Building2 },
     {
       name: "Profile",
       path: session ? "/dashboard" : "/auth",

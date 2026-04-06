@@ -145,24 +145,27 @@ export default function BusinessSearchWithDates({
     <>
       <FontImport />
       <div
-        className="esw-root flex w-full md:w-fit items-center justify-center m-auto py-4 md:py-6 md:pt-0 px-4 md:px-0"
-        ref={containerRef}>
+        className="esw-root flex w-full md:w-fit items-center justify-center m-auto px-4 md:px-0"
+        ref={containerRef}
+      >
         <div
           className={[
-            "relative flex flex-col md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full md:w-auto",
+            "relative flex flex-col md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full",
             isExpanded
               ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
               : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
-          ].join(" ")}>
+          ].join(" ")}
+        >
           <div
             onClick={() => setActiveTab("search")}
             className={[
               "relative flex flex-col justify-center rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer transition-all duration-200",
-              sticky ? "md:min-w-[130px]" : "md:min-w-[200px]",
+              sticky ? "md:min-w-[130px]" : "md:min-w-[180px]",
               activeTab === "search"
-                ? "bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
+                ? "bg-white shadow-md scale-[1.02] z-10"
                 : "hover:bg-[#eeecf5]",
-            ].join(" ")}>
+            ].join(" ")}
+          >
             <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
               Search Business
             </span>
@@ -185,7 +188,8 @@ export default function BusinessSearchWithDates({
                       e.stopPropagation();
                       setInputValue("");
                     }}
-                    className="flex items-center justify-center w-5 h-5 shrink-0 rounded-full opacity-50 hover:opacity-100 hover:bg-black/10 transition-all border-none bg-transparent cursor-pointer">
+                    className="flex items-center justify-center w-5 h-5 shrink-0 rounded-full opacity-50 hover:opacity-100 hover:bg-black/10 transition-all border-none bg-transparent cursor-pointer"
+                  >
                     <X size={11} strokeWidth={3} />
                   </motion.button>
                 )}
@@ -202,7 +206,8 @@ export default function BusinessSearchWithDates({
             displayValue={location}
             placeholder="Select location"
             onClear={() => setLocation("")}
-            segW={segW}>
+            segW={segW}
+          >
             <div className="p-2 py-3 w-full md:w-auto">
               {[
                 { city: "sydney", country: "Australia", emoji: "🌉" },
@@ -215,7 +220,8 @@ export default function BusinessSearchWithDates({
                   onClick={() => {
                     setLocation(city);
                     setActiveTab("cat");
-                  }}>
+                  }}
+                >
                   <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#f5f4f8] shrink-0 group-hover:bg-[#ede8ff] transition-colors duration-150">
                     <span className="text-[18px] leading-none">{emoji}</span>
                   </div>
@@ -246,7 +252,8 @@ export default function BusinessSearchWithDates({
             placeholder="All Categories"
             onClear={() => setActiveCategory("all")}
             segW={segW}
-            panelAlign="right">
+            panelAlign="right"
+          >
             <div className="p-4 grid grid-cols-2 xs:grid-cols-3 gap-2 w-full md:w-[340px] max-h-[60vh] md:max-h-[400px] overflow-y-auto">
               {CATEGORIES.map((cat) => {
                 const Icon = cat.icon;
@@ -262,7 +269,8 @@ export default function BusinessSearchWithDates({
                       isActive
                         ? "bg-[#051e3a] border-[#051e3a] text-white shadow-lg"
                         : "bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50"
-                    }`}>
+                    }`}
+                  >
                     <Icon
                       className={`h-5 w-5 mb-1.5 transition-colors ${isActive ? "text-white" : "text-slate-500 group-hover:text-[#6c47ff]"}`}
                     />
@@ -277,20 +285,22 @@ export default function BusinessSearchWithDates({
 
           <button
             onClick={handleSearch}
-            className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center overflow-hidden shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none w-full md:w-auto md:min-w-[48px]">
-            <span className="flex items-center justify-center px-3.5">
-              <Search size={18} strokeWidth={3} />
-            </span>
-            <span className="md:hidden font-bold text-[15px]">
+            className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all w-full md:w-auto md:px-2"
+          >
+            <Search size={18} className="md:mx-2" />
+
+            <span className="md:hidden font-bold text-[15px] ml-2">
               Search Businesses
             </span>
+
             <AnimatePresence>
               {isExpanded && (
                 <motion.span
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: "auto" }}
                   exit={{ opacity: 0, width: 0 }}
-                  className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden">
+                  className="hidden md:block pr-4 font-bold text-[13px] whitespace-nowrap"
+                >
                   Search
                 </motion.span>
               )}
@@ -343,7 +353,8 @@ function SegmentSection({
           isActive
             ? "esw-active bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
             : "hover:bg-[#eeecf5]",
-        ].join(" ")}>
+        ].join(" ")}
+      >
         <AnimatePresence>
           {ripple && (
             <motion.span
@@ -366,7 +377,8 @@ function SegmentSection({
               ? "text-[#0f0e17] font-medium"
               : "font-light italic text-[#9896aa]",
           ].join(" ")}
-          style={!hasValue ? { fontFamily: "'Fraunces', serif" } : undefined}>
+          style={!hasValue ? { fontFamily: "'Fraunces', serif" } : undefined}
+        >
           {hasValue ? displayValue : placeholder}
         </span>
         {hasValue && (
@@ -375,7 +387,8 @@ function SegmentSection({
               e.stopPropagation();
               onClear();
             }}
-            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer">
+            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer"
+          >
             <X size={10} strokeWidth={3} />
           </button>
         )}
@@ -391,7 +404,8 @@ function SegmentSection({
             initial={{ opacity: 0, y: 12, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}>
+            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}
+          >
             {children}
           </motion.div>
         )}

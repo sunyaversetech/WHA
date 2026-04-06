@@ -95,21 +95,23 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
   };
 
   const isExpanded = activeTab !== null;
-  const segW = sticky ? "w-[130px]" : "w-[190px]";
+  const segW = sticky ? "w-[130px]" : "w-[180px]";
 
   return (
     <>
       <FontImport />
       <div
-        className="ds-root flex w-full md:w-fit items-center justify-center m-auto py-4 md:py-8 max-sm:px-0 max-sm:mt-2 max-sm:w-full px-4 md:px-0"
-        ref={containerRef}>
+        className="ds-root flex w-full md:w-fit items-center justify-center m-auto px-4 md:px-0"
+        ref={containerRef}
+      >
         <div
           className={[
             "relative flex flex-col md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full md:w-auto",
             isExpanded
               ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
               : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
-          ].join(" ")}>
+          ].join(" ")}
+        >
           {/* SEARCH INPUT */}
           <div className="relative w-full md:w-auto">
             <div
@@ -120,7 +122,8 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
                 activeTab === "search"
                   ? "bg-white shadow-md scale-[1.02] z-10"
                   : "hover:bg-[#eeecf5]",
-              ].join(" ")}>
+              ].join(" ")}
+            >
               <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-0.5 leading-none">
                 Search Deals
               </span>
@@ -145,7 +148,8 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
             displayValue={location}
             placeholder="Select destinations"
             onClear={() => setLocation("")}
-            segW={segW}>
+            segW={segW}
+          >
             <div className="p-2 py-3 w-full md:min-w-[300px]">
               {["Sydney", "Canberra"].map((city) => (
                 <motion.div
@@ -155,7 +159,8 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
                   onClick={() => {
                     setLocation(city);
                     setActiveTab("when");
-                  }}>
+                  }}
+                >
                   <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#f5f4f8] group-hover:bg-[#ede8ff] transition-colors">
                     <MapPin size={18} className="text-[#6c47ff]" />
                   </div>
@@ -182,7 +187,8 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
             placeholder="Add dates"
             onClear={() => setDate(undefined)}
             segW={segW}
-            panelAlign="right">
+            panelAlign="right"
+          >
             <div className="flex flex-col md:flex-row overflow-y-auto md:overflow-hidden max-h-[70vh] md:max-h-none">
               {/* Quick Select Sidebar */}
               <div className="w-full md:w-[190px] border-b md:border-b-0 md:border-r border-black/5 p-4 flex flex-row md:flex-col gap-2 md:gap-5 overflow-x-auto md:overflow-x-visible">
@@ -195,7 +201,8 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
                     variant={"outline"}
                     key={btn.id}
                     onClick={() => handleQuickSelect(btn.id as any)}
-                    className="flex-1 md:w-full text-left items-start px-4 py-2 rounded-xl h-auto flex flex-col min-w-[100px]">
+                    className="flex-1 md:w-full text-left items-start px-4 py-2 rounded-xl h-auto flex flex-col min-w-[100px]"
+                  >
                     <span className="text-[14px] md:text-[18px] font-bold text-black">
                       {btn.label}
                     </span>
@@ -222,7 +229,8 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
           {/* SEARCH BUTTON */}
           <button
             onClick={handleSearch}
-            className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none w-full md:w-auto md:min-w-[48px]">
+            className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none w-full md:w-auto md:min-w-[48px]"
+          >
             <span className="flex items-center justify-center px-3.5">
               <Search size={18} strokeWidth={3} />
             </span>
@@ -235,7 +243,8 @@ export default function DealsSearchWithDates({ sticky }: { sticky?: boolean }) {
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: "auto" }}
                   exit={{ opacity: 0, width: 0 }}
-                  className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden">
+                  className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden"
+                >
                   Search
                 </motion.span>
               )}
@@ -269,7 +278,8 @@ function SegmentSection({
           isActive
             ? "ds-active bg-white shadow-md scale-[1.02] z-10"
             : "hover:bg-[#eeecf5]",
-        ].join(" ")}>
+        ].join(" ")}
+      >
         <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none">
           {label}
         </span>
@@ -280,7 +290,8 @@ function SegmentSection({
               ? "text-[#0f0e17] font-medium"
               : "font-light italic text-[#9896aa]",
           ].join(" ")}
-          style={!hasValue ? { fontFamily: "'Fraunces', serif" } : undefined}>
+          style={!hasValue ? { fontFamily: "'Fraunces', serif" } : undefined}
+        >
           {hasValue ? displayValue : placeholder}
         </span>
         {hasValue && (
@@ -289,7 +300,8 @@ function SegmentSection({
               e.stopPropagation();
               onClear();
             }}
-            className="ds-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer">
+            className="ds-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer"
+          >
             <X size={10} strokeWidth={3} />
           </button>
         )}
@@ -305,7 +317,8 @@ function SegmentSection({
             initial={{ opacity: 0, y: 12, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}>
+            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}
+          >
             {children}
           </motion.div>
         )}
