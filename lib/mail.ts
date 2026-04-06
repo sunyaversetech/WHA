@@ -1,16 +1,4 @@
 import { MailtrapClient } from "mailtrap";
-const TOKEN = process.env.MAIL_TOKEN!;
-const client = new MailtrapClient({ token: TOKEN });
-import nodemailer from "nodemailer";
-
-const transporter = nodemailer.createTransport({
-  host: "sandbox.smtp.mailtrap.io",
-  port: 587,
-  auth: {
-    user: process.env.MAILTRAP_USER!,
-    pass: process.env.MAILTRAP_PASS!,
-  },
-});
 
 const generateEmailTemplate = (verificationLink: string) => `
   <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e1e1e1; padding: 20px; border-radius: 10px;">
@@ -37,6 +25,7 @@ const generateEmailTemplate = (verificationLink: string) => `
 export const sendVerificationEmail = async (email: string, token: string) => {
   const domain = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const verificationLink = `${domain}/verify-email?token=${token}`;
+  const client = new MailtrapClient({ token: process.env.MAIL_TOKEN! });
 
   const sender = {
     email: "sunyaverse.tech@gmail.com",
@@ -67,6 +56,7 @@ export const sendSimpleMail = async (
   text: string,
   html?: string,
 ) => {
+  const client = new MailtrapClient({ token: process.env.MAIL_TOKEN! });
   try {
     const sender = {
       email: "sunyaverse.tech@gmail.com",
