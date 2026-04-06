@@ -35,7 +35,7 @@ export default function DealsPageClient() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden ">
-      <div className="flex-none h-22 max-md:h-fit  -mt-1 border-b pb-1 flex items-center justify-center">
+      <div className="flex-none h-22 max-md:h-fit   border-b flex items-center justify-center">
         <div className="w-full max-md:hidden">
           <DealsSearchWithDates />
         </div>
@@ -43,9 +43,9 @@ export default function DealsPageClient() {
           <MobileDealsSearchWithDates />
         </div>
       </div>
-      <Separator />
+
       <div className="relative z-10">
-        <div className="container-modern mt-2  md:py-6">
+        <div className="container-modern px-6 py-4">
           <div className="flex items-end justify-end ">
             <Drawer>
               <DrawerTrigger asChild className="hidden max-md:flex">
@@ -57,7 +57,7 @@ export default function DealsPageClient() {
 
               <DrawerContent className="max-w-4xl w-full z-9999 min-h-[40vh] p-4">
                 <DrawerTitle className="text-lg font-bold mb-4">
-                  Filter Events
+                  Filter Deals
                 </DrawerTitle>
                 <DealsHeader />
               </DrawerContent>
@@ -80,15 +80,15 @@ export default function DealsPageClient() {
             </Dialog>
           </div>
         </div>
-        <div className="container-modern pb-8">
+        <div className="container-modern pb-8 px-6">
           {isLoading ? (
-            <div className="flex  items-center gap-2 mt-5">
+            <div className="flex  items-center gap-2 ">
               <Skeleton className="h-72 w-96 mb-4 animate-pulse rounded-xl" />
               <Skeleton className="h-72 w-96 mb-4 animate-pulse" />
               <Skeleton className="h-72 w-96 mb-4 animate-pulse" />
             </div>
           ) : data && data.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 max-xl:mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 ">
               {data.map((deal) => (
                 <DealCard key={deal._id} deal={deal} />
               ))}

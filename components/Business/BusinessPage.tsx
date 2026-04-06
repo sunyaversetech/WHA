@@ -72,8 +72,8 @@ export default function BusinessesClientPage() {
   );
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden ">
-      <div className="flex-none h-22 max-md:h-fit  -mt-1 border-b pb-1 flex items-center justify-center">
+    <div className="flex flex-col h-screen overflow-hidden  ">
+      <div className="flex-none h-22 max-md:h-fit  border-b  flex items-center justify-center">
         <div className="w-full max-md:hidden">
           <BusinessSearchWithDates />
         </div>
@@ -82,12 +82,12 @@ export default function BusinessesClientPage() {
         </div>
       </div>
 
-      <div className="flex-none px-6 pr-2 py-4 flex justify-between items-center">
+      <div className="flex-none px-6 py-4 flex justify-between items-center">
         <div className="text-sm font-medium text-slate-500">
           {data.length} businesses in {searchParams.get("city") ?? "Australia "}
         </div>
 
-        <div className="flex gap-2 md:mr-5 max-md:mr-5">
+        <div className="flex gap-2 ">
           <Drawer>
             <DrawerTrigger asChild className="hidden max-md:flex">
               <Button variant="outline" size="sm">
@@ -314,7 +314,7 @@ export default function BusinessesClientPage() {
         </div>
 
         <div
-          className={`transition-all flex md:hidden duration-500 pr-7.5  ${
+          className={`transition-all flex md:hidden duration-500 ${
             isMapExpanded ? "w-full" : ""
           }`}
         >

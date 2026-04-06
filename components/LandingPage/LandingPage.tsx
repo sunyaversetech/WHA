@@ -56,7 +56,7 @@ export default function LandingPage() {
 
       <div className="mt-2 md:mt-4 bg-white text-black rounded-t-3xl px-4 md:px-6">
         <div className="container-modern py-4 md:py-6 border-b border-divider ">
-          <h2 className="text-wha-link ">
+          <h2 className="pb-2 md:pb-4">
             Explore whats active right now in your city
           </h2>
 
@@ -168,7 +168,7 @@ export default function LandingPage() {
             <div className="text-center mb-2 md:mb-6">
               <div className="flex items-center justify-center space-x-3  md:mb-4">
                 <div className="p-2 bg-primary rounded-lg">
-                  <Users className="h-4 w-4 md:h-5 md:w-5 text-base" />
+                  <Users className="h-4 w-4 md:h-5 md:w-5 text-white" />
                 </div>
                 <h2 className="text-secondary  md:text-lg lg:text-xl font-semibold">
                   Connect with Us
@@ -254,7 +254,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <div className=" py-4 md:py-6">
+      <div className=" px-6 py-4 md:py-6">
         <div className="card p-3 md:p-4 lg:p-6">
           <div className="flex items-start space-x-3 md:space-x-4">
             <div className="p-2 bg-yellow-500/20 rounded-xl flex-shrink-0">
