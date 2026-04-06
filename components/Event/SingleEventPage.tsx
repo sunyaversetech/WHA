@@ -72,7 +72,7 @@ export default function EventDetailPage() {
   const userRedemption = data?.data?.find(
     (redemption: any) =>
       redemption.user === session?.user?.id &&
-      redemption.event === event?.data?._id,
+      redemption.event._id === event?.data?._id,
   );
 
   useEffect(() => {

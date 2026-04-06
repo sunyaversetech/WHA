@@ -5,11 +5,13 @@ import { ClipboardCheck, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { useVerifyEvent } from "@/services/event.service";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function VerifyEventPage() {
   const [code, setCode] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const { mutate, isPending } = useVerifyEvent();
+  const queryClient = useQueryClient();
 
   const handleVerify = async (manualCode?: string) => {
     const codeToVerify = manualCode || code;
@@ -18,7 +20,10 @@ export default function VerifyEventPage() {
     mutate(
       { uniqueKey: codeToVerify },
       {
-        onSuccess: () => toast.success("Event verified successfully!"),
+        onSuccess: () => {
+          toast.success("Event verified successfully!");
+          queryClient.invalidateQueries({ queryKey: ["redeem"] });
+        },
         onError: (error) => toast.error(error.message || "Verification failed"),
       },
     );
