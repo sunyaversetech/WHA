@@ -106,11 +106,10 @@ export default function DashboardNavbar() {
                     </div>
                   </div>
 
-                  {/* Verify Box */}
                   <div className="mt-4">
                     {!session?.user?.emailVerified && (
                       <Link
-                        href="/verify-email"
+                        href="/email-sent"
                         className="flex justify-between items-center p-4 rounded-xl bg-yellow-100 border border-yellow-200 hover:bg-yellow-200 transition">
                         <div>
                           <p className="font-medium text-sm">

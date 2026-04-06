@@ -47,6 +47,8 @@ const UserSchema = new Schema(
     isblocked: { type: Boolean, default: false },
     abn_number: { type: String },
     verified: { type: Boolean, default: false },
+    token: { type: String },
+    verificationTokenExpire: { type: Date },
     resetPasswordToken: { type: String },
     resetPasswordExpire: { type: Date },
     isSponsor: { type: Boolean, default: false },

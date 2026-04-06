@@ -23,12 +23,12 @@ const generateEmailTemplate = (verificationLink: string) => `
 `;
 
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const domain = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const domain = process.env.NEXT_PUBLIC_APP_URL!;
   const verificationLink = `${domain}/verify-email?token=${token}`;
   const client = new MailtrapClient({ token: process.env.MAIL_TOKEN! });
 
   const sender = {
-    email: "sunyaverse.tech@gmail.com",
+    email: "no-reply@whaustralia.com",
     name: "Sunyaverse",
   };
 
