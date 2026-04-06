@@ -59,7 +59,7 @@ export const sendSimpleMail = async (
   const client = new MailtrapClient({ token: process.env.MAIL_TOKEN! });
   try {
     const sender = {
-      email: "sunyaverse.tech@gmail.com",
+      email: "no-reply@whaustralia.com",
       name: "WhAustralia",
     };
 
