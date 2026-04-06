@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Edit, ChevronLeft } from "lucide-react";
+import {
+  PlusCircle,
+  Edit,
+  ChevronLeft,
+  ShieldCheck,
+  ExternalLink,
+} from "lucide-react";
 import { useDeleteEvent, useGetEvent } from "@/services/event.service";
 import Image from "next/image";
 import Link from "next/link";
@@ -43,11 +49,23 @@ export default function EventsBackend() {
                text-[#ODODOD] 
                transition-all hover:scale-105 active:scale-95"
         />
-        <Link
-          href="/dashboard/events/add-event"
-          className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
-          <PlusCircle className="mr-2 h-4 w-4" /> Add
-        </Link>
+        <div>
+          <Link
+            href="/dashboard/events/redemtion-table"
+            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
+            <ExternalLink className="mr-2 h-4 w-4" /> Redemtion Table
+          </Link>
+          <Link
+            href="/dashboard/events/verify-event"
+            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
+            <ShieldCheck className="mr-2 h-4 w-4" /> Verify Event
+          </Link>
+          <Link
+            href="/dashboard/events/add-event"
+            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
+            <PlusCircle className="mr-2 h-4 w-4" /> Add
+          </Link>
+        </div>
       </div>
 
       <div className="flex justify-between items-center">
@@ -60,7 +78,17 @@ export default function EventsBackend() {
           </p>
         </div>
 
-        <div className="hidden md:block">
+        <div className="hidden md:flex md:gap-2">
+          <Link
+            href="/dashboard/events/redemtion-table"
+            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
+            <ExternalLink className="mr-2 h-4 w-4" /> Redemtion Table
+          </Link>
+          <Link
+            href="/dashboard/events/verify-event"
+            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
+            <ShieldCheck className="mr-2 h-4 w-4" /> Verify Event
+          </Link>
           <Link
             href="/dashboard/events/add-event"
             className="ml-auto flex bg-[#041e3a]  text-white items-center py-2 px-6 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">

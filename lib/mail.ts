@@ -78,3 +78,58 @@ export const sendSimpleMail = async (
     return { success: false, error };
   }
 };
+
+const generateEventTicketTemplate = (
+  eventName: string,
+  code: string,
+  userName: string,
+) => {
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${code}`;
+
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 2px solid #051e3a; border-radius: 15px; overflow: hidden;">
+      <div style="background-color: #051e3a; padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">Your Event Ticket</h1>
+      </div>
+      <div style="padding: 30px; text-align: center; color: #333;">
+        <p style="font-size: 18px;">Hi <strong>${userName}</strong>,</p>
+        <p>Thanks for getting your ticket for <strong>${eventName}</strong>!</p>
+        
+        <div style="margin: 30px 0;">
+          <img src="${qrUrl}" alt="Ticket QR Code" style="border: 10px solid #f4f4f4; border-radius: 10px;" />
+          <p style="font-family: monospace; font-size: 24px; font-weight: bold; letter-spacing: 4px; margin-top: 10px; color: #051e3a;">
+            ${code}
+          </p>
+        </div>
+
+        <p style="font-size: 14px; color: #666;">
+          Present this QR code or the unique ID at the entrance for verification.
+        </p>
+      </div>
+      <div style="background-color: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #999;">
+        &copy; ${new Date().getFullYear()} WHA Australia. All rights reserved.
+      </div>
+    </div>
+  `;
+};
+
+export const sendEventTicketEmail = async (
+  email: string,
+  eventName: string,
+  code: string,
+  userName: string,
+) => {
+  const client = new MailtrapClient({ token: process.env.MAIL_TOKEN! });
+  try {
+    await client.send({
+      from: { email: "no-reply@whaustralia.com", name: "WHA Australia" },
+      to: [{ email }],
+      subject: `Your Ticket for ${eventName}`,
+      html: generateEventTicketTemplate(eventName, code, userName),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Email Error:", error);
+    return { success: false };
+  }
+};

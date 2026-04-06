@@ -41,6 +41,26 @@ export type EventType = {
   ticket_price: string | null;
 };
 
+type RedeemCodeType = {
+  eventId: string;
+  userId: string;
+  business: string;
+};
+
+type RedeemCodeResponseType = {
+  event: string;
+  user: string;
+  business: string;
+  uniqueKey: string;
+  status: "pending" | "verified";
+  verifiedAt?: Date;
+};
+
+type RedeemCodeFormResponseType = {
+  success: string;
+  uniqueKey: string;
+};
+
 export const useCreateEvent = () => {
   return useMutation<ApiResponseType<EventFormValues>, any, FormData>({
     mutationKey: ["createEvent"],
@@ -109,4 +129,41 @@ export const useDeleteEvent = () => {
         data: data,
       }),
   });
+};
+
+export const useVerifyEvent = () => {
+  return useMutation<ApiResponseType<any>, any, any>({
+    mutationKey: ["verify-event"],
+    mutationFn: (data: any) =>
+      Post<any, ApiResponseType<any>>({
+        url: `/api/event/verify`,
+        data: data,
+      }),
+  });
+};
+
+export const useRedeemEventCode = () => {
+  return useMutation<RedeemCodeFormResponseType, any, RedeemCodeType>({
+    mutationKey: ["getRedeem"],
+    mutationFn: (data: RedeemCodeType) =>
+      Post<RedeemCodeType, RedeemCodeFormResponseType>({
+        url: "/api/event/redeem",
+        data: data,
+      }),
+  });
+};
+
+export const useGetEventRedeem = () => {
+  return useFetcher<ApiResponseType<RedeemCodeResponseType[]>>(
+    "redeem",
+    null,
+    "/api/event/redeem",
+  );
+};
+export const useGetEventRedeemBusiness = () => {
+  return useFetcher<ApiResponseType<RedeemCodeResponseType[]>>(
+    "redeem",
+    null,
+    "/api/event/redeem/get-business",
+  );
 };

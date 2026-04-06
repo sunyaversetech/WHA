@@ -13,17 +13,22 @@ import {
   Dot,
   Phone,
   Clock,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useGetSingleEvent } from "@/services/event.service";
+import {
+  useGetEventRedeem,
+  useGetSingleEvent,
+  useRedeemEventCode,
+} from "@/services/event.service";
 import Image from "next/image";
 import { format, formatDate, parse } from "date-fns";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import {
   useCreateFavroite,
@@ -33,6 +38,7 @@ import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import EventDetailsSkeleton from "./SingleEventSkeleton";
+import { QRCodeCanvas } from "qrcode.react";
 
 export default function EventDetailPage() {
   const param = useParams();
@@ -50,8 +56,72 @@ export default function EventDetailPage() {
     iconAnchor: [12, 41],
   });
 
+  const [redemptionResult, setRedemptionResult] = useState<{
+    success: boolean;
+    message: string;
+    code?: string;
+    status: string;
+  } | null>(null);
+
+  const { mutate: redeem, isPending: redeemPending } = useRedeemEventCode();
+  const { data } = useGetEventRedeem();
+
   const [copied, setCopied] = useState(false);
   const EventId = event?.data?._id;
+
+  const userRedemption = data?.data?.find(
+    (redemption: any) =>
+      redemption.user === session?.user?.id &&
+      redemption.event === event?.data?._id,
+  );
+
+  useEffect(() => {
+    if (!userRedemption) return;
+    setTimeout(() => {
+      setRedemptionResult({
+        success: true,
+        message: "success",
+        code: userRedemption?.uniqueKey,
+        status: userRedemption.status,
+      });
+    }, 0);
+  }, [userRedemption]);
+
+  const handleRedeem = async () => {
+    if (!session?.user) {
+      router.push("/auth");
+      toast.error("Please login to get your ticket");
+      return;
+    }
+
+    redeem(
+      {
+        eventId: event?.data?._id ?? "",
+        userId: session?.user.id ?? "",
+        business: event?.data?.user?._id ?? "",
+      },
+      {
+        onSuccess: (responseData: any) => {
+          setRedemptionResult({
+            success: true,
+            message: "success",
+            code: responseData.uniqueKey,
+            status: "pending",
+          });
+          queryClient.invalidateQueries({ queryKey: ["redeem"] });
+          toast.success("Ticket claimed successfully!");
+        },
+        onError: (error: any) => {
+          setRedemptionResult({
+            success: false,
+            message: error.message,
+            status: "error",
+          });
+          toast.error(error.message);
+        },
+      },
+    );
+  };
 
   const handleShare = async () => {
     const shareData = {
@@ -124,8 +194,7 @@ export default function EventDetailPage() {
                 <div className="hidden flex items-center gap-2 md:flex md:items-center md:gap-2">
                   <button
                     onClick={handleAddRemoveFavorite}
-                    className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition"
-                  >
+                    className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition">
                     {isPending ? (
                       <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                     ) : (
@@ -144,8 +213,7 @@ export default function EventDetailPage() {
                   <button
                     onClick={handleShare}
                     className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition-all active:scale-90"
-                    title="Share Event"
-                  >
+                    title="Share Event">
                     <Share className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </button>
                 </div>
@@ -206,8 +274,7 @@ export default function EventDetailPage() {
                   <Button
                     variant={"ghost"}
                     className="p-0 transition-all hover:scale-105 active:scale-95"
-                    onClick={() => router.back()}
-                  >
+                    onClick={() => router.back()}>
                     <ChevronLeft
                       className="h-9 w-9 cursor-pointer rounded-full border  p-1.5 
                  text-primary bg-white transition-all hover:scale-105 active:scale-95"
@@ -216,8 +283,7 @@ export default function EventDetailPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={handleAddRemoveFavorite}
-                      className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95"
-                    >
+                      className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95">
                       {isPending ? (
                         <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                       ) : (
@@ -235,8 +301,7 @@ export default function EventDetailPage() {
 
                     <button
                       className="flex items-center justify-center p-2 border rounded-full bg-white transition-all hover:scale-105 active:scale-95"
-                      onClick={handleShare}
-                    >
+                      onClick={handleShare}>
                       <Share className="h-5 w-5 text-primary" />
                     </button>
                   </div>
@@ -348,22 +413,19 @@ export default function EventDetailPage() {
                       width: "100%",
                       borderRadius: "8px",
                       overflow: "hidden",
-                    }}
-                  >
+                    }}>
                     <MapContainer
                       center={[event.data.latitude, event.data.longitude]}
                       zoom={13}
                       scrollWheelZoom={false}
-                      style={{ height: "100%", width: "100%" }}
-                    >
+                      style={{ height: "100%", width: "100%" }}>
                       <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       />
                       <Marker
                         position={[event.data.latitude, event.data.longitude]}
-                        icon={DefaultIcon}
-                      >
+                        icon={DefaultIcon}>
                         <Popup>
                           <div>
                             <h3 className="font-bold text-lg">
@@ -375,16 +437,14 @@ export default function EventDetailPage() {
                             <div className="flex space-x-2 mt-2">
                               <Link
                                 href={`/businesses/${event.data.user._id}`}
-                                className="bg-primary !text-base px-3 py-1 rounded text-sm font-medium hover:bg-primary/80"
-                              >
+                                className="bg-primary !text-base px-3 py-1 rounded text-sm font-medium hover:bg-primary/80">
                                 View Details
                               </Link>
                               <a
                                 href={`https://www.google.com/maps?q=${event.data.latitude},${event.data.longitude}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="bg-secondary !text-base px-3 py-1 rounded text-sm font-medium hover:bg-secondary/80 flex items-center"
-                              >
+                                className="bg-secondary !text-base px-3 py-1 rounded text-sm font-medium hover:bg-secondary/80 flex items-center">
                                 Get Directions
                                 <ExternalLink className="h-3 w-3 ml-1" />
                               </a>
@@ -408,16 +468,71 @@ export default function EventDetailPage() {
                       <Link
                         href={event.data?.ticket_link}
                         target="_blank"
-                        className="w-full bg-[#041e3a] flex text-white rounded-full text-center items-center justify-center space-x-2 px-4 py-1.5 font-medium"
-                      >
+                        className="w-full bg-[#041e3a] flex text-white rounded-full text-center items-center justify-center space-x-2 px-4 py-1.5 font-medium">
                         <Ticket className="h-4 w-4 " />
                         <span>Get Tickets</span>
                       </Link>
                     ) : (
-                      <Button className="w-full">
-                        <Ticket className="h-4 w-4 mr-2" />
-                        Free Entry
-                      </Button>
+                      <div className="text-center">
+                        {redemptionResult?.status === "verified" ? (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-6 flex flex-col items-center">
+                            <div className="flex items-center justify-center space-x-2 mb-4">
+                              <Check className="h-5 w-5 text-green-600" />
+                              <span className="text-green-800 font-medium text-lg">
+                                Ticket Verified!
+                              </span>
+                            </div>
+                            <p className="text-green-700 text-sm mb-2">
+                              You have successfully used this ticket at the
+                              event.
+                            </p>
+                          </div>
+                        ) : redemptionResult?.success ? (
+                          <div className="border rounded-lg p-6 flex flex-col items-center">
+                            <div className="flex items-center justify-center space-x-2 mb-4">
+                              <span className="font-medium text-lg">
+                                Show this Ticket QR at the entrance
+                              </span>
+                            </div>
+
+                            <div className="bg-white p-3 rounded-lg shadow-sm mb-4 border">
+                              <QRCodeCanvas
+                                value={redemptionResult.code || ""}
+                                size={150}
+                              />
+                            </div>
+
+                            <p className="text-sm mb-2">Ticket Code:</p>
+                            <div className="bg-white border rounded-lg p-4 mb-3 w-full max-w-xs">
+                              <code className="text-xl font-mono font-bold tracking-widest">
+                                {redemptionResult.code}
+                              </code>
+                            </div>
+                            <p className="text-red-500 text-xs">
+                              Valid only for this event session
+                            </p>
+                          </div>
+                        ) : (
+                          <div>
+                            <button
+                              onClick={handleRedeem}
+                              disabled={redeemPending}
+                              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-4 px-6 rounded-xl text-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-70">
+                              {redeemPending ? (
+                                <>
+                                  <Loader2 className="h-5 w-5 animate-spin" />
+                                  Processing...
+                                </>
+                              ) : (
+                                "Get Event Ticket"
+                              )}
+                            </button>
+                            <p className="text-gray-500 text-sm mt-3">
+                              Claim your spot for this event
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     )}
 
                     <Button className="w-full" onClick={handleShare}>
@@ -439,8 +554,7 @@ export default function EventDetailPage() {
                         </div>
                         <a
                           href={`mailto:${event?.data?.user.email}`}
-                          className="text-gray-700 hover:text-blue-600 transition-colors"
-                        >
+                          className="text-gray-700 hover:text-blue-600 transition-colors">
                           {event?.data?.user.email}
                         </a>
                       </div>
@@ -452,8 +566,7 @@ export default function EventDetailPage() {
                         </div>
                         <a
                           href={`tel:${event.data.phone_number}`}
-                          className="text-gray-700 hover:text-green-600 transition-colors"
-                        >
+                          className="text-gray-700 hover:text-green-600 transition-colors">
                           {event.data.phone_number}
                         </a>
                       </div>
@@ -484,8 +597,7 @@ export default function EventDetailPage() {
                 <Link
                   href={event.data.ticket_link}
                   target="_blank"
-                  className="bg-primary text-white px-4 py-2 rounded-full text-base font-semibold hover:opacity-90 transition flex items-center gap-2"
-                >
+                  className="bg-primary text-white px-4 py-2 rounded-full text-base font-semibold hover:opacity-90 transition flex items-center gap-2">
                   Get Tickets
                 </Link>
               ) : (
