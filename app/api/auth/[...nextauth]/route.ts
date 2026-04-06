@@ -47,6 +47,7 @@ export const authOptions: NextAuthOptions = {
           community_name: user.community_name,
           isblocked: user.isblocked,
           location: user.location,
+          phone_number: user.phone_number,
         };
       },
     }),
@@ -69,6 +70,7 @@ export const authOptions: NextAuthOptions = {
             provider: "google",
             googleId: profile?.sub,
             category: "user",
+            phone_number: user.phone_number,
             emailVerified: new Date(),
           });
           user.id = newUser._id.toString();
@@ -103,6 +105,7 @@ export const authOptions: NextAuthOptions = {
         token.isblocked = (user as any).isblocked ?? false;
         token.verified = (user as any).verified ?? false;
         token.location = (user as any).location ?? "";
+        token.phone_number = (user as any).phone_number ?? "";
       }
 
       if (trigger === "update" && session) {
@@ -123,6 +126,7 @@ export const authOptions: NextAuthOptions = {
           token.isblocked = (dbUser as any).isblocked ?? false;
           token.verified = (dbUser as any).verified ?? false;
           token.location = (dbUser as any).location ?? "";
+          token.phone_number = (dbUser as any).phone_number ?? "";
         }
       }
       return token;
@@ -140,6 +144,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).isblocked = token.isblocked;
         (session.user as any).verified = token.verified;
         (session.user as any).location = token.location;
+        (session.user as any).phone_number = token.phone_number;
       }
       return session;
     },

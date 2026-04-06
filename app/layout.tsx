@@ -35,9 +35,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="no-scrollbar">
       <body
-        className={`${marcellus.variable} ${montserrat.variable} font-montserrat antialiased bg-neutral-50 overflow-scroll no-scrollbar`}>
+        className={`${marcellus.variable} ${montserrat.variable} font-montserrat antialiased bg-neutral-50 overflow-y-scroll overflow-x-hidden no-scrollbar`}>
         <ReactQueryContext>
           <CityFilterProvider>
             <SessionWrapper>

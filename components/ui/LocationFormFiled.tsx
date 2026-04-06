@@ -124,8 +124,7 @@ export function LocationFormField({ form }: { form: any }) {
               variant="outline"
               className="h-auto py-1 px-2 text-xs gap-1"
               onClick={handleGetCurrentLocation}
-              disabled={isLocating}
-            >
+              disabled={isLocating}>
               {isLocating ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
@@ -152,8 +151,7 @@ export function LocationFormField({ form }: { form: any }) {
               <button
                 type="button"
                 onClick={handleClearLocation}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
               </button>
             )}
@@ -175,8 +173,7 @@ export function LocationFormField({ form }: { form: any }) {
                         key={result.place_id}
                         type="button"
                         onClick={() => handleSelectLocation(result)}
-                        className="w-full flex items-start gap-2 rounded-sm px-2 py-2 text-sm text-left hover:bg-accent hover:text-accent-foreground transition-colors"
-                      >
+                        className="w-full flex items-start gap-2 rounded-sm px-2 py-2 text-sm text-left hover:bg-accent hover:text-accent-foreground transition-colors">
                         <MapPin className="h-4 w-4 mt-0.5 shrink-0 opacity-50" />
                         <span className="truncate">{result.display_name}</span>
                       </button>

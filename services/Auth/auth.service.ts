@@ -71,3 +71,14 @@ export const useDeleteProfile = () => {
       }),
   });
 };
+
+export const useEditProfile = () => {
+  return useMutation<ApiResponseType<any>, any, any>({
+    mutationKey: ["editProfile"],
+    mutationFn: (data: any) =>
+      Post<any, ApiResponseType<any>>({
+        url: "/api/edit-profile",
+        data: data,
+      }),
+  });
+};
