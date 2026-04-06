@@ -53,6 +53,8 @@ export const sendVerificationEmail = async (email: string, token: string) => {
       category: "Email Verification",
       html: generateEmailTemplate(verificationLink),
     });
+
+    return { success: true };
   } catch (error) {
     console.error("Failed to send email:", error);
     throw new Error("Email could not be sent.");
@@ -66,9 +68,15 @@ export const sendSimpleMail = async (
   html?: string,
 ) => {
   try {
-    const response = await transporter.sendMail({
-      from: `"Sunyaverse" <sunyaverse.tech@gmail.com>`,
-      to: email,
+    const sender = {
+      email: "sunyaverse.tech@gmail.com",
+      name: "WhAustralia",
+    };
+
+    const recipients = [{ email }];
+    const response = await client.send({
+      from: sender,
+      to: recipients,
       subject: subject,
       text: text,
       html: html,

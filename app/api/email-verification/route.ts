@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
-import { sendSimpleMail } from "@/lib/mail";
+import { sendSimpleMail, sendVerificationEmail } from "@/lib/mail";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, subject, message } = body;
+    const { email, token } = body;
 
-    if (!email || !subject || !message) {
+    if (!email || !token) {
       return NextResponse.json(
         { error: "Missing required fields: email, subject, or message." },
         { status: 400 },
       );
     }
 
-    const result = await sendSimpleMail(email, subject, message);
+    const result = await sendVerificationEmail(email, token);
 
     if (result.success) {
       return NextResponse.json(

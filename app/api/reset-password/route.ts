@@ -46,7 +46,6 @@ export async function POST(req: Request) {
       </div>
     `;
 
-    // 5. Send the email
     const mailSent = await sendSimpleMail(
       email,
       "Your Password Reset Code - Sunyaverse",
