@@ -4,9 +4,6 @@ import {
   User,
   Heart,
   Settings,
-  LifeBuoy,
-  Globe,
-  LogOut,
   Ticket,
   BadgeDollarSign,
   Calendar,
@@ -14,10 +11,8 @@ import {
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-import ProfileAvatar from "./ProfilePic";
 import { LogoutDialog } from "../ui/LogoutDialog";
 
 export default function MobileDashboard() {
@@ -74,7 +69,6 @@ export default function MobileDashboard() {
 
   return (
     <div className="min-h-[50vh] pb-28">
-      {/* Header */}
       <div className="flex items-start justify-between  mb-6">
         <div>
           <h1 className="text-xl font-bold">
@@ -86,7 +80,6 @@ export default function MobileDashboard() {
           </p>
         </div>
 
-        {/* Profile Avatar */}
         <div className="relative">
           <Avatar className="h-12 w-12  rounded-full">
             <AvatarImage
@@ -125,7 +118,6 @@ export default function MobileDashboard() {
             })}
           </div>
 
-          {/* Account Section */}
           <div className="bg-white rounded-2xl p-5 border border-gray-200 mb-5">
             {menu1.map((item, i) => {
               const Icon = item.icon;
@@ -174,8 +166,10 @@ export default function MobileDashboard() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl p-5 border border-gray-200">
-        <LogoutDialog />
+      <div className="bg-white rounded-2xl  p-5 border border-gray-200">
+        <div className="ml-3">
+          <LogoutDialog />
+        </div>
       </div>
     </div>
   );

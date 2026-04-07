@@ -44,7 +44,7 @@ export function LogoutDialog({ children }: LogoutDialogProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 w-full flex justify-start p-0  text-red-500 hover:text-red-600 hover:bg-red-50">
+            className="gap-2 w-full flex cursor-pointer justify-start p-0  text-red-500 hover:text-red-600 hover:bg-red-50">
             <LogOut size={16} />
             <span>Logout</span>
           </Button>

@@ -114,7 +114,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`${isSticky ? "fixed bg-white w-full h-22" : ""} top-0 z-[9999] hidden md:flex items-center md:justify-between justify-center px-6 py-3 border-white/20`}>
+      className={`${isSticky && pathname === "/" ? "fixed bg-white w-full h-15" : isSticky && pathname !== "/" ? "fixed bg-white w-full h-22" : ""} top-0 z-[9999] hidden md:flex items-center md:justify-between justify-center px-6 py-3 border-white/20`}>
       <Link
         href={buildPath("/")}
         onClick={() => setActiveTab("")}
@@ -237,9 +237,9 @@ export default function Navbar() {
 
             <DropdownMenuContent
               align="end"
-              className="w-64 p-3 rounded-2xl bg-white/90 backdrop-blur-lg shadow-xl">
+              className="w-68 p-3 rounded-2xl bg-white/90 backdrop-blur-lg shadow-xl">
               <p className="font-semibold">{session.user?.name}</p>
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-sm text-muted-foreground mb-2 truncate">
                 {session.user?.email}
               </p>
               <div className="border-t my-2" />
@@ -248,7 +248,9 @@ export default function Navbar() {
                 className="block px-2 py-2 rounded-md hover:bg-gray-100">
                 Dashboard
               </Link>
-              <LogoutDialog />
+              <div className="-ml-2 ">
+                <LogoutDialog />
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
