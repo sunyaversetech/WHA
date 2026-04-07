@@ -29,10 +29,10 @@ import { SingUPFormSchema } from "@/components/Auth/BusinessSignupPage";
 // };
 
 export const useSingup = () => {
-  return useMutation<ApiResponseType<SingUPFormSchema>, any, SingUPFormSchema>({
+  return useMutation<ApiResponseType<SingUPFormSchema>, any, FormData>({
     mutationKey: ["createSignup"],
-    mutationFn: (data: SingUPFormSchema) =>
-      Post<SingUPFormSchema, ApiResponseType<SingUPFormSchema>>({
+    mutationFn: (data: FormData) =>
+      Post<FormData, ApiResponseType<SingUPFormSchema>>({
         url: "/api/signup",
         data: data,
       }),
