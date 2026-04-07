@@ -184,8 +184,7 @@ export function LocationFormField({ form }: { form: any }) {
             )}
           </div>
 
-          {/* Display coordinates if available (optional) */}
-          {form.watch("latitude") && form.watch("longitude") && (
+          {/* {form.watch("latitude") && form.watch("longitude") && (
             <div className="mt-1 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
@@ -193,7 +192,7 @@ export function LocationFormField({ form }: { form: any }) {
                 {form.watch("longitude").toFixed(6)}
               </span>
             </div>
-          )}
+          )} */}
 
           <FormMessage />
         </FormItem>
