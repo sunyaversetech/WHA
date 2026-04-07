@@ -6,7 +6,7 @@ import { useSendVerificationEmail } from "@/services/email.service";
 import { useEffect, useRef } from "react";
 
 export default function SendEmailPage() {
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
 
   const { mutate } = useSendVerificationEmail();
