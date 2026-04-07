@@ -27,15 +27,17 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { DealsGetValues } from "@/services/deal.service";
 import { formatDate } from "date-fns";
+import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
 
 export default function DealCard({ deal }: { deal: DealsGetValues }) {
   const router = useRouter();
   const { mutate, isPending } = useCreateFavroite();
   const { data: session } = useSession();
+  const { onOpen } = useAuthModal();
   const queryClient = useQueryClient();
   const handleAddRemoveFavorite = () => {
     if (!session) {
-      toast.error("Please login to add to favorites");
+      onOpen();
       router.push("/auth");
       return;
     }

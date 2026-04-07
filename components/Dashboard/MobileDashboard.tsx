@@ -18,6 +18,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import ProfileAvatar from "./ProfilePic";
+import { LogoutDialog } from "../ui/LogoutDialog";
 
 export default function MobileDashboard() {
   const pathname = usePathname();
@@ -173,14 +174,8 @@ export default function MobileDashboard() {
         </div>
       )}
 
-      {/* Logout */}
       <div className="bg-white rounded-2xl p-5 border border-gray-200">
-        <button
-          onClick={() => signOut()}
-          className="flex items-center gap-4 text-gray-600 hover:text-black transition">
-          <LogOut size={22} />
-          <span className="text-lg">Log out</span>
-        </button>
+        <LogoutDialog />
       </div>
     </div>
   );

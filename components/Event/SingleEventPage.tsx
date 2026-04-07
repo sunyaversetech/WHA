@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import EventDetailsSkeleton from "./SingleEventSkeleton";
 import { QRCodeCanvas } from "qrcode.react";
+import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
 
 export default function EventDetailPage() {
   const param = useParams();
@@ -65,6 +66,7 @@ export default function EventDetailPage() {
 
   const { mutate: redeem, isPending: redeemPending } = useRedeemEventCode();
   const { data } = useGetEventRedeem();
+  const { onOpen } = useAuthModal();
 
   const [copied, setCopied] = useState(false);
   const EventId = event?.data?._id;
@@ -89,7 +91,7 @@ export default function EventDetailPage() {
 
   const handleRedeem = async () => {
     if (!session?.user) {
-      router.push("/auth");
+      onOpen();
       toast.error("Please login to get your ticket");
       return;
     }
@@ -145,8 +147,7 @@ export default function EventDetailPage() {
 
   const handleAddRemoveFavorite = () => {
     if (!session) {
-      toast.error("Please login to add to favorites");
-      router.push("/auth");
+      onOpen();
       return;
     }
     mutate(

@@ -24,6 +24,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import LiveDateTime from "../ui/date-time";
+import { LogoutDialog } from "../ui/LogoutDialog";
 
 export default function DashboardNavbar() {
   const { data: session } = useSession();
@@ -149,11 +150,7 @@ export default function DashboardNavbar() {
                       Help and support
                     </Link>
 
-                    <button
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                      className="w-full text-left px-2 py-2 rounded-md hover:bg-gray-100 transition">
-                      Log out
-                    </button>
+                    <LogoutDialog />
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>

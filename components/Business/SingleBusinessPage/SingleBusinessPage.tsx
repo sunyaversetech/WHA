@@ -28,10 +28,12 @@ import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import Loading from "@/app/businesses/loading";
 import BusinessHours from "./Hours";
+import { useAuthModal } from "@/components/Auth/DialogLogin/use-auth-model";
 
 export default function BusinessPage() {
   const { data, isLoading } = useGetSingleBusiness();
   const { mutate, isPending } = useCreateFavroite();
+  const { onOpen } = useAuthModal();
   const slug = data?.data?.business_name
     ?.toLowerCase()
     .replace(/[^a-z0-9]/g, "");
@@ -82,7 +84,7 @@ export default function BusinessPage() {
 
   const handleAddRemoveFavorite = () => {
     if (!session) {
-      toast.error("Please login to add to favorites");
+      onOpen();
       router.push("/auth");
       return;
     }

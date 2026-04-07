@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { EventFormValues } from "../Dashboard/Events/EventsForm";
+import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
 
 const EventCard = memo(function EventCard({
   event,
@@ -20,6 +21,7 @@ const EventCard = memo(function EventCard({
   event: EventFormValues;
 }) {
   const router = useRouter();
+  const { onOpen } = useAuthModal();
   const { mutate, isPending } = useCreateFavroite();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -41,8 +43,7 @@ const EventCard = memo(function EventCard({
 
   const handleAddRemoveFavorite = () => {
     if (!session) {
-      toast.error("Please login to add to favorites");
-      router.push("/auth");
+      onOpen();
       return;
     }
     mutate(

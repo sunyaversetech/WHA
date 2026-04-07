@@ -7,17 +7,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, ChevronDown } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import EventSearchWithDates from "./SearchSectionForEvents";
-import HomePageSearchWithDates from "./SearchSection";
 import BusinessSearchWithDates from "./SearchSectionforBusiness";
+import { LogoutDialog } from "../ui/LogoutDialog";
 
 const navItems = [
   {
@@ -250,11 +248,7 @@ export default function Navbar() {
                 className="block px-2 py-2 rounded-md hover:bg-gray-100">
                 Dashboard
               </Link>
-              <button
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="w-full text-left px-2 py-2 rounded-md hover:bg-gray-100">
-                Logout
-              </button>
+              <LogoutDialog />
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
