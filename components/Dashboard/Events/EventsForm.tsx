@@ -104,7 +104,6 @@ export function EventForm() {
       category: data?.category ?? "",
       category_name: data?.category_name ?? "",
       ticket_link: data?.ticket_link ?? "",
-      ticket_price: String(data?.ticket_price) ?? "",
       email: data?.email ?? "",
       phone_number: data?.phone_number ? String(data?.phone_number) : "",
       website_link: data?.website_link ?? "",
@@ -134,8 +133,6 @@ export function EventForm() {
       form.setValue("category_name", data.category_name);
       form.setValue("price_category", data.price_category);
       form.setValue("ticket_link", data.ticket_link ?? "");
-      if (data.ticket_price)
-        form.setValue("ticket_price", String(data.ticket_price));
       if (data?.email) form.setValue("email", data.email);
       if (data?.phone_number) form.setValue("phone_number", data.phone_number);
       if (data?.website_link) form.setValue("website_link", data.website_link);
@@ -461,7 +458,12 @@ export function EventForm() {
                       <ToggleGroupItem
                         value="paid"
                         className={toggleItemStyles}>
-                        Paid
+                        External Ticket
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        value="registration"
+                        className={toggleItemStyles}>
+                        Free With Registration
                       </ToggleGroupItem>
                     </ToggleGroup>
                   </FormControl>
@@ -470,19 +472,7 @@ export function EventForm() {
             />
 
             {form.watch("price_category") === "paid" && (
-              <div className="grid grid-cols-2  gap-4 animate-in fade-in slide-in-from-top-1">
-                <FormField
-                  name="ticket_price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
+              <div className="grid grid-cols-1  gap-4 animate-in fade-in slide-in-from-top-1">
                 <FormField
                   name="ticket_link"
                   render={({ field }) => (

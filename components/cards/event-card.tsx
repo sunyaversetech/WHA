@@ -12,8 +12,13 @@ import {
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { EventFormValues } from "../Dashboard/Events/EventsForm";
 
-const EventCard = memo(function EventCard({ event }: { event: any }) {
+const EventCard = memo(function EventCard({
+  event,
+}: {
+  event: EventFormValues;
+}) {
   const router = useRouter();
   const { mutate, isPending } = useCreateFavroite();
   const { data: session } = useSession();
@@ -21,19 +26,17 @@ const EventCard = memo(function EventCard({ event }: { event: any }) {
   const slug = event.title.toLowerCase().replace(/[^a-z0-9]/g, "");
   const eventId = event._id || "";
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "";
+  const formatDate = (dateInput: string | Date) => {
+    if (!dateInput) return "";
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "numeric",
-    }).format(new Date(dateString));
+    }).format(typeof dateInput === "string" ? new Date(dateInput) : dateInput);
   };
 
   let dateDisplay = "TBA";
   if (event.dateRange?.from) {
     dateDisplay = `${formatDate(event.dateRange.from)}  ${event.dateRange.to !== event.dateRange.from ? `- ${formatDate(event.dateRange.to)}` : ""}`;
-  } else if (event.date) {
-    dateDisplay = formatDate(event.date);
   }
 
   const handleAddRemoveFavorite = () => {
@@ -106,15 +109,12 @@ const EventCard = memo(function EventCard({ event }: { event: any }) {
           )}
         </button>
 
-        {/* Glassmorphism Bottom Overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-black/10 backdrop-blur-sm border-t border-white/20">
           <div className="py-3 px-4 md:p-4">
-            {/* Event Title */}
             <h3 className="text-white font-bold text-sm md:text-md line-clamp-2 mb-2 md:mb-3 leading-tight">
               {event.title}
             </h3>
 
-            {/* Meta Info Row */}
             <div className="flex items-center justify-between text-white/90 text-sm">
               <div className="space-x-6 max-w-[70%]">
                 <div className="flex items-center truncate pb-1">
@@ -134,11 +134,10 @@ const EventCard = memo(function EventCard({ event }: { event: any }) {
 
               {event.price_category === "paid" ? (
                 <a
-                  href={event.ticketUrl || "#"}
+                  href={event.ticket_link || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg hover:bg-white/30 transition-colors duration-200"
-                  onClick={(e) => e.stopPropagation()}>
+                  className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg hover:bg-white/30 transition-colors duration-200">
                   <Ticket className="h-4 w-4 text-white" />
                   <span className="text-white font-medium md:text-sm">
                     Ticket

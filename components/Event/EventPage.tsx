@@ -2,43 +2,30 @@
 
 import { useCallback, useState } from "react";
 import EventMap from "./Event-map";
-import { useCityFilter } from "@/contexts/city-filter-context";
 import { useGetAllEvents } from "@/services/event.service";
 import EventSearchWithDates from "../ResuableComponents/SearchSectionForEvents";
 import { Button } from "../ui/button";
 import EventCard from "../cards/event-card";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
-import { Filter, Globe, MapIcon, MapPin, SlidersVertical } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
+import { Globe, MapIcon, MapPin, SlidersVertical } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import EventHeader from "./EventFilter";
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
 import MobileEventSearchWithDates from "../ResuableComponents/MobileViewSearch/SearchSectionForEvents";
 
 const COMMUNITIES = [
-  { name: "All Community", value: "All", icon: Globe }, // Replace 'Globe' with your preferred icon component
-
+  { name: "All Community", value: "All", icon: Globe },
   { name: "Australian", value: "Australian", icon: MapPin },
-
   { name: "Nepali", value: "Nepali", icon: MapPin },
 ];
 
 export default function EventsPageClient() {
-  const { selectedCity } = useCityFilter();
   const searchParams = useSearchParams();
   const [showMap, setShowMap] = useState(true);
   const { data: apiResponse } = useGetAllEvents();
@@ -275,7 +262,7 @@ export default function EventsPageClient() {
             ${showMap ? "w-full lg:w-[55%]" : "w-full"}`}>
             <div
               className={`grid gap-6 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
-              {apiResponse?.data.map((event: any) => (
+              {apiResponse?.data.map((event) => (
                 <EventCard key={event._id} event={event} />
               ))}
             </div>

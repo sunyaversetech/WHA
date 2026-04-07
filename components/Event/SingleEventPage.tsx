@@ -466,14 +466,14 @@ export default function EventDetailPage() {
                   <div className="space-y-3">
                     {event?.data?.ticket_link ? (
                       <Link
-                        href={event.data?.ticket_link}
+                        href={event.data.ticket_link}
                         target="_blank"
-                        className="w-full bg-[#041e3a] flex text-white rounded-full text-center items-center justify-center space-x-2 px-4 py-1.5 font-medium">
-                        <Ticket className="h-4 w-4 " />
+                        className="w-full bg-[#041e3a] flex text-white rounded-full text-center items-center justify-center space-x-2 px-4 py-1.5 font-medium hover:opacity-90 transition-opacity">
+                        <Ticket className="h-4 w-4" />
                         <span>Get Tickets</span>
                       </Link>
                     ) : (
-                      <div className="text-center">
+                      <div className="text-center w-full">
                         {redemptionResult?.status === "verified" ? (
                           <div className="bg-green-50 border border-green-200 rounded-lg p-6 flex flex-col items-center">
                             <div className="flex items-center justify-center space-x-2 mb-4">
@@ -482,46 +482,56 @@ export default function EventDetailPage() {
                                 Ticket Verified!
                               </span>
                             </div>
-                            <p className="text-green-700 text-sm mb-2">
+                            <p className="text-green-700 text-sm">
                               You have successfully used this ticket at the
                               event.
                             </p>
                           </div>
                         ) : redemptionResult?.success ? (
-                          <div className="border rounded-lg p-6 flex flex-col items-center">
-                            <div className="flex items-center justify-center space-x-2 mb-4">
-                              <span className="font-medium text-lg">
-                                Show this Ticket QR at the entrance
-                              </span>
-                            </div>
-
+                          <div className="border rounded-lg p-6 flex flex-col items-center bg-white shadow-sm">
+                            <span className="font-medium text-lg mb-4 text-slate-900">
+                              Show this Ticket QR at the entrance
+                            </span>
                             <div className="bg-white p-3 rounded-lg shadow-sm mb-4 border">
                               <QRCodeCanvas
                                 value={redemptionResult.code || ""}
                                 size={150}
                               />
                             </div>
-
-                            <p className="text-sm mb-2">Ticket Code:</p>
-                            <div className="bg-white border rounded-lg p-4 mb-3 w-full max-w-xs">
-                              <code className="text-xl font-mono font-bold tracking-widest">
+                            <p className="text-sm mb-2 text-slate-500">
+                              Ticket Code:
+                            </p>
+                            <div className="bg-slate-50 border rounded-lg p-4 mb-3 w-full max-w-xs">
+                              <code className="text-xl font-mono font-bold tracking-widest text-slate-800">
                                 {redemptionResult.code}
                               </code>
                             </div>
-                            <p className="text-red-500 text-xs">
+                            <p className="text-red-500 text-xs font-medium">
                               Valid only for this event session
                             </p>
                           </div>
+                        ) : event?.data?.price_category === "free" ? (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 flex flex-col items-center">
+                            <div className="flex items-center justify-center space-x-2">
+                              <Check className="h-5 w-5 text-blue-600" />
+                              <span className="text-blue-800 font-medium text-lg">
+                                Free Entry!
+                              </span>
+                            </div>
+                            <p className="text-blue-700 text-sm mt-2">
+                              No ticket required for this event.
+                            </p>
+                          </div>
                         ) : (
-                          <div>
+                          <div className="flex flex-col items-center">
                             <button
                               onClick={handleRedeem}
                               disabled={redeemPending}
-                              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-4 px-6 rounded-xl text-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-70">
+                              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-4 px-6 rounded-xl text-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
                               {redeemPending ? (
                                 <>
                                   <Loader2 className="h-5 w-5 animate-spin" />
-                                  Processing...
+                                  <span>Processing...</span>
                                 </>
                               ) : (
                                 "Get Event Ticket"
@@ -534,7 +544,6 @@ export default function EventDetailPage() {
                         )}
                       </div>
                     )}
-
                     <Button className="w-full" onClick={handleShare}>
                       <Share className="h-4 w-4  mr-2" />
                       Share
@@ -584,7 +593,6 @@ export default function EventDetailPage() {
             </div>
           </div>
 
-          {/* Bottom Fixed  */}
           <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t shadow-sm z-[9999]">
             <div className="flex items-center justify-between px-6 py-3">
               <p className="text-gray-600 text-sm">
