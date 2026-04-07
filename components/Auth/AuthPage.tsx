@@ -10,14 +10,23 @@ import {
 } from "@/components/ui/card";
 import LoginPage from "./LoginPage";
 import SignupPage from "./Signup";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function AuthPage() {
   const params = useSearchParams();
+  const router = useRouter();
+
+  const currentTab = params.get("tab") === "signup" ? "signup" : "login";
+
+  const handleTabChange = (value: string) => {
+    const newParams = new URLSearchParams(params.toString());
+    newParams.set("tab", value);
+    router.push(`?${newParams.toString()}`, { scroll: false });
+  };
 
   return (
-    <div className="flex w-full bg-gray-50">
+    <div className="flex w-full min-h-screen bg-gray-50">
       <div className="flex w-full xl:w-1/2 items-center justify-center p-4 md:p-6 overflow-y-auto">
         <Card className="w-full max-w-md shadow-lg border-none bg-white flex flex-col">
           <CardHeader className="text-center pb-4">
@@ -31,19 +40,23 @@ export default function AuthPage() {
 
           <CardContent className="flex-1">
             <Tabs
-              defaultValue={params.get("tab") === "signup" ? "signup" : "login"}
-              className="flex flex-col"
-            >
+              value={currentTab}
+              onValueChange={handleTabChange}
+              className="flex flex-col">
               <TabsList className="grid w-full grid-cols-2 rounded-full bg-gray-100 mb-4">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="login" className="rounded-full">
+                  Login
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="rounded-full">
+                  Sign Up
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login" className="mt-0">
+              <TabsContent value="login" className="mt-0 outline-none">
                 <LoginPage />
               </TabsContent>
 
-              <TabsContent value="signup" className="mt-0">
+              <TabsContent value="signup" className="mt-0 outline-none">
                 <SignupPage />
               </TabsContent>
             </Tabs>

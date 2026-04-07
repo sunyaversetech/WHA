@@ -9,6 +9,7 @@ import { Toaster } from "sonner";
 import BottomNav from "@/components/ResuableComponents/BottomNavbar";
 import NavbarProvider from "@/components/ResuableComponents/NavbarProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthModal } from "@/components/Auth/DialogLogin/AuthModel";
 
 const marcellus = Marcellus({
   weight: "400",
@@ -44,6 +45,7 @@ export default function RootLayout({
               <NavbarProvider />
               <TooltipProvider>
                 <div className="pb-16 md:pb-0">{children}</div>
+                <AuthModal />
               </TooltipProvider>
               <Toaster />
               <BottomNav />

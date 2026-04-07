@@ -58,7 +58,7 @@ export default function SignupPage() {
     mutate(values as any, {
       onSuccess: () => {
         toast.success("Signup successful! Please log in.");
-        router.push("/auth?tab=login");
+        router.replace("/auth?tab=login");
       },
       onError: (error) => {
         toast.error(error.message || "Signup failed. Please try again.");
@@ -216,6 +216,12 @@ export default function SignupPage() {
         </Form>
         <div className="text-start pt-4">
           <h1 className="text-lg font-bold">Have a business? </h1>
+
+          <Button
+            onClick={() => router.replace("/auth?tab=login")}
+            className="w-full">
+            Sign Up
+          </Button>
 
           <Link href="/auth/business" className="text-primary font-medium">
             Register in as a business
