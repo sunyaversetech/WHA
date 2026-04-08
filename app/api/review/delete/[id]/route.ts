@@ -24,7 +24,10 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Review not found" }, { status: 404 });
     }
 
-    if (review.user.toString() !== currentUserId) {
+    if (
+      review.user.toString() !== currentUserId &&
+      session.user.category !== "super-admin"
+    ) {
       return NextResponse.json(
         { error: "You are not authorized to delete this review" },
         { status: 403 },

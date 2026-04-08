@@ -59,9 +59,11 @@ export default function BusinessReviewSection({
     resolver: zodResolver(reviewSchema),
     defaultValues: { rating: 0, comment: "" },
   });
+
   const params = useParams();
   const { id } = params;
   const { data: session, status } = useSession();
+
   // const { data: reviews } = useGetReview(String(id));
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -209,16 +211,16 @@ export default function BusinessReviewSection({
                   <div className="flex items-center gap-3">
                     <Avatar>
                       <AvatarImage
-                        src={review.user?.image}
+                        src={review?.user?.image}
                         className="object-cover"
                       />
                       <AvatarFallback className="text-white">
-                        {review.user?.name[0]}
+                        {review?.user?.name[0]}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex justify-between gap-2 items-center">
                       <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-md h-6.5 text-sm font-medium">
-                        {review.user.name}
+                        {review?.user?.name}
                       </span>
                       {session?.user?.id === review.user?._id && (
                         <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-md h-6.5 text-sm font-medium">
@@ -230,19 +232,20 @@ export default function BusinessReviewSection({
                           <Edit
                             size={15}
                             onClick={() => {
-                              form.setValue("comment", review.comment);
-                              form.setValue("rating", review.rating);
-                              form.setValue("review_id", review._id);
+                              form.setValue("comment", review?.comment);
+                              form.setValue("rating", review?.rating);
+                              form.setValue("review_id", review?._id);
                             }}
                           />
                         </span>
                       )}
-                      {session?.user?.id === review.user?._id && (
-                        <DeleteConfirmDialog
-                          onConfirm={() => handleDelete(review._id)}
-                          text={review.comment}
-                        />
-                      )}
+                      {session?.user?.id === review?.user?._id ||
+                        (session?.user?.category === "super-admin" && (
+                          <DeleteConfirmDialog
+                            onConfirm={() => handleDelete(review._id)}
+                            text={review?.comment}
+                          />
+                        ))}
                     </div>
                     <div>
                       <h4 className="font-bold text-slate-900 leading-none"></h4>
