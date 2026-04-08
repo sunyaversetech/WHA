@@ -1,5 +1,4 @@
 "use client";
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -208,7 +207,6 @@ export default function SignupPage() {
                 )}
               />
             </div>
-
             <Button type="submit" className="w-full">
               Sign Up
             </Button>

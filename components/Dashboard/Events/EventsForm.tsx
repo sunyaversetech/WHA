@@ -61,9 +61,9 @@ export const eventSchema = z.object({
   endTime: z.string().optional(),
   category: z.string().min(1, "Category is required"),
   category_name: z.string().optional(),
-  price_category: z.enum(["free", "paid"]),
+  price_category: z.enum(["free", "paid", "registration"]),
   ticket_link: z.string().optional(),
-  ticket_price: z.string().optional(),
+  ticket_price: z.string().optional().nullable(),
   community: z.string().min(1, "Community is required"),
   community_name: z.string().optional(),
   city: z.string().min(2, "City is required"),
@@ -139,6 +139,8 @@ export function EventForm() {
       form.setValue("image", data.image);
     }
   }, [data, form]);
+
+  console.log("form error", form.formState.errors);
 
   const onSubmit = (values: EventFormValues) => {
     const formData = new FormData();

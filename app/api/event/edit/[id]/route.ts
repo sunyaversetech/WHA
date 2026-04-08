@@ -30,7 +30,7 @@ export const eventSchema = z.object({
   endTime: z.string().optional(),
   category: z.string().min(1, "Category is required"),
   category_name: z.string().optional(),
-  price_category: z.enum(["free", "paid"]),
+  price_category: z.enum(["free", "paid", "registration"]),
   ticket_link: z.string().optional(),
   ticket_price: z.preprocess(
     (val) => (val === "" || val === "undefined" ? 0 : val),
