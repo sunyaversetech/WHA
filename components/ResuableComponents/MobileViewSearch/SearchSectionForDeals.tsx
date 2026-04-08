@@ -155,7 +155,7 @@ export default function MobileDealsSearchWithDates({
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   placeholder="Search deals, offers..."
-                  className="pl-10 pr-8 h-10 rounded-sm border border-gray-200 bg-white text-sm font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-0 focus-visible:ring-0"
+                  className="pl-10 pr-8 h-10 rounded-sm border border-gray-200 bg-white text-base font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-0 focus-visible:ring-0"
                 />
 
                 {/* Clear button */}
