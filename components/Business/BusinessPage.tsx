@@ -57,7 +57,7 @@ export default function BusinessesClientPage() {
   );
 
   return (
-    <div className="flex flex-col h-screen h-[100dvh] overflow-hidden">
+    <div className="flex flex-col h-[92vh]  overflow-hidden">
       <div className="flex-none">
         <div className="h-22 max-md:h-fit border-b flex items-center justify-center">
           <div className="w-full max-md:hidden">
@@ -250,7 +250,7 @@ export default function BusinessesClientPage() {
         )}
 
         <div
-          className={`transition-all duration-500 max-md:hidden pb-24 h-full ${
+          className={`transition-all duration-500 max-md:hidden pb-2 h-full ${
             isMapExpanded
               ? "w-full"
               : showMap

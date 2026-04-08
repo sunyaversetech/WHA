@@ -54,7 +54,7 @@ export default function EventsPageClient() {
   );
 
   return (
-    <div className="flex flex-col h-screen  overflow-hidden ">
+    <div className="flex flex-col h-[92vh]  overflow-hidden ">
       <div className="flex-none ">
         <div className="flex-none h-22 max-md:h-fit  border-b  flex items-center justify-center">
           <div className="w-full max-md:hidden">
@@ -270,7 +270,7 @@ export default function EventsPageClient() {
         )}
 
         <div
-          className={`transition-all duration-500 pb-23 max-md:hidden h-full ${
+          className={`transition-all duration-500 pb-2 max-md:hidden h-full ${
             isMapExpanded
               ? "w-full"
               : showMap
