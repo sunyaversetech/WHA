@@ -157,8 +157,7 @@ export default function MobileBusinessSearchWithDates({
       <DrawerTrigger className="w-11/12 mx-auto my-3 flex">
         <div
           onClick={() => setActiveTab("search")}
-          className="flex items-center gap-3 w-full px-4 py-4 bg-white rounded-full shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer"
-        >
+          className="flex items-center gap-3 w-full px-4 py-4 bg-white rounded-full shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer">
           <SearchIcon size={18} className="text-gray-500" />
 
           <span className="text-sm text-gray-500">
@@ -173,14 +172,12 @@ export default function MobileBusinessSearchWithDates({
         <FontImport />
         <div
           className="esw-root flex w-full md:w-fit   overflow-y-scroll h-full gap-2 px-4 md:px-0 no-scrollbar"
-          ref={containerRef}
-        >
+          ref={containerRef}>
           <div
             className={[
               "relative flex flex-col md:flex-row gap-3 items-stretch  md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full md:w-auto",
               isExpanded ? "  " : "bg-white  ",
-            ].join(" ")}
-          >
+            ].join(" ")}>
             <div
               onClick={() => setActiveTab("search")}
               className={[
@@ -189,19 +186,16 @@ export default function MobileBusinessSearchWithDates({
                 activeTab === "search"
                   ? "bg-white shadow-md scale-[1.02] z-10"
                   : "hover:bg-[#eeecf5]",
-              ].join(" ")}
-            >
+              ].join(" ")}>
               <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
                 Business
               </span>
               <div className="relative w-full">
-                {/* Icon */}
                 <SearchIcon
                   size={16}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                 />
 
-                {/* Input */}
                 <Input
                   type="text"
                   value={inputValue}
@@ -212,7 +206,6 @@ export default function MobileBusinessSearchWithDates({
     focus:outline-none focus:ring-0 focus-visible:ring-0"
                 />
 
-                {/* Animated Clear Button */}
                 <AnimatePresence>
                   {inputValue && (
                     <motion.button
@@ -224,8 +217,7 @@ export default function MobileBusinessSearchWithDates({
                         e.stopPropagation();
                         setInputValue("");
                       }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 transition"
-                    >
+                      className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 transition">
                       <X size={12} />
                     </motion.button>
                   )}
@@ -242,8 +234,7 @@ export default function MobileBusinessSearchWithDates({
               displayValue={location}
               placeholder="Select location"
               onClear={() => setLocation("")}
-              segW={segW}
-            >
+              segW={segW}>
               <div className="p-2 py-3 w-full md:w-auto">
                 {[
                   { city: "sydney", country: "Australia", emoji: "🌉" },
@@ -257,8 +248,7 @@ export default function MobileBusinessSearchWithDates({
                     onClick={() => {
                       setLocation(city);
                       setActiveTab("cat");
-                    }}
-                  >
+                    }}>
                     <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#f5f4f8] shrink-0 group-hover:bg-[#ede8ff] transition-colors duration-150">
                       <span className="text-[18px] leading-none">{emoji}</span>
                     </div>
@@ -287,8 +277,7 @@ export default function MobileBusinessSearchWithDates({
               placeholder="All Categories"
               onClear={() => setActiveCategory("all")}
               segW={segW}
-              panelAlign="center"
-            >
+              panelAlign="center">
               <div className="p-4 w-[94vw] gap-4 grid grid-cols-3 xs:grid-cols-3   md:w-[90vh] max-h-[60vh]  overflow-y-auto">
                 {CATEGORIES.map((cat) => {
                   const Icon = cat.icon;
@@ -304,8 +293,7 @@ export default function MobileBusinessSearchWithDates({
                         isActive
                           ? "bg-[#051e3a] border-[#051e3a] text-white shadow-lg"
                           : "bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50"
-                      }`}
-                    >
+                      }`}>
                       <Icon
                         className={`h-5 w-5 mb-1.5 transition-colors ${isActive ? "text-white" : "text-slate-500 group-hover:text-[#6c47ff]"}`}
                       />
@@ -322,8 +310,7 @@ export default function MobileBusinessSearchWithDates({
         <button
           onClick={handleSearch}
           className="flex w-[92vw] mb-4 m-auto mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] 
-          md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all  md:w-auto md:px-2"
-        >
+          md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all  md:w-auto md:px-2">
           <span className="flex items-center justify-center px-3.5">
             <Search size={18} strokeWidth={3} />
           </span>
@@ -336,8 +323,7 @@ export default function MobileBusinessSearchWithDates({
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
-                className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden"
-              >
+                className="hidden md:block pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden">
                 Search
               </motion.span>
             )}
@@ -389,8 +375,7 @@ function SegmentSection({
           isActive
             ? "esw-active bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
             : "hover:bg-[#eeecf5]",
-        ].join(" ")}
-      >
+        ].join(" ")}>
         <AnimatePresence>
           {ripple && (
             <motion.span
@@ -413,8 +398,7 @@ function SegmentSection({
               ? "text-[#0f0e17] font-medium"
               : "font-light italic text-[#9896aa]",
           ].join(" ")}
-          style={!hasValue ? { fontFamily: "'Fraunces', serif" } : undefined}
-        >
+          style={!hasValue ? { fontFamily: "'Fraunces', serif" } : undefined}>
           {hasValue ? displayValue : placeholder}
         </span>
         {hasValue && (
@@ -423,8 +407,7 @@ function SegmentSection({
               e.stopPropagation();
               onClear();
             }}
-            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer"
-          >
+            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer">
             <X size={10} strokeWidth={3} />
           </button>
         )}
@@ -440,8 +423,7 @@ function SegmentSection({
             initial={{ opacity: 0, y: 12, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}
-          >
+            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}>
             {children}
           </motion.div>
         )}
