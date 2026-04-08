@@ -228,7 +228,10 @@ export default function Navbar() {
           <DropdownMenu>
             <DropdownMenuTrigger>
               <Avatar className="h-10 w-10 border rounded-full border-white/30">
-                <AvatarImage src={session?.user?.image ?? ""} />
+                <AvatarImage
+                  className="object-cover"
+                  src={session?.user?.image ?? ""}
+                />
                 <AvatarFallback>
                   {session?.user?.name?.charAt(0) || "U"}
                 </AvatarFallback>
