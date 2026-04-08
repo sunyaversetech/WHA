@@ -488,9 +488,10 @@ export function CalendarSegment({
                   selected={date}
                   onSelect={setDate}
                   numberOfMonths={1}
-                  className="rounded-sm w-full bg-white overflow-scroll text-xs! tracking-tighter!"
+                  className="rounded-sm w-full bg-white overflow-scroll text-xs! tracking-wider!"
                   classNames={{
-                    day: "text-xs! flex! tracking-tighter!",
+                    day: "text-base! mr-3 -ml-0.5 flex! tracking-wider",
+                    weekday: "text-base! flex mr-5  ",
                   }}
                 />
               </div>
