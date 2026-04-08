@@ -31,18 +31,36 @@ export async function GET(request: NextRequest) {
       query.city = { $regex: `^${escapeRegex(city)}$`, $options: "i" };
     }
 
+    // if (from || to) {
+    //   const dateQuery: any = {};
+
+    //   if (from) {
+    //     const searchFrom = new Date(from);
+    //     searchFrom.setHours(0, 0, 0, 0);
+    //     dateQuery["dateRange.to"] = { $gte: searchFrom };
+    //   }
+
+    //   if (to) {
+    //     const searchTo = new Date(to);
+    //     searchTo.setHours(23, 59, 59, 999);
+    //     dateQuery["dateRange.from"] = { $lte: searchTo };
+    //   }
+    //   Object.assign(query, dateQuery);
+    // }
+
     if (from || to) {
-      const searchFrom = from ? new Date(from) : null;
-      const searchTo = to ? new Date(to) : null;
-
       const dateQuery: any = {};
-
-      if (searchFrom) {
+      if (from) {
+        const searchFrom = new Date(from);
+        searchFrom.setHours(0, 0, 0, 0);
         dateQuery.$gte = searchFrom;
       }
-      if (searchTo) {
+      if (to) {
+        const searchTo = new Date(to);
+        searchTo.setHours(23, 59, 59, 999);
         dateQuery.$lte = searchTo;
       }
+
       query.valid_till = dateQuery;
     }
 
