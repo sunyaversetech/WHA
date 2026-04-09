@@ -4,6 +4,7 @@ import { PATCH, Post } from "@/lib/action";
 import { useFetcher } from "@/lib/generic.service";
 import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
 import { useSearchParams } from "next/navigation";
+import { ReviewType } from "./review.service";
 
 export type EventType = {
   _id: string;
@@ -19,12 +20,16 @@ export type EventType = {
     email: string;
     name: string;
     business_name: string;
+    city: string;
+    location: string;
+    image: string;
   };
   location: string;
   category_name: string;
   email: string;
   phone_number: string;
   website_link: string;
+  reviews: ReviewType[];
   price_category: "free" | "paid";
   community_name: string;
   city: string;

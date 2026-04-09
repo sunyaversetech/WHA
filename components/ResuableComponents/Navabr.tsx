@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,25 +78,6 @@ export default function Navbar() {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, [pathname]);
-
-  const updateQuery = useCallback(
-    (updates: Record<string, string | null>) => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value && value !== "all") {
-          params.set(key, value);
-          if (key === "city") localStorage.setItem("preferredCity", value);
-        } else {
-          params.delete(key);
-          if (key === "city") localStorage.removeItem("preferredCity");
-        }
-      });
-
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    },
-    [router, searchParams, pathname],
-  );
 
   useEffect(() => {
     const savedCity = localStorage.getItem("preferredCity");
@@ -201,29 +182,6 @@ export default function Navbar() {
       )}
 
       <div className="md:flex hidden items-center gap-3">
-        {/* <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-primary text-primary text-sm hover:bg-white/30 transition focus:outline-none">
-              <MapPin className="h-4 w-4" />
-              <span className="capitalize">{currentCity ?? "Australia"}</span>
-              <ChevronDown className="h-4 w-4 opacity-70" />
-            </button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent className="rounded-xl bg-white/90 backdrop-blur-lg border border-white/30 shadow-xl p-2">
-            {["Australia", "sydney", "canberra"].map((city) => (
-              <DropdownMenuItem
-                key={city}
-                onSelect={() =>
-                  updateQuery({ city: city === "Australia" ? null : city })
-                }
-                className="capitalize cursor-pointer">
-                {city}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu> */}
-
         {session ? (
           <DropdownMenu>
             <DropdownMenuTrigger>

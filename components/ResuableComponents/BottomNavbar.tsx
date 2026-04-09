@@ -44,13 +44,12 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 z-[99] w-full">
+    <nav className="md:hidden fixed bottom-0 z-49 w-full">
       <div
         className="flex items-center justify-between p-2  
       bg-white/60 backdrop-blur-2xl
       border border-white/40
-      shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
-      >
+      shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
         {navLinks.map((link) => {
           const Icon = link.icon;
 
@@ -62,8 +61,7 @@ export default function BottomNav() {
             <Link
               key={link.name}
               href={fullPath}
-              className="flex-1 flex justify-center"
-            >
+              className="flex-1 flex justify-center">
               <div
                 className={`flex flex-col items-center justify-center
         w-full h-12 rounded-full 
@@ -72,8 +70,7 @@ export default function BottomNav() {
           active
             ? "bg-primary shadow-md scale-105"
             : "text-primary hover:text-primary"
-        }`}
-              >
+        }`}>
                 <Icon
                   size={22}
                   strokeWidth={2}
@@ -82,8 +79,7 @@ export default function BottomNav() {
                 <span
                   className={`text-[10px] font-medium ${
                     active ? "text-white" : "text-primary"
-                  }`}
-                >
+                  }`}>
                   {link.name}
                 </span>
               </div>

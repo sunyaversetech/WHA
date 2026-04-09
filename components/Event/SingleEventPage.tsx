@@ -2,18 +2,13 @@
 import {
   Calendar,
   MapPin,
-  Mail,
-  Ticket,
-  Sparkles,
   ChevronLeft,
-  ExternalLink,
   Share,
   Loader2,
   Heart,
   Dot,
-  Phone,
   Clock,
-  Check,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -24,7 +19,7 @@ import {
 } from "@/services/event.service";
 import Image from "next/image";
 import { format, formatDate, parse } from "date-fns";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { toast } from "sonner";
@@ -70,6 +65,14 @@ export default function EventDetailPage() {
 
   const [copied, setCopied] = useState(false);
   const EventId = event?.data?._id;
+
+  const averageRating =
+    event?.data && event.data.reviews.length > 0
+      ? Math.round(
+          event.data.reviews.reduce((acc, review) => acc + review.rating, 0) /
+            event.data.reviews.length,
+        )
+      : 0;
 
   const userRedemption = data?.data?.find(
     (redemption: any) =>
@@ -195,8 +198,7 @@ export default function EventDetailPage() {
                 <div className="hidden flex items-center gap-2 md:flex md:items-center md:gap-2">
                   <button
                     onClick={handleAddRemoveFavorite}
-                    className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition"
-                  >
+                    className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition">
                     {isPending ? (
                       <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                     ) : (
@@ -215,8 +217,7 @@ export default function EventDetailPage() {
                   <button
                     onClick={handleShare}
                     className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition-all active:scale-90"
-                    title="Share Event"
-                  >
+                    title="Share Event">
                     <Share className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </button>
                 </div>
@@ -287,8 +288,7 @@ export default function EventDetailPage() {
                   <Button
                     variant={"ghost"}
                     className="p-0 transition-all hover:scale-105 active:scale-95"
-                    onClick={() => router.back()}
-                  >
+                    onClick={() => router.back()}>
                     <ChevronLeft
                       className="h-9 w-9 cursor-pointer rounded-full border  p-1.5 
                  text-primary bg-white transition-all hover:scale-105 active:scale-95"
@@ -297,8 +297,7 @@ export default function EventDetailPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={handleAddRemoveFavorite}
-                      className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95"
-                    >
+                      className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95">
                       {isPending ? (
                         <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                       ) : (
@@ -316,8 +315,7 @@ export default function EventDetailPage() {
 
                     <button
                       className="flex items-center justify-center p-2 border rounded-full bg-white transition-all hover:scale-105 active:scale-95"
-                      onClick={handleShare}
-                    >
+                      onClick={handleShare}>
                       <Share className="h-5 w-5 text-primary" />
                     </button>
                   </div>
@@ -328,19 +326,18 @@ export default function EventDetailPage() {
 
           <div className="px-6 md:px-0 py-4 md:py-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-              {/* Right Column: Sticky Event Card */}
               <div className="lg:col-span-1 order-2 md:order-2">
                 <div className="sticky top-30">
                   <div className="card p-5 md:p-6 rounded-md border border-gray-300 shadow-md space-y-4">
-                    {/* Event Title */}
                     <h1 className="text-xl font-bold text-gray-800">
                       {event?.data?.title
                         ?.toLowerCase()
                         .replace(/\b\w/g, (c) => c.toUpperCase())}
                     </h1>
 
-                    {/* Category */}
-                    <p className="text-sm font-medium text-primary">
+                    <p
+                      className="text-sm font-medium text-primary"
+                      id="registration-button">
                       {event?.data?.ticket_link
                         ? "Ticket Required Event"
                         : event?.data?.price_category === "free"
@@ -348,13 +345,11 @@ export default function EventDetailPage() {
                           : "Free Event  | Registration Required"}
                     </p>
 
-                    {/* CTA Button */}
                     {event?.data?.ticket_link ? (
                       <Link
                         href={event.data.ticket_link}
                         target="_blank"
-                        className="w-full block bg-primary text-white rounded-full py-3 text-center font-semibold hover:opacity-90 transition"
-                      >
+                        className="w-full block bg-primary text-white rounded-full py-3 text-center font-semibold hover:opacity-90 transition">
                         Get Tickets
                       </Link>
                     ) : event?.data?.price_category === "free" ? (
@@ -370,8 +365,7 @@ export default function EventDetailPage() {
                           redemptionResult?.success
                             ? "bg-gray-400 text-white cursor-not-allowed"
                             : "bg-primary text-white hover:opacity-90",
-                        )}
-                      >
+                        )}>
                         {redemptionResult?.success
                           ? "Already Registered"
                           : redeemPending
@@ -380,9 +374,7 @@ export default function EventDetailPage() {
                       </button>
                     )}
 
-                    {/* Divider */}
                     <div className="border-t pt-4 space-y-3 text-sm text-gray-700">
-                      {/* Date */}
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-primary" />
                         <span>
@@ -392,7 +384,6 @@ export default function EventDetailPage() {
                         </span>
                       </div>
 
-                      {/* Time */}
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-primary" />
                         <p className="font-medium text-gray-800">
@@ -411,7 +402,6 @@ export default function EventDetailPage() {
                         </p>
                       </div>
 
-                      {/* Venue */}
                       <div className="flex items-start gap-2">
                         <MapPin className="h-9 w-9 text-primary" />
                         <span>
@@ -423,8 +413,7 @@ export default function EventDetailPage() {
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-bold text-primary text-sm"
-                            >
+                              className="font-bold text-primary text-sm">
                               Get Directions
                             </a>
                           </div>
@@ -432,7 +421,6 @@ export default function EventDetailPage() {
                       </div>
                     </div>
 
-                    {/* Ticket / QR Section */}
                     {!event?.data?.ticket_link && redemptionResult?.success && (
                       <div className="border-t pt-4 flex flex-col items-center text-center">
                         <p className="text-sm text-gray-500 mb-2">
@@ -454,9 +442,7 @@ export default function EventDetailPage() {
                   </div>
                 </div>
               </div>
-              {/* Left Column: Main Content */}
               <div className="lg:col-span-2 space-y-6 order-1 md:order-1">
-                {/* Description Section */}
                 <div className="md:card-lg md:p-4 md:p-6 pb-4 md:pb-0">
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
                     Descriptions
@@ -471,7 +457,6 @@ export default function EventDetailPage() {
                   )}
                 </div>
 
-                {/* Location Section */}
                 <div className="md:p-4 md:p-6 mb-6">
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
                     Location
@@ -483,8 +468,7 @@ export default function EventDetailPage() {
                         center={[event.data.latitude, event.data.longitude]}
                         zoom={13}
                         scrollWheelZoom={false}
-                        className="h-full w-full"
-                      >
+                        className="h-full w-full">
                         <TileLayer
                           attribution="&copy; OpenStreetMap contributors"
                           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -516,52 +500,66 @@ export default function EventDetailPage() {
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-bold text-primary text-sm pl-1"
-                    >
+                      className="font-bold text-primary text-sm pl-1">
                       Get Directions
                     </a>
                   </div>
                 </div>
 
-                {/* Host Section */}
                 <div className="md:p-4 md:p-6 mb-6">
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
                     Host
                   </h2>
-                  {/* Add Host content here if any */}
                   <div className="flex flex-row  items-center gap-6 border rounded-md p-4">
-                    {/* Host Image */}
                     <div className="flex-shrink-0">
                       <Image
-                        src={event?.data?.image || "/placeholder.svg"}
+                        src={event?.data?.user.image || "/placeholder.svg"}
                         alt={event?.data?.title || "Host Image"}
                         width={80}
                         height={80}
-                        className="rounded-sm object-cover shadow-md"
+                        className="rounded-sm h-full object-cover shadow-md"
                       />
                     </div>
 
-                    {/* Host Details */}
                     <div className="flex-1 space-y-2">
-                      {/* Name & Followers */}
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
                         <h3 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-white">
-                          {event?.data?.title || "Host Name"}
+                          {event?.data?.user.business_name || "Host Name"}
                         </h3>
                       </div>
 
-                      {/* Reviews */}
                       <div className="flex items-center gap-1 sm:gap-2">
-                        <span className="font-medium text-foreground">
-                          *****
-                        </span>
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <span className="font-medium text-foreground">
+                            {averageRating.toFixed(1)}
+                          </span>
+                          <div className="flex gap-1">
+                            {[...Array(5)].map((_, index) => (
+                              <Star
+                                key={index}
+                                className={`h-4 w-4 ${
+                                  index < averageRating
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-gray-300"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span>
+                            (
+                            {event?.data.reviews &&
+                            event?.data?.reviews?.length > 0
+                              ? event?.data?.reviews?.length
+                              : "No Review Yet"}
+                            )
+                          </span>
+                        </div>
                         <div className="flex gap-1"></div>
                         <span></span>
                       </div>
 
-                      {/* Host City */}
                       <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base mt-3">
-                        Business City
+                        {event?.data?.user?.city || "Host Description"}
                       </p>
                     </div>
                   </div>
@@ -582,14 +580,28 @@ export default function EventDetailPage() {
                 <Link
                   href={event.data.ticket_link}
                   target="_blank"
-                  className="bg-primary text-white px-4 py-2 rounded-full text-base font-semibold hover:opacity-90 transition flex items-center gap-2"
-                >
+                  className="bg-primary text-white px-4 py-2 rounded-full text-base font-semibold hover:opacity-90 transition flex items-center gap-2">
                   Get Tickets
                 </Link>
+              ) : event?.data?.price_category === "free" ? (
+                <div className="w-full bg-primary text-white rounded-full py-3 text-center font-semibold">
+                  No Ticket Required
+                </div>
               ) : (
-                <button className="bg-primary text-white px-4 py-2 rounded-full text-base font-semibold flex items-center gap-2 hover:opacity-80 transition cursor-default">
-                  Free Entry
-                </button>
+                <Link
+                  href={"#registration-button"}
+                  className={cn(
+                    "w-full rounded-full py-3 text-center font-semibold transition",
+                    redemptionResult?.success
+                      ? "bg-gray-400 text-white cursor-not-allowed"
+                      : "bg-primary text-white hover:opacity-90",
+                  )}>
+                  {redemptionResult?.success
+                    ? "Already Registered"
+                    : redeemPending
+                      ? "Processing..."
+                      : "Register"}
+                </Link>
               )}
             </div>
           </div>
