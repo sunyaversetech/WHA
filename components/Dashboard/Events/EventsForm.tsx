@@ -144,13 +144,25 @@ export function EventForm() {
 
   const onSubmit = (values: EventFormValues) => {
     const formData = new FormData();
+
     Object.entries(values).forEach(([key, value]) => {
       if (value === "" || value === null || value === undefined) {
         formData.append(key, "");
+        return;
       }
 
       if (key === "dateRange" && value) {
-        formData.append(key, JSON.stringify(value));
+        const cleanedRange = {
+          from:
+            value.from instanceof Date
+              ? format(value.from, "yyyy-MM-dd")
+              : value.from.split("T")[0],
+          to:
+            value.to instanceof Date
+              ? format(value.to, "yyyy-MM-dd")
+              : value.to.split("T")[0],
+        };
+        formData.append(key, JSON.stringify(cleanedRange));
       } else {
         formData.append(key, value as any);
       }

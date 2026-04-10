@@ -5,8 +5,8 @@ const EventSchema = new Schema({
   description: { type: String },
   date: { type: Date, index: true },
   dateRange: {
-    from: { type: Date, index: true },
-    to: { type: Date, index: true },
+    from: { type: String, index: true },
+    to: { type: String, index: true },
   },
   user: { type: Schema.Types.ObjectId, ref: "User" },
   email: { type: String, required: false },

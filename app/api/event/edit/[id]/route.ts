@@ -20,8 +20,8 @@ export const eventSchema = z.object({
   ]),
   venue: z.string().min(2, "Venue is required"),
   dateRange: z.object({
-    from: z.coerce.date(),
-    to: z.coerce.date(),
+    from: z.string(),
+    to: z.string(),
   }),
   email: z.email("Invalid email address").optional().or(z.literal("")),
   phone_number: z.string().optional().or(z.literal("")),
@@ -62,6 +62,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     const userId = (session.user as any).id;
 
     const formData = await req.formData();
+    const dateRangeRaw = formData.get("dateRange") as string;
 
     const rawData: Record<string, any> = {};
     formData.forEach((value, key) => {
@@ -78,6 +79,26 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
         rawData[key] = value;
       }
     });
+
+    const formattedDates: { dateFrom?: string; dateTo?: string } = {};
+
+    if (dateRangeRaw) {
+      try {
+        const parsedRange = JSON.parse(dateRangeRaw);
+
+        if (parsedRange.from) {
+          const [y, m, d] = parsedRange.from.split("T")[0].split("-");
+          formattedDates.dateFrom = `${d}-${m}-${y}`;
+        }
+
+        if (parsedRange.to) {
+          const [y, m, d] = parsedRange.to.split("T")[0].split("-");
+          formattedDates.dateTo = `${d}-${m}-${y}`;
+        }
+      } catch (e) {
+        console.error("Failed to parse dateRange:", e);
+      }
+    }
 
     const validatedData = eventSchema.partial().parse(rawData);
 
@@ -110,7 +131,6 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
         imageField.name,
         imageField.type,
       );
-
       finalImageUrl = s3Response.Location;
     }
 
@@ -128,6 +148,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     const updatePayload = {
       ...defaultEmptyFields,
       ...validatedData,
+      ...formattedDates, // Spread the formatted dateFrom and dateTo here!
       image: finalImageUrl,
     };
 
@@ -142,9 +163,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
 
     const updatedEvent = await Event.findByIdAndUpdate(
       eventId,
-      {
-        $set: updatePayload,
-      },
+      { $set: updatePayload },
       { new: true, runValidators: true },
     );
 
