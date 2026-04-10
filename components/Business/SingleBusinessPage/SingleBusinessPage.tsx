@@ -195,33 +195,36 @@ export default function BusinessPage() {
         </div>
 
         <div className="order-1 md:order-2">
-          <div className="relative h-80 md:h-120 w-full rounded-2xl overflow-hidden">
+          <div className="relative h-80 md:h-[70vh] w-screen -ml-6 -mt-6 md:rounded-xl overflow-hidden">
             <Image
-              src={data?.data.image || "/placeholder.svg"}
-              alt={data?.data.business_name ?? "Business"}
-              className="w-full h-full object-cover"
               fill
+              src={data?.data?.image || "/placeholder.svg"}
+              alt={data?.data?.business_name || "Bussiness Image"}
+              className="w-full h-full object-cover"
             />
 
-            <div className="absolute inset-0 flex items-start justify-between p-3 md:hidden">
-              <div>
-                <ChevronLeft
-                  onClick={() => router.push("/businesses")}
-                  className="h-8 w-8 cursor-pointer rounded-full border  p-1.5 
-                 text-primary bg-white transition-all hover:scale-105 active:scale-95"
-                />
-              </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-10 md:rounded-2xl"></div>
 
-              <div className="flex gap-2 ">
+            <div className="absolute inset-0 z-50 flex items-start justify-between p-3 md:hidden">
+              <Button
+                variant={"ghost"}
+                className="p-0 transition-all hover:scale-105 active:scale-95"
+                onClick={() => router.back()}>
+                <ChevronLeft
+                  className="h-9 w-9 cursor-pointer rounded-full border  p-1.5 
+                         text-primary bg-white transition-all hover:scale-105 active:scale-95"
+                />{" "}
+              </Button>
+              <div className="flex gap-2">
                 <button
                   onClick={handleAddRemoveFavorite}
-                  className="flex items-center justify-center p-2 border bg-white rounded-full transition-all hover:scale-105 active:scale-95">
+                  className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95">
                   {isPending ? (
                     <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                   ) : (
                     <Heart
                       className={cn(
-                        "h-5 w-5 sm:h-6 sm:w-6 text-primary transition-all",
+                        "h-5 w-5 md:h-6 md:w-6 text-primary transition-all",
                         isBusinessFavorite
                           ? "text-red-500 scale-110"
                           : "text-neutral-600 hover:text-neutral-900",
@@ -232,9 +235,9 @@ export default function BusinessPage() {
                 </button>
 
                 <button
-                  className="flex items-center justify-center p-2 border rounded-full bg-white  transition-all hover:scale-105 active:scale-95"
+                  className="flex items-center justify-center p-2 border rounded-full bg-white transition-all hover:scale-105 active:scale-95"
                   onClick={handleShare}>
-                  <Share className="h-4 w-4 text-primary " />
+                  <Share className="h-5 w-5 text-primary" />
                 </button>
               </div>
             </div>
