@@ -147,7 +147,7 @@ export default function Navbar() {
                     setActiveTab(item.id);
                     router.push(buildPath(item.href));
                   }}
-                  className={`group relative flex items-center gap-2 pb-2 transition-all duration-500 ${
+                  className={`group relative cursor-pointer flex items-center gap-2 pb-2 transition-all duration-500 ${
                     isActive ? "text-black" : "text-gray-500 hover:text-black"
                   }`}>
                   <div className="flex gap-2 items-center">
@@ -217,7 +217,7 @@ export default function Navbar() {
         ) : (
           <div className="hidden md:flex gap-2">
             <Link href={buildPath("/auth")}>
-              <Button className="rounded-full px-5 bg-white/20 backdrop-blur-md text-primary hover:bg-primary hover:text-white">
+              <Button className="rounded-full cursor-pointer px-5 bg-white/20 backdrop-blur-md text-primary hover:bg-primary hover:text-white">
                 Login
               </Button>
             </Link>

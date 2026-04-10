@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     const { phone_number, location, latitude, longitude } = body;
 
     const updateData: any = {};
-    if (phone_number !== undefined) updateData.phone = phone_number;
+    if (phone_number !== undefined) updateData.phone_number = phone_number;
     if (location !== undefined) updateData.location = location;
     if (latitude !== undefined) updateData.latitude = latitude;
     if (longitude !== undefined) updateData.longitude = longitude;

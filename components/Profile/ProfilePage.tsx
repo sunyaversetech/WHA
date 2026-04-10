@@ -33,7 +33,7 @@ const InfoRow = ({ label, value }: { label: string; value?: string }) => (
   </div>
 );
 
-const ProfilePage = ({ userData }: { userData: any }) => {
+const ProfilePage = () => {
   const { data: session, update } = useSession();
   const { mutate: deleteAccount, isPending } = useDeleteProfile();
   const { mutate: editProfile } = useEditProfile();
@@ -66,10 +66,10 @@ const ProfilePage = ({ userData }: { userData: any }) => {
     }
 
     editProfile(filteredData, {
-      onSuccess: () => {
+      onSuccess: async () => {
+        await update();
         toast.success("Profile updated");
-        router.refresh();
-        update(filteredData);
+        setEditPhone(false);
       },
       onError: (error: any) => {
         toast.error(error.message || "Failed to update profile");
