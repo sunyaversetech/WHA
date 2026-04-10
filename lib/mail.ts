@@ -103,11 +103,11 @@ const generateEventTicketTemplate = (
         </div>
 
         <p style="font-size: 14px; color: #666;">
-          Present this QR code or the unique ID at the entrance for verification.
+          Present this QR code or the Coupon Code at the entrance for verification.
         </p>
       </div>
       <div style="background-color: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #999;">
-        &copy; ${new Date().getFullYear()} WHA Australia. All rights reserved.
+        &copy; ${new Date().getFullYear()} WHAustralia. All rights reserved.
       </div>
     </div>
   `;
