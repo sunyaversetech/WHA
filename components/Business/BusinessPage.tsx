@@ -153,12 +153,12 @@ export default function BusinessesClientPage() {
                 </DrawerTitle>
                 <Tabs
                   defaultValue="categories"
-                  className="w-full rounded-lg border bg-white">
+                  className="rounded-lg border bg-white ">
                   <TabsList className="w-full border-none">
                     <TabsTrigger value="categories">Categories</TabsTrigger>
                     <TabsTrigger value="communities">Communities</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="categories">
+                  <TabsContent value="categories" className="flex flex-wrap">
                     <BusinessHeader />
                   </TabsContent>
                   <TabsContent value="communities" className="p-4">
@@ -178,7 +178,9 @@ export default function BusinessesClientPage() {
                               setCurrentCommunity(com.value);
                             }}
                             className={`flex flex-col items-center justify-center h-15 min-w-[80px] py-5 px-3 rounded-xl transition-all border ${
-                              isActive ? "bg-primary text-white" : "bg-white"
+                              isActive
+                                ? "bg-primary text-white"
+                                : "bg-white text-blue-950/90"
                             }`}>
                             <Icon className="h-5 w-5 mb-1" />
                             <span className="text-[10px] uppercase font-bold">

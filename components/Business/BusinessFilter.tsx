@@ -219,7 +219,7 @@ export default function BusinessHeader() {
       </div> */}
 
       {/* Category Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
+      <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon;
           const isActive = activeCategory === cat?.value;

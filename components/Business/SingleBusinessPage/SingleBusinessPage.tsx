@@ -193,7 +193,7 @@ export default function BusinessPage() {
         </div>
 
         <div className="order-1 md:order-2">
-          <div className="relative h-80 md:h-[70vh] w-full max-sm:w-screen max:sm:-ml-6 max-sm:-mt-6 md:rounded-xl overflow-hidden">
+          <div className="relative h-80 md:h-[70vh] w-full max-sm:w-screen max-sm:-ml-6 max-sm:-mt-6 md:rounded-xl overflow-hidden">
             <Image
               fill
               src={data?.data?.image || "/placeholder.svg"}
