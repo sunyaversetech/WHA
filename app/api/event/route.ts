@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
     if (dateRangeRaw) {
       try {
         const parsedRange = JSON.parse(dateRangeRaw);
-        dateFrom = parsedRange.from;
-        dateTo = parsedRange.to;
+        dateFrom = parsedRange.from.split("T")[0];
+        dateTo = parsedRange.to.split("T")[0];
       } catch (e) {
         console.error("Failed to parse dateRange:", e);
       }

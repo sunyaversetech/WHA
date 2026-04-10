@@ -21,7 +21,6 @@ interface MapProps {
 }
 
 export default function Map({ latitude, longitude, business }: MapProps) {
-  // 1. Convert to numbers and validate
   const lat = parseFloat(String(latitude));
   const lng = parseFloat(String(longitude));
 
@@ -41,7 +40,7 @@ export default function Map({ latitude, longitude, business }: MapProps) {
     <div className="h-[400px] w-full rounded-xl overflow-hidden border">
       <MapContainer
         center={position}
-        zoom={15}
+        zoom={12}
         scrollWheelZoom={false}
         className="h-full w-full">
         <TileLayer
@@ -50,10 +49,8 @@ export default function Map({ latitude, longitude, business }: MapProps) {
         />
         <Marker position={position} icon={DefaultIcon}>
           <Popup>
-            {" "}
             <div>
               <h3 className="font-bold text-lg">{business.business_name}</h3>
-
               <p className="text-gray-600 text-sm mb-2">{business.location}</p>
 
               <div className="flex space-x-2 mt-2">

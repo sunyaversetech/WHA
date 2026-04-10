@@ -11,6 +11,7 @@ import {
   Heart,
   Share,
   Loader2,
+  MapPin,
 } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -29,6 +30,8 @@ import { cn } from "@/lib/utils";
 import Loading from "@/app/businesses/loading";
 import BusinessHours from "./Hours";
 import { useAuthModal } from "@/components/Auth/DialogLogin/use-auth-model";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 export default function BusinessPage() {
   const { data, isLoading } = useGetSingleBusiness();
@@ -120,8 +123,10 @@ export default function BusinessPage() {
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
                 {data?.data.business_name}
               </h1>
-              {business.verified && (
-                <BadgeCheck className="text-green h-5 w-5 sm:h-6 sm:w-6" />
+              {business.verified ? (
+                <BadgeCheck className="text-green h-5 w-5 sm:h-6 sm:w-6 fill-blue-500 text-white" />
+              ) : (
+                <Button variant={"outline"}>not verified</Button>
               )}
             </div>
 
@@ -239,29 +244,28 @@ export default function BusinessPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardContent className="">
-              <h2 className="text-xl font-semibold mb-4">About Business</h2>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="space-y-1">
-                  <p className="text-muted-foreground">Category</p>
-                  <p className="font-medium flex items-center gap-2">
-                    <Tag className="w-4 h-4" /> {data?.data.business_category}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-muted-foreground">ABN Number</p>
-                  <p className="font-medium">{data?.data.abn_number}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-muted-foreground">Email</p>
-                  <p className="font-medium flex items-center gap-2">
-                    <Mail className="w-4 h-4" /> {data?.data.email}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <h2 className="text-2xl font-[600] tracking-wide mb-4">Services</h2>
+          <div className="grid grid-cols-1 gap-4 text-sm">
+            <Button
+              type="button"
+              variant={"outline"}
+              className="h-20  flex flex-col text-left items-start border-slate-400 p-4! rounded-md">
+              <p className="font-medium flex items-center gap-2">
+                <Tag className="w-4 h-4" /> {data?.data.business_category}
+              </p>
+            </Button>
+            {/* <div className="space-y-1">
+              <p className="text-muted-foreground">ABN Number</p>
+              <p className="font-medium">{data?.data.abn_number}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-muted-foreground">Email</p>
+              <p className="font-medium flex items-center gap-2">
+                <Mail className="w-4 h-4" /> {data?.data.email}
+              </p>
+            </div> */}
+          </div>
+          <BusinessReviewSection reviews={reviews?.data || []} />
 
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Our Location</h2>
@@ -277,45 +281,61 @@ export default function BusinessPage() {
               </div>
             )}
           </div>
-          <BusinessReviewSection reviews={reviews?.data || []} />
+          <BusinessHours hours={data?.data?.hours} open={true} />
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 sticky top-32 self-start">
           <Card className="bg-slate-50 border-none">
-            <CardContent className="pt-6 ">
-              <h3 className="font-bold mb-2">Business Operating Hours</h3>
-              <BusinessHours hours={data?.data?.hours} />
-            </CardContent>
-          </Card>
-          <Card className="bg-slate-50 border-none">
-            <CardContent className="pt-6 ">
-              <h3 className="font-bold mb-2">Business Status</h3>
-              <Badge
-                className={`${data?.data?.verified ? "bg-green-600" : "bg-red-500"}`}>
-                {data?.data?.verified
-                  ? "Verified Business"
-                  : "Pending Verification"}
-              </Badge>
-              <div className="flex gap-2 items-center mt-4">
-                Community :{" "}
-                <Image
-                  src={
-                    data?.data?.community === "nepali"
-                      ? "/business/nepal-flag.png"
-                      : "/business/australia-flag.png"
-                  }
-                  width={20}
-                  height={20}
-                  alt=""
-                />{" "}
-                <p className="bg-blue-950 font-semibold flex gap-2 text-white rounded-sm capitalize py-1 px-5 ">
-                  {data?.data?.community}
-                </p>
+            <CardContent className="pt-6 space-y-4">
+              <h3 className="text-xl capitalize">
+                {data?.data.business_name} | {data?.data.business_category}
+              </h3>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="font-medium text-foreground">
+                  {averageRating.toFixed(1)}
+                </span>
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, index) => (
+                    <Star
+                      key={index}
+                      className={`h-4 w-4 ${
+                        index < averageRating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span>
+                  (
+                  {reviews?.data && reviews?.data.length > 0
+                    ? reviews?.data.length
+                    : "No Review Yet"}
+                  )
+                </span>
               </div>
-              <p className="text-xs text-muted-foreground mt-4">
-                This business is a registered member of the{" "}
-                {data?.data?.community_name ?? "WHA"} community.
-              </p>
+              <Button className="wha-btn-primary w-full">Book Now</Button>
+              <Separator />
+              <h3 className="font-bold mb-2">Business Operating Hours</h3>
+
+              <BusinessHours hours={data?.data?.hours} />
+              <div className="flex items-start gap-2">
+                <MapPin className="h-9 w-9 text-primary" />
+                <span>
+                  {data?.data?.location || "Venue TBA"}{" "}
+                  <div>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        data?.data.location || "",
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold text-primary text-sm">
+                      Get Directions
+                    </a>
+                  </div>
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -118,14 +118,9 @@ export default function BusinessReviewSection({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10 py-10">
-      <Card className="border-slate-200 shadow-sm overflow-hidden">
-        <CardHeader className="bg-slate-50/50">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary" />
-            Leave a Review
-          </CardTitle>
-        </CardHeader>
+    <div className=" mx-auto space-y-4 ">
+      <h2 className="text-xl font-bold tracking-wider">Reviews</h2>
+      <Card className="border-slate-200 shadow-sm overflow-hidden p-0 mt-0">
         <CardContent className="pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -176,7 +171,7 @@ export default function BusinessReviewSection({
                 )}
               />
 
-              <div className="flex justify-end">
+              <div className="flex justify-end mb-4">
                 <Button type="submit">
                   {false ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -203,7 +198,7 @@ export default function BusinessReviewSection({
 
         <div className="space-y-4">
           {reviews && reviews?.length > 0 ? (
-            reviews?.map((review) => (
+            reviews.splice(0, 3)?.map((review) => (
               <div
                 key={review._id}
                 className="p-6 rounded-2xl border   hover:border-slate-200 transition-all shadow-sm">
