@@ -11,11 +11,12 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Ticket, CheckCircle2 } from "lucide-react";
+import { Loader2, Ticket, CheckCircle2, ExternalLink } from "lucide-react";
 import {
   useGetEventRedeem,
   useGetEventRedeemBusiness,
 } from "@/services/event.service";
+import { useRouter } from "next/navigation";
 
 interface EventStats {
   eventId: string;
@@ -26,8 +27,7 @@ interface EventStats {
 
 export default function EventRedemptionTable() {
   const { data, isLoading } = useGetEventRedeemBusiness();
-
-  console.log(data);
+  const router = useRouter();
 
   const aggregateStats = (): EventStats[] => {
     if (!data?.data) return [];
@@ -99,8 +99,14 @@ export default function EventRedemptionTable() {
                   <TableRow
                     key={event.eventId}
                     className="hover:bg-slate-50/50 transition-colors">
-                    <TableCell className="font-medium">
-                      {event.eventName}
+                    <TableCell
+                      className="font-medium cursor-pointer flex gap-2 hover:text-blue-500 hover:underline"
+                      onClick={() =>
+                        router.push(
+                          `/dashboard/events/redemtion-table/${event.eventId}`,
+                        )
+                      }>
+                      {event.eventName} <ExternalLink size={10} />
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge

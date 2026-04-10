@@ -30,6 +30,8 @@
     "express-fileupload": "^1.5.2",
     "framer-motion": "^12.38.0",
     "input-otp": "^1.4.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "leaflet": "^1.9.4",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.563.0",

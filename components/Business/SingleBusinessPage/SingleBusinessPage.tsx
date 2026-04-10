@@ -1,8 +1,6 @@
 "use client";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Mail,
   Tag,
   ChevronLeft,
   BadgeCheck,
@@ -14,7 +12,7 @@ import {
   MapPin,
 } from "lucide-react";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useGetSingleBusiness } from "@/services/business.service";
 import BusinessReviewSection from "@/components/Business/Comment";
 import Map from "./Map";

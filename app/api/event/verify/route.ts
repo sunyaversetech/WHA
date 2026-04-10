@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure the business verifying it is the one who owns the event
     if (redemption.business.toString() !== session.user.id) {
       return NextResponse.json(
         { message: "Unauthorized for this business." },

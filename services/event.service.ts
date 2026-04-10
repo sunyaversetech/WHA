@@ -167,8 +167,16 @@ export const useGetEventRedeem = () => {
 };
 export const useGetEventRedeemBusiness = () => {
   return useFetcher<ApiResponseType<RedeemCodeResponseType[]>>(
-    "redeem",
+    "redeem-business",
     null,
     "/api/event/redeem/get-business",
+  );
+};
+
+export const useGetEventVerifyUsers = (id: string) => {
+  return useFetcher<ApiResponseType<RedeemCodeResponseType[]>>(
+    "verify-users",
+    null,
+    `/api/event/verify/${id}`,
   );
 };
