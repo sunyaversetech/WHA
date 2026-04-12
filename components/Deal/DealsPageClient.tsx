@@ -14,7 +14,6 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { useSearchParams } from "next/navigation";
-import { Separator } from "../ui/separator";
 import MobileDealsSearchWithDates from "../ResuableComponents/MobileViewSearch/SearchSectionForDeals";
 import {
   Drawer,
@@ -45,7 +44,7 @@ export default function DealsPageClient() {
       </div>
 
       <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar relative">
-        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md">
+        <div className="sticky top-0 z-10 bg-gray-100/20 backdrop-blur-md">
           <div className="container-modern px-6 py-4">
             <div className="flex items-end justify-end">
               <Drawer>

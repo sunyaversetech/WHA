@@ -13,7 +13,6 @@ export async function GET(request: NextRequest) {
   try {
     await connectToDb();
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
     const todayISO = today.toISOString();
 
     const { searchParams } = new URL(request.url);
@@ -24,10 +23,10 @@ export async function GET(request: NextRequest) {
 
     if (city) {
       const safeCity = escapeRegex(city);
-      query.name = { $regex: safeCity, $options: "i" };
+      query.city = { $regex: safeCity, $options: "i" };
     }
 
-    const business = await User.find({ category: "business", ...query })
+    const business = await User.find(query)
       .sort({
         createdAt: -1,
       })
@@ -68,10 +67,11 @@ export async function GET(request: NextRequest) {
     // });
     const upcomingevents = await Event.find({
       "dateRange.from": { $gte: todayISO },
+      city: { $regex: city, $options: "i" },
     })
       .populate("user")
       .sort({ "dateRange.from": 1 })
-      .limit(10)
+      .limit(5)
       .lean();
 
     const deals = await Deal.find({ valid_till: { $gte: todayISO } })

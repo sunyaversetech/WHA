@@ -99,8 +99,6 @@ export default function EventsBackend() {
 
       <hr className="border-slate-200" />
 
-      {/* new  */}
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {data?.data?.map((event) => (
           <div
