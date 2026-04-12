@@ -57,7 +57,6 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     await connectToDb();
-
     const session = await getServerSession(authOptions);
 
     if (!session)
@@ -67,6 +66,10 @@ export async function GET(req: Request) {
       user_id: session.user.id,
     }).populate({
       path: "item_id",
+      populate: {
+        path: "user",
+        strictPopulate: false,
+      },
     });
 
     const brokenFavoriteIds = favorite_docs

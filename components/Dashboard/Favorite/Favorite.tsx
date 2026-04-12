@@ -1,6 +1,6 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Heart,
@@ -9,10 +9,6 @@ import {
   ArrowRight,
   Loader2,
   ChevronLeft,
-  CheckCircle2,
-  Building2,
-  Mail,
-  Users,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -24,7 +20,9 @@ import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import EventCard from "@/components/cards/event-card";
+import BusinessCard from "@/components/cards/business-card";
+import DealCard from "@/components/cards/deal-card";
 
 export default function FavoritesPage() {
   const router = useRouter();
@@ -87,9 +85,7 @@ export default function FavoritesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {favorites.events.map((event) => {
                 if (!event) return null;
-                return (
-                  <FavoriteCard key={event._id} item={event} type="event" />
-                );
+                return <EventCard key={event._id} event={event} />;
               })}
             </div>
           ) : (
@@ -104,8 +100,9 @@ export default function FavoritesPage() {
           {favorites.deals && favorites.deals.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {favorites.deals.map((deal) => {
+                console.log(deal);
                 if (!deal) return null;
-                return <FavoriteCard key={deal._id} item={deal} type="deal" />;
+                return <DealCard key={deal._id} deal={deal} />;
               })}
             </div>
           ) : (
@@ -121,7 +118,7 @@ export default function FavoritesPage() {
               {favorites.business.map((business) => {
                 if (!business) return null;
                 return (
-                  <BusinessCard key={business._id} data={business as any} />
+                  <BusinessCard key={business._id} business={business as any} />
                 );
               })}
             </div>
@@ -260,81 +257,81 @@ function FavoritesSkeleton() {
   );
 }
 
-interface Business {
-  _id: string;
-  name: string;
-  email: string;
-  location: string;
-  community: string;
-  business_name: string;
-  business_category: string;
-  verified: boolean;
-  image?: string;
-}
+// interface Business {
+//   _id: string;
+//   name: string;
+//   email: string;
+//   location: string;
+//   community: string;
+//   business_name: string;
+//   business_category: string;
+//   verified: boolean;
+//   image?: string;
+// }
 
-export function BusinessCard({ data }: { data: Business }) {
-  const slug = data.business_name.toLowerCase().replace(/[^a-z0-9]/g, "");
-  return (
-    <Card className="overflow-hidden border-slate-200 transition-all hover:shadow-lg dark:border-slate-800">
-      {/* Decorative Top Accent */}
-      <div className="h-1.5 bg-gradient-to-r from-blue-600 to-indigo-600" />
+// export function BusinessCard({ data }: { data: Business }) {
+//   const slug = data.business_name.toLowerCase().replace(/[^a-z0-9]/g, "");
+//   return (
+//     <Card className="overflow-hidden border-slate-200 transition-all hover:shadow-lg dark:border-slate-800">
+//       {/* Decorative Top Accent */}
+//       <div className="h-1.5 bg-gradient-to-r from-blue-600 to-indigo-600" />
 
-      <CardHeader className="p-5 pb-0">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                {data.business_name}
-              </h3>
-              {data.verified && (
-                <CheckCircle2 className="h-4 w-4 text-blue-500" />
-              )}
-            </div>
-            <p className="text-sm font-medium text-slate-500 flex items-center gap-1">
-              <Building2 className="h-3.5 w-3.5" />
-              by {data.name}
-            </p>
-          </div>
-          <Badge
-            variant={data.verified ? "secondary" : "outline"}
-            className="capitalize">
-            {data.business_category}
-          </Badge>
-        </div>
-      </CardHeader>
+//       <CardHeader className="p-5 pb-0">
+//         <div className="flex items-start justify-between">
+//           <div className="space-y-1">
+//             <div className="flex items-center gap-2">
+//               <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+//                 {data.business_name}
+//               </h3>
+//               {data.verified && (
+//                 <CheckCircle2 className="h-4 w-4 text-blue-500" />
+//               )}
+//             </div>
+//             <p className="text-sm font-medium text-slate-500 flex items-center gap-1">
+//               <Building2 className="h-3.5 w-3.5" />
+//               by {data.name}
+//             </p>
+//           </div>
+//           <Badge
+//             variant={data.verified ? "secondary" : "outline"}
+//             className="capitalize">
+//             {data.business_category}
+//           </Badge>
+//         </div>
+//       </CardHeader>
 
-      <CardContent className="p-5 pt-4 space-y-4">
-        {/* Location Section */}
-        <div className="flex items-start gap-3">
-          <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />
-          <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-            {data.location}
-          </p>
-        </div>
+//       <CardContent className="p-5 pt-4 space-y-4">
+//         {/* Location Section */}
+//         <div className="flex items-start gap-3">
+//           <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />
+//           <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+//             {data.location}
+//           </p>
+//         </div>
 
-        {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-4 pt-2">
-          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-            <Mail className="h-3.5 w-3.5 text-slate-400" />
-            <span className="truncate">{data.email}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-            <Users className="h-3.5 w-3.5 text-slate-400" />
-            <span className="capitalize">{data.community} Community</span>
-          </div>
-        </div>
+//         {/* Info Grid */}
+//         <div className="grid grid-cols-2 gap-4 pt-2">
+//           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+//             <Mail className="h-3.5 w-3.5 text-slate-400" />
+//             <span className="truncate">{data.email}</span>
+//           </div>
+//           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+//             <Users className="h-3.5 w-3.5 text-slate-400" />
+//             <span className="capitalize">{data.community} Community</span>
+//           </div>
+//         </div>
 
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
-            Business ID: {data._id.slice(-6)}
-          </span>
-          <Link
-            href={`/businesses/${slug}`}
-            className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-all">
-            View Profile →
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+//         <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+//           <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+//             Business ID: {data._id.slice(-6)}
+//           </span>
+//           <Link
+//             href={`/businesses/${slug}`}
+//             className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-all">
+//             View Profile →
+//           </Link>
+//         </div>
+//       </CardContent>
+//     </Card>
+//   );
+// }

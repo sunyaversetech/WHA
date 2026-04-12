@@ -1,10 +1,23 @@
 "use client";
 
-import { Building, Star } from "lucide-react";
+import { Building, Heart, Loader2, Star } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
+import {
+  useCreateFavroite,
+  useGetUserFavroite,
+} from "@/services/favroite.service";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function BusinessCard({ business }: { business: any }) {
+  const { onOpen } = useAuthModal();
+  const { mutate, isPending } = useCreateFavroite();
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const businessId = business?._id;
   const getCategoryInfo = () => {
     switch (business.category) {
       case "restaurant":
@@ -71,6 +84,31 @@ export default function BusinessCard({ business }: { business: any }) {
   const categoryInfo = getCategoryInfo();
   const slug = business.business_name.toLowerCase().replace(/[^a-z0-9]/g, "");
 
+  const { data: userFavorites } = useGetUserFavroite();
+
+  const isBusinessFavorite = userFavorites?.data?.business?.some(
+    (item) => (item._id ?? "").toString() === businessId?.toString(),
+  );
+  const handleAddRemoveFavorite = () => {
+    if (!session) {
+      onOpen();
+      return;
+    }
+    mutate(
+      { item_id: businessId, item_type: "User" },
+      {
+        onSuccess: (msg) => {
+          router.refresh();
+          toast.success(msg.message);
+          queryClient.invalidateQueries({ queryKey: ["favroite"] });
+        },
+        onError: () => {
+          toast.error("Failed to add to favorites");
+        },
+      },
+    );
+  };
+
   return (
     <div
       className=" overflow-hidden group cursor-pointer"
@@ -90,6 +128,28 @@ export default function BusinessCard({ business }: { business: any }) {
               <Building className="w-3 h-3" />
               <p className="capitalize">{business.business_category}</p>
             </div>
+
+            <button
+              disabled={isPending}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                handleAddRemoveFavorite();
+              }}
+              className="absolute top-3 right-3 p-2 bg-black/10 backdrop-blur-md border border-white/30 rounded-full
+                       transition-colors duration-200 shadow-lg group/fav hover:bg-white/30 disabled:opacity-70">
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+              ) : (
+                <Heart
+                  className={`h-5 w-5 transition-colors duration-200 ${
+                    isBusinessFavorite
+                      ? "text-red-500 fill-red-500"
+                      : "text-white group-hover/fav:text-primary"
+                  }`}
+                />
+              )}
+            </button>
           </div>
         </div>
       </div>

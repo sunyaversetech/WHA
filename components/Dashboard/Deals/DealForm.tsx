@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, ChevronLeft } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -58,7 +57,7 @@ export default function DealForm() {
     },
   });
 
-  const { mutate } = useCreateDeals();
+  const { mutate, isPending } = useCreateDeals();
   function onSubmit(values: DealFormValues) {
     mutate(values as any, {
       onSuccess: () => {
@@ -268,11 +267,8 @@ export default function DealForm() {
             )}
           />
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Submitting..." : "Create Deal"}
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? "Submitting..." : "Create Deal"}
           </Button>
         </form>
       </div>

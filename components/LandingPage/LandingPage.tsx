@@ -10,12 +10,13 @@ import { useFilteredBusinesses } from "@/hooks/use-filtered-data";
 
 import { useGetLandingPageData } from "@/services/landing.service";
 import LandingPageSkeleton from "./LandingPageSkeleton";
+import { useSearchParams } from "next/navigation";
 
 export default function LandingPage() {
   const { data, isLoading } = useGetLandingPageData();
 
-  console.log(data);
-
+  const param = useSearchParams();
+  const city = param.get("city") || "";
   const businesses = useFilteredBusinesses(data?.data.business || []);
 
   if (isLoading) return <LandingPageSkeleton />;
@@ -55,7 +56,7 @@ export default function LandingPage() {
       <div className="mt-2 md:mt-4 bg-white text-black rounded-t-3xl px-4 md:px-6">
         <div className="container-modern py-4 md:py-6 border-b border-divider ">
           <h2 className="pb-2 md:pb-4">
-            Explore whats active right now in your city
+            Explore whats active right now in {city ? city : "Australia"}
           </h2>
 
           <div className="flex flex-wrap justify-between gap-2 mx-auto  md:max-w-full rounded-lg ">
@@ -108,7 +109,7 @@ export default function LandingPage() {
 
         <div className="container-modern pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
           <CardSlider
-            title="Upcoming Events"
+            title={`Upcoming Events in ${city ? city : "Australia"}`}
             icon={<Calendar className="h-5 w-5 text-primary" />}
             viewAllHref="/events">
             {data?.data?.length === 0 ? (
@@ -142,7 +143,7 @@ export default function LandingPage() {
 
         <div className=" pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
           <CardSlider
-            title="Local Businesses"
+            title={`Businesses in ${city ? city : "Australia"}`}
             icon={<Building className="h-5 w-5 text-primary" />}
             viewAllHref="/businesses">
             {businesses && businesses.length === 0 ? (
