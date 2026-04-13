@@ -30,6 +30,12 @@ import BusinessHours from "./Hours";
 import { useAuthModal } from "@/components/Auth/DialogLogin/use-auth-model";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EventCard from "@/components/cards/event-card";
+import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
+import DealCard from "@/components/cards/deal-card";
+import EventDrawer from "./EventDrawer";
+import DealDrawer from "./DealDrawer";
 
 export default function BusinessPage() {
   const { data, isLoading } = useGetSingleBusiness();
@@ -245,27 +251,81 @@ export default function BusinessPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
         <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-2xl font-[600] tracking-wide mb-4">Services</h2>
-          <div className="grid grid-cols-1 gap-4 text-sm">
-            <Button
-              type="button"
-              variant={"outline"}
-              className="h-20  flex flex-col text-left items-start border-slate-400 p-4! rounded-md">
-              <p className="font-medium flex items-center gap-2">
-                <Tag className="w-4 h-4" /> {data?.data.business_category}
-              </p>
-            </Button>
-            {/* <div className="space-y-1">
-              <p className="text-muted-foreground">ABN Number</p>
-              <p className="font-medium">{data?.data.abn_number}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-muted-foreground">Email</p>
-              <p className="font-medium flex items-center gap-2">
-                <Mail className="w-4 h-4" /> {data?.data.email}
-              </p>
-            </div> */}
-          </div>
+          <Tabs defaultValue="services" className="w-full  ">
+            <TabsList className="w-full border-none! bg-[#fafafa]">
+              <TabsTrigger
+                value="services"
+                className="data-[state=active]:bg-gray-100/10! data-[state=active]:shadow-none! data-[state=active]:text-primary!  
+                data-[state=active]:border-b-blue-950/80 rounded-none border-2 py-4">
+                Services
+              </TabsTrigger>
+              <TabsTrigger
+                value="event"
+                className="data-[state=active]:bg-gray-100/10! data-[state=active]:shadow-none! data-[state=active]:text-primary!  
+                data-[state=active]:border-b-blue-950/80 rounded-none border-2">
+                Event
+              </TabsTrigger>
+              <TabsTrigger
+                value="deal"
+                className="data-[state=active]:bg-gray-100/10! data-[state=active]:shadow-none! data-[state=active]:text-primary!  
+                data-[state=active]:border-b-blue-950/80 rounded-none border-2 ">
+                Deals
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="services" className="w-full">
+              <Button
+                type="button"
+                variant={"outline"}
+                className="h-20  flex flex-col text-left items-start w-full border-slate-400 p-4! rounded-md">
+                <p className="font-medium flex items-center gap-2">
+                  <Tag className="w-4 h-4" /> {data?.data.business_category}
+                </p>
+              </Button>
+            </TabsContent>
+            <TabsContent value="event">
+              <div
+                className={`grid grid-cols-1 md:${data?.data?.event && data?.data?.event?.length < 2 ? "grid-cols-1" : "grid-cols-2"} gap-2`}>
+                {data?.data.event && data?.data.event.length > 0 ? (
+                  data?.data.event.slice(0, 2).map((item: EventFormValues) => {
+                    return <EventCard key={item._id} event={item} />;
+                  })
+                ) : (
+                  <p className="text-center">
+                    There is no Event Form This Business
+                  </p>
+                )}
+              </div>
+              <div
+                className={`${data?.data.event && data?.data.event?.length < 3 ? "hidden" : "flex"} w-full m-auto mt-2 justify-center`}>
+                <EventDrawer
+                  event={data?.data.event}
+                  user={data?.data.business_name}
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="deal">
+              <div
+                className={`grid grid-cols-1 md:${data?.data?.deal && data?.data?.deal?.length < 2 ? "grid-cols-1" : "grid-cols-2"} gap-2`}>
+                {data?.data.deal && data?.data.deal.length > 0 ? (
+                  data?.data.deal
+                    .splice(0, 2)
+                    .map((item) => <DealCard key={item._id} deal={item} />)
+                ) : (
+                  <p className="text-center">
+                    There is no Deal Form This Business
+                  </p>
+                )}
+              </div>
+              <div
+                className={`${data?.data.deal && data?.data.deal?.length < 3 ? "hidden" : "flex"} w-full m-auto mt-2 justify-center`}>
+                <DealDrawer
+                  deal={data?.data.deal ?? []}
+                  user={data?.data.business_name ?? ""}
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+
           <BusinessReviewSection reviews={reviews?.data || []} />
 
           <div className="space-y-4">

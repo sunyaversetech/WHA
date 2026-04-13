@@ -1,5 +1,7 @@
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
+import { Deal } from "@/server/models/DealSchema.model";
+import Event from "@/server/models/Event.model";
 import { OperatingHours } from "@/server/models/OperatingHour.model";
 import { Review } from "@/server/models/Review.model";
 import { NextRequest, NextResponse } from "next/server";
@@ -22,6 +24,13 @@ export async function GET(req: NextRequest, { params }: Props) {
       .sort({ createdAt: -1 })
       .lean();
 
+    const event = await Event.find({ user: business._id }).sort({
+      createdAt: -1,
+    });
+    const deal = await Deal.find({ user: business._id }).sort({
+      createdAt: -1,
+    });
+
     if (!business) {
       return NextResponse.json(
         { error: "Business not found" },
@@ -37,7 +46,13 @@ export async function GET(req: NextRequest, { params }: Props) {
 
     return NextResponse.json(
       {
-        data: { ...business, review: review, hours: hours },
+        data: {
+          ...business,
+          review: review,
+          hours: hours,
+          event: event,
+          deal: deal,
+        },
         message: "Businesses retrieved successfully",
       },
       { status: 200 },

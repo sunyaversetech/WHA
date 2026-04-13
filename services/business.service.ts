@@ -5,6 +5,9 @@ import { useMutation } from "@tanstack/react-query";
 import { Post } from "@/lib/action";
 import { OperatingHourPostType } from "@/components/Dashboard/Settings/OperatingHours";
 import { BusinessHoursData } from "@/components/Business/SingleBusinessPage/Hours";
+import { EventType } from "./event.service";
+import { DealsGetValues } from "./deal.service";
+import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
 
 export type UserBusinessType = {
   _id?: string;
@@ -26,6 +29,8 @@ export type UserBusinessType = {
   business_category?: string;
   abn_number?: string;
   verified: boolean;
+  event: EventFormValues[];
+  deal: DealsGetValues[];
 
   emailVerified?: Date | null;
   createdAt?: string | Date;

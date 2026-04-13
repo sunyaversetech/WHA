@@ -95,7 +95,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`${isSticky && pathname === "/" ? "fixed bg-white w-full h-15" : isSticky && pathname !== "/" ? "fixed bg-white w-full h-22" : ""} top-0 z-[9999] hidden md:flex items-center md:justify-between justify-center px-6 py-3 border-white/20`}>
+      className={`${isSticky && pathname === "/" ? "fixed bg-white w-full h-15" : isSticky && pathname !== "/" ? "fixed bg-white w-full h-22" : ""} top-0 z-49 hidden md:flex items-center md:justify-between justify-center px-6 py-3 border-white/20`}>
       <Link
         href={buildPath("/")}
         onClick={() => setActiveTab("")}
