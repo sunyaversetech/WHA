@@ -463,12 +463,12 @@ export default function EventDetailPage() {
                   </h2>
 
                   {event?.data?.latitude && event?.data?.longitude && (
-                    <div className="h-[200px] md:h-[400px] w-full rounded-lg overflow-hidden">
+                    <div className="h-[200px] md:h-[400px] z-20 w-full rounded-lg overflow-hidden">
                       <MapContainer
                         center={[event.data.latitude, event.data.longitude]}
                         zoom={13}
                         scrollWheelZoom={false}
-                        className="h-full w-full">
+                        className="h-full w-full z-20">
                         <TileLayer
                           attribution="&copy; OpenStreetMap contributors"
                           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

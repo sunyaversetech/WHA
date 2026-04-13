@@ -252,27 +252,27 @@ export default function BusinessPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
         <div className="lg:col-span-2 space-y-6">
           <Tabs defaultValue="services" className="w-full  ">
-            <TabsList className="w-full border-none! bg-[#fafafa]">
+            <TabsList className="w-full border-none!  bg-[#fafafa]">
               <TabsTrigger
                 value="services"
                 className="data-[state=active]:bg-gray-100/10! data-[state=active]:shadow-none! data-[state=active]:text-primary!  
-                data-[state=active]:border-b-blue-950/80 rounded-none border-2 py-4">
+                data-[state=active]:border-b-blue-950/80 rounded-none border-2 py-5">
                 Services
               </TabsTrigger>
               <TabsTrigger
                 value="event"
                 className="data-[state=active]:bg-gray-100/10! data-[state=active]:shadow-none! data-[state=active]:text-primary!  
-                data-[state=active]:border-b-blue-950/80 rounded-none border-2">
+                data-[state=active]:border-b-blue-950/80 rounded-none border-2 py-5">
                 Event
               </TabsTrigger>
               <TabsTrigger
                 value="deal"
                 className="data-[state=active]:bg-gray-100/10! data-[state=active]:shadow-none! data-[state=active]:text-primary!  
-                data-[state=active]:border-b-blue-950/80 rounded-none border-2 ">
+                data-[state=active]:border-b-blue-950/80 rounded-none border-2 py-5">
                 Deals
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="services" className="w-full">
+            <TabsContent value="services" className="w-full mt-2">
               <Button
                 type="button"
                 variant={"outline"}
@@ -282,7 +282,7 @@ export default function BusinessPage() {
                 </p>
               </Button>
             </TabsContent>
-            <TabsContent value="event">
+            <TabsContent value="event" className="mt-2">
               <div
                 className={`grid grid-cols-1 md:${data?.data?.event && data?.data?.event?.length < 2 ? "grid-cols-1" : "grid-cols-2"} gap-2`}>
                 {data?.data.event && data?.data.event.length > 0 ? (
@@ -303,7 +303,7 @@ export default function BusinessPage() {
                 />
               </div>
             </TabsContent>
-            <TabsContent value="deal">
+            <TabsContent value="deal" className="mt-2">
               <div
                 className={`grid grid-cols-1 md:${data?.data?.deal && data?.data?.deal?.length < 2 ? "grid-cols-1" : "grid-cols-2"} gap-2`}>
                 {data?.data.deal && data?.data.deal.length > 0 ? (
@@ -328,7 +328,7 @@ export default function BusinessPage() {
 
           <BusinessReviewSection reviews={reviews?.data || []} />
 
-          <div className="space-y-4">
+          <div className="space-y-4 z-20">
             <h2 className="text-xl font-semibold">Our Location</h2>
             {data?.data?.latitude && data?.data?.longitude ? (
               <Map

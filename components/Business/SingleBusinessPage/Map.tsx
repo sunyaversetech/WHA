@@ -37,12 +37,12 @@ export default function Map({ latitude, longitude, business }: MapProps) {
   const position: [number, number] = [lat, lng];
 
   return (
-    <div className="h-[400px] w-full rounded-xl overflow-hidden border">
+    <div className="h-[400px] w-full rounded-xl overflow-hidden border z-20">
       <MapContainer
         center={position}
         zoom={12}
         scrollWheelZoom={false}
-        className="h-full w-full">
+        className="h-full w-full z-20">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
