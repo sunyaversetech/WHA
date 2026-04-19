@@ -64,101 +64,75 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
   return (
     <div
       className="block cursor-pointer"
-      onClick={() => router.push(`/deals/${deal._id}`)}>
-      <div className="relative w-full bg-gray-200 rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-gray-300 active:scale-95">
-        <div className="absolute top-1/2 -left-2 w-4 h-4 bg-white border border-gray-200 rounded-full transform -translate-y-1/2 z-0"></div>
-        <div className="absolute top-1/2 -right-2 w-4 h-4 bg-white border border-gray-200 rounded-full transform -translate-y-1/2 z-0"></div>
+      onClick={() => router.push(`/deals/${deal._id}`)}
+    >
+      <div className="relative bg-white rounded-lg overflow-hidden border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-lg active:scale-[0.98]">
+        {/* Ticket cut effect */}
+        <div className="absolute top-1/2 -left-2 w-4 h-4 bg-white border border-gray-200 rounded-full -translate-y-1/2" />
+        <div className="absolute top-1/2 -right-2 w-4 h-4 bg-white border border-gray-200 rounded-full -translate-y-1/2" />
 
-        <div className="flex px-4 py-2 gap-4">
-          <div className="flex-grow">
-            <div className="mb-1 md:mb-2 flex justify-between items-center">
-              <div>
-                <h3 className="text-sm md:text-md font-semibold text-gray-900">
-                  {deal.title}
-                </h3>
-                <p className="text-xs md:text-sm text-gray-600 mt-1 line-clamp-2">
-                  {deal.description}
+        <div className="p-4 space-y-3">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-lg font-bold text-gray-900 leading-snug line-clamp-1">
+              {deal.title}
+            </h3>
+
+            <button
+              disabled={isPending}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddRemoveFavorite();
+              }}
+              className={`p-2 rounded-full transition ${
+                isDealFavorite
+                  ? "text-red-500 bg-red-50"
+                  : "text-gray-400 bg-gray-100"
+              }`}
+            >
+              <Heart
+                className={`h-5 w-5 ${isDealFavorite ? "fill-current" : ""}`}
+              />
+            </button>
+          </div>
+
+          {/* Business Info */}
+          {deal.user && (
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-md overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
+                <Image
+                  width={80}
+                  height={80}
+                  src={deal?.user?.image || "/placeholder.svg"}
+                  className="w-full h-full object-cover"
+                  alt="Business"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900 line-clamp-1">
+                  {deal?.user?.business_name ?? "Business Name"}
+                </p>
+
+                <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                  <MapPin className="h-3 w-3" />
+                  <span className="line-clamp-1 text-wha-primary">
+                    {deal?.user?.location?.split(",").slice(0, 2).join(", ") ||
+                      "Business Location"}
+                  </span>
                 </p>
               </div>
-              <button
-                disabled={isPending}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddRemoveFavorite();
-                }}
-                className={`self-start p-2  rounded-lg transition-all duration-200 ${
-                  isDealFavorite
-                    ? "text-red-500 bg-red-50"
-                    : "text-gray-400 bg-gray-100 hover:text-red-500 hover:bg-red-50"
-                }`}>
-                <Heart
-                  className={`h-5 w-5 ${isDealFavorite ? "fill-current" : ""}`}
-                />
-              </button>
             </div>
+          )}
 
-            {deal.user && (
-              <div className="flex items-start gap-3 rounded-lg p-2 -m-2 transition-colors">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
-                    <Image
-                      width={500}
-                      height={500}
-                      src={deal?.user?.image || "/placeholder.svg"}
-                      className="w-full h-full object-cover cursor-pointer"
-                      loading="lazy"
-                      alt="WHA"
-                      onClick={() => router.push(`/deals/${deal._id}`)}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <h2 className="text-sm md:text-md font-bold flex items-center gap-2 cursor-pointer text-gray-900 ">
-                    {deal?.user?.business_name ?? "Business Name"}
-                    <SquareArrowOutUpRight
-                      size={15}
-                      onClick={() => router.push(`/deals/${deal._id}`)}
-                    />
-                  </h2>
-                  <div className="flex items-center gap-2 mt-1 ">
-                    <p className="text-xs text-gray-500 flex items-center gap-1  ">
-                      <MapPin className="h-3 w-3" />
-                      <span className="line-clamp-1 text-xs">
-                        {deal?.user?.location ?? "Business Location"}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-3  relative">
-              <div className="absolute top-0 left-0 right-0 h-px overflow-hidden">
-                <div className="border-t-2 border-dashed border-gray-200 w-full"></div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <div className="flex items-center text-xs text-gray-500 mt-1">
-                  <Calendar className="h-3 w-3 mr-1" /> Expires At :
-                  <span className="font-bold">
-                    {formatDate(deal?.valid_till, "dd MMM yyyy")}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 mt-1">
-                  {/* Claim Button - Now shows state but doesn't handle redemption */}
-                  {/* {alreadyRedeemed ? (
-                    <div className="px-3 py-1.5 bg-primary/10 rounded-sm text-sm font-medium text-primary flex items-center gap-1">
-                      <Check className="h-4 w-4" />
-                      Redeemed
-                    </div>
-                  ) : (
-                    <div className="px-2 py-1 bg-secondary/10 rounded-sm text-xs md:text-sm font-medium text-secondary flex items-center gap-1">
-                      Claim
-                    </div>
-                  )} */}
-                </div>
-              </div>
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-2 border-t border-dashed border-gray-200 text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              <span>Expires:</span>
+              <span className="font-medium text-gray-700">
+                {formatDate(deal?.valid_till, "dd MMM yyyy")}
+              </span>
             </div>
           </div>
         </div>

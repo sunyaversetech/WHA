@@ -104,7 +104,8 @@ export default function MobileEventSearchWithDates({
       <DrawerTrigger className="w-11/12 mx-auto my-3 flex">
         <div
           onClick={() => setActiveTab("search")}
-          className="flex items-center gap-3 w-full px-4 py-4 bg-white rounded-full shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer">
+          className="flex items-center gap-3 w-full px-4 py-4 bg-white rounded-full shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer"
+        >
           <SearchIcon size={18} className="text-gray-500" />
 
           <span className="text-sm text-gray-500">Search events</span>
@@ -113,50 +114,26 @@ export default function MobileEventSearchWithDates({
 
       <DrawerContent className="h-screen w-full bg-white flex  flex-col rounded-t-4xl! border-none z-999 shadow-none!">
         <DrawerHeader>
-          <DrawerTitle>Search Events</DrawerTitle>
+          <DrawerTitle>Search</DrawerTitle>
         </DrawerHeader>
         <FontImport />
         <div
           className="esw-root flex w-full md:w-fit   overflow-y-scroll h-full gap-2 px-4 md:px-0 no-scrollbar"
-          ref={containerRef}>
+          ref={containerRef}
+        >
           <div
             className={[
               "relative flex flex-col  gap-3  md:flex-row items-stretch md:items-center rounded-[1rem] md:rounded-full p-1.5 transition-all duration-300 w-full",
               isExpanded ? "  " : "bg-white  ",
-            ].join(" ")}>
+            ].join(" ")}
+          >
             <div
               onClick={() => setActiveTab("search")}
               className={[
-                "relative flex flex-col justify-center max-md:w-full rounded-md px-6 py-2.5 bg-slate-100/80 min-h-[60px] cursor-pointer transition-all duration-200",
+                "relative flex flex-col justify-center max-md:w-full rounded-md     cursor-pointer ",
                 segW,
-                activeTab === "search"
-                  ? "bg-white shadow-md scale-[1.02] z-10"
-                  : "hover:bg-[#eeecf5]",
-              ].join(" ")}>
-              <span className="text-[10px] font-bold uppercase tracking-[0.08em]  text-[#0f0e17] mb-1 leading-none select-none">
-                Events
-              </span>
-              {/* <div className="flex items-center">
-                <Input
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  placeholder=" Concerts, markets…"
-                  className="esw-placeholder flex-1 min-w-0 bg-transparent shadow-none border focus:outline-none  focus-visible:ring-0 outline-none text-base font-medium text-[#0f0e17] p-0 focus:ring-0"
-                />
-                {inputValue && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInputValue("");
-                    }}
-                    className="opacity-50 hover:opacity-100"
-                  >
-                    <X size={15} />
-                  </button>
-                )}
-              </div> */}
+              ].join(" ")}
+            >
               <div className="relative w-full">
                 {/* Icon */}
                 <SearchIcon
@@ -178,7 +155,8 @@ export default function MobileEventSearchWithDates({
                 {inputValue && (
                   <button
                     onClick={() => setInputValue("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
                     <X size={15} />
                   </button>
                 )}
@@ -194,7 +172,8 @@ export default function MobileEventSearchWithDates({
               displayValue={location}
               placeholder="Select destination"
               onClear={() => setLocation("")}
-              segW={segW}>
+              segW={segW}
+            >
               <div className="p-2 py-3 -mt-1 w-full md:min-w-[300px]">
                 {[
                   { city: "sydney", country: "Australia", emoji: "🌉" },
@@ -206,7 +185,8 @@ export default function MobileEventSearchWithDates({
                     onClick={() => {
                       setLocation(city);
                       setActiveTab("when");
-                    }}>
+                    }}
+                  >
                     <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-xl">
                       {emoji}
                     </div>
@@ -238,7 +218,8 @@ export default function MobileEventSearchWithDates({
             setOpen(false);
           }}
           className="flex w-[92vw] mb-4 m-auto mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] 
-          md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all  md:w-auto md:px-2">
+          md:min-h-[48px] justify-center shadow-lg hover:bg-[#0b3463] transition-all  md:w-auto md:px-2"
+        >
           <span className="md:hidden font-bold text-[15px] ml-2">Search</span>
           <AnimatePresence>
             {isExpanded && (
@@ -246,7 +227,8 @@ export default function MobileEventSearchWithDates({
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
-                className="hidden md:block pr-4 font-bold text-[13px] whitespace-nowrap">
+                className="hidden md:block pr-4 font-bold text-[13px] whitespace-nowrap"
+              >
                 Search
               </motion.span>
             )}
@@ -308,7 +290,8 @@ function SegmentSection({
           isActive
             ? "esw-active bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
             : "hover:bg-[#eeecf5]",
-        ].join(" ")}>
+        ].join(" ")}
+      >
         <AnimatePresence>
           {ripple && (
             <motion.span
@@ -337,7 +320,8 @@ function SegmentSection({
           ].join(" ")}
           style={
             !isValuePresent ? { fontFamily: "'Fraunces', serif" } : undefined
-          }>
+          }
+        >
           {isValuePresent ? displayValue : placeholder}
         </span>
 
@@ -347,7 +331,8 @@ function SegmentSection({
               e.stopPropagation();
               onClear();
             }}
-            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-4 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all duration-150 z-20 border-none bg-transparent cursor-pointer">
+            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-4 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all duration-150 z-20 border-none bg-transparent cursor-pointer"
+          >
             <X size={14} strokeWidth={3} />
           </button>
         )}
@@ -364,7 +349,8 @@ function SegmentSection({
             initial={{ opacity: 0, y: 12, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}>
+            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}
+          >
             {children}
           </motion.div>
         )}
@@ -435,7 +421,8 @@ export function CalendarSegment({
           isActive
             ? "bg-white shadow-md scale-[1.02] z-10"
             : "hover:bg-[#eeecf5]",
-        ].join(" ")}>
+        ].join(" ")}
+      >
         <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none">
           When
         </span>
@@ -445,7 +432,8 @@ export function CalendarSegment({
             hasValue
               ? "text-[#0f0e17] font-medium"
               : "font-light italic text-[#9896aa]",
-          ].join(" ")}>
+          ].join(" ")}
+        >
           {getDateDisplay()}
         </span>
 
@@ -455,7 +443,8 @@ export function CalendarSegment({
               e.stopPropagation();
               onClear();
             }}
-            className="absolute top-1/2 -translate-y-1/2 right-4 flex items-center justify-center w-[18px] h-[18px] rounded-full hover:bg-black/10 transition-all">
+            className="absolute top-1/2 -translate-y-1/2 right-4 flex items-center justify-center w-[18px] h-[18px] rounded-full hover:bg-black/10 transition-all"
+          >
             <X size={14} strokeWidth={3} />
           </button>
         )}
@@ -468,7 +457,8 @@ export function CalendarSegment({
             overflow-hidden  md:w-auto md:shadow-xl border md:border-black/5"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}>
+            exit={{ opacity: 0, height: 0 }}
+          >
             <div className="flex flex-col md:flex-row">
               <div className="w-full md:w-[140px] border-b mt-1 md:border-b-0 md:border-r border-black/5 p-3 flex flex-row md:flex-col gap-2 overflow-x-auto">
                 {["today", "week", "month"].map((id) => (
@@ -476,7 +466,8 @@ export function CalendarSegment({
                     key={id}
                     variant="ghost"
                     onClick={() => handleQuickSelect(id as any)}
-                    className="max-sm:w-18  md:w-full border-gray-200! rounded-sm! text-xs font-bold capitalize text-center justify-center btn-wha-outline hover:bg-[#f5f4f8]">
+                    className="max-sm:w-18  md:w-full border-gray-200! rounded-sm! text-xs font-bold capitalize text-center justify-center btn-wha-outline hover:bg-[#f5f4f8]"
+                  >
                     {id}
                   </Button>
                 ))}
