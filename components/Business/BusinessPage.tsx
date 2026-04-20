@@ -57,18 +57,18 @@ export default function BusinessesClientPage() {
   );
 
   return (
-    <div className="flex flex-col md:h-[92vh] max-sm:h-[74vh] overflow-hidden">
+    <div className="flex flex-col h-screen ">
       <div className="flex-none">
-        <div className="h-22 max-md:h-fit border-b flex items-center justify-center">
+        {/* <div className="h-22 max-md:h-fit border-b flex items-center justify-center">
           <div className="w-full max-md:hidden">
             <BusinessSearchWithDates />
           </div>
           <div className="w-full hidden max-md:block">
             <MobileBusinessSearchWithDates />
           </div>
-        </div>
+        </div> */}
 
-        <div className="px-6 py-4 flex justify-between items-center">
+        <div className="px-6 py-4 pt-20 md:pt-42  flex justify-between items-center">
           <div className="text-sm font-medium text-slate-500">
             {data.length} businesses in{" "}
             {searchParams.get("city") ?? "Australia "}
@@ -88,16 +88,19 @@ export default function BusinessesClientPage() {
                 </DrawerTitle>
                 <Tabs
                   defaultValue="categories"
-                  className="w-full rounded-lg border bg-white">
+                  className="w-full rounded-lg border bg-white"
+                >
                   <TabsList className="w-full border-none">
                     <TabsTrigger
                       value="categories"
-                      className="data-[state=active]:text-wha-primary">
+                      className="data-[state=active]:text-wha-primary"
+                    >
                       Categories
                     </TabsTrigger>
                     <TabsTrigger
                       value="communities"
-                      className="data-[state=active]:text-wha-primary">
+                      className="data-[state=active]:text-wha-primary"
+                    >
                       Communities
                     </TabsTrigger>
                   </TabsList>
@@ -124,7 +127,8 @@ export default function BusinessesClientPage() {
                               isActive
                                 ? "bg-primary text-white"
                                 : "bg-white text-slate-600"
-                            }`}>
+                            }`}
+                          >
                             <Icon
                               className={`h-4 w-4 mb-1 ${isActive ? "text-white" : "text-slate-500"}`}
                             />
@@ -153,7 +157,8 @@ export default function BusinessesClientPage() {
                 </DrawerTitle>
                 <Tabs
                   defaultValue="categories"
-                  className="rounded-lg border bg-white ">
+                  className="rounded-lg border bg-white "
+                >
                   <TabsList className="w-full border-none">
                     <TabsTrigger value="categories">Categories</TabsTrigger>
                     <TabsTrigger value="communities">Communities</TabsTrigger>
@@ -181,7 +186,8 @@ export default function BusinessesClientPage() {
                               isActive
                                 ? "bg-primary text-white"
                                 : "bg-white text-blue-950/90"
-                            }`}>
+                            }`}
+                          >
                             <Icon className="h-5 w-5 mb-1" />
                             <span className="text-[10px] uppercase font-bold">
                               {com.name}
@@ -200,7 +206,8 @@ export default function BusinessesClientPage() {
                 variant="outline"
                 onClick={() => setShowMap(!showMap)}
                 className="max-md:hidden"
-                size="sm">
+                size="sm"
+              >
                 <MapIcon className="h-4 w-4" />{" "}
                 {showMap ? "Hide map" : "Show map"}
               </Button>
@@ -209,7 +216,8 @@ export default function BusinessesClientPage() {
               variant="outline"
               onClick={() => setIsMapExpanded(!isMapExpanded)}
               className="hidden max-md:flex"
-              size="sm">
+              size="sm"
+            >
               <MapIcon className="h-4 w-4" />{" "}
               {isMapExpanded ? "Hide map" : "Show map"}
             </Button>
@@ -225,7 +233,8 @@ export default function BusinessesClientPage() {
               overflow-y-auto overscroll-contain h-full 
               px-6 no-scrollbar 
               ${showMap ? "w-full lg:w-[55%]" : "w-full"}
-            `}>
+            `}
+          >
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
                 {[1, 2, 3, 4].map((i) => (
@@ -242,7 +251,8 @@ export default function BusinessesClientPage() {
                   showMap
                     ? "grid-cols-1 xl:grid-cols-2"
                     : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-                }`}>
+                }`}
+              >
                 {data.map((business: any) => (
                   <BusinessCard key={business._id} business={business} />
                 ))}
@@ -258,7 +268,8 @@ export default function BusinessesClientPage() {
               : showMap
                 ? "w-[45%]"
                 : "w-0 opacity-0 pointer-events-none"
-          }`}>
+          }`}
+        >
           <BusinessMap
             businesses={data}
             currentCity={searchParams.get("city") || ""}
@@ -269,7 +280,8 @@ export default function BusinessesClientPage() {
         </div>
 
         <div
-          className={`transition-all flex md:hidden duration-500 h-full ${isMapExpanded ? "w-full" : "w-0 overflow-hidden"}`}>
+          className={`transition-all flex md:hidden duration-500 h-full ${isMapExpanded ? "w-full" : "w-0 overflow-hidden"}`}
+        >
           <BusinessMap
             businesses={data}
             currentCity={searchParams.get("city") || ""}

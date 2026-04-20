@@ -3,7 +3,6 @@
 import { useCallback, useState } from "react";
 import EventMap from "./Event-map";
 import { useGetAllEvents } from "@/services/event.service";
-import EventSearchWithDates from "../ResuableComponents/SearchSectionForEvents";
 import { Button } from "../ui/button";
 import EventCard from "../cards/event-card";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,7 +16,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
-import MobileEventSearchWithDates from "../ResuableComponents/MobileViewSearch/SearchSectionForEvents";
 
 const COMMUNITIES = [
   { name: "All Community", value: "All", icon: Globe },
@@ -27,12 +25,14 @@ const COMMUNITIES = [
 
 export default function EventsPageClient() {
   const searchParams = useSearchParams();
-  const [showMap, setShowMap] = useState(true);
-  const { data: apiResponse } = useGetAllEvents();
-  const [isMapExpanded, setIsMapExpanded] = useState(false);
-  const data = apiResponse?.data ? apiResponse?.data : [];
-  const [currentCommunity, setCurrentCommunity] = useState("All");
   const router = useRouter();
+
+  const [showMap, setShowMap] = useState(true);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [currentCommunity, setCurrentCommunity] = useState("All");
+
+  const { data: apiResponse } = useGetAllEvents();
+  const data = apiResponse?.data ?? [];
 
   const toggleExpand = () => setIsMapExpanded(!isMapExpanded);
 
@@ -41,11 +41,8 @@ export default function EventsPageClient() {
       const params = new URLSearchParams(searchParams.toString());
 
       Object.entries(updates).forEach(([key, value]) => {
-        if (value && value !== "all") {
-          params.set(key, value);
-        } else {
-          params.delete(key);
-        }
+        if (value) params.set(key, value);
+        else params.delete(key);
       });
 
       router.push(`?${params.toString()}`, { scroll: false });
@@ -54,251 +51,138 @@ export default function EventsPageClient() {
   );
 
   return (
-    <div className="flex flex-col md:h-[92vh] max-sm:h-[74vh]   overflow-hidden ">
-      <div className="flex-none ">
-        <div className="flex-none h-22 max-md:h-fit  border-b  flex items-center justify-center">
-          <div className="w-full max-md:hidden">
-            <EventSearchWithDates />
-          </div>
-          <div className="w-full hidden max-md:block">
-            <MobileEventSearchWithDates />
-          </div>
+    <div className="flex flex-col min-h-screen pt-20 md:pt-40">
+      {/* HEADER / FILTER BAR */}
+      <div className="sticky top-19 md:top-39 z-40 bg-white px-6 py-4 flex justify-between items-center">
+        <div className="text-sm font-medium text-slate-500">
+          {apiResponse?.data?.length ?? 0} events in{" "}
+          {searchParams.get("city") ?? "Australia"}
         </div>
-        <div className="flex-none px-6 py-4 flex justify-between items-center">
-          <div className="text-sm font-medium text-slate-500 ">
-            {apiResponse?.data.length} events in{" "}
-            {searchParams.get("city") ?? "australia "}
-          </div>
-          <div className="flex gap-2">
-            <Drawer>
-              <DrawerTrigger asChild className="hidden max-md:flex">
-                <Button variant="outline" size="sm">
-                  <SlidersVertical className="h-4 w-4" />
-                  Filters
-                </Button>
-              </DrawerTrigger>
 
-              <DrawerContent className="max-w-4xl w-full z-9999 min-h-[40vh] p-4">
-                <DrawerTitle className="text-lg font-bold mb-4">
-                  Filter Events
-                </DrawerTitle>
-
-                <Tabs
-                  defaultValue="categories"
-                  className="w-full overflow-scroll no-scrollbar rounded-lg border bg-white ">
-                  <TabsList className="w-full border-none ">
-                    <TabsTrigger
-                      value="categories"
-                      className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
-
-                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!">
-                      Categories
-                    </TabsTrigger>
-
-                    <TabsTrigger
-                      className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
-
-                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!"
-                      value="communities">
-                      Communities
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="categories">
-                    <EventHeader />
-                  </TabsContent>
-
-                  <TabsContent
-                    value="communities"
-                    className="flex flex-wrap gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
-                    <div className="flex gap-2 justify-center items-center m-auto">
-                      {COMMUNITIES.map((com) => {
-                        const Icon = com.icon;
-
-                        const isActive =
-                          (currentCommunity ?? "All") === com.value;
-
-                        return (
-                          <Button
-                            key={com.value}
-                            onClick={() => {
-                              updateQuery({
-                                community:
-                                  com.value === "All" ? null : com.value,
-                              });
-
-                              setCurrentCommunity(com.value);
-                            }}
-                            className={`flex flex-col items-center justify-center h-15 md:min-w-[80px] py-5 px-3 rounded-md md:rounded-xl transition-all border shrink-0 ${
-                              isActive
-                                ? "bg-primary border-primary text-white"
-                                : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                            }`}>
-                            <Icon
-                              className={`h-4 w-4 md:h-5 md:w-5 mb-1 ${
-                                isActive ? "text-white" : "text-slate-500"
-                              }`}
-                            />
-
-                            <span className="text-[9px] md:text-[10px] uppercase font-bold whitespace-nowrap text-center">
-                              {com.name}
-                            </span>
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </DrawerContent>
-            </Drawer>
-            <Dialog>
-              <DialogTrigger asChild className="flex max-md:hidden">
-                <Button variant="outline" size="sm">
-                  <SlidersVertical className="h-4 w-4" />
-                  Filters
-                </Button>
-              </DialogTrigger>
-
-              <DialogContent className="max-w-4xl w-full z-50">
-                <DrawerTitle className="text-lg font-bold mb-4">
-                  Filter Events
-                </DrawerTitle>
-
-                <Tabs
-                  defaultValue="categories"
-                  className="w-full overflow-scroll no-scrollbar rounded-lg border bg-white ">
-                  <TabsList className="w-full border-none ">
-                    <TabsTrigger
-                      value="categories"
-                      className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
-
-                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!">
-                      Categories
-                    </TabsTrigger>
-
-                    <TabsTrigger
-                      className="data-[state=active]:bg-white data-[state=active]:underline text-wha-p
-
-                    data-[state=active]:text-wha-primary data-[state=active]:underline-offset-8 data-[state=active]:decoration-2 data-[state=active]:shadow-none!"
-                      value="communities">
-                      Communities
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="categories">
-                    <EventHeader />
-                  </TabsContent>
-
-                  <TabsContent
-                    value="communities"
-                    className="flex flex-wrap gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
-                    <div className="flex gap-2 justify-center items-center m-auto">
-                      {COMMUNITIES.map((com) => {
-                        const Icon = com.icon;
-
-                        const isActive =
-                          (currentCommunity ?? "All") === com.value;
-
-                        return (
-                          <Button
-                            key={com.value}
-                            onClick={() => {
-                              updateQuery({
-                                community:
-                                  com.value === "All" ? null : com.value,
-                              });
-
-                              setCurrentCommunity(com.value);
-                            }}
-                            className={`flex flex-col items-center justify-center h-15 md:min-w-[80px] py-5 px-3 rounded-md md:rounded-xl transition-all border shrink-0 ${
-                              isActive
-                                ? "bg-primary border-primary text-white"
-                                : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                            }`}>
-                            <Icon
-                              className={`h-4 w-4 md:h-5 md:w-5 mb-1 ${
-                                isActive ? "text-white" : "text-slate-500"
-                              }`}
-                            />
-
-                            <span className="text-[9px] md:text-[10px] uppercase font-bold whitespace-nowrap text-center">
-                              {com.name}
-                            </span>
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </DialogContent>
-            </Dialog>
-            {!isMapExpanded && (
-              <Button
-                variant="outline"
-                onClick={() => setShowMap(!showMap)}
-                className=" max-md:hidden"
-                size="sm">
-                <MapIcon className="h-4 w-4" />{" "}
-                {showMap ? "Hide map" : "Show map"}
+        <div className="flex gap-2">
+          <Drawer>
+            <DrawerTrigger asChild className="flex">
+              <Button variant="outline" size="sm">
+                <SlidersVertical className="h-4 w-4" />
+                Filters
               </Button>
-            )}
-            <Button
-              variant="outline"
-              onClick={() => setIsMapExpanded(!isMapExpanded)}
-              className="hidden   max-md:flex"
-              size="sm">
-              <MapIcon className="h-4 w-4" />{" "}
-              {isMapExpanded ? "Hide map" : "Show map"}
-            </Button>
-          </div>
+            </DrawerTrigger>
+
+            <DrawerContent className="max-w-4xl w-full min-h-[40vh] p-4">
+              <DrawerTitle className="text-lg font-bold mb-4">
+                Filter Events
+              </DrawerTitle>
+
+              <Tabs defaultValue="categories" className="w-full">
+                <TabsList>
+                  <TabsTrigger value="categories">Categories</TabsTrigger>
+                  <TabsTrigger value="communities">Communities</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="categories">
+                  <EventHeader />
+                </TabsContent>
+
+                <TabsContent value="communities">
+                  <div className="flex flex-wrap gap-2">
+                    {COMMUNITIES.map((com) => {
+                      const Icon = com.icon;
+                      const isActive =
+                        (currentCommunity ?? "All") === com.value;
+
+                      return (
+                        <Button
+                          key={com.value}
+                          onClick={() => {
+                            updateQuery({
+                              community: com.value === "All" ? null : com.value,
+                            });
+                            setCurrentCommunity(com.value);
+                          }}
+                          className={`flex flex-col items-center justify-center h-14 px-3 rounded-md border ${
+                            isActive
+                              ? "bg-primary text-white border-primary"
+                              : "bg-white text-slate-600"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4 mb-1" />
+                          <span className="text-[10px] uppercase">
+                            {com.name}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </DrawerContent>
+          </Drawer>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowMap((prev) => !prev)}
+            className="hidden md:flex"
+          >
+            <MapIcon className="h-4 w-4" />
+            {showMap ? "Hide map" : "Show map"}
+          </Button>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden relative px-5 gap-0 md:gap-4">
+      {/* MAIN LAYOUT (NO INTERNAL SCROLL) */}
+      <div className="flex flex-1 px-5 gap-6">
+        {/* LEFT: EVENTS GRID (ONLY FLOW CONTENT) */}
+        <div
+          className={`transition-all w-full ${
+            showMap ? "lg:w-[55%]" : "w-full"
+          }`}
+        >
+          <div
+            className={`grid gap-6 ${
+              showMap
+                ? "grid-cols-1 xl:grid-cols-2"
+                : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            }`}
+          >
+            {data.map((event) => (
+              <EventCard key={event._id} event={event} />
+            ))}
+          </div>
+        </div>
+
         {!isMapExpanded && (
           <div
-            className={`transition-all duration-300 
-            overflow-y-auto overscroll-contain h-full no-scrollbar pb-40
-            ${showMap ? "w-full lg:w-[55%]" : "w-full"}`}>
-            <div
-              className={`grid gap-6 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
-              {apiResponse?.data.map((event) => (
-                <EventCard key={event._id} event={event} />
-              ))}
+            className={`hidden md:block transition-all shrink-0 ${
+              showMap ? "w-[45%]" : "w-0 opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="sticky top-[160px] h-[calc(100vh-160px)] overflow-hidden will-change-transform">
+              <EventMap
+                businesses={data}
+                currentCity={searchParams.get("city") || ""}
+                isVisible={showMap}
+                isExpanded={isMapExpanded}
+                onToggleExpand={toggleExpand}
+              />
             </div>
           </div>
         )}
-
-        <div
-          className={`transition-all duration-500 pb-2 max-md:hidden h-full ${
-            isMapExpanded
-              ? "w-full"
-              : showMap
-                ? "w-[45%]"
-                : "w-0 border-none opacity-0"
-          }`}>
-          <EventMap
-            businesses={data}
-            currentCity={searchParams.get("city") || ""}
-            isVisible={showMap}
-            isExpanded={isMapExpanded}
-            onToggleExpand={toggleExpand}
-          />
-        </div>
-
-        <div
-          className={`transition-all flex md:hidden duration-500 ${
-            isMapExpanded ? "w-full" : ""
-          }`}>
-          <EventMap
-            businesses={data}
-            currentCity={searchParams.get("city") || ""}
-            isVisible={showMap}
-            isExpanded={isMapExpanded}
-            onToggleExpand={toggleExpand}
-          />
-        </div>
       </div>
+
+      {isMapExpanded && (
+        <div className="px-5 pb-5">
+          <div className="h-[calc(100vh-160px)] w-full rounded-xl overflow-hidden border">
+            <EventMap
+              businesses={data}
+              currentCity={searchParams.get("city") || ""}
+              isVisible={true}
+              isExpanded={true}
+              onToggleExpand={toggleExpand}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

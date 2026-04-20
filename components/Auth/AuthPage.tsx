@@ -12,6 +12,7 @@ import LoginPage from "./LoginPage";
 import SignupPage from "./Signup";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import AuthSelectionPage from "./AuthSelectionPage";
 
 export default function AuthPage() {
   const params = useSearchParams();
@@ -26,9 +27,9 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex w-full min-h-screen bg-gray-50">
-      <div className="flex w-full xl:w-1/2 items-center justify-center p-4 md:p-6 overflow-y-auto">
-        <Card className="w-full max-w-md shadow-lg border-none bg-white flex flex-col">
+    <div className="flex w-full  bg-gray-50">
+      <div className="flex w-full xl:w-1/2 items-center justify-center p-4 md:p-6 ">
+        <Card className="w-full max-w-md border-none bg-transparent flex flex-col">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-bold text-start md:text-center">
               Log in or sign up
@@ -42,7 +43,8 @@ export default function AuthPage() {
             <Tabs
               value={currentTab}
               onValueChange={handleTabChange}
-              className="flex flex-col">
+              className="flex flex-col"
+            >
               <TabsList className="grid w-full grid-cols-2 rounded-full bg-gray-100 mb-4">
                 <TabsTrigger value="login" className="rounded-full">
                   Login

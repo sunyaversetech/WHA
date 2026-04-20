@@ -1,3 +1,7 @@
-import AuthPage from "@/components/Auth/AuthPage";
+// import AuthPage from "@/components/Auth/AuthPage";
 
-export default AuthPage;
+import AuthSelectionPage from "@/components/Auth/AuthSelectionPage";
+
+// export default AuthPage;
+
+export default AuthSelectionPage;

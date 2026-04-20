@@ -104,7 +104,7 @@ export default function MobileEventSearchWithDates({
       <DrawerTrigger className="w-11/12 mx-auto my-3 flex">
         <div
           onClick={() => setActiveTab("search")}
-          className="flex items-center gap-3 w-full px-4 py-4 bg-white rounded-full shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer"
+          className="flex items-center gap-3 w-full px-4 py-5 bg-white rounded-full shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer"
         >
           <SearchIcon size={18} className="text-gray-500" />
 
