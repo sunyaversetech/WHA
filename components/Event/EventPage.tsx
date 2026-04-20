@@ -52,7 +52,6 @@ export default function EventsPageClient() {
 
   return (
     <div className="flex flex-col min-h-screen pt-20 md:pt-40">
-      {/* HEADER / FILTER BAR */}
       <div className="sticky top-19 md:top-39 z-40 bg-white px-6 py-4 flex justify-between items-center">
         <div className="text-sm font-medium text-slate-500">
           {apiResponse?.data?.length ?? 0} events in{" "}
@@ -103,8 +102,7 @@ export default function EventsPageClient() {
                             isActive
                               ? "bg-primary text-white border-primary"
                               : "bg-white text-slate-600"
-                          }`}
-                        >
+                          }`}>
                           <Icon className="h-4 w-4 mb-1" />
                           <span className="text-[10px] uppercase">
                             {com.name}
@@ -122,29 +120,24 @@ export default function EventsPageClient() {
             variant="outline"
             size="sm"
             onClick={() => setShowMap((prev) => !prev)}
-            className="hidden md:flex"
-          >
+            className="hidden md:flex">
             <MapIcon className="h-4 w-4" />
             {showMap ? "Hide map" : "Show map"}
           </Button>
         </div>
       </div>
 
-      {/* MAIN LAYOUT (NO INTERNAL SCROLL) */}
       <div className="flex flex-1 px-5 gap-6">
-        {/* LEFT: EVENTS GRID (ONLY FLOW CONTENT) */}
         <div
           className={`transition-all w-full ${
             showMap ? "lg:w-[55%]" : "w-full"
-          }`}
-        >
+          }`}>
           <div
             className={`grid gap-6 ${
               showMap
                 ? "grid-cols-1 xl:grid-cols-2"
                 : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            }`}
-          >
+            }`}>
             {data.map((event) => (
               <EventCard key={event._id} event={event} />
             ))}
@@ -155,9 +148,8 @@ export default function EventsPageClient() {
           <div
             className={`hidden md:block transition-all shrink-0 ${
               showMap ? "w-[45%]" : "w-0 opacity-0 pointer-events-none"
-            }`}
-          >
-            <div className="sticky top-[160px] h-[calc(100vh-160px)] overflow-hidden will-change-transform">
+            }`}>
+            <div className="sticky top-[225px] h-[calc(90vh-160px)] overflow-hidden will-change-transform">
               <EventMap
                 businesses={data}
                 currentCity={searchParams.get("city") || ""}
@@ -172,7 +164,7 @@ export default function EventsPageClient() {
 
       {isMapExpanded && (
         <div className="px-5 pb-5">
-          <div className="h-[calc(100vh-160px)] w-full rounded-xl overflow-hidden border">
+          <div className="h-[calc(80vh-160px)] w-full rounded-xl overflow-hidden border">
             <EventMap
               businesses={data}
               currentCity={searchParams.get("city") || ""}

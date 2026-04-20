@@ -153,16 +153,14 @@ export default function BusinessSignup() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 py-8 bg-white/90 backdrop-blur-md border rounded-2xl shadow-2xl">
+    <div className="w-full mt-[20vh]  justify-center items-center max-w-3xl mx-auto px-4 py-8 bg-white/90 backdrop-blur-md border rounded-2xl shadow-2xl">
       <div className="mb-8">
         <div className="mb-10">
           <div className="flex items-center justify-between mb-8">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() =>
-                step > 1 ? setStep(step - 1) : router.push("/auth?tab=login")
-              }
+              onClick={() => (step > 1 ? setStep(step - 1) : router.back())}
               className="rounded-full border">
               <ChevronLeft className="h-5 w-5" />
             </Button>

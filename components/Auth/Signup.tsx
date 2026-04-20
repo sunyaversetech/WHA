@@ -17,7 +17,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useSingup } from "@/services/Auth/auth.service";
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
 
 const signupSchema = z
@@ -66,8 +66,16 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex ">
+    <div className="flex flex-col items-center justify-center mt-[20vh]">
       <div className="w-full max-w-md space-y-2 rounded-xl bg-white">
+        <h3 className="text-3xl my-2 flex gap-5 text-left">
+          <Button
+            className="rounded-full w-10 h-10 text-left p-0"
+            onClick={() => router.back()}>
+            <ChevronLeft className="h-5 w-5 p-0  " />
+          </Button>
+          Signup For User
+        </h3>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField

@@ -9,32 +9,21 @@ import { useParams, useRouter } from "next/navigation";
 export default function AuthSelectionPage() {
   const router = useRouter();
   return (
-    <div className="flex h-screen flex-col pt-22  xl:flex-row bg-white">
+    <div className="flex  flex-col w-full   xl:flex-row bg-white">
       {/* Left Panel */}
-      <div className="w-full xl:w-1/2 flex flex-col justify-between px-8 py-6 ">
+      <div className="w-full    flex flex-col justify-between px-8 py-6 ">
         <div>
-          {/* Back Button */}
-          <Button
-            variant={"ghost"}
-            className="p-0"
-            onClick={() => router.back()}
-          >
-            <ChevronLeft
-              className="h-9 w-9 cursor-pointer rounded-full border  p-1.5 
-                 text-primary bg-white "
-            />{" "}
-          </Button>
-
           {/* Heading */}
-          <div className="text-center mb-10">
-            <h1 className="text-3xl font-semibold text-gray-900">
-              Sign up/log in
-            </h1>
-          </div>
+          {/* <div className="text-center mb-10">
+            <h1 className="text-3xl font-semibold text-gray-900">Sign up</h1>
+          </div> */}
 
           {/* Cards */}
-          <div className="space-y-4 max-w-lg mx-auto">
-            <button className="w-full border border-gray-300 rounded-xl px-6 py-5 flex items-center justify-between bg-white hover:shadow-md transition">
+          <div className="space-y-4  mx-auto">
+            <button
+              onClick={() => router.push("/auth/user")}
+              className="w-full border h-25 cursor-pointer 
+              border-gray-300 rounded-xl px-6 py-5 flex items-center justify-between bg-white hover:shadow-md transition">
               <div className="text-left">
                 <h2 className="text-lg font-medium text-gray-900">
                   WHA for customers
@@ -45,9 +34,14 @@ export default function AuthSelectionPage() {
               </div>
             </button>
 
-            <button className="w-full border border-gray-300 rounded-xl px-6 py-5 flex items-center justify-between bg-white hover:shadow-md transition">
+            <button
+              onClick={() => router.push("/auth/business")}
+              className="w-full border 
+                border-gray-300 h-25 rounded-xl cursor-pointer px-6 py-5 flex items-center justify-between bg-white hover:shadow-md transition">
               <div className="text-left">
-                <h2 className="text-lg font-medium text-gray-900">
+                <h2
+                  className="text-lg font-medium 
+                 text-gray-900">
                   WHA for businesses
                 </h2>
                 <p className="text-sm text-gray-500">

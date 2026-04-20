@@ -27,10 +27,10 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex w-full  bg-gray-50">
-      <div className="flex w-full xl:w-1/2 items-center justify-center p-4 md:p-6 ">
-        <Card className="w-full max-w-md border-none bg-transparent flex flex-col">
-          <CardHeader className="text-center pb-4">
+    <div className="flex w-full h-[90vh]  ">
+      <div className="flex w-full md:w-1/2 items-center justify-center md: p-4 md:p-6 ">
+        <Card className="w-full  max-w-md border-none shadow-none! bg-transparent flex flex-col">
+          <CardHeader className="text-center pb-4  border-none!">
             <CardTitle className="text-2xl font-bold text-start md:text-center">
               Log in or sign up
             </CardTitle>
@@ -43,13 +43,18 @@ export default function AuthPage() {
             <Tabs
               value={currentTab}
               onValueChange={handleTabChange}
-              className="flex flex-col"
-            >
-              <TabsList className="grid w-full grid-cols-2 rounded-full bg-gray-100 mb-4">
-                <TabsTrigger value="login" className="rounded-full">
+              className="flex flex-col">
+              <TabsList className="grid w-full grid-cols-2 rounded-full border-none! mb-4">
+                <TabsTrigger
+                  value="login"
+                  className="shadow-none! rounded-none! border-2 data-[state=active]:bg-white 
+                  data-[state=active]:border-b-blue-950 data-[state=active]:text-black py-2">
                   Login
                 </TabsTrigger>
-                <TabsTrigger value="signup" className="rounded-full">
+                <TabsTrigger
+                  value="signup"
+                  className="shadow-none! rounded-none! border-2 data-[state=active]:bg-white 
+                  data-[state=active]:border-b-blue-950 data-[state=active]:text-black py-2">
                   Sign Up
                 </TabsTrigger>
               </TabsList>
@@ -58,16 +63,15 @@ export default function AuthPage() {
                 <LoginPage />
               </TabsContent>
 
-              <TabsContent value="signup" className="mt-0 outline-none">
-                <SignupPage />
+              <TabsContent value="signup" className="mt-0 w-full outline-none">
+                <AuthSelectionPage />
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
       </div>
 
-      {/* RIGHT IMAGE */}
-      <div className="hidden xl:block xl:fixed xl:top-24 xl:right-0 xl:bottom-10 xl:w-1/2 px-4">
+      <div className="hidden md:block md:fixed md:top-24 md:right-0 md:bottom-10 md:w-1/2 px-4">
         <div className="relative w-full h-full rounded-xl overflow-hidden">
           <Image
             src="/wha/wha-auth.png"
