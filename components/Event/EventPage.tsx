@@ -6,7 +6,12 @@ import { useGetAllEvents } from "@/services/event.service";
 import { Button } from "../ui/button";
 import EventCard from "../cards/event-card";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 import { Globe, MapIcon, MapPin, SlidersVertical } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import EventHeader from "./EventFilter";
@@ -60,7 +65,7 @@ export default function EventsPageClient() {
 
         <div className="flex gap-2">
           <Drawer>
-            <DrawerTrigger asChild className="flex">
+            <DrawerTrigger asChild className="flex md:hidden">
               <Button variant="outline" size="sm">
                 <SlidersVertical className="h-4 w-4" />
                 Filters
@@ -73,9 +78,19 @@ export default function EventsPageClient() {
               </DrawerTitle>
 
               <Tabs defaultValue="categories" className="w-full">
-                <TabsList>
-                  <TabsTrigger value="categories">Categories</TabsTrigger>
-                  <TabsTrigger value="communities">Communities</TabsTrigger>
+                <TabsList className="w-full border-none bg-gray-100/10!">
+                  <TabsTrigger
+                    value="categories"
+                    className="data-[state=active]:bg-gray-100/10! rounded-none data-[state=active]:text-black py-4 data-[state=active]:shadow-none! 
+                    data-[state=active]:border-b-blue-950 border-2">
+                    Categories
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="communities"
+                    className="data-[state=active]:bg-gray-100/10! rounded-none data-[state=active]:text-black py-4 data-[state=active]:shadow-none! 
+                    data-[state=active]:border-b-blue-950 border-2">
+                    Communities
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="categories">
@@ -83,7 +98,7 @@ export default function EventsPageClient() {
                 </TabsContent>
 
                 <TabsContent value="communities">
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 p-4 bg-white rounded-xl h-40 shadow-sm">
                     {COMMUNITIES.map((com) => {
                       const Icon = com.icon;
                       const isActive =
@@ -115,6 +130,72 @@ export default function EventsPageClient() {
               </Tabs>
             </DrawerContent>
           </Drawer>
+          <Dialog>
+            <DialogTrigger asChild className="flex">
+              <Button variant="outline" size="sm">
+                <SlidersVertical className="h-4 w-4" />
+                Filters
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-4xl w-full min-h-[40vh] p-4">
+              <DialogTitle className="text-lg font-bold mb-4 hidden md:flex">
+                Filter Events
+              </DialogTitle>
+
+              <Tabs defaultValue="categories" className="w-full">
+                <TabsList className="w-full border-none bg-gray-100/10!">
+                  <TabsTrigger
+                    value="categories"
+                    className="data-[state=active]:bg-gray-100/10! rounded-none data-[state=active]:text-black py-4 data-[state=active]:shadow-none! 
+                    data-[state=active]:border-b-blue-950 border-2">
+                    Categories
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="communities"
+                    className="data-[state=active]:bg-gray-100/10! rounded-none data-[state=active]:text-black py-4 data-[state=active]:shadow-none! 
+                    data-[state=active]:border-b-blue-950 border-2">
+                    Communities
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="categories">
+                  <EventHeader />
+                </TabsContent>
+
+                <TabsContent value="communities">
+                  <div className="flex flex-wrap gap-2 p-4 bg-white rounded-xl h-40 shadow-sm">
+                    {COMMUNITIES.map((com) => {
+                      const Icon = com.icon;
+                      const isActive =
+                        (currentCommunity ?? "All") === com.value;
+
+                      return (
+                        <Button
+                          key={com.value}
+                          onClick={() => {
+                            updateQuery({
+                              community: com.value === "All" ? null : com.value,
+                            });
+                            setCurrentCommunity(com.value);
+                          }}
+                          className={`flex flex-col items-center justify-center h-14 px-3 rounded-md border ${
+                            isActive
+                              ? "bg-primary text-white border-primary"
+                              : "bg-white text-slate-600"
+                          }`}>
+                          <Icon className="h-4 w-4 mb-1" />
+                          <span className="text-[10px] uppercase">
+                            {com.name}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </DialogContent>
+          </Dialog>
 
           <Button
             variant="outline"
