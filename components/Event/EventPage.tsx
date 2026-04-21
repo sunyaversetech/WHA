@@ -124,13 +124,21 @@ export default function EventsPageClient() {
             <MapIcon className="h-4 w-4" />
             {showMap ? "Hide map" : "Show map"}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsMapExpanded((prev) => !prev)}
+            className="flex md:hidden">
+            <MapIcon className="h-4 w-4" />
+            {showMap ? "Hide map" : "Show map"}
+          </Button>
         </div>
       </div>
 
-      <div className="flex flex-1 px-5 gap-6">
+      <div className={`flex ${isMapExpanded ? "" : "flex-1"} px-5 gap-6`}>
         <div
           className={`transition-all w-full ${
-            showMap ? "lg:w-[55%]" : "w-full"
+            isMapExpanded ? "hidden" : showMap ? "lg:w-[55%]" : "w-full"
           }`}>
           <div
             className={`grid gap-6 ${
@@ -149,7 +157,8 @@ export default function EventsPageClient() {
             className={`hidden md:block transition-all shrink-0 ${
               showMap ? "w-[45%]" : "w-0 opacity-0 pointer-events-none"
             }`}>
-            <div className="sticky top-[225px] h-[calc(90vh-160px)] overflow-hidden will-change-transform">
+            <div
+              className={`sticky top-[225px] h-[calc(90vh-160px)] overflow-hidden will-change-transform `}>
               <EventMap
                 businesses={data}
                 currentCity={searchParams.get("city") || ""}
@@ -164,7 +173,8 @@ export default function EventsPageClient() {
 
       {isMapExpanded && (
         <div className="px-5 pb-5">
-          <div className="h-[calc(80vh-160px)] w-full rounded-xl overflow-hidden border">
+          <div
+            className={`${isMapExpanded ? "h-[73vh]" : "h-[calc(80vh-160px)]"}  w-full rounded-xl overflow-hidden border`}>
             <EventMap
               businesses={data}
               currentCity={searchParams.get("city") || ""}

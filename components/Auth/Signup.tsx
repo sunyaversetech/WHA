@@ -220,12 +220,6 @@ export default function SignupPage() {
             </Button>
           </form>
         </Form>
-        <div className="text-start pt-4">
-          <h1 className="text-lg font-bold">Have a business? </h1>
-          <Link href="/auth/business" className="text-primary font-medium">
-            Register in as a business
-          </Link>
-        </div>
       </div>
     </div>
   );

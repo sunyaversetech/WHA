@@ -3,16 +3,26 @@
 import * as React from "react";
 import { MapPin, Loader2, X, Navigation } from "lucide-react";
 import debounce from "lodash.debounce";
-import { cn } from "@/lib/utils";
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+
+const DefaultIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 interface LocationResult {
   display_name: string;
@@ -21,11 +31,21 @@ interface LocationResult {
   lon: string;
 }
 
+// Helper component to update map view when coordinates change
+function ChangeView({ center }: { center: [number, number] }) {
+  const map = useMap();
+  map.setView(center, 15);
+  return null;
+}
+
 export function LocationFormField({ form }: { form: any }) {
   const [loading, setLoading] = React.useState(false);
   const [isLocating, setIsLocating] = React.useState(false);
   const [results, setResults] = React.useState<LocationResult[]>([]);
   const [showDropdown, setShowDropdown] = React.useState(false);
+
+  const lat = form.watch("latitude");
+  const lng = form.watch("longitude");
 
   const fetchLocations = React.useMemo(
     () =>
@@ -51,63 +71,56 @@ export function LocationFormField({ form }: { form: any }) {
     [],
   );
 
+  const updateAddressFromCoords = async (
+    latitude: number,
+    longitude: number,
+  ) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+      );
+      const data = await res.json();
+      if (data.display_name) {
+        form.setValue("location", data.display_name);
+        form.setValue("latitude", latitude);
+        form.setValue("longitude", longitude);
+      }
+    } catch (error) {
+      console.error("Reverse geocoding error:", error);
+    }
+  };
+
   const handleSelectLocation = (result: LocationResult) => {
-    // Set the display name as the location value
+    const latitude = parseFloat(result.lat);
+    const longitude = parseFloat(result.lon);
+
     form.setValue("location", result.display_name);
-
-    // Set latitude and longitude in separate fields
-    form.setValue("latitude", parseFloat(result.lat));
-    form.setValue("longitude", parseFloat(result.lon));
-
-    // You can also set them as a nested object if preferred
-    form.setValue("coordinates", {
-      lat: parseFloat(result.lat),
-      lng: parseFloat(result.lon),
-    });
+    form.setValue("latitude", latitude);
+    form.setValue("longitude", longitude);
+    form.setValue("coordinates", { lat: latitude, lng: longitude });
 
     setShowDropdown(false);
   };
 
+  const handleMarkerDragEnd = (e: any) => {
+    const marker = e.target;
+    const position = marker.getLatLng();
+    updateAddressFromCoords(position.lat, position.lng);
+  };
+
   const handleGetCurrentLocation = () => {
     if (!navigator.geolocation) return;
-
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        try {
-          const { latitude, longitude } = pos.coords;
-
-          // Reverse geocode to get address
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-          );
-          const data = await res.json();
-
-          if (data.display_name) {
-            form.setValue("location", data.display_name);
-
-            form.setValue("latitude", latitude);
-            form.setValue("longitude", longitude);
-          }
-        } catch (error) {
-          console.error("Error getting location details:", error);
-        } finally {
-          setIsLocating(false);
-        }
-      },
-      (error) => {
-        console.error("Geolocation error:", error);
+        await updateAddressFromCoords(
+          pos.coords.latitude,
+          pos.coords.longitude,
+        );
         setIsLocating(false);
       },
+      () => setIsLocating(false),
     );
-  };
-
-  const handleClearLocation = () => {
-    form.setValue("location", "");
-    form.setValue("latitude", null);
-    form.setValue("longitude", null);
-    form.setValue("coordinates", null);
-    setResults([]);
   };
 
   return (
@@ -115,14 +128,14 @@ export function LocationFormField({ form }: { form: any }) {
       control={form.control}
       name="location"
       render={({ field }) => (
-        <FormItem className="w-full">
-          <div className="flex items-end justify-end mb-2">
-            {/* <FormLabel>Location</FormLabel> */}
+        <FormItem className="w-full space-y-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Location</span>
             <Button
               type="button"
               size="sm"
               variant="outline"
-              className="h-auto py-1 px-2 text-xs gap-1"
+              className="h-8 py-1 px-2 text-xs gap-1"
               onClick={handleGetCurrentLocation}
               disabled={isLocating}>
               {isLocating ? (
@@ -137,62 +150,84 @@ export function LocationFormField({ form }: { form: any }) {
           <div className="relative group">
             <FormControl>
               <Input
-                placeholder="Enter your location"
+                placeholder="Search for an address..."
                 {...field}
                 onChange={(e) => {
                   field.onChange(e.target.value);
                   fetchLocations(e.target.value);
                 }}
-                className="pr-10 focus-visible:ring-1"
+                className="pr-10"
               />
             </FormControl>
 
             {field.value && (
               <button
                 type="button"
-                onClick={handleClearLocation}
+                onClick={() => {
+                  form.setValue("location", "");
+                  form.setValue("latitude", null);
+                  form.setValue("longitude", null);
+                }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
               </button>
             )}
 
+            {/* Results Dropdown */}
             {showDropdown && field.value?.length >= 3 && (
-              <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-[300px] overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
+              <div className="absolute top-full left-0 right-0 z-[1000] mt-1 max-h-[200px] overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md">
                 {loading ? (
-                  <div className="flex items-center justify-center p-4">
-                    <Loader2 className="h-4 w-4 animate-spin opacity-50" />
+                  <div className="p-4 flex justify-center">
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
                 ) : results.length === 0 ? (
-                  <div className="p-4 text-sm text-center text-muted-foreground">
+                  <div className="p-4 text-sm text-center">
                     No addresses found.
                   </div>
                 ) : (
-                  <div className="p-1">
-                    {results.map((result) => (
-                      <button
-                        key={result.place_id}
-                        type="button"
-                        onClick={() => handleSelectLocation(result)}
-                        className="w-full flex items-start gap-2 rounded-sm px-2 py-2 text-sm text-left hover:bg-accent hover:text-accent-foreground transition-colors">
-                        <MapPin className="h-4 w-4 mt-0.5 shrink-0 opacity-50" />
-                        <span className="truncate">{result.display_name}</span>
-                      </button>
-                    ))}
-                  </div>
+                  results.map((result) => (
+                    <button
+                      key={result.place_id}
+                      type="button"
+                      onClick={() => handleSelectLocation(result)}
+                      className="w-full flex items-start gap-2 px-3 py-2 text-sm text-left hover:bg-accent">
+                      <MapPin className="h-4 w-4 mt-0.5 shrink-0 opacity-50" />
+                      <span className="truncate">{result.display_name}</span>
+                    </button>
+                  ))
                 )}
               </div>
             )}
           </div>
 
-          {/* {form.watch("latitude") && form.watch("longitude") && (
-            <div className="mt-1 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                {form.watch("latitude").toFixed(6)},{" "}
-                {form.watch("longitude").toFixed(6)}
-              </span>
+          {/* Map Preview */}
+          {lat && lng && (
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+              <p className="text-xs text-muted-foreground italic">
+                Is this correct? Drag the pin to adjust your exact location.
+              </p>
+              <div className="h-[250px] w-full rounded-md border overflow-hidden z-0">
+                <MapContainer
+                  center={[lat, lng]}
+                  zoom={15}
+                  scrollWheelZoom={false}
+                  className="h-full w-full">
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <ChangeView center={[lat, lng]} />
+                  <Marker
+                    position={[lat, lng]}
+                    draggable={true}
+                    eventHandlers={{
+                      dragend: handleMarkerDragEnd,
+                    }}
+                  />
+                </MapContainer>
+              </div>
             </div>
-          )} */}
+          )}
 
           <FormMessage />
         </FormItem>
