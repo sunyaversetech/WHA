@@ -100,7 +100,6 @@ export default function FavoritesPage() {
           {favorites.deals && favorites.deals.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {favorites.deals.map((deal) => {
-                console.log(deal);
                 if (!deal) return null;
                 return <DealCard key={deal._id} deal={deal} />;
               })}

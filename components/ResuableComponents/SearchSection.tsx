@@ -89,7 +89,6 @@ export default function HomePageSearchWithDates({
   };
 
   const handleSearch = () => {
-    console.log("Searching for:", { location, date, what });
     setActiveTab(null);
   };
 

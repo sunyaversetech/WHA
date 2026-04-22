@@ -90,7 +90,6 @@ export default function BusinessReviewSection({
           queryClient.invalidateQueries({ queryKey: ["review"] });
         },
         onError: (error: any) => {
-          console.log(error);
           toast.error(String(error) || "Failed to create review");
           console.error(
             error.response?.data?.message || "Failed to create review",

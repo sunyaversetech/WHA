@@ -72,8 +72,6 @@ export default function DealForm() {
     });
   }
 
-  console.log(form.formState.errors);
-
   return (
     <Form {...form}>
       <div className="space-y-6 max-w-6xl mx-auto">

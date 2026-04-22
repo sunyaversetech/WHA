@@ -140,8 +140,6 @@ export function EventForm() {
     }
   }, [data, form]);
 
-  console.log("form error", form.formState.errors);
-
   const onSubmit = (values: EventFormValues) => {
     const formData = new FormData();
 

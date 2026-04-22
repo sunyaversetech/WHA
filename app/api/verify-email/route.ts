@@ -13,11 +13,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing token" }, { status: 400 });
     }
 
-    console.log("Received Token:", `|${token}|`);
     const user = await User.findOne({ token: token });
-    console.log("User found without date check:", user);
-
-    console.log(user);
 
     if (!user) {
       return NextResponse.json(

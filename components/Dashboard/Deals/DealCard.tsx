@@ -19,7 +19,6 @@ export function DealsTable({ data }: { data?: DealsGetValues[] }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { mutate: deleteDeal } = useDeleteDeal();
-  console.log(data);
 
   const handleDelete = (id: string) => {
     deleteDeal(
