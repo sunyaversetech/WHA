@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { use } from "react";
-import { Calendar, Check, ArrowLeft, MapPin, Loader2 } from "lucide-react";
+import {
+  Calendar,
+  Check,
+  ArrowLeft,
+  MapPin,
+  Loader2,
+  Tag,
+  ExternalLink,
+  AlertCircle,
+  Clock,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
@@ -23,6 +33,17 @@ function isPromise<T>(value: any): value is Promise<T> {
   return !!value && typeof value.then === "function";
 }
 
+/* ─── Loading skeleton ─── */
+function DealDetailSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 gap-4">
+      <Skeleton className="h-80 w-full max-w-2xl rounded-2xl" />
+      <Skeleton className="h-32 w-full max-w-2xl rounded-2xl" />
+      <Skeleton className="h-24 w-full max-w-2xl rounded-2xl" />
+    </div>
+  );
+}
+
 export default function DealDetailPage({ params }: { params: { id: string } }) {
   let unwrappedParams: { id: string };
   if (isPromise(params)) {
@@ -30,6 +51,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
   } else {
     unwrappedParams = params;
   }
+
   const { data: deal, isLoading } = useGetSingleDeal(unwrappedParams.id);
   const router = useRouter();
   const { data: session } = useSession();
@@ -84,6 +106,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
             status: "pending",
           });
           queryClient.invalidateQueries({ queryKey: ["redeem"] });
+          toast.success("Deal claimed! Show the QR code to the business.");
         },
         onError: (error) => {
           setRedemptionResult({
@@ -97,245 +120,221 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
     );
   };
 
-  if (isLoading)
-    return (
-      <div className="min-h-screen flex flex-col -mt-35 items-center justify-center">
-        <Skeleton className="h-96 w-96 md:w-160 mb-4 animate-pulse rounded-xl" />
-        <Skeleton className="h-52 w-96 md:w-160 mb-4 animate-pulse rounded-xl" />
-      </div>
-    );
-
+  if (isLoading) return <DealDetailSkeleton />;
   if (!deal?.data) return <DealNotFoundPage />;
 
   const slug =
     deal?.data?.user?.business_name &&
-    deal?.data?.user?.business_name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    deal.data.user.business_name.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  const isVerified = redemptionResult?.status === "verified";
+  const isClaimed = redemptionResult?.success && !isVerified;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="fixed top-20 left-5 z-30">
-        <Link
-          href="/deals"
-          className="glass text-gray-700 hover:text-blue-600 p-2 rounded-lg shadow-md transition-colors flex items-center justify-center"
-          aria-label="Back to events">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
+      {/* ─── Top nav bar ─── */}
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
+          <Link
+            href="/deals"
+            className="flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition active:scale-95"
+            aria-label="Back to deals">
+            <ArrowLeft className="h-4 w-4 text-gray-600" />
+          </Link>
+          <h1 className="text-sm font-semibold text-gray-700 truncate">
+            {deal.data.title}
+          </h1>
+        </div>
       </div>
 
-      <div className="container-modern py-6">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div className="relative w-full bg-white rounded-xl overflow-hidden shadow-lg">
-            <div className="absolute top-1/2 -left-2 w-4 h-4 bg-gray-100 rounded-full transform -translate-y-1/2 z-0"></div>
-            <div className="absolute top-1/2 -right-2 w-4 h-4 bg-gray-100 rounded-full transform -translate-y-1/2 z-0"></div>
+      {/* ─── Page content ─── */}
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+        {/* ── MAIN DEAL CARD ── */}
+        {/* Ticket-stub notch effect */}
+        <div className="relative bg-white rounded-2xl shadow-md overflow-visible">
+          {/* Notch left */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-gray-50 border border-gray-100 z-10" />
+          {/* Notch right */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 rounded-full bg-gray-50 border border-gray-100 z-10" />
 
-            <div className="p-6 md:p-8">
-              <div className="flex items-start justify-between gap-4 mb-6">
-                <div className="flex-1">
-                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-                    {deal?.data?.title}
-                  </h1>
-                  <p className="text-gray-600 text-base md:text-lg leading-relaxed">
-                    {deal?.data?.description}
-                  </p>
-                </div>
-
-                {/* <button
-                  onClick={handleFavoriteClick}
-                  className={`p-2 rounded-lg transition-all duration-200 self-start ${
-                    isDealFavorite
-                      ? "text-red-500 bg-red-50"
-                      : "text-gray-400 bg-gray-100 hover:text-red-500 hover:bg-red-50"
-                  }`}>
-                  <Heart
-                    className={`h-5 w-5 ${isDealFavorite ? "fill-current" : ""}`}
-                  />
-                </button> */}
-              </div>
-
-              {/* Business Information */}
-              {deal?.data?.user && (
-                <div className="mb-6">
-                  <Link
-                    href={`/businesses/${slug}`}
-                    className="block border border-gray-200 hover:bg-gray-50 rounded-lg p-4 -m-4 transition-colors">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
-                          <Image
-                            width={500}
-                            height={500}
-                            src={deal.data.user.image || "/placeholder.svg"}
-                            alt={`${deal.data.user.name} logo`}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <h2 className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
-                          {deal.data.user.business_name}
-                        </h2>
-                        <div className="flex items-center gap-2 mt-2">
-                          <p className="text-sm text-gray-500 flex items-center gap-1">
-                            <MapPin className="h-4 w-4" />
-                            {deal.data.user.location || deal.data.user.city}
-                          </p>
-                        </div>
-                        {/* {deal.data.user. && (
-                          <p className="text-sm text-gray-500 mt-1">
-                            📞 {business.phone}
-                          </p>
-                        )} */}
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-              )}
-
-              {deal.data.terms_for_the_deal && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    Deal Details
-                  </h3>
-                  <div className="text-gray-600 leading-relaxed">
-                    {deal.data.terms_for_the_deal}
-                  </div>
-                </div>
-              )}
-
-              <div className="border-t-2 border-dashed border-gray-200 my-6"></div>
-              <div className="text-center">
-                {redemptionResult?.status === "verified" ? (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-6 flex flex-col items-center">
-                    <div className="flex items-center justify-center space-x-2 mb-4">
-                      <Check className="h-5 w-5 text-green-600" />
-                      <span className="text-green-800 font-medium text-lg">
-                        Successfully Redeemed!
-                      </span>
-                    </div>
-
-                    {/* <div className="bg-white p-3 rounded-lg shadow-sm mb-4 border border-green-200">
-                      <QRCodeCanvas
-                        value={redemptionResult.code || ""}
-                        size={150}
-                      />
-                    </div> */}
-
-                    <p className="text-green-700 text-sm mb-2">
-                      You have successfully redeemed this deal Already
-                    </p>
-                    {/* <div className="bg-white border border-green-300 rounded-lg p-4 mb-3 w-full max-w-xs">
-                      <code className="text-xl font-mono text-blue-950 font-bold text-green-800 tracking-widest">
-                        {redemptionResult.code}
-                      </code>
-                    </div> */}
-                  </div>
-                ) : redemptionResult?.success ? (
-                  <div className=" border rounded-lg p-6 flex flex-col items-center">
-                    <div className="flex items-center justify-center space-x-2 mb-4">
-                      <span className=" font-medium text-lg">
-                        Show this QR Code to the business
-                      </span>
-                    </div>
-
-                    <div className="bg-white p-3 rounded-lg shadow-sm mb-4 border ">
-                      <QRCodeCanvas
-                        value={redemptionResult.code || ""}
-                        size={150}
-                      />
-                    </div>
-
-                    <p className=" text-sm mb-2">
-                      Show this code to the business:
-                    </p>
-                    <div className="bg-white border  rounded-lg p-4 mb-3 w-full max-w-xs">
-                      <code className="text-xl font-mono  font-bold tracking-widest">
-                        {redemptionResult.code}
-                      </code>
-                    </div>
-                    <p className="text-red-500 text-xs">
-                      Code expires when deal expires
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    <button
-                      onClick={handleRedeem}
-                      disabled={isPending}
-                      className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-4 px-6 rounded-xl text-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-70">
-                      {isPending ? (
-                        <>
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          Claiming...
-                        </>
-                      ) : (
-                        "Redeem Deal"
-                      )}
-                    </button>
-                    <p className="text-gray-500 text-sm mt-3">
-                      Click to claim your exclusive offer
-                    </p>
-                  </div>
-                )}
-              </div>
+          <div className="p-6 sm:p-8">
+            {/* Deal type badge */}
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-100 px-3 py-1 mb-5">
+              <Tag className="h-3.5 w-3.5 text-blue-500" />
+              <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
+                Exclusive Deal
+              </span>
             </div>
-          </div>
 
-          <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Deal Information
-            </h3>
+            {/* Title + description */}
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
+              {deal.data.title}
+            </h2>
+            <p className="text-gray-500 text-base leading-relaxed mb-6">
+              {deal.data.description}
+            </p>
 
-            {deal.data.valid_till && (
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Calendar className="h-4 w-4 text-green-600" />
+            {/* Business card */}
+            {deal.data.user && (
+              <Link
+                href={`/businesses/${slug}`}
+                className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-blue-50 hover:border-blue-100 transition group mb-6">
+                <div className="relative w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden border border-gray-200 bg-white">
+                  <Image
+                    fill
+                    src={deal.data.user.image || "/placeholder.svg"}
+                    alt={deal.data.user.business_name || "Business"}
+                    className="object-cover"
+                  />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Valid Until</p>
-                  <p className="font-medium text-gray-900">
-                    {formatDate(deal.data.valid_till, "dd MMM yyyy")}
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-semibold text-gray-900 group-hover:text-blue-600 transition truncate">
+                    {deal.data.user.business_name}
                   </p>
+                  {(deal.data.user.location || deal.data.user.city) && (
+                    <p className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
+                      <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                      {deal.data.user.location || deal.data.user.city}
+                    </p>
+                  )}
                 </div>
+                <ExternalLink className="h-4 w-4 text-gray-300 group-hover:text-blue-400 transition flex-shrink-0" />
+              </Link>
+            )}
+
+            {/* Deal details */}
+            {deal.data.terms_for_the_deal && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  What You Get
+                </h3>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  {deal.data.terms_for_the_deal}
+                </p>
+              </div>
+            )}
+
+            {/* Dashed divider */}
+            <div className="border-t-2 border-dashed border-gray-200 my-6" />
+
+            {/* ── CTA / Redemption area ── */}
+            {isVerified ? (
+              /* Already verified / used */
+              <div className="flex flex-col items-center gap-3 rounded-xl bg-green-50 border border-green-200 px-6 py-8 text-center">
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <Check className="h-6 w-6 text-green-600" />
+                </div>
+                <p className="text-lg font-bold text-green-800">
+                  Deal Redeemed!
+                </p>
+                <p className="text-sm text-green-600 max-w-xs">
+                  You have already used this deal. Thanks for visiting!
+                </p>
+              </div>
+            ) : isClaimed ? (
+              /* Claimed — show QR */
+              <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-200 bg-white px-6 py-8 text-center shadow-inner">
+                <p className="text-base font-bold text-gray-900">
+                  Show this to the business
+                </p>
+                <div className="bg-white p-4 rounded-2xl shadow-md border border-gray-100">
+                  <QRCodeCanvas
+                    value={redemptionResult?.code || ""}
+                    size={160}
+                  />
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-xl px-6 py-3 w-full max-w-xs">
+                  <code className="text-xl font-mono font-bold tracking-widest text-gray-800">
+                    {redemptionResult?.code}
+                  </code>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-red-500">
+                  <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                  Code expires when the deal expires
+                </div>
+              </div>
+            ) : (
+              /* Not yet claimed */
+              <div className="flex flex-col items-center gap-3">
+                <button
+                  onClick={handleRedeem}
+                  disabled={isPending}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-4 text-base transition-all shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-60">
+                  {isPending ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" /> Claiming…
+                    </>
+                  ) : (
+                    <>
+                      <Tag className="h-5 w-5" /> Redeem This Deal
+                    </>
+                  )}
+                </button>
+                <p className="text-gray-400 text-xs">
+                  Tap to claim your exclusive offer — free &amp; instant
+                </p>
               </div>
             )}
           </div>
+        </div>
+        {/* ── END MAIN CARD ── */}
 
-          {deal.data.terms_for_the_deal && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h4 className="text-md font-semibold text-gray-900 mb-3">
-                Terms & Conditions
-              </h4>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  {deal.data.terms_for_the_deal}
+        {/* ── DEAL INFO CARD ── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 space-y-4">
+          <h3 className="text-base font-bold text-gray-900">
+            Deal Information
+          </h3>
+
+          {deal.data.valid_till && (
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                <Calendar className="h-4 w-4 text-green-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+                  Valid Until
+                </p>
+                <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                  {formatDate(deal.data.valid_till, "EEEE, dd MMM yyyy")}
                 </p>
               </div>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* <div className="container-modern pb-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm">
-            <div className="flex items-start space-x-4">
-              <div className="p-2 bg-yellow-500/20 rounded-xl flex-shrink-0">
-                <Sparkles className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-yellow-800 mb-2">
-                  Platform in Development
-                </h3>
-                <p className="text-yellow-700 text-sm">
-                  Information may be outdated. Please check official business
-                  sites for up-to-date details.
-                </p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <Clock className="h-4 w-4 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+                Status
+              </p>
+              <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                {isVerified
+                  ? "Used"
+                  : isClaimed
+                    ? "Claimed — pending verification"
+                    : "Available to claim"}
+              </p>
             </div>
           </div>
         </div>
-      </div> */}
+        {/* ── END DEAL INFO CARD ── */}
+
+        {/* ── TERMS CARD ── */}
+        {deal.data.terms_for_the_deal && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+            <h3 className="text-base font-bold text-gray-900 mb-3">
+              Terms &amp; Conditions
+            </h3>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              {deal.data.terms_for_the_deal}
+            </p>
+          </div>
+        )}
+        {/* ── END TERMS CARD ── */}
+      </div>
+      {/* ─── END PAGE CONTENT ─── */}
     </div>
   );
 }

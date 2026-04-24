@@ -27,9 +27,11 @@ export async function GET(req: NextRequest, { params }: Props) {
     const event = await Event.find({ user: business._id }).sort({
       createdAt: -1,
     });
-    const deal = await Deal.find({ user: business._id }).sort({
-      createdAt: -1,
-    });
+    const deal = await Deal.find({ user: business._id })
+      .sort({
+        createdAt: -1,
+      })
+      .populate("user", "business_name location city image");
 
     if (!business) {
       return NextResponse.json(

@@ -29,25 +29,30 @@ export async function GET(request: NextRequest) {
 
     const query: any = {};
 
-    if (category && category !== "all") {
-      query.category = category;
-    }
-    if (from || to) {
-      const dateQuery: any = {};
+    // 1. Establish the "Today" threshold
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-      if (from) {
-        const searchFrom = new Date(from);
-        searchFrom.setHours(0, 0, 0, 0);
-        dateQuery["dateRange.to"] = { $gte: searchFrom };
-      }
+    const dateQuery: any = {};
 
-      if (to) {
-        const searchTo = new Date(to);
-        searchTo.setHours(23, 59, 59, 999);
-        dateQuery["dateRange.from"] = { $lte: searchTo };
-      }
-      Object.assign(query, dateQuery);
+    if (from) {
+      const searchFrom = new Date(from);
+      searchFrom.setHours(0, 0, 0, 0);
+      dateQuery["dateRange.from"] = { $gte: searchFrom };
+    } else {
+      dateQuery["dateRange.from"] = { $gte: today };
     }
+
+    if (to) {
+      const searchTo = new Date(to);
+      searchTo.setHours(23, 59, 59, 999);
+      dateQuery["dateRange.from"] = {
+        ...dateQuery["dateRange.from"],
+        $lte: searchTo,
+      };
+    }
+
+    Object.assign(query, dateQuery);
 
     if (search) {
       const safeSearch = escapeRegex(search);
