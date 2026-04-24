@@ -131,7 +131,7 @@ export default function EventsPageClient() {
             </DrawerContent>
           </Drawer>
           <Dialog>
-            <DialogTrigger asChild className="flex">
+            <DialogTrigger asChild className="hidden md:flex ">
               <Button variant="outline" size="sm">
                 <SlidersVertical className="h-4 w-4" />
                 Filters
