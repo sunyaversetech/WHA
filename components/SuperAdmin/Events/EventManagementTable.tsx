@@ -194,7 +194,7 @@ const EventManagementTable = ({ data }: { data: EventType[] }) => {
                       </TooltipTrigger>
                       <TooltipContent>Delete Event</TooltipContent>
                     </Tooltip>
-                    <Tooltip>
+                    {/* <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           onClick={() =>
@@ -207,7 +207,7 @@ const EventManagementTable = ({ data }: { data: EventType[] }) => {
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Delete Event</TooltipContent>
-                    </Tooltip>
+                    </Tooltip> */}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <DeleteConfirmDialog
