@@ -211,7 +211,7 @@ export default function EventsPageClient() {
             onClick={() => setIsMapExpanded((prev) => !prev)}
             className="flex md:hidden">
             <MapIcon className="h-4 w-4" />
-            {showMap ? "Hide map" : "Show map"}
+            {isMapExpanded ? "Hide map" : "Show map"}
           </Button>
         </div>
       </div>
