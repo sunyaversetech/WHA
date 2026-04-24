@@ -60,6 +60,10 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
 
     const { id: eventId } = await params;
     const userId = (session.user as any).id;
+    console.log(
+      "Session in PATCH /api/event/edit/[id]:",
+      session?.user?.category,
+    );
 
     const formData = await req.formData();
     const dateRangeRaw = formData.get("dateRange") as string;
@@ -101,13 +105,14 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     }
 
     const validatedData = eventSchema.partial().parse(rawData);
-
     const event = await Event.findById(eventId);
+    const isOwner = event.user.toString() === userId;
+    const isSuperAdmin = session?.user?.category === "super-admin";
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    if (event.user.toString() !== userId) {
+    if (!isOwner && !isSuperAdmin) {
       return NextResponse.json(
         { error: "You can only edit your own events" },
         { status: 403 },

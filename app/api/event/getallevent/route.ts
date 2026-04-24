@@ -29,27 +29,14 @@ export async function GET(request: NextRequest) {
 
     const query: any = {};
 
-    // 1. Establish the "Today" threshold
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date().toISOString().split("T")[0];
 
     const dateQuery: any = {};
 
     if (from) {
-      const searchFrom = new Date(from);
-      searchFrom.setHours(0, 0, 0, 0);
-      dateQuery["dateRange.from"] = { $gte: searchFrom };
+      dateQuery["dateRange.from"] = { $gte: from };
     } else {
       dateQuery["dateRange.from"] = { $gte: today };
-    }
-
-    if (to) {
-      const searchTo = new Date(to);
-      searchTo.setHours(23, 59, 59, 999);
-      dateQuery["dateRange.from"] = {
-        ...dateQuery["dateRange.from"],
-        $lte: searchTo,
-      };
     }
 
     Object.assign(query, dateQuery);
@@ -69,7 +56,7 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const myEvents = await Event.find(query).sort({ createdAt: -1 });
+    const myEvents = await Event.find(query).sort({ "dateRange.from": 1 });
 
     return NextResponse.json(
       { data: myEvents, message: "Events retrieved successfully" },

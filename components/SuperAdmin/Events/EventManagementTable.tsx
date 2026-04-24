@@ -8,6 +8,7 @@ import {
   MapPin,
   BanknoteArrowDown,
   BanknoteArrowUp,
+  Edit,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -37,9 +38,11 @@ import {
 } from "@/services/super-admin.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
+import { useRouter } from "next/navigation";
 
 const EventManagementTable = ({ data }: { data: EventType[] }) => {
   const { mutate } = useSuperAdminDeleteEvent();
+  const router = useRouter();
   const { mutate: isSponsor } = useSponsorEvent();
   const queryClient = useQueryClient();
   const handleDeleteEvent = async (id: string) => {
@@ -187,6 +190,20 @@ const EventManagementTable = ({ data }: { data: EventType[] }) => {
                               Sponsor
                             </>
                           )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete Event</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() =>
+                            router.push(
+                              `/dashboard/events/add-event?id=${event._id}`,
+                            )
+                          }
+                          variant="ghost">
+                          <Edit className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Delete Event</TooltipContent>
