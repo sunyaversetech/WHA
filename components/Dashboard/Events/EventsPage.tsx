@@ -78,18 +78,27 @@ export default function EventsBackend() {
           <Link
             href="/dashboard/events/redemtion-table"
             className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
+            <span className="hidden md:flex">
+              <ExternalLink className="mr-2 h-4 w-4" />
+            </span>{" "}
             Redemtion Table
           </Link>
 
           <Link
             href="/dashboard/events/verify-event"
             className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
+            <span className="hidden md:flex">
+              <ShieldCheck className="mr-2 h-4 w-4" />
+            </span>{" "}
             Verify Event
           </Link>
 
           <Link
             href="/dashboard/events/add-event"
             className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
+            <span className="hidden md:flex">
+              <PlusCircle className="mr-2 h-4 w-4" />
+            </span>{" "}
             Add Event
           </Link>
         </div>
