@@ -38,7 +38,7 @@ const EventCard = memo(function EventCard({
 
   let dateDisplay = "TBA";
   if (event.dateRange?.from) {
-    dateDisplay = `${formatDate(event.dateRange.from)}  ${event.dateRange.to !== event.dateRange.from ? `- ${formatDate(event.dateRange.to)}` : ""}`;
+    dateDisplay = `${formatDate(event.dateRange.from)}  ${event.dateRange.to !== event.dateRange.from ? `- ${event.dateRange.to && formatDate(event.dateRange.to)}` : ""}`;
   }
 
   const handleAddRemoveFavorite = () => {
