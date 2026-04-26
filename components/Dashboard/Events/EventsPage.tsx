@@ -66,12 +66,34 @@ export default function EventsBackend() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto overflow-hidden">
-      <Button
-        onClick={() => router.back()}
-        className="w-8 h-10 rounded-md"
-        variant="outline">
-        <ChevronLeft className="mr-2 h-8 w-8" />
-      </Button>
+      <div className="flex items-center justify-between no-scrollbar ">
+        <ChevronLeft
+          onClick={() => router.back()}
+          className="h-10 w-10 cursor-pointer rounded-full  p-1 -ml-2
+               text-[#ODODOD]
+
+               transition-all hover:scale-105 active:scale-95"
+        />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/events/redemtion-table"
+            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
+            Redemtion Table
+          </Link>
+
+          <Link
+            href="/dashboard/events/verify-event"
+            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
+            Verify Event
+          </Link>
+
+          <Link
+            href="/dashboard/events/add-event"
+            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
+            Add Event
+          </Link>
+        </div>
+      </div>
       <div className="flex gap-4 border-b border-slate-200 w-full">
         <button
           onClick={() => setActiveTab("upcoming")}
