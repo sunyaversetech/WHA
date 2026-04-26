@@ -36,20 +36,36 @@ export async function POST(req: NextRequest) {
     const longitude = parseFloat(formData.get("longitude") as string);
 
     const file = formData.get("image") as File;
-    let dateFrom = "";
-    let dateTo = "";
+
+    const formattedDates: { dateFrom?: string; dateTo?: string } = {};
 
     if (dateRangeRaw) {
       try {
         const parsedRange = JSON.parse(dateRangeRaw);
-        dateFrom = parsedRange.from.split("T")[0];
-        dateTo = parsedRange.to.split("T")[0];
+
+        if (parsedRange.from) {
+          formattedDates.dateFrom = parsedRange.from.split("T")[0];
+        }
+
+        if (parsedRange.to) {
+          formattedDates.dateTo = parsedRange.to.split("T")[0];
+        }
       } catch (e) {
         console.error("Failed to parse dateRange:", e);
       }
     }
 
-    if (!file || !title || !dateFrom || !dateTo) {
+    // if (dateRangeRaw) {
+    //   try {
+    //     const parsedRange = JSON.parse(dateRangeRaw);
+    //     dateFrom = parsedRange.from.split("T")[0];
+    //     dateTo = parsedRange.to.split("T")[0];
+    //   } catch (e) {
+    //     console.error("Failed to parse dateRange:", e);
+    //   }
+    // }
+
+    if (!file || !title || !dateRangeRaw) {
       return NextResponse.json(
         { error: "Missing required fields (Title, Image, or Dates)" },
         { status: 400 },
@@ -72,8 +88,8 @@ export async function POST(req: NextRequest) {
       image: uploadResult.Location,
 
       dateRange: {
-        from: new Date(dateFrom as string),
-        to: new Date(dateTo as string),
+        from: formattedDates.dateFrom,
+        to: formattedDates.dateTo,
       },
 
       startTime,

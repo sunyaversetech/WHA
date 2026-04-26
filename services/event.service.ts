@@ -12,8 +12,8 @@ export type EventType = {
   description: string;
   date?: Date;
   dateRange?: {
-    from: Date;
-    to: Date;
+    from: string;
+    to: string;
   };
   user: {
     _id: string;

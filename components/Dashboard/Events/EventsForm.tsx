@@ -51,8 +51,8 @@ export const eventSchema = z.object({
   ]),
   venue: z.string().min(2, "Venue is required"),
   dateRange: z.object({
-    from: z.date(),
-    to: z.date(),
+    from: z.date().optional(),
+    to: z.date().optional(),
   }),
   email: z.email("Invalid email address").optional().or(z.literal("")),
   phone_number: z.string().optional().or(z.literal("")),
@@ -98,7 +98,6 @@ export function EventForm() {
       city: data?.city ?? "",
       description: data?.description ?? "",
       location: data?.location ?? "",
-      dateRange: data?.dateRange ?? { from: new Date(), to: new Date() },
       latitude: data?.latitude ?? 0,
       longitude: data?.longitude ?? 0,
       category: data?.category ?? "",
@@ -117,11 +116,11 @@ export function EventForm() {
       form.setValue("venue", data.venue);
       form.setValue("startTime", data.startTime);
       form.setValue("endTime", data.endTime);
-      if (data?.dateRange?.from) {
-        form.setValue("dateRange.from", new Date(data.dateRange.from));
-      }
-      if (data?.dateRange?.to) {
-        form.setValue("dateRange.to", new Date(data.dateRange.to));
+      if (data?.dateRange?.from || data?.dateRange?.to) {
+        form.setValue("dateRange", {
+          from: data.dateRange.from ? new Date(data.dateRange.from) : undefined,
+          to: data.dateRange.to ? new Date(data.dateRange.to) : undefined,
+        });
       }
       form.setValue("community", data.community);
       form.setValue("city", data.city);
@@ -182,6 +181,8 @@ export function EventForm() {
       },
     });
   };
+
+  console.log("Form Errors:", form.getValues());
 
   return (
     <div className="flex-1 h-auto overflow-y-auto mb-20">
@@ -366,7 +367,7 @@ export function EventForm() {
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="range"
-                          selected={field.value}
+                          selected={field.value as any}
                           onSelect={field.onChange}
                           numberOfMonths={2}
                         />

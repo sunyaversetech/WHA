@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   PlusCircle,
@@ -19,9 +20,38 @@ import "@/app/globals.css";
 
 export default function EventsBackend() {
   const { data } = useGetEvent();
+  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
   const { mutate, isPending } = useDeleteEvent();
   const queryClient = useQueryClient();
   const router = useRouter();
+
+  const filteredEvents = useMemo(() => {
+    if (!data?.data) return [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return data.data
+      .filter((event) => {
+        // Use fallback empty string to satisfy TypeScript
+        const eventDate = new Date(event.dateRange?.from ?? "");
+
+        // Handle invalid dates (optional but recommended)
+        if (isNaN(eventDate.getTime())) return false;
+
+        return activeTab === "upcoming"
+          ? eventDate >= today
+          : eventDate < today;
+      })
+      .sort((a, b) => {
+        // Use nullish coalescing (?? "") here as well
+        const dateA = new Date(a.dateRange?.from ?? "").getTime();
+        const dateB = new Date(b.dateRange?.from ?? "").getTime();
+
+        return activeTab === "upcoming" ? dateA - dateB : dateB - dateA;
+      });
+  }, [data, activeTab]);
+
   const handleDelete = (id: string) => {
     mutate(
       { id },
@@ -29,78 +59,28 @@ export default function EventsBackend() {
         onSuccess: () => {
           toast.success("Event deleted successfully");
           queryClient.invalidateQueries({ queryKey: ["event"] });
-          queryClient.invalidateQueries({ queryKey: ["favorite"] });
-        },
-        onError: (error: any) => {
-          toast.error(
-            error.response?.data?.message || "Failed to delete event",
-          );
         },
       },
     );
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto overflow-hidden no-scrollbar">
-      <div className="flex items-start justify-between no-scrollbar md:hidden">
-        <ChevronLeft
-          onClick={() => router.back()}
-          className="h-10 w-10 cursor-pointer rounded-full  p-1 -ml-2
-               text-[#ODODOD] 
-               transition-all hover:scale-105 active:scale-95"
-        />
-        <div>
-          <Link
-            href="/dashboard/events/redemtion-table"
-            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
-            <ExternalLink className="mr-2 h-4 w-4" /> Redemtion Table
-          </Link>
-          <Link
-            href="/dashboard/events/verify-event"
-            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
-            <ShieldCheck className="mr-2 h-4 w-4" /> Verify Event
-          </Link>
-          <Link
-            href="/dashboard/events/add-event"
-            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
-            <PlusCircle className="mr-2 h-4 w-4" /> Add
-          </Link>
-        </div>
+    <div className="space-y-6 max-w-6xl mx-auto overflow-hidden">
+      <div className="flex gap-4 border-b border-slate-200 w-full">
+        <button
+          onClick={() => setActiveTab("upcoming")}
+          className={`pb-2 px-1 w-full font-semibold transition-colors ${activeTab === "upcoming" ? "text-primary border-b-2 border-primary" : "text-slate-500"}`}>
+          Upcoming Events
+        </button>
+        <button
+          onClick={() => setActiveTab("past")}
+          className={`pb-2 px-1 w-full font-semibold transition-colors ${activeTab === "past" ? "text-primary border-b-2 border-primary" : "text-slate-500"}`}>
+          Past Events
+        </button>
       </div>
-
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-xl text-secondary  font-bold tracking-tight">
-            Events dashboard
-          </h1>
-          <p className="text-muted">
-            View and manage the event offered by your business.
-          </p>
-        </div>
-
-        <div className="hidden md:flex md:gap-2">
-          <Link
-            href="/dashboard/events/redemtion-table"
-            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
-            <ExternalLink className="mr-2 h-4 w-4" /> Redemtion Table
-          </Link>
-          <Link
-            href="/dashboard/events/verify-event"
-            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
-            <ShieldCheck className="mr-2 h-4 w-4" /> Verify Event
-          </Link>
-          <Link
-            href="/dashboard/events/add-event"
-            className="ml-auto flex bg-[#041e3a]  text-white items-center py-2 px-6 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
-            <PlusCircle className="mr-2 h-4 w-4" /> Add
-          </Link>
-        </div>
-      </div>
-
-      <hr className="border-slate-200" />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {data?.data?.map((event) => (
+        {filteredEvents.map((event) => (
           <div
             key={event._id}
             className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition">
@@ -115,30 +95,22 @@ export default function EventsBackend() {
             <div className="p-4 space-y-2">
               <h3 className="text-lg font-bold">{event.title}</h3>
               <p className="text-sm text-muted-foreground">{event.venue}</p>
-
-              <div className="flex justify-between">
-                <p className="text-sm">
-                  {event?.dateRange?.from
-                    ? new Intl.DateTimeFormat("en-AU", {
+              <div className="flex justify-between text-sm">
+                <span>
+                  {event?.dateRange?.from &&
+                    new Date(event?.dateRange?.from).toLocaleDateString(
+                      "en-AU",
+                      {
                         day: "2-digit",
                         month: "short",
-                      }).format(new Date(event?.dateRange?.from))
-                    : ""}{" "}
-                  {event?.dateRange?.from !== event?.dateRange?.to &&
-                  event?.dateRange?.to
-                    ? `to ${new Intl.DateTimeFormat("en-AU", {
-                        day: "2-digit",
-                        month: "short",
-                      }).format(new Date(event?.dateRange?.to))}`
-                    : ""}
-                </p>
-                <p className="text-sm">
+                      },
+                    )}
+                </span>
+                <span>
                   {event.ticket_price ? `$${event.ticket_price}` : "Free"}
-                </p>
+                </span>
               </div>
-
-              <p className="text-xs text-muted-foreground">{event.location}</p>
-              <div className="flex justify-between items-center mt-2 border-t-2">
+              <div className="flex justify-between items-center mt-2 border-t-2 pt-2">
                 <Button
                   onClick={() =>
                     router.push(`/dashboard/events/add-event?id=${event._id}`)
@@ -155,6 +127,11 @@ export default function EventsBackend() {
             </div>
           </div>
         ))}
+        {filteredEvents.length === 0 && (
+          <p className="col-span-full text-center py-10 text-muted-foreground">
+            No {activeTab} events found.
+          </p>
+        )}
       </div>
     </div>
   );

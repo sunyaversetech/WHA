@@ -96,7 +96,7 @@ export default function MobileDashboard() {
 
       {session?.user.category === "business" && (
         <>
-          <div className="bg-white rounded-2xl p-5 border border-gray-200 mb-5">
+          <div className="bg-white rounded-2xl px-5 py-0 border border-gray-200 mb-5">
             {menu2.map((item, i) => {
               const Icon = item.icon;
               const active = pathname.startsWith(item.link);
@@ -118,7 +118,7 @@ export default function MobileDashboard() {
             })}
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-gray-200 mb-5">
+          <div className="bg-white rounded-2xl px-5 py-0  border border-gray-200 mb-5">
             {menu1.map((item, i) => {
               const Icon = item.icon;
               const active = pathname.startsWith(item.link);
@@ -143,7 +143,7 @@ export default function MobileDashboard() {
       )}
 
       {session?.user.category === "user" && (
-        <div className="bg-white rounded-2xl p-5 border border-gray-200 mb-5">
+        <div className="bg-white rounded-2xl px-5 py-0  border border-gray-200 mb-5">
           {menuUser.map((item, i) => {
             const Icon = item.icon;
             const active = pathname.startsWith(item.link);
@@ -166,7 +166,7 @@ export default function MobileDashboard() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl  p-5 border border-gray-200">
+      <div className="bg-white rounded-2xl  px-5 py-3 border border-gray-200">
         <div className="ml-3">
           <LogoutDialog />
         </div>
