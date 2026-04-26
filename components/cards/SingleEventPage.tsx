@@ -62,6 +62,15 @@ export default function EventDetailPage() {
     }
   };
 
+  const formatEventDate = (dateValue?: string | Date | null) => {
+    if (!dateValue) return "";
+    const date =
+      dateValue instanceof Date ? dateValue : new Date(dateValue as string);
+    return Number.isNaN(date.getTime())
+      ? String(dateValue)
+      : date.toLocaleDateString();
+  };
+
   if (isLoading) {
     <LoadingPage />;
   }
@@ -167,13 +176,8 @@ export default function EventDetailPage() {
                       <p className="text-sm text-gray-500">Date & Time</p>
                       <p className="font-medium text-gray-800">
                         {" "}
-                        {event?.data?.dateRange?.from instanceof Date
-                          ? event.data?.dateRange.from.toLocaleDateString()
-                          : event?.data?.dateRange?.from}{" "}
-                        -{" "}
-                        {event?.data?.dateRange?.to instanceof Date
-                          ? event.data?.dateRange.to.toLocaleDateString()
-                          : event?.data?.dateRange?.to}
+                        {formatEventDate(event?.data?.dateRange?.from)} -{" "}
+                        {formatEventDate(event?.data?.dateRange?.to)}
                       </p>
                     </div>
                   </div>
