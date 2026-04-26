@@ -66,6 +66,12 @@ export default function EventsBackend() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto overflow-hidden">
+      <Button
+        onClick={() => router.back()}
+        className="w-8 h-10 rounded-md"
+        variant="outline">
+        <ChevronLeft className="mr-2 h-8 w-8" />
+      </Button>
       <div className="flex gap-4 border-b border-slate-200 w-full">
         <button
           onClick={() => setActiveTab("upcoming")}

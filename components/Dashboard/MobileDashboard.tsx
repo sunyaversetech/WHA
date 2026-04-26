@@ -68,7 +68,7 @@ export default function MobileDashboard() {
   ];
 
   return (
-    <div className="min-h-[50vh] pb-28">
+    <div className="min-h-[50vh] overflow-scroll ">
       <div className="flex items-start justify-between  mb-6">
         <div>
           <h1 className="text-xl font-bold">
