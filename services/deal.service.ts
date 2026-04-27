@@ -53,6 +53,14 @@ export const useGetDeals = () => {
   );
 };
 
+export const useGetDealsRedemption = (id: string) => {
+  return useFetcher<ApiResponseType<any>>(
+    ["deals-redemption", id],
+    null,
+    `/api/deals/redeem/${id}`,
+  );
+};
+
 export const useGetAllDeals = () => {
   const param = useSearchParams();
   const category = param.get("category") || "";

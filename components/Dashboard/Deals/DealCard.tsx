@@ -12,8 +12,9 @@ import { DealsGetValues, useDeleteDeal } from "@/services/deal.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Edit } from "lucide-react";
+import { Edit, ExternalLink } from "lucide-react";
 import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
+import Link from "next/link";
 
 export function DealsTable({ data }: { data?: DealsGetValues[] }) {
   const router = useRouter();
@@ -54,7 +55,15 @@ export function DealsTable({ data }: { data?: DealsGetValues[] }) {
             const isExpired = new Date(deal.valid_till) < new Date();
             return (
               <TableRow key={deal._id}>
-                <TableCell className="font-medium">{deal.title}</TableCell>
+                <TableCell className="font-medium">
+                  <Link
+                    href={`/dashboard/deals/redeemtion/${deal._id}`}
+                    className="flex hover:text-blue-500 hover:border-b-blue-500 hover:border-b-2
+                    transition-all duration-500
+                    gap-1">
+                    {deal.title} <ExternalLink size={10} />
+                  </Link>
+                </TableCell>
                 <TableCell>{deal.verifiedRedemptions}</TableCell>
                 <TableCell>{deal.current_redemptions}</TableCell>
                 <TableCell>{deal.max_redemptions}</TableCell>
