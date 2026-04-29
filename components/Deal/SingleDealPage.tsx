@@ -121,7 +121,7 @@ export default function DealDetailPage({
   const isVerified = redemptionResult?.status === "verified";
   const isClaimed = redemptionResult?.success && !isVerified;
 
-  const isFavorite = userFavorites?.data?.business?.some(
+  const isFavorite = userFavorites?.data?.deals?.some(
     (item) => (item._id ?? "").toString() === d?._id?.toString(),
   );
 
@@ -278,11 +278,6 @@ export default function DealDetailPage({
             <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm border border-white/30 text-white text-xs font-medium px-3 py-1.5 rounded-full">
               <Tag className="h-3 w-3" /> {d.category}
             </span>
-            {d.user?.verified && (
-              <span className="inline-flex items-center gap-1 bg-green-500/20 border border-green-400/40 text-white text-xs font-medium px-2.5 py-1 rounded-full">
-                <BadgeCheck className="h-3.5 w-3.5 text-green-300" /> Verified
-              </span>
-            )}
           </div>
         </div>
       </div>
