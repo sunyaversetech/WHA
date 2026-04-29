@@ -148,25 +148,25 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* ─── Page content ─── */}
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4 mt-5">
         {/* ── MAIN DEAL CARD ── */}
         {/* Ticket-stub notch effect */}
         <div className="relative bg-white rounded-2xl shadow-md overflow-visible">
+          <Image
+            src={deal?.data?.image || "/placeholder.png"}
+            alt={deal.data.title}
+            width={1000}
+            height={1000}
+            sizes="100vw"
+            className="w-full h-80 object-cover rounded-t-2xl mb-5"
+          />
           {/* Notch left */}
           <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-gray-50 border border-gray-100 z-10" />
           {/* Notch right */}
           <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 rounded-full bg-gray-50 border border-gray-100 z-10" />
 
-          <div className="p-6 sm:p-8">
+          <div className="p-6 sm:p-8 md:-mt-7">
             {/* Deal type badge */}
-            <Image
-              src={deal?.data?.image || "/placeholder.png"}
-              alt={deal.data.title}
-              width={1000}
-              height={1000}
-              sizes="100vw"
-              className="w-full h-80 object-cover rounded-2xl mb-5"
-            />
 
             {/* Title + description */}
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
@@ -203,18 +203,6 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                 <ExternalLink className="h-4 w-4 text-gray-300 group-hover:text-blue-400 transition flex-shrink-0" />
               </Link>
             )} */}
-
-            {/* Deal details */}
-            {deal.data.terms_for_the_deal && (
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  What You Get
-                </h3>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  {deal.data.terms_for_the_deal}
-                </p>
-              </div>
-            )}
 
             {/* Dashed divider */}
             <div className="border-t-2 border-dashed border-gray-200 my-6" />
@@ -320,6 +308,17 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
               </p>
             </div>
           </div>
+
+          {deal.data.terms_for_the_deal && (
+            <div className="mt-8">
+              <h3 className="text-base font-bold text-gray-900 mb-3">
+                Terms &amp; Conditions
+              </h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                {deal.data.terms_for_the_deal}
+              </p>
+            </div>
+          )}
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 space-y-4">
           <h3>Business</h3>
@@ -350,16 +349,6 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
             </Link>
           )}
         </div>
-        {deal.data.terms_for_the_deal && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
-            <h3 className="text-base font-bold text-gray-900 mb-3">
-              Terms &amp; Conditions
-            </h3>
-            <p className="text-sm text-gray-500 leading-relaxed">
-              {deal.data.terms_for_the_deal}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

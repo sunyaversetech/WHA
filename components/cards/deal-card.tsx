@@ -72,8 +72,8 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
         <div className="relative h-42 w-full">
           <div className="relative z-999">
             <div className="flex justify-between px-2 py-2">
-              <h3 className="bg-black/50 text-white items-center gap-2  rounded-md p-1 text-base flex">
-                <Tag size={15} /> {deal.category}
+              <h3 className="bg-black/50 text-white items-center gap-2  rounded-md py-2 h-8 px-3 font-semibold text-sm flex">
+                {deal.category}
               </h3>
               <button
                 disabled={isPending}
