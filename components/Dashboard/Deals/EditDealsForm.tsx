@@ -2,7 +2,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ChevronLeft, X } from "lucide-react"; // Added X for remove button
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,172 +23,333 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-import { z } from "zod";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useCreateDeals, useGetSingleDeal } from "@/services/deal.service";
+import { useCreateDeals, useGetSingleDeal } from "@/services/deal.service"; // Ensure useUpdateDeal exists
 import { toast } from "sonner";
-import { useGetSingleEvent } from "@/services/event.service";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import { DealFormValues, dealSchema } from "./DealForm";
+import Image from "next/image";
 
-export const dealSchema = z.object({
-  _id: z.string().min(1, "ID is required"),
-  title: z.string().min(2, "Title is too short"),
-  valid_till: z.date().min(1, "Date must be in the future"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  terms_for_the_deal: z.string().min(1, "Terms are required"),
-});
-
-export type DealFormValues = z.infer<typeof dealSchema>;
+const toggleItemStyles =
+  "border! rounded-lg! px-7! py-2! data-[state=on]:bg-primary! min-w-fit data-[state=on]:text-primary-foreground! w-full flex-1";
 
 export default function EditDealForm() {
-  const parmas = useSearchParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const dealId = parmas.get("id");
-  const { data } = useGetSingleDeal(dealId!);
+  const dealId = searchParams.get("id");
+  const { data, isLoading } = useGetSingleDeal(dealId!);
 
   const form = useForm<DealFormValues>({
     resolver: zodResolver(dealSchema),
     defaultValues: {
-      _id: data?.data._id || "",
-      title: data?.data.title || "",
-      description: data?.data.description || "",
-      terms_for_the_deal: data?.data.terms_for_the_deal || "",
-      valid_till: new Date(data?.data.valid_till ?? new Date()) || new Date(),
+      title: "",
+      description: "",
+      terms_for_the_deal: "",
+      category: "",
+      city: "",
+      max_redemptions: 0,
+      valid_till: new Date(),
     },
   });
 
   useEffect(() => {
-    form.setValue("_id", data?.data._id || "");
-    form.setValue("title", data?.data.title || "");
-    form.setValue("description", data?.data.description || "");
-    form.setValue("terms_for_the_deal", data?.data.terms_for_the_deal || "");
-    form.setValue(
-      "valid_till",
-      new Date(data?.data.valid_till ?? new Date()) || new Date(),
-    );
+    if (data?.data) {
+      const deal = data.data;
+      form.reset({
+        _id: deal._id,
+        title: deal.title,
+        description: deal.description,
+        terms_for_the_deal: deal.terms_for_the_deal,
+        valid_till: new Date(deal.valid_till),
+        category: deal.category,
+        max_redemptions: deal.max_redemptions,
+        city: deal.city,
+        image: deal.image,
+      });
+    }
   }, [data, form]);
 
-  const { mutate } = useCreateDeals();
+  const { mutate, isPending } = useCreateDeals();
+
   function onSubmit(values: DealFormValues) {
     const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
-      formData.append(key, value as any);
-    });
-    mutate(formData as any, {
+    formData.append("_id", values._id ?? "");
+    formData.append("title", values.title);
+    formData.append("valid_till", values.valid_till.toISOString());
+    formData.append("description", values.description);
+    formData.append("terms_for_the_deal", values.terms_for_the_deal);
+    formData.append("category", values.category);
+    formData.append("max_redemptions", values.max_redemptions.toString());
+    formData.append("city", values.city);
+
+    if (values.image) {
+      formData.append("image", values.image);
+    }
+
+    mutate(formData, {
       onSuccess: () => {
-        form.reset();
+        toast.success("Deal updated successfully");
         router.push("/dashboard/deals");
-        toast("Deals Updated successfully");
       },
       onError: (error: any) => {
-        toast.error(error.response || "Failed to Edit deal");
+        toast.error(error.response?.data?.error || "Failed to update deal");
       },
     });
   }
 
+  if (isLoading)
+    return <p className="p-10 text-center">Loading deal data...</p>;
+
   return (
     <Form {...form}>
-      <h1 className="text-2xl my-4">Edit Your Deal</h1>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mx-4">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Deal Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Summer Flash Sale" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-6 max-w-6xl mx-auto">
+        <div className="flex items-start justify-start">
+          <ChevronLeft
+            onClick={() => router.back()}
+            className="h-10 w-10 cursor-pointer rounded-full  p-1 -ml-2
+               text-[#ODODOD] 
+               transition-all hover:scale-105 active:scale-95"
+          />
+        </div>
+        <h1 className="text-2xl my-4">Edit Deal</h1>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 ">
           <FormField
             control={form.control}
-            name="valid_till"
+            name="title"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel className="mb-1">Valid Until</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground",
-                        )}>
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date < new Date(new Date().setHours(0, 0, 0, 0))
-                      }
-                    />
-                  </PopoverContent>
-                </Popover>
+              <FormItem>
+                <FormLabel>Deal Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="Summer Flash Sale" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-        </div>
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Describe the deal details..."
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="valid_till"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel className="mb-1">Valid Until</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground",
+                          )}>
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date(new Date().setHours(0, 0, 0, 0))
+                        }
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-        {/* Terms */}
-        <FormField
-          control={form.control}
-          name="terms_for_the_deal"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Terms & Conditions</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Usage limits, specific conditions..."
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>City</FormLabel>
+                <FormControl>
+                  <ToggleGroup
+                    type="single"
+                    value={field.value}
+                    onValueChange={(val) => val && field.onChange(val)}
+                    className="flex flex-wrap gap-4">
+                    {[
+                      "Sydney",
+                      "Canberra",
+                      // "Melbourne",
+                      // "Brisbane",
+                      // "Adelaide",
+                      // "Gold Coast",
+                      // "Perth",
+                      // "Hobart",
+                      // "Darwin",
+                      "others",
+                    ].map((cat) => (
+                      <ToggleGroupItem
+                        key={cat}
+                        value={cat}
+                        className={toggleItemStyles}>
+                        {cat}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? "Submitting..." : "Edit Deal"}
-        </Button>
-      </form>
+          <FormField
+            control={form.control}
+            name="image"
+            render={({ field: { value, onChange, ...fieldProps } }) => (
+              <FormItem>
+                <FormLabel>Deal Image</FormLabel>
+                <FormControl>
+                  <div className="space-y-4">
+                    {!value && (
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) onChange(file);
+                        }}
+                        {...fieldProps}
+                      />
+                    )}
+
+                    {value && (
+                      <div className="relative w-fit group">
+                        <div className="relative h-40 w-40 overflow-hidden rounded-lg border">
+                          <Image
+                            width={1000}
+                            height={1000}
+                            src={
+                              typeof value === "string"
+                                ? value
+                                : URL.createObjectURL(value)
+                            }
+                            alt="Preview"
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => onChange(null)}
+                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white shadow-md transition-transform hover:scale-110 active:scale-95">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="category"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <FormControl>
+                  <ToggleGroup
+                    type="single"
+                    value={field.value}
+                    onValueChange={(val) => val && field.onChange(val)}
+                    className="flex flex-wrap gap-4">
+                    {[
+                      "Groceries",
+                      "Shopping",
+                      "Restaurant",
+                      "Fashion",
+                      "Events",
+                      "Others",
+                    ].map((cat) => (
+                      <ToggleGroupItem
+                        key={cat}
+                        value={cat}
+                        className={toggleItemStyles}>
+                        {cat}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="max_redemptions"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>MAX Redemption</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="How Many People can redeem it?"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Describe the deal details..."
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Terms */}
+          <FormField
+            control={form.control}
+            name="terms_for_the_deal"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Terms & Conditions</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Usage limits, specific conditions..."
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? "Submitting..." : "Edit Deal"}
+          </Button>
+        </form>
+      </div>
     </Form>
   );
 }

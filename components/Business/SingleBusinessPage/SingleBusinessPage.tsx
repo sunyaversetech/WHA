@@ -306,8 +306,8 @@ export default function BusinessPage() {
             <TabsContent value="deal" className="mt-2">
               <div
                 className={`grid grid-cols-1 md:${data?.data?.deal && data?.data?.deal?.length < 2 ? "grid-cols-1" : "grid-cols-2"} gap-2`}>
-                {data?.data.deal && data?.data.deal.length > 0 ? (
-                  data?.data.deal
+                {data?.data?.deal && data?.data?.deal?.length > 0 ? (
+                  data?.data?.deal
                     .splice(0, 2)
                     .map((item) => <DealCard key={item._id} deal={item} />)
                 ) : (
