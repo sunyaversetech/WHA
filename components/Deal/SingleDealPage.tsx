@@ -290,9 +290,9 @@ export default function DealDetailPage({
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
           <div className="lg:col-span-2">
-            <Tabs defaultValue="overview" className="w-full">
+            <Tabs defaultValue="redeem" className="w-full">
               <TabsList className="w-full bg-white border border-gray-100 rounded-xl rounded-b-none p-0 h-auto">
-                {(["overview", "whatyouget", "redeem"] as const).map((tab) => (
+                {(["redeem", "whatyouget", "overview"] as const).map((tab) => (
                   <TabsTrigger
                     key={tab}
                     value={tab}
@@ -408,6 +408,9 @@ export default function DealDetailPage({
                   <div className="flex flex-col items-center gap-4 py-4 text-center">
                     <p className="text-sm font-semibold text-gray-800">
                       Show this to the business
+                      <p className="text-xs text-gray-400 text-center mb-2">
+                        Show the QR code at the business to redeem your offer.
+                      </p>
                     </p>
                     <div className="bg-white p-4 rounded-2xl border border-gray-200">
                       <QRCodeCanvas
@@ -430,9 +433,7 @@ export default function DealDetailPage({
                     <p className="text-base font-bold text-gray-900 text-center">
                       Ready to claim?
                     </p>
-                    <p className="text-xs text-gray-400 text-center mb-2">
-                      Show the QR code at the business to redeem your offer.
-                    </p>
+
                     <Button
                       onClick={handleRedeem}
                       disabled={isPending}
