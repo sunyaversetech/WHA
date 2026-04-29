@@ -13,6 +13,7 @@ import {
   QrCode,
   Link2,
   SquareArrowOutUpRight,
+  Tag,
 } from "lucide-react";
 import type { Deal } from "@/lib/types";
 import { getBusinessById } from "@/lib/data/businesses";
@@ -64,36 +65,45 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
   return (
     <div
       className="block cursor-pointer"
-      onClick={() => router.push(`/deals/${deal._id}`)}
-    >
+      onClick={() => router.push(`/deals/${deal._id}`)}>
       <div className="relative bg-white rounded-lg overflow-hidden border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-lg active:scale-[0.98]">
-        {/* Ticket cut effect */}
         <div className="absolute top-1/2 -left-2 w-4 h-4 bg-white border border-gray-200 rounded-full -translate-y-1/2" />
         <div className="absolute top-1/2 -right-2 w-4 h-4 bg-white border border-gray-200 rounded-full -translate-y-1/2" />
-
+        <div className="relative h-42 w-full">
+          <div className="relative z-999">
+            <div className="flex justify-between px-2 py-2">
+              <h3 className="bg-black/50 text-white items-center gap-2  rounded-md p-1 text-base flex">
+                <Tag size={15} /> {deal.category}
+              </h3>
+              <button
+                disabled={isPending}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddRemoveFavorite();
+                }}
+                className={`p-2 rounded-full transition ${
+                  isDealFavorite
+                    ? "text-red-500 bg-red-50"
+                    : "text-gray-400 bg-gray-100"
+                }`}>
+                <Heart
+                  className={`h-5 w-5 ${isDealFavorite ? "fill-current" : ""}`}
+                />
+              </button>
+            </div>
+          </div>
+          <Image
+            src={deal.image || "/placeholder.svg"}
+            alt="Deal Banner"
+            fill
+            className="object-cover"
+          />
+        </div>
         <div className="p-4 space-y-3">
-          {/* Header */}
           <div className="flex items-start justify-between gap-3">
             <h3 className="text-lg font-bold text-gray-900 leading-snug line-clamp-1">
               {deal.title}
             </h3>
-
-            <button
-              disabled={isPending}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddRemoveFavorite();
-              }}
-              className={`p-2 rounded-full transition ${
-                isDealFavorite
-                  ? "text-red-500 bg-red-50"
-                  : "text-gray-400 bg-gray-100"
-              }`}
-            >
-              <Heart
-                className={`h-5 w-5 ${isDealFavorite ? "fill-current" : ""}`}
-              />
-            </button>
           </div>
 
           {/* Business Info */}

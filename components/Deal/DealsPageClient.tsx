@@ -21,6 +21,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
+import NewDealCard from "../cards/new-deal-card";
 
 export default function DealsPageClient() {
   const { data: deals, isLoading } = useGetAllDeals();
@@ -93,7 +94,7 @@ export default function DealsPageClient() {
               ))}
             </div>
           ) : data && data.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
               {data.map((deal) => (
                 <DealCard key={deal._id} deal={deal} />
               ))}
