@@ -147,10 +147,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* ─── Page content ─── */}
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4 mt-5">
-        {/* ── MAIN DEAL CARD ── */}
-        {/* Ticket-stub notch effect */}
         <div className="relative bg-white rounded-2xl shadow-md overflow-visible">
           <Image
             src={deal?.data?.image || "/placeholder.png"}
@@ -160,15 +157,10 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
             sizes="100vw"
             className="w-full h-80 object-cover rounded-t-2xl mb-5"
           />
-          {/* Notch left */}
           <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-gray-50 border border-gray-100 z-10" />
-          {/* Notch right */}
           <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 rounded-full bg-gray-50 border border-gray-100 z-10" />
 
           <div className="p-6 sm:p-8 md:-mt-7">
-            {/* Deal type badge */}
-
-            {/* Title + description */}
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
               {deal.data.title}
             </h2>
