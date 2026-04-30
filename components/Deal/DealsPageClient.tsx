@@ -1,11 +1,10 @@
 "use client";
 
 import DealCard from "@/components/cards/deal-card";
-import { Calendar, Filter, Map, SlidersVertical, Tag } from "lucide-react";
+import { SlidersVertical, Tag } from "lucide-react";
 import { useGetAllDeals } from "@/services/deal.service";
 import DealsHeader from "./DealFilter";
 import { Skeleton } from "../ui/skeleton";
-import DealsSearchWithDates from "../ResuableComponents/SearchSectionForDeals";
 import {
   Dialog,
   DialogContent,
@@ -14,14 +13,12 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { useSearchParams } from "next/navigation";
-import MobileDealsSearchWithDates from "../ResuableComponents/MobileViewSearch/SearchSectionForDeals";
 import {
   Drawer,
   DrawerContent,
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
-import NewDealCard from "../cards/new-deal-card";
 
 export default function DealsPageClient() {
   const { data: deals, isLoading } = useGetAllDeals();
@@ -95,7 +92,7 @@ export default function DealsPageClient() {
             </div>
           ) : data && data.length > 0 ? (
             <div
-              className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 ${data.length === 1 ? "h-[20vh]" : "h-full"}`}>
+              className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 ${data.length === 1 ? "max-h-[20vh]" : "h-full"}`}>
               {data.map((deal) => (
                 <DealCard key={deal._id} deal={deal} />
               ))}

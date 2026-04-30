@@ -8,10 +8,8 @@ interface MutatorProps<T> extends ApiProps {
   data: T;
 }
 
-// get api value from env
 const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}`;
 
-//  parse json
 export const parseJson = async (value: string) => {
   try {
     return JSON.parse(value);

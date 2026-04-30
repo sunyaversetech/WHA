@@ -18,9 +18,6 @@ interface HeroBannerProps {
 
 export default function HeroBanner({
   title,
-  subtitle,
-  buttonText,
-  buttonLink,
   images,
   type,
   eventIds,
@@ -42,18 +39,6 @@ export default function HeroBanner({
   };
 
   // Set background color based on type
-  const getBgColor = () => {
-    switch (type) {
-      case "events":
-        return "from-blue-700/70 to-blue-900/70";
-      case "deals":
-        return "from-green-700/70 to-green-900/70";
-      case "businesses":
-        return "from-purple-700/70 to-purple-900/70";
-      default:
-        return "from-blue-700/70 to-blue-900/70";
-    }
-  };
 
   // Helper to get the correct link for each type
   const getDetailLink = () => {

@@ -2,7 +2,6 @@
 
 import { memo } from "react";
 import { Calendar, MapPin, Heart, Loader2, Ticket } from "lucide-react";
-import { useFavorites } from "@/contexts/favorites-context";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { ExternalLink, Maximize2, Minimize2, Navigation } from "lucide-react";
+import { ExternalLink, Maximize2, Minimize2 } from "lucide-react";
 import Link from "next/link";
 import { UserLocationButton } from "../Business/business-map";
 
@@ -96,10 +96,6 @@ export default function EventMap({
   isExpanded: boolean;
   onToggleExpand: () => void;
 }) {
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(
-    null,
-  );
-
   return (
     <div className="h-full w-full relative z-0">
       <button

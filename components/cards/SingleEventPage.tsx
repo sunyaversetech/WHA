@@ -2,25 +2,18 @@
 import {
   Calendar,
   MapPin,
-  Share2,
   Mail,
   Ticket,
   Sparkles,
-  ChevronLeft,
   ExternalLink,
-  Check,
   Share,
-  BadgeCheck,
-  Loader2,
   Heart,
   Dot,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import FavoriteButton from "@/components/ui/favorite-button";
 import { useGetSingleEvent } from "@/services/event.service";
 import Image from "next/image";
-import { differenceInDays, format } from "date-fns";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";

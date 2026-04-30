@@ -1,22 +1,8 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
-import Link from "next/link";
-import { useFavorites } from "@/contexts/favorites-context";
-import { useRedeem } from "@/contexts/redeem-context";
-import {
-  Heart,
-  Check,
-  MapPin,
-  Calendar,
-  QrCode,
-  Link2,
-  SquareArrowOutUpRight,
-  Tag,
-} from "lucide-react";
-import type { Deal } from "@/lib/types";
-import { getBusinessById } from "@/lib/data/businesses";
+
+import { Heart, MapPin, Calendar } from "lucide-react";
 import {
   useCreateFavroite,
   useGetUserFavroite,

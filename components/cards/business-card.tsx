@@ -81,7 +81,6 @@ export default function BusinessCard({ business }: { business: any }) {
     ) ?? 0;
   const totalReviews = business?.reviews?.length ?? "no rating yet";
 
-  const categoryInfo = getCategoryInfo();
   const slug = business.business_name.toLowerCase().replace(/[^a-z0-9]/g, "");
 
   const { data: userFavorites } = useGetUserFavroite();

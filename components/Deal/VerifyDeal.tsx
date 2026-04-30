@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { QrCode, ClipboardCheck, Loader2, Camera } from "lucide-react";
+import { ClipboardCheck, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { useVerifySingleDeal } from "@/services/deal.service";

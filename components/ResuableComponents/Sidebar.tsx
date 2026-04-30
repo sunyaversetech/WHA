@@ -1,21 +1,13 @@
 "use client";
 import {
   LayoutDashboard,
-  Users,
-  ChevronDown,
   LucideIcon,
-  Calendar1,
-  HeartHandshake,
-  Album,
   User,
-  CirclePile,
   HeartPlus,
-  Calendar,
   Ticket,
   BadgeDollarSign,
   Settings,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
