@@ -34,7 +34,7 @@ export default function DealsPageClient() {
     deals?.data?.filter((deal) => currentDate <= new Date(deal.valid_till));
 
   return (
-    <div className="flex flex-col h-[70vh] overflow-hidden">
+    <div className={`flex flex-col h-[80vh] overflow-hidden `}>
       {/* <div className="flex-none h-22 max-md:h-fit border-b flex items-center justify-center">
         <div className="w-full max-md:hidden">
           <DealsSearchWithDates />
@@ -44,8 +44,8 @@ export default function DealsPageClient() {
         </div>
       </div> */}
 
-      <div className="flex-1 overflow-y-auto pt-18 md:pt-42  overscroll-contain no-scrollbar relative">
-        <div className="sticky top-0 z-10 bg-gray-100/20 backdrop-blur-md">
+      <div className="flex-1 overflow-y-auto pt-18 md:pt-42 h-[10vh]  overscroll-contain no-scrollbar relative">
+        <div className="sticky top-0 z-50 bg-gray-100/20 backdrop-blur-md">
           <div className="container-modern px-6 py-4">
             <div className="flex items-end justify-end">
               <Drawer>
@@ -94,7 +94,8 @@ export default function DealsPageClient() {
               ))}
             </div>
           ) : data && data.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+            <div
+              className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 ${data.length === 1 ? "h-[20vh]" : "h-full"}`}>
               {data.map((deal) => (
                 <DealCard key={deal._id} deal={deal} />
               ))}

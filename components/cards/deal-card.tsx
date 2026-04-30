@@ -70,7 +70,7 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
         <div className="absolute top-1/2 -left-2 w-4 h-4 bg-white border border-gray-200 rounded-full -translate-y-1/2" />
         <div className="absolute top-1/2 -right-2 w-4 h-4 bg-white border border-gray-200 rounded-full -translate-y-1/2" />
         <div className="relative h-42 w-full">
-          <div className="relative z-999">
+          <div className="relative z-49">
             <div className="flex justify-between px-2 py-2">
               <h3 className="bg-black/50 text-white items-center gap-2  rounded-md py-2 h-8 px-3 font-semibold text-sm flex">
                 {deal.category}
