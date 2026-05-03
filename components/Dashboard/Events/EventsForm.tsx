@@ -71,6 +71,7 @@ export const eventSchema = z.object({
   location: z.string().min(2, "Location is required"),
   latitude: z.number(),
   longitude: z.number(),
+  slug: z.string().optional().nullable(),
 });
 
 export type EventFormValues = z.infer<typeof eventSchema>;

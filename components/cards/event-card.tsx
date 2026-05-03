@@ -69,8 +69,7 @@ const EventCard = memo(function EventCard({
   return (
     <div
       className="group relative overflow-hidden rounded-lg cursor-pointer border border-gray-200"
-      onClick={() => router.push(`/events/${slug}`)}
-    >
+      onClick={() => router.push(`/events/${event.slug}`)}>
       <div className="relative h-48 md:h-52 w-full">
         <Image
           width={500}
@@ -96,8 +95,7 @@ const EventCard = memo(function EventCard({
             handleAddRemoveFavorite();
           }}
           className="absolute top-3 right-3 p-2 bg-black/10 backdrop-blur-md border border-white/30 rounded-full
-           transition-colors duration-200 shadow-lg group/fav hover:bg-white/30 disabled:opacity-70"
-        >
+           transition-colors duration-200 shadow-lg group/fav hover:bg-white/30 disabled:opacity-70">
           {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin text-white" />
           ) : (
@@ -139,8 +137,7 @@ const EventCard = memo(function EventCard({
                 href={event.ticket_link || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2 border border-primary rounded-full hover:bg-white/30 transition-colors duration-200"
-              >
+                className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2 border border-primary rounded-full hover:bg-white/30 transition-colors duration-200">
                 <Ticket className="h-4 w-4 text-primary" />
                 <span className="text-primary font-medium md:text-sm">
                   Ticket
