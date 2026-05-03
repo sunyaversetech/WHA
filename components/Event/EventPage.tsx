@@ -82,13 +82,15 @@ export default function EventsPageClient() {
                   <TabsTrigger
                     value="categories"
                     className="data-[state=active]:bg-gray-100/10! rounded-none data-[state=active]:text-black py-4 data-[state=active]:shadow-none! 
-                    data-[state=active]:border-b-blue-950 border-2">
+                    data-[state=active]:border-b-blue-950 border-2"
+                  >
                     Categories
                   </TabsTrigger>
                   <TabsTrigger
                     value="communities"
                     className="data-[state=active]:bg-gray-100/10! rounded-none data-[state=active]:text-black py-4 data-[state=active]:shadow-none! 
-                    data-[state=active]:border-b-blue-950 border-2">
+                    data-[state=active]:border-b-blue-950 border-2"
+                  >
                     Communities
                   </TabsTrigger>
                 </TabsList>
@@ -117,7 +119,8 @@ export default function EventsPageClient() {
                             isActive
                               ? "bg-primary text-white border-primary"
                               : "bg-white text-slate-600"
-                          }`}>
+                          }`}
+                        >
                           <Icon className="h-4 w-4 mb-1" />
                           <span className="text-[10px] uppercase">
                             {com.name}
@@ -148,13 +151,15 @@ export default function EventsPageClient() {
                   <TabsTrigger
                     value="categories"
                     className="data-[state=active]:bg-gray-100/10! rounded-none data-[state=active]:text-black py-4 data-[state=active]:shadow-none! 
-                    data-[state=active]:border-b-blue-950 border-2">
+                    data-[state=active]:border-b-blue-950 border-2"
+                  >
                     Categories
                   </TabsTrigger>
                   <TabsTrigger
                     value="communities"
                     className="data-[state=active]:bg-gray-100/10! rounded-none data-[state=active]:text-black py-4 data-[state=active]:shadow-none! 
-                    data-[state=active]:border-b-blue-950 border-2">
+                    data-[state=active]:border-b-blue-950 border-2"
+                  >
                     Communities
                   </TabsTrigger>
                 </TabsList>
@@ -183,7 +188,8 @@ export default function EventsPageClient() {
                             isActive
                               ? "bg-primary text-white border-primary"
                               : "bg-white text-slate-600"
-                          }`}>
+                          }`}
+                        >
                           <Icon className="h-4 w-4 mb-1" />
                           <span className="text-[10px] uppercase">
                             {com.name}
@@ -201,7 +207,8 @@ export default function EventsPageClient() {
             variant="outline"
             size="sm"
             onClick={() => setShowMap((prev) => !prev)}
-            className="hidden md:flex">
+            className="hidden md:flex"
+          >
             <MapIcon className="h-4 w-4" />
             {showMap ? "Hide map" : "Show map"}
           </Button>
@@ -209,24 +216,26 @@ export default function EventsPageClient() {
             variant="outline"
             size="sm"
             onClick={() => setIsMapExpanded((prev) => !prev)}
-            className="flex md:hidden">
+            className="flex md:hidden"
+          >
             <MapIcon className="h-4 w-4" />
             {isMapExpanded ? "Hide map" : "Show map"}
           </Button>
         </div>
       </div>
-
       <div className={`flex ${isMapExpanded ? "" : "flex-1"} px-5 gap-6`}>
         <div
           className={`transition-all w-full ${
             isMapExpanded ? "hidden" : showMap ? "lg:w-[55%]" : "w-full"
-          }`}>
+          }`}
+        >
           <div
             className={`grid gap-6 ${
               showMap
                 ? "grid-cols-1 xl:grid-cols-2"
                 : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            }`}>
+            }`}
+          >
             {data.map((event) => (
               <EventCard key={event._id} event={event} />
             ))}
@@ -237,9 +246,11 @@ export default function EventsPageClient() {
           <div
             className={`hidden md:block transition-all shrink-0 ${
               showMap ? "w-[45%]" : "w-0 opacity-0 pointer-events-none"
-            }`}>
+            }`}
+          >
             <div
-              className={`sticky top-[225px] h-[calc(90vh-160px)] overflow-hidden will-change-transform `}>
+              className={`sticky top-[225px] h-[calc(90vh-160px)] overflow-hidden will-change-transform `}
+            >
               <EventMap
                 businesses={data}
                 currentCity={searchParams.get("city") || ""}
@@ -251,11 +262,11 @@ export default function EventsPageClient() {
           </div>
         )}
       </div>
-
       {isMapExpanded && (
         <div className="px-5 pb-5">
           <div
-            className={`${isMapExpanded ? "h-[73vh]" : "h-[calc(80vh-160px)]"}  w-full rounded-xl overflow-hidden border`}>
+            className={`${isMapExpanded ? "h-[73vh]" : "h-[calc(80vh-160px)]"}  w-full rounded-xl overflow-hidden border`}
+          >
             <EventMap
               businesses={data}
               currentCity={searchParams.get("city") || ""}
