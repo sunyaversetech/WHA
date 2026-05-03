@@ -28,10 +28,19 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
+import { createPaymentIntent } from "../Stripe/stripe";
+import { Elements } from "@stripe/react-stripe-js";
+import StripePaymentModal from "../Stripe/StripePaymentModal";
+import { loadStripe } from "@stripe/stripe-js";
+import StripeCheckout from "../Stripe/CheckOut";
 
 function isPromise<T>(value: any): value is Promise<T> {
   return !!value && typeof value.then === "function";
 }
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
+);
 
 /* ─── Loading skeleton ─── */
 function DealDetailSkeleton() {
@@ -51,6 +60,10 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
   } else {
     unwrappedParams = params;
   }
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [isPreparingPayment, setIsPreparingPayment] = useState(false);
 
   const { data: deal, isLoading } = useGetSingleDeal(unwrappedParams.id);
   const router = useRouter();
@@ -85,12 +98,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
     );
   }, [userRedemption]);
 
-  const handleRedeem = async () => {
-    if (!session?.user) {
-      router.push("/auth");
-      toast.error("Please login to redeem");
-      return;
-    }
+  const finalizeRedemption = () => {
     mutate(
       {
         dealId: deal?.data?._id ?? "",
@@ -106,18 +114,27 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
             status: "pending",
           });
           queryClient.invalidateQueries({ queryKey: ["redeem"] });
-          toast.success("Deal claimed! Show the QR code to the business.");
-        },
-        onError: (error) => {
-          setRedemptionResult({
-            success: false,
-            message: error.message,
-            status: "error",
-          });
-          toast.error(error.message);
+          toast.success("Payment successful! Your QR code is ready.");
         },
       },
     );
+  };
+
+  const handleRedeemClick = async () => {
+    if (!session?.user) return router.push("/auth");
+
+    if (deal?.data.price && deal?.data.price > 0) {
+      setIsPreparingPayment(true);
+      setIsModalOpen(true);
+      setIsPreparingPayment(false);
+      return;
+    }
+
+    mutate({
+      dealId: deal?.data._id ?? "",
+      userId: session.user.id,
+      business: deal?.data.user._id ?? "",
+    });
   };
 
   if (isLoading) return <DealDetailSkeleton />;
@@ -132,7 +149,6 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ─── Top nav bar ─── */}
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm ">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
           <Link
@@ -147,6 +163,14 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
+      {isModalOpen && (
+        <StripeCheckout
+          dealId={deal.data._id}
+          price={deal.data.price || 5}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={finalizeRedemption}
+        />
+      )}
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4 mt-5">
         <div className="relative bg-white rounded-2xl shadow-md overflow-visible">
           <Image
@@ -238,8 +262,28 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
             ) : (
               /* Not yet claimed */
               <div className="flex flex-col items-center gap-3">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl mb-4 border border-gray-100">
+                  <span className="font-semibold text-gray-700">Quantity</span>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center bg-white">
+                      -
+                    </button>
+                    <span
+                      className="text-lg font-bold"
+                      style={{ color: "#051e3a" }}>
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center bg-white">
+                      +
+                    </button>
+                  </div>
+                </div>
                 <button
-                  onClick={handleRedeem}
+                  onClick={handleRedeemClick}
                   disabled={isPending}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-4 text-base transition-all shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-60">
                   {isPending ? (

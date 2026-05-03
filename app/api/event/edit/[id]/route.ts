@@ -6,6 +6,14 @@ import z from "zod";
 import Event from "@/server/models/Event.model";
 import { uploadToS3, deleteFromS3 } from "@/server/lib/function";
 
+export function generateSlug(title: string) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim()
+    .replace(/\s+/g, "");
+}
+
 export const eventSchema = z.object({
   _id: z.string().optional(),
   title: z.string().min(2, "Title is required"),
@@ -26,6 +34,7 @@ export const eventSchema = z.object({
   email: z.email("Invalid email address").optional().or(z.literal("")),
   phone_number: z.string().optional().or(z.literal("")),
   website_link: z.string().optional(),
+  slug: z.string(),
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().optional(),
   category: z.string().min(1, "Category is required"),
@@ -101,17 +110,15 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     }
 
     const validatedData = eventSchema.partial().parse(rawData);
+
     const event = await Event.findById(eventId);
     const isOwner = event.user.toString() === userId;
-    // const isSuperAdmin = session?.user?.category === "super-admin";
+    const isSuperAdmin = session?.user?.category === "super-admin";
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    if (
-      !isOwner
-      // && !isSuperAdmin
-    ) {
+    if (!isOwner && !isSuperAdmin) {
       return NextResponse.json(
         { error: "You can only edit your own events" },
         { status: 403 },
@@ -152,7 +159,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     const updatePayload = {
       ...defaultEmptyFields,
       ...validatedData,
-      ...formattedDates, // Spread the formatted dateFrom and dateTo here!
+      ...formattedDates,
       image: finalImageUrl,
     };
 
@@ -163,6 +170,10 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       updatePayload.ticket_price = 0;
     } else if (updatePayload.ticket_price) {
       updatePayload.ticket_price = Number(updatePayload.ticket_price);
+    }
+
+    if (validatedData.title) {
+      updatePayload.slug = generateSlug(validatedData.title);
     }
 
     const updatedEvent = await Event.findByIdAndUpdate(

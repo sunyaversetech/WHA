@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectToDb } from "@/lib/db";
 import { uploadToS3 } from "@/server/lib/function";
 import Event from "@/server/models/Event.model";
+import { generateSlug } from "./edit/[id]/route";
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,6 +35,8 @@ export async function POST(req: NextRequest) {
     const endTime = formData.get("endTime") as string;
     const latitude = parseFloat(formData.get("latitude") as string);
     const longitude = parseFloat(formData.get("longitude") as string);
+
+    const slug = generateSlug(title);
 
     const file = formData.get("image") as File;
 
@@ -84,6 +87,7 @@ export async function POST(req: NextRequest) {
       website_link,
       city,
       community,
+      slug,
       category,
       image: uploadResult.Location,
 

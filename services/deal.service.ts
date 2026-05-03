@@ -20,6 +20,7 @@ export type DealsGetValues = {
   title: string;
   current_redemptions: number;
   max_redemptions: number;
+  price: number;
   valid_till: Date;
   deals_for: string;
   category?: string;
@@ -60,7 +61,7 @@ export const useGetDealsRedemption = (id: string) => {
   return useFetcher<ApiResponseType<any>>(
     ["deals-redemption", id],
     null,
-    `/api/deals/redeem/${id}`,
+    `/api/deals/redeem/single/${id}`,
   );
 };
 

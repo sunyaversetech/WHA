@@ -43,7 +43,7 @@ export default function EventDetailPage() {
   const { data: session } = useSession();
   const { mutate, isPending } = useCreateFavroite();
   const router = useRouter();
-  const { data: event, isLoading } = useGetSingleEvent(slug);
+  const { data: event, isLoading, isFetching } = useGetSingleEvent(slug);
   const queryClient = useQueryClient();
   const DefaultIcon = L.icon({
     iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -60,7 +60,7 @@ export default function EventDetailPage() {
   } | null>(null);
 
   const { mutate: redeem, isPending: redeemPending } = useRedeemEventCode();
-  const { data } = useGetEventRedeem();
+  const { data, isLoading: redeemLoading } = useGetEventRedeem();
   const { onOpen } = useAuthModal();
 
   const [copied, setCopied] = useState(false);
@@ -76,8 +76,8 @@ export default function EventDetailPage() {
 
   const userRedemption = data?.data?.find(
     (redemption: any) =>
-      redemption.user === session?.user?.id &&
-      redemption.event._id === event?.data?._id,
+      redemption?.user === session?.user?.id &&
+      redemption?.event?._id === event?.data?._id,
   );
 
   useEffect(() => {
@@ -174,7 +174,7 @@ export default function EventDetailPage() {
     (item) => (item._id ?? "").toString() === EventId?.toString(),
   );
 
-  if (isLoading) {
+  if (isLoading || redeemLoading || isFetching) {
     <EventDetailsSkeleton />;
   }
 
@@ -236,13 +236,13 @@ export default function EventDetailPage() {
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
                   <span className="font-medium text-foreground">
-                    {event?.data.dateRange?.from
+                    {event?.data?.dateRange?.from
                       ? `${formatDate(event?.data?.dateRange.from, "dd MMM yyyy")} ${
                           event?.data?.dateRange.from !==
                             event?.data?.dateRange.to &&
                           event?.data?.dateRange.to
                             ? `- ${formatDate(
-                                event?.data.dateRange.to,
+                                event?.data?.dateRange.to,
                                 "dd MMM yyyy",
                               )}`
                             : ""
@@ -347,7 +347,7 @@ export default function EventDetailPage() {
 
                     {event?.data?.ticket_link ? (
                       <Link
-                        href={event.data.ticket_link}
+                        href={event?.data?.ticket_link}
                         target="_blank"
                         className="w-full block bg-primary text-white rounded-full py-3 text-center font-semibold hover:opacity-90 transition">
                         Get Tickets
@@ -409,7 +409,7 @@ export default function EventDetailPage() {
                           <div>
                             <a
                               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                event?.data.location || "",
+                                event?.data?.location || "",
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -429,13 +429,13 @@ export default function EventDetailPage() {
 
                         <div className="bg-white p-3 rounded-lg border mb-3">
                           <QRCodeCanvas
-                            value={redemptionResult.code || ""}
+                            value={redemptionResult?.code || ""}
                             size={120}
                           />
                         </div>
 
                         <code className="text-lg font-mono font-bold tracking-widest text-gray-800">
-                          {redemptionResult.code}
+                          {redemptionResult?.code}
                         </code>
                       </div>
                     )}
@@ -450,7 +450,7 @@ export default function EventDetailPage() {
                   {event?.data?.description && (
                     <div
                       dangerouslySetInnerHTML={{
-                        __html: event.data.description,
+                        __html: event?.data?.description,
                       }}
                       className="text-gray-600 leading-relaxed"
                     />
@@ -475,7 +475,10 @@ export default function EventDetailPage() {
                         />
 
                         <Marker
-                          position={[event.data.latitude, event.data.longitude]}
+                          position={[
+                            event?.data?.latitude,
+                            event?.data?.longitude,
+                          ]}
                           icon={DefaultIcon}
                           eventHandlers={{
                             click: () => {
@@ -493,10 +496,10 @@ export default function EventDetailPage() {
                   )}
 
                   <div className="mt-4">
-                    <span className="text-sm">{event?.data.location}</span>
+                    <span className="text-sm">{event?.data?.location}</span>
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        event?.data.location || "",
+                        event?.data?.location || "",
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -547,7 +550,7 @@ export default function EventDetailPage() {
                           </div>
                           <span>
                             (
-                            {event?.data.reviews &&
+                            {event?.data?.reviews &&
                             event?.data?.reviews?.length > 0
                               ? event?.data?.reviews?.length
                               : "No Review Yet"}

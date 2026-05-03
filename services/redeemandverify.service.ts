@@ -34,6 +34,17 @@ export const useRedeemCode = () => {
   });
 };
 
+export const useReddemMultipleCode = () => {
+  return useMutation<RedeemCodeFormResponseType, any, RedeemCodeType[]>({
+    mutationKey: ["redeemMultiple"],
+    mutationFn: (data: RedeemCodeType[]) =>
+      Post<RedeemCodeType[], RedeemCodeFormResponseType>({
+        url: "/api/deals/redeem/multiple",
+        data: data,
+      }),
+  });
+};
+
 export const useGetRedeem = () => {
   return useFetcher<ApiResponseType<RedeemCodeResponseType[]>>(
     "redeem",

@@ -33,10 +33,8 @@ export default function EventsBackend() {
 
     return data.data
       .filter((event) => {
-        // Use fallback empty string to satisfy TypeScript
         const eventDate = new Date(event.dateRange?.from ?? "");
 
-        // Handle invalid dates (optional but recommended)
         if (isNaN(eventDate.getTime())) return false;
 
         return activeTab === "upcoming"
@@ -44,7 +42,6 @@ export default function EventsBackend() {
           : eventDate < today;
       })
       .sort((a, b) => {
-        // Use nullish coalescing (?? "") here as well
         const dateA = new Date(a.dateRange?.from ?? "").getTime();
         const dateB = new Date(b.dateRange?.from ?? "").getTime();
 

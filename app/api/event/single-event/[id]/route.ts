@@ -11,12 +11,13 @@ export async function GET(request: NextRequest, { params }: Props) {
 
     const { id } = await params;
 
-    const searchRegex = id.split("").join("\\s*");
-    const event = await Event.findOne({
-      title: { $regex: `^${searchRegex}$`, $options: "i" },
-    })
+    const event = await Event.findOne({ slug: id })
       .populate("user", "email business_name city location image")
       .lean();
+
+    if (!event) {
+      return NextResponse.json({ message: "Event not found" }, { status: 404 });
+    }
     const review = await Review.find({ business_id: event._id })
       .sort({
         createdAt: -1,
