@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 
-import { Marcellus, Montserrat } from "next/font/google";
+import { Marcellus, Montserrat, Quicksand } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/Auth/SessionWrapper";
 import ReactQueryContext from "@/lib/ReactQueryContext";
@@ -11,18 +11,24 @@ import NavbarProvider from "@/components/ResuableComponents/NavbarProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthModal } from "@/components/Auth/DialogLogin/AuthModel";
 
-const marcellus = Marcellus({
-  weight: "400",
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-marcellus",
-});
+// const marcellus = Marcellus({
+//   weight: "400",
+//   subsets: ["latin"],
+//   display: "swap",
+//   variable: "--font-marcellus",
+// });
 
-const montserrat = Montserrat({
+// const montserrat = Montserrat({
+//   subsets: ["latin"],
+//   display: "swap",
+//   variable: "--font-montserrat",
+//   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+// });
+
+// FONTS
+const quicksand = Quicksand({
   subsets: ["latin"],
-  display: "swap",
-  variable: "--font-montserrat",
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -38,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${marcellus.variable} ${montserrat.variable} font-montserrat antialiased bg-white overflow-y-scroll overflow-x-hidden `}
+        className={` ${quicksand.className}  antialiased bg-white overflow-y-scroll overflow-x-hidden `}
       >
         <ReactQueryContext>
           <CityFilterProvider>

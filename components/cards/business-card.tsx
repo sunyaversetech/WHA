@@ -111,7 +111,8 @@ export default function BusinessCard({ business }: { business: any }) {
   return (
     <div
       className=" overflow-hidden group cursor-pointer"
-      onClick={() => router.push(`/businesses/${slug}`)}>
+      onClick={() => router.push(`/businesses/${slug}`)}
+    >
       <div className="relative w-full h-56 md:h-60 rounded-xl overflow-hidden group">
         <Image
           width={500}
@@ -136,7 +137,8 @@ export default function BusinessCard({ business }: { business: any }) {
                 handleAddRemoveFavorite();
               }}
               className="absolute top-3 right-3 p-2 bg-black/10 backdrop-blur-md border border-white/30 rounded-full
-                       transition-colors duration-200 shadow-lg group/fav hover:bg-white/30 disabled:opacity-70">
+                       transition-colors duration-200 shadow-lg group/fav hover:bg-white/30 disabled:opacity-70"
+            >
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin text-white" />
               ) : (
@@ -156,7 +158,7 @@ export default function BusinessCard({ business }: { business: any }) {
       <div className="pt-3">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <h3 className="text-base md:text-lg font-semibold text-gray-900 leading-tight">
+            <h3 className="text-primary font-bold text-base md:text-lg line-clamp-2 leading-tight">
               {business.business_name}
             </h3>
 

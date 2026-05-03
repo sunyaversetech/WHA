@@ -82,17 +82,18 @@ export default function DealsPageClient() {
 
         <div className="container-modern pb-20 px-6">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2, 3, 4].map((i) => (
                 <Skeleton
                   key={i}
-                  className="h-72 w-full animate-pulse rounded-xl"
+                  className="h-42 w-full animate-pulse rounded-xl"
                 />
               ))}
             </div>
           ) : data && data.length > 0 ? (
             <div
-              className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 ${data.length === 1 ? "max-h-[20vh]" : "h-full"}`}>
+              className={`grid grid-cols-1 md:grid-cols-2  gap-3 md:gap-6 ${data.length === 1 ? "max-h-[20vh]" : "h-full"}`}
+            >
               {data.map((deal) => (
                 <DealCard key={deal._id} deal={deal} />
               ))}

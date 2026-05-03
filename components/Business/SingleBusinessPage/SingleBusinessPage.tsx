@@ -137,7 +137,8 @@ export default function BusinessPage() {
             <div className="hidden flex items-center gap-2 md:flex md:items-center md:gap-2">
               <button
                 onClick={handleAddRemoveFavorite}
-                className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition">
+                className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition"
+              >
                 {isPending ? (
                   <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                 ) : (
@@ -156,7 +157,8 @@ export default function BusinessPage() {
               <button
                 onClick={handleShare}
                 className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition-all active:scale-90"
-                title="Share business">
+                title="Share business"
+              >
                 <Share className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </button>
             </div>
@@ -213,7 +215,8 @@ export default function BusinessPage() {
               <Button
                 variant={"ghost"}
                 className="p-0 transition-all hover:scale-105 active:scale-95"
-                onClick={() => router.back()}>
+                onClick={() => router.back()}
+              >
                 <ChevronLeft
                   className="h-9 w-9 cursor-pointer rounded-full border  p-1.5 
                          text-primary bg-white transition-all hover:scale-105 active:scale-95"
@@ -222,7 +225,8 @@ export default function BusinessPage() {
               <div className="flex gap-2">
                 <button
                   onClick={handleAddRemoveFavorite}
-                  className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95">
+                  className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95"
+                >
                   {isPending ? (
                     <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                   ) : (
@@ -240,7 +244,8 @@ export default function BusinessPage() {
 
                 <button
                   className="flex items-center justify-center p-2 border rounded-full bg-white transition-all hover:scale-105 active:scale-95"
-                  onClick={handleShare}>
+                  onClick={handleShare}
+                >
                   <Share className="h-5 w-5 text-primary" />
                 </button>
               </div>
@@ -249,34 +254,38 @@ export default function BusinessPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-        <div className="lg:col-span-2 space-y-6">
-          <Tabs defaultValue="services" className="w-full  ">
-            <TabsList className="w-full border-none!  bg-[#fafafa]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4 md:mt-8">
+        <div className="lg:col-span-2">
+          <Tabs defaultValue="services" className="w-full">
+            <TabsList className="w-full border-none! p-0">
               <TabsTrigger
                 value="services"
-                className="data-[state=active]:bg-gray-100/10! data-[state=active]:shadow-none! data-[state=active]:text-primary!  
-                data-[state=active]:border-b-blue-950/80 rounded-none border-2 py-5">
+                className="data-[state=active]:bg-priamry!  data-[state=active]:shadow-none! data-[state=active]:text-white!  
+                data-[state=active]:border-b-blue-950/80 rounded-full border-2 p-2 md:py-5 text-base md:text-xl font-bold text-primary!"
+              >
                 Services
               </TabsTrigger>
               <TabsTrigger
                 value="event"
-                className="data-[state=active]:bg-gray-100/10! data-[state=active]:shadow-none! data-[state=active]:text-primary!  
-                data-[state=active]:border-b-blue-950/80 rounded-none border-2 py-5">
+                className="data-[state=active]:bg-priamry! data-[state=active]:shadow-none! data-[state=active]:text-white!  
+                data-[state=active]:border-b-blue-950/80 rounded-full border-2 p-2 md:py-5 text-base md:text-xl font-bold text-primary!"
+              >
                 Event
               </TabsTrigger>
               <TabsTrigger
                 value="deal"
-                className="data-[state=active]:bg-gray-100/10! data-[state=active]:shadow-none! data-[state=active]:text-primary!  
-                data-[state=active]:border-b-blue-950/80 rounded-none border-2 py-5">
+                className="data-[state=active]:bg-primary! data-[state=active]:shadow-none! data-[state=active]:text-white!  
+                data-[state=active]:border-b-blue-950/80 rounded-full border-2 p-2 md:py-5 text-base md:text-xl font-bold text-primary!"
+              >
                 Deals
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="services" className="w-full mt-2">
+            <TabsContent value="services" className="w-full mt-6">
               <Button
                 type="button"
                 variant={"outline"}
-                className="h-20  flex flex-col text-left items-start w-full border-slate-400 p-4! rounded-md">
+                className="h-12  flex flex-col text-left items-start w-full border-slate-400 p-4! rounded-md"
+              >
                 <p className="font-medium flex items-center gap-2">
                   <Tag className="w-4 h-4" /> {data?.data.business_category}
                 </p>
@@ -284,7 +293,8 @@ export default function BusinessPage() {
             </TabsContent>
             <TabsContent value="event" className="mt-2">
               <div
-                className={`grid grid-cols-1 md:${data?.data?.event && data?.data?.event?.length < 2 ? "grid-cols-1" : "grid-cols-2"} gap-2`}>
+                className={`grid grid-cols-1 md:${data?.data?.event && data?.data?.event?.length < 2 ? "grid-cols-1" : "grid-cols-2"} gap-2`}
+              >
                 {data?.data.event && data?.data.event.length > 0 ? (
                   data?.data.event.slice(0, 2).map((item: EventFormValues) => {
                     return <EventCard key={item._id} event={item} />;
@@ -296,7 +306,8 @@ export default function BusinessPage() {
                 )}
               </div>
               <div
-                className={`${data?.data.event && data?.data.event?.length < 3 ? "hidden" : "flex"} w-full m-auto mt-2 justify-center`}>
+                className={`${data?.data.event && data?.data.event?.length < 3 ? "hidden" : "flex"} w-full m-auto mt-2 justify-center`}
+              >
                 <EventDrawer
                   event={data?.data.event}
                   user={data?.data.business_name}
@@ -305,7 +316,8 @@ export default function BusinessPage() {
             </TabsContent>
             <TabsContent value="deal" className="mt-2">
               <div
-                className={`grid grid-cols-1 md:${data?.data?.deal && data?.data?.deal?.length < 2 ? "grid-cols-1" : "grid-cols-2"} gap-2`}>
+                className={`grid grid-cols-1 md:${data?.data?.deal && data?.data?.deal?.length < 2 ? "grid-cols-1" : "grid-cols-2"} gap-2`}
+              >
                 {data?.data?.deal && data?.data?.deal?.length > 0 ? (
                   data?.data?.deal
                     .splice(0, 2)
@@ -317,7 +329,8 @@ export default function BusinessPage() {
                 )}
               </div>
               <div
-                className={`${data?.data.deal && data?.data.deal?.length < 3 ? "hidden" : "flex"} w-full m-auto mt-2 justify-center`}>
+                className={`${data?.data.deal && data?.data.deal?.length < 3 ? "hidden" : "flex"} w-full m-auto mt-2 justify-center`}
+              >
                 <DealDrawer
                   deal={data?.data.deal ?? []}
                   user={data?.data.business_name ?? ""}
@@ -328,8 +341,16 @@ export default function BusinessPage() {
 
           <BusinessReviewSection reviews={reviews?.data || []} />
 
-          <div className="space-y-4 z-20">
-            <h2 className="text-xl font-semibold">Our Location</h2>
+          <div className="md:card-lg md:p-4 md:p-6 pb-4 md:pb-0">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
+              About
+            </h2>
+          </div>
+
+          <div className="md:card-lg md:p-4 md:p-6 pb-4 md:pb-0">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
+              Location
+            </h2>
             {data?.data?.latitude && data?.data?.longitude ? (
               <Map
                 latitude={data.data.latitude}
@@ -341,8 +362,28 @@ export default function BusinessPage() {
                 No Map Location available
               </div>
             )}
+
+            <div className="mt-4">
+              <span className="text-sm">{data?.data.location}</span>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  data?.data.location || "",
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-primary text-sm pl-1"
+              >
+                Get Directions
+              </a>
+            </div>
           </div>
-          <BusinessHours hours={data?.data?.hours} open={true} />
+
+          <div className="md:card-lg md:p-4 md:p-6 pb-4 md:pb-0">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
+              Operating Hours
+            </h2>
+            <BusinessHours hours={data?.data?.hours} open={true} />
+          </div>
         </div>
 
         <div className="space-y-6 sticky top-32 self-start">
@@ -391,7 +432,8 @@ export default function BusinessPage() {
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-bold text-primary text-sm">
+                      className="font-bold text-primary text-sm"
+                    >
                       Get Directions
                     </a>
                   </div>

@@ -68,9 +68,10 @@ const EventCard = memo(function EventCard({
 
   return (
     <div
-      className="group relative overflow-hidden rounded-lg cursor-pointer"
-      onClick={() => router.push(`/events/${slug}`)}>
-      <div className="relative h-56 md:h-60 w-full">
+      className="group relative overflow-hidden rounded-lg cursor-pointer border border-gray-200"
+      onClick={() => router.push(`/events/${slug}`)}
+    >
+      <div className="relative h-48 md:h-52 w-full">
         <Image
           width={500}
           height={500}
@@ -95,7 +96,8 @@ const EventCard = memo(function EventCard({
             handleAddRemoveFavorite();
           }}
           className="absolute top-3 right-3 p-2 bg-black/10 backdrop-blur-md border border-white/30 rounded-full
-           transition-colors duration-200 shadow-lg group/fav hover:bg-white/30 disabled:opacity-70">
+           transition-colors duration-200 shadow-lg group/fav hover:bg-white/30 disabled:opacity-70"
+        >
           {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin text-white" />
           ) : (
@@ -108,50 +110,50 @@ const EventCard = memo(function EventCard({
             />
           )}
         </button>
+      </div>
+      <div className="border-t border-white/20">
+        <div className="py-3 px-4 md:p-4">
+          <h3 className="text-primary font-bold text-base md:text-lg line-clamp-2 mb-2 md:mb-3 leading-tight">
+            {event.title}
+          </h3>
 
-        <div className="absolute bottom-0 left-0 right-0 bg-black/10 backdrop-blur-sm border-t border-white/20">
-          <div className="py-3 px-4 md:p-4">
-            <h3 className="text-white font-bold text-sm md:text-md line-clamp-2 mb-2 md:mb-3 leading-tight">
-              {event.title}
-            </h3>
-
-            <div className="flex items-center justify-between text-white/90 text-sm">
-              <div className="space-x-6 max-w-[70%]">
-                <div className="flex items-center truncate pb-1">
-                  <MapPin className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                  <span className="truncate text-xs md:text-sm">
-                    {event.venue || "Venue TBA"}
-                  </span>
-                </div>
-
-                <div className="flex items-center">
-                  <Calendar className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                  <span className="truncate text-xs md:text-sm">
-                    {dateDisplay}
-                  </span>
-                </div>
+          <div className="flex items-center justify-between text-primary text-sm">
+            <div className="space-x-6 max-w-[70%]">
+              <div className="flex items-center truncate pb-2">
+                <MapPin className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                <span className="truncate text-xs md:text-sm">
+                  {event.venue || "Venue TBA"}
+                </span>
               </div>
 
-              {event.price_category === "paid" ? (
-                <a
-                  href={event.ticket_link || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg hover:bg-white/30 transition-colors duration-200">
-                  <Ticket className="h-4 w-4 text-white" />
-                  <span className="text-white font-medium md:text-sm">
-                    Ticket
-                  </span>
-                </a>
-              ) : (
-                <div className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-md transition-colors duration-200">
-                  <Ticket className="h-4 w-4 text-white" />
-                  <span className="text-white font-medium md:text-sm">
-                    FREE
-                  </span>
-                </div>
-              )}
+              <div className="flex items-center">
+                <Calendar className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                <span className="truncate text-xs md:text-sm">
+                  {dateDisplay}
+                </span>
+              </div>
             </div>
+
+            {event.price_category === "paid" ? (
+              <a
+                href={event.ticket_link || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2 border border-primary rounded-full hover:bg-white/30 transition-colors duration-200"
+              >
+                <Ticket className="h-4 w-4 text-primary" />
+                <span className="text-primary font-medium md:text-sm">
+                  Ticket
+                </span>
+              </a>
+            ) : (
+              <div className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2  border border-primary rounded-full transition-colors duration-200">
+                <Ticket className="h-4 w-4 text-primary" />
+                <span className="text-primary font-medium md:text-sm">
+                  FREE
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

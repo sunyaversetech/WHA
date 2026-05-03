@@ -117,77 +117,12 @@ export default function BusinessReviewSection({
   };
 
   return (
-    <div className=" mx-auto space-y-4 ">
-      <h2 className="text-xl font-bold tracking-wider">Reviews</h2>
-      <Card className="border-slate-200 shadow-sm overflow-hidden p-0 mt-0">
-        <CardContent className="pt-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="rating"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold text-slate-700">
-                      How would you rate your experience? *
-                    </FormLabel>
-                    <div className="flex gap-2 mt-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={cn(
-                            "w-8 h-8 cursor-pointer transition-all hover:scale-110",
-                            star <= field.value
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-slate-300",
-                          )}
-                          onClick={() => field.onChange(star)}
-                        />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="comment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold text-slate-700">
-                      Your Feedback *
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Write your thoughts here..."
-                        className="min-h-[120px] bg-slate-50/50 focus:bg-white transition-colors"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end mb-4">
-                <Button type="submit">
-                  {false ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5 mr-2" />
-                  )}
-                  Post Review
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
+    <div className=" mx-auto space-y-4 md:card-lg md:p-4 md:p-6 pb-4 md:pb-0">
       <div className="space-y-6 mt-10">
-        <div className="flex items-center gap-3 px-2">
-          <h3 className="text-2xl font-bold text-slate-900">Recent Reviews</h3>
+        <div className="flex items-center gap-3 justify-between">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
+            Reviews
+          </h2>
           <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">
             {reviews?.length}
           </span>
@@ -200,7 +135,8 @@ export default function BusinessReviewSection({
             reviews.splice(0, 3)?.map((review) => (
               <div
                 key={review._id}
-                className="p-6 rounded-2xl border   hover:border-slate-200 transition-all shadow-sm">
+                className="p-6 rounded-2xl border   hover:border-slate-200 transition-all shadow-sm"
+              >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
                     <Avatar>
@@ -277,6 +213,76 @@ export default function BusinessReviewSection({
           )}
         </div>
       </div>
+      {/* 
+      <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
+        Reviews
+      </h2> */}
+
+      <Card className="border-slate-200 shadow-sm overflow-hidden p-0 mt-0">
+        <CardContent className="pt-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="rating"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base text-gray-800 ">
+                      How would you rate your experience? *
+                    </FormLabel>
+                    <div className="flex gap-2 mt-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={cn(
+                            "w-8 h-8 cursor-pointer transition-all hover:scale-110",
+                            star <= field.value
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-slate-300",
+                          )}
+                          onClick={() => field.onChange(star)}
+                        />
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="comment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold text-slate-700">
+                      Your Feedback *
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Write your thoughts here..."
+                        className="min-h-[120px] bg-slate-50/50 focus:bg-white transition-colors"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end mb-4">
+                <Button type="submit">
+                  {false ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5 mr-2" />
+                  )}
+                  Post Review
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
