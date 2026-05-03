@@ -27,7 +27,6 @@ export default function StripeCheckout({
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Fetch new intent whenever quantity changes
   useEffect(() => {
     async function updateIntent() {
       setLoading(true);
@@ -82,7 +81,6 @@ export default function StripeCheckout({
           </div>
         </div>
 
-        {/* Stripe Elements */}
         <div className="p-6">
           {loading ? (
             <div className="h-64 flex flex-col items-center justify-center gap-3">
@@ -120,16 +118,21 @@ function InternalForm({ total, quantity, onSuccess }: any) {
     if (!stripe || !elements) return;
 
     setIsPaying(true);
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      redirect: "if_required",
-    });
+    try {
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        redirect: "if_required",
+      });
 
-    if (error) {
-      alert(error.message);
+      if (error) {
+        alert(error.message);
+        setIsPaying(false);
+      } else if (paymentIntent && paymentIntent.status === "succeeded") {
+        await onSuccess(paymentIntent.id, quantity);
+      }
+    } catch (err) {
+      console.error(err);
       setIsPaying(false);
-    } else if (paymentIntent.status === "succeeded") {
-      onSuccess(paymentIntent.id, quantity);
     }
   };
 

@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
     const max_redemptions = formData.get("max_redemptions") as string;
     const city = formData.get("city") as string;
     const file = formData.get("image") as File | null;
+    const price = formData.get("price") as string;
 
     if (
       !title ||
@@ -34,7 +35,8 @@ export async function POST(req: NextRequest) {
       !terms_for_the_deal ||
       !city ||
       !category ||
-      !file
+      !file ||
+      !price
     ) {
       return NextResponse.json(
         { error: "Missing required fields or image" },
@@ -49,6 +51,7 @@ export async function POST(req: NextRequest) {
       title,
       valid_till: new Date(valid_till),
       category,
+      price,
       user: (session.user as any).id,
       description,
       terms_for_the_deal,

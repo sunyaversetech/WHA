@@ -115,6 +115,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
           });
           queryClient.invalidateQueries({ queryKey: ["redeem"] });
           toast.success("Payment successful! Your QR code is ready.");
+          setIsModalOpen(false);
         },
       },
     );
@@ -262,7 +263,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
             ) : (
               /* Not yet claimed */
               <div className="flex flex-col items-center gap-3">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl mb-4 border border-gray-100">
+                {/* <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl mb-4 border border-gray-100">
                   <span className="font-semibold text-gray-700">Quantity</span>
                   <div className="flex items-center gap-4">
                     <button
@@ -281,7 +282,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                       +
                     </button>
                   </div>
-                </div>
+                </div> */}
                 <button
                   onClick={handleRedeemClick}
                   disabled={isPending}

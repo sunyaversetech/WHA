@@ -41,6 +41,7 @@ export const dealSchema = z.object({
   max_redemptions: z.number().min(1, "Max redemptions is required"),
   category: z.string().min(1, "Category is required"),
   city: z.string().min(1, "City is required"),
+  price: z.number().min(1, "Price is required"),
   image: z
     .any()
     .refine((file) => file?.size <= 3000000, `Max image size is 3MB.`)
@@ -62,6 +63,7 @@ export default function DealForm() {
       terms_for_the_deal: "",
       category: "",
       city: "",
+      price: 0,
     },
   });
 
@@ -76,6 +78,7 @@ export default function DealForm() {
     formData.append("category", values.category);
     formData.append("max_redemptions", values.max_redemptions.toString());
     formData.append("city", values.city);
+    formData.append("price", values.price.toString());
 
     if (values.image) {
       formData.append("image", values.image);
@@ -115,6 +118,26 @@ export default function DealForm() {
                 <FormLabel>Deal Title</FormLabel>
                 <FormControl>
                   <Input placeholder="Summer Flash Sale" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Deal Price (optional for online payment only)
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter Price in AUD"
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

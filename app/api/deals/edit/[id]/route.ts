@@ -19,6 +19,7 @@ export const dealSchema = z.object({
   category: z.string().optional(),
   city: z.string().optional(),
   max_redemptions: z.coerce.number().optional(),
+  price: z.coerce.number().optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: RouteContext) {
