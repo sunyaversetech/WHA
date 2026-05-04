@@ -7,6 +7,7 @@ import {
   Ticket,
   BadgeDollarSign,
   Settings,
+  TicketCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -69,6 +70,13 @@ const Sidebar = () => {
           link: "/dashboard/events",
           hasDropdown: false,
           active: pathname.startsWith("/dashboard/events"),
+        },
+        {
+          name: "tickets",
+          icon: TicketCheck,
+          link: "/dashboard/tickets",
+          hasDropdown: false,
+          active: pathname.startsWith("/dashboard/tickets"),
         },
       ],
     },
