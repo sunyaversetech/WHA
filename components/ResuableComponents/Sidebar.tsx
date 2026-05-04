@@ -11,8 +11,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-
-import { useState } from "react";
 import Image from "next/image";
 
 export type NavItem = {
@@ -30,7 +28,6 @@ export type NavGroup = {
 };
 
 const Sidebar = () => {
-  const [openDropdowns, setOpenDropdowns] = useState<string[]>([]);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentCity = searchParams.get("city");
@@ -155,47 +152,22 @@ const Sidebar = () => {
             <div className="space-y-1">
               {group.items.map((item) => (
                 <div key={item.link}>
-                  {/* <Link
-                    href={item.link || "#"}
-                    title={item.name}
-                    className={`flex items-center 
-                              justify-center md:justify-start
-                              gap-3 
-                              p-3 
-                              rounded-md
-                              transition-all duration-200
-                              w-full
-                              ${
-                                item.active
-                                  ? "bg-slate-100 text-black"
-                                  : "hover:bg-gray-600 hover:text-white"
-                              }`}>
-                
-                    <item.icon size={22} strokeWidth={1.5} />
-
-   
-                    <span className="hidden md:inline capitalize font-medium">
-                      {item.name}
-                    </span>
-                  </Link> */}
-
-                  {/* new design with text  */}
                   <Link
                     href={item.link || "#"}
                     title={item.name}
                     className={`flex flex-col md:flex-row
-              items-center 
-              justify-center md:justify-start
-              gap-1 md:gap-3
-              p-2 md:p-3
-              rounded-md
-              transition-all duration-200
-              w-full
-              ${
-                item.active
-                  ? "bg-slate-100 text-black"
-                  : "hover:bg-gray-600 hover:text-white"
-              }`}>
+                    items-center 
+                    justify-center md:justify-start
+                    gap-1 md:gap-3
+                    p-2 md:p-3
+                    rounded-md
+                    transition-all duration-200
+                    w-full
+                    ${
+                      item.active
+                        ? "bg-slate-100 text-black"
+                        : "hover:bg-gray-600 hover:text-white"
+                    }`}>
                     {/* ICON */}
                     <item.icon size={22} strokeWidth={1.5} />
 
