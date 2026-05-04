@@ -183,8 +183,6 @@ export function EventForm() {
     });
   };
 
-  console.log("Form Errors:", form.getValues());
-
   return (
     <div className="flex-1 h-auto overflow-y-auto mb-20">
       <Form {...form}>

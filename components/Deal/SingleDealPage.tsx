@@ -28,21 +28,13 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
-import { createPaymentIntent } from "../Stripe/stripe";
-import { Elements } from "@stripe/react-stripe-js";
-import StripePaymentModal from "../Stripe/StripePaymentModal";
-import { loadStripe } from "@stripe/stripe-js";
 import StripeCheckout from "../Stripe/CheckOut";
+import { Button } from "../ui/button";
 
 function isPromise<T>(value: any): value is Promise<T> {
   return !!value && typeof value.then === "function";
 }
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-);
-
-/* ─── Loading skeleton ─── */
 function DealDetailSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 gap-4">
@@ -62,7 +54,6 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
   }
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [quantity, setQuantity] = useState(1);
   const [isPreparingPayment, setIsPreparingPayment] = useState(false);
 
   const { data: deal, isLoading } = useGetSingleDeal(unwrappedParams.id);
@@ -221,44 +212,22 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
               </Link>
             )} */}
 
-            {/* Dashed divider */}
             <div className="border-t-2 border-dashed border-gray-200 my-6" />
 
-            {/* ── CTA / Redemption area ── */}
-            {isVerified ? (
-              /* Already verified / used */
+            {isClaimed ? (
               <div className="flex flex-col items-center gap-3 rounded-xl bg-green-50 border border-green-200 px-6 py-8 text-center">
                 <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
                   <Check className="h-6 w-6 text-green-600" />
                 </div>
-                <p className="text-lg font-bold text-green-800">
-                  Deal Redeemed!
+                <p className="text-lg font-bold text-black">
+                  Your Ticket is ready click the link below to view it!
                 </p>
-                <p className="text-sm text-green-600 max-w-xs">
-                  You have already used this deal. Thanks for visiting!
-                </p>
-              </div>
-            ) : isClaimed ? (
-              /* Claimed — show QR */
-              <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-200 bg-white px-6 py-8 text-center shadow-inner">
-                <p className="text-base font-bold text-gray-900">
-                  Show this to the business
-                </p>
-                <div className="bg-white p-4 rounded-2xl shadow-md border border-gray-100">
-                  <QRCodeCanvas
-                    value={redemptionResult?.code || ""}
-                    size={160}
-                  />
-                </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-xl px-6 py-3 w-full max-w-xs">
-                  <code className="text-xl font-mono font-bold tracking-widest text-gray-800">
-                    {redemptionResult?.code}
-                  </code>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-red-500">
-                  <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                  Code expires when the deal expires
-                </div>
+                <Button
+                  onClick={() => router.push("/dashboard/tickets")}
+                  variant={"outline"}
+                  className="text-sm p-2 w-40 font-bold  text-green-600 max-w-xs">
+                  Ticket
+                </Button>
               </div>
             ) : (
               /* Not yet claimed */

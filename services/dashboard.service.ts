@@ -8,3 +8,11 @@ export const useGetDashboardData = () => {
     `/api/dashboard`,
   );
 };
+
+export const useGetTickets = () => {
+  return useFetcher<ApiResponseType<any[]>>(
+    ["tickets-dashboard"],
+    null,
+    `/api/tickets`,
+  );
+};
