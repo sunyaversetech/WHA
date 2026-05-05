@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/use-media-query";
-
 import {
   Dialog,
   DialogContent,
@@ -41,19 +40,107 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+type LoginValues = z.infer<typeof loginSchema>;
+
+// ✅ Declared OUTSIDE AuthModal — stable reference, no re-creation on render
+interface AuthFormProps {
+  form: UseFormReturn<LoginValues>;
+  onSubmit: (values: LoginValues) => Promise<void>;
+  loading: boolean;
+  showPassword: boolean;
+  setShowPassword: (val: boolean) => void;
+}
+
+const AuthForm = ({
+  form,
+  onSubmit,
+  loading,
+  showPassword,
+  setShowPassword,
+}: AuthFormProps) => (
+  <div className="px-4 md:px-0">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input placeholder="Email Address" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <div className="relative">
+                <FormControl>
+                  <Input
+                    placeholder="Password"
+                    type={showPassword ? "text" : "password"}
+                    {...field}
+                  />
+                </FormControl>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {loading ? "Signing In..." : "Sign In"}
+        </Button>
+      </form>
+    </Form>
+
+    <div className="relative my-6">
+      <div className="absolute inset-0 flex items-center">
+        <span className="w-full border-t" />
+      </div>
+      <div className="relative flex justify-center text-xs uppercase">
+        <span className="bg-background px-2 text-muted-foreground">OR</span>
+      </div>
+    </div>
+
+    <Button
+      variant="outline"
+      onClick={() => signIn("google")}
+      className="w-full rounded-full gap-3 mb-4">
+      <GoogleIcon />
+      Continue with Google
+    </Button>
+  </div>
+);
+
 export const AuthModal = () => {
   const { isOpen, onClose } = useAuthModal();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
-  const form = useForm<z.infer<typeof loginSchema>>({
+  const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = async (values: z.infer<typeof loginSchema>) => {
+  const onSubmit = async (values: LoginValues) => {
     setLoading(true);
     try {
       const result = await signIn("credentials", {
@@ -61,7 +148,6 @@ export const AuthModal = () => {
         password: values.password,
         redirect: false,
       });
-
       if (result?.error) {
         toast.error("Invalid email or password");
       } else if (result?.ok) {
@@ -69,84 +155,21 @@ export const AuthModal = () => {
         form.reset();
         onClose();
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  const AuthForm = () => (
-    <div className="px-4 md:px-0 z-9999">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input placeholder="Email Address" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <div className="relative">
-                  <FormControl>
-                    <Input
-                      placeholder="Password"
-                      type={showPassword ? "text" : "password"}
-                      {...field}
-                    />
-                  </FormControl>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}>
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {loading ? "Signing In..." : "Sign In"}
-          </Button>
-        </form>
-      </Form>
-
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">OR</span>
-        </div>
-      </div>
-
-      <Button
-        variant="outline"
-        onClick={() => signIn("google")}
-        className="w-full rounded-full gap-3 mb-4">
-        <GoogleIcon />
-        Continue with Google
-      </Button>
-    </div>
-  );
+  // ✅ Shared props passed down — no closures over render scope
+  const authFormProps: AuthFormProps = {
+    form,
+    onSubmit,
+    loading,
+    showPassword,
+    setShowPassword,
+  };
 
   if (isDesktop) {
     return (
@@ -158,7 +181,7 @@ export const AuthModal = () => {
               Log in to your account to continue.
             </DialogDescription>
           </DialogHeader>
-          <AuthForm />
+          <AuthForm {...authFormProps} />
         </DialogContent>
       </Dialog>
     );
@@ -173,7 +196,7 @@ export const AuthModal = () => {
             Log in to your account to continue.
           </DrawerDescription>
         </DrawerHeader>
-        <AuthForm />
+        <AuthForm {...authFormProps} />
         <DrawerFooter className="pt-2">
           <DrawerClose asChild>
             <Button variant="outline">Cancel</Button>

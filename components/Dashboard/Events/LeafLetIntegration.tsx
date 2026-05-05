@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 import { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Navigation, Search, Loader2, MapPin } from "lucide-react";
+import { Navigation, Search, Loader2 } from "lucide-react"; // ✅ removed unused MapPin
 import debounce from "lodash.debounce";
 
 interface MapPickerProps {
@@ -15,9 +15,13 @@ interface MapPickerProps {
 export default function MapPicker({ form }: MapPickerProps) {
   const locationName = form.watch("location");
 
-  const [searchQuery, setSearchQuery] = useState(locationName || "");
+  // ✅ Track whether user is actively typing — if not, mirror locationName
+  const [userInput, setUserInput] = useState<string | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // ✅ Derive searchQuery — use userInput while typing, fall back to form value
+  const searchQuery = userInput ?? locationName ?? "";
 
   const debouncedFetch = useMemo(
     () =>
@@ -26,13 +30,10 @@ export default function MapPicker({ form }: MapPickerProps) {
           setResults([]);
           return;
         }
-
         setIsSearching(true);
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-              query,
-            )}&limit=5`,
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
           );
           const data = await res.json();
           setResults(data);
@@ -45,19 +46,12 @@ export default function MapPicker({ form }: MapPickerProps) {
     [],
   );
 
-  useEffect(() => {
-    return () => debouncedFetch.cancel();
-  }, [debouncedFetch]);
-
-  useEffect(() => {
-    if (locationName !== searchQuery) {
-      setSearchQuery(locationName || "");
-    }
-  }, [locationName]);
+  // ✅ Only cleanup effect — no setState inside
+  useMemo(() => () => debouncedFetch.cancel(), [debouncedFetch]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setSearchQuery(value);
+    setUserInput(value); // ✅ track user typing separately
     debouncedFetch(value);
   };
 
@@ -66,14 +60,11 @@ export default function MapPicker({ form }: MapPickerProps) {
     latStr: string,
     lonStr: string,
   ) => {
-    const newLat = parseFloat(latStr);
-    const newLon = parseFloat(lonStr);
-
     form.setValue("location", display_name);
-    form.setValue("latitude", newLat);
-    form.setValue("longitude", newLon);
+    form.setValue("latitude", parseFloat(latStr));
+    form.setValue("longitude", parseFloat(lonStr));
 
-    setSearchQuery(display_name);
+    setUserInput(null); // ✅ clear user input so form value takes over
     setResults([]);
   };
 
@@ -91,9 +82,10 @@ export default function MapPicker({ form }: MapPickerProps) {
         const data = await res.json();
         const addr = data.display_name || "Current Location";
         form.setValue("location", addr);
-        setSearchQuery(addr);
-      } catch (e) {
+        setUserInput(null); // ✅ let form value display after geolocation
+      } catch {
         form.setValue("location", "Selected Location");
+        setUserInput(null);
       }
     });
   };
@@ -134,8 +126,9 @@ export default function MapPicker({ form }: MapPickerProps) {
         </div>
 
         <Button
-          variant={"outline"}
+          variant="outline"
           size="icon"
+          type="button"
           onClick={handleGeolocation}
           className="shrink-0 rounded-lg border">
           <Navigation className="h-4 w-4" />
