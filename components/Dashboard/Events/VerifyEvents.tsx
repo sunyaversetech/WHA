@@ -6,19 +6,22 @@ import { toast } from "sonner";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { useVerifyEvent } from "@/services/event.service";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 
 export default function VerifyEventPage() {
   const [code, setCode] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const { mutate, isPending } = useVerifyEvent();
   const queryClient = useQueryClient();
+  const params = useSearchParams();
+  const eventId = params.get("id") || "";
 
   const handleVerify = async (manualCode?: string) => {
     const codeToVerify = manualCode || code;
     if (!codeToVerify) return toast.error("Please enter or scan a code");
 
     mutate(
-      { uniqueKey: codeToVerify },
+      { uniqueKey: codeToVerify, event: eventId },
       {
         onSuccess: () => {
           toast.success("Event verified successfully!");

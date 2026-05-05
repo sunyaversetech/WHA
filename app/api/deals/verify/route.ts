@@ -14,16 +14,18 @@ export async function POST(request: NextRequest) {
     }
 
     await connectToDb();
-    const { uniqueKey } = await request.json();
+    const { uniqueKey, deal } = await request.json();
 
-    if (!uniqueKey) {
+    if (!uniqueKey && !deal) {
       return NextResponse.json(
-        { message: "Code is required" },
+        { message: "Code is required, deal is required" },
         { status: 400 },
       );
     }
 
     const redemption = await Redemption.findOne({ uniqueKey });
+
+    console.log("DEBUG: Redemption Object:", redemption);
 
     if (!redemption) {
       return NextResponse.json(
@@ -35,6 +37,13 @@ export async function POST(request: NextRequest) {
     if (redemption.business.toString() !== session.user.id) {
       return NextResponse.json(
         { message: "Unauthorized: This code belongs to another business." },
+        { status: 403 },
+      );
+    }
+
+    if (redemption.deal.toString() !== deal) {
+      return NextResponse.json(
+        { message: "Unauthorized: This code does not belong to this deal." },
         { status: 403 },
       );
     }

@@ -18,11 +18,7 @@ export default function DealsPage() {
                text-[#ODODOD] 
                transition-all hover:scale-105 active:scale-95"
         />
-        <Link
-          href="/dashboard/deals/verify-deal"
-          className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
-          <ShieldCheck className="mr-2 h-4 w-4" /> Verify Deal
-        </Link>
+
         <Link
           href="/dashboard/deals/new"
           className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">

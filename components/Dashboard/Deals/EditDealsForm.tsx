@@ -101,6 +101,8 @@ export default function EditDealForm() {
   if (isLoading)
     return <p className="p-10 text-center">Loading deal data...</p>;
 
+  console.log("form errors", form.formState.errors);
+
   return (
     <Form {...form}>
       <div className="space-y-6 max-w-6xl mx-auto">

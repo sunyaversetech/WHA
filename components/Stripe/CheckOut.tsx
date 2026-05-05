@@ -21,8 +21,9 @@ export default function StripeCheckout({
   price,
   onSuccess,
   onClose,
+  setQuantity,
+  quantity,
 }: any) {
-  const [quantity, setQuantity] = useState(1);
   const [clientSecret, setClientSecret] = useState("");
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,7 @@ export default function StripeCheckout({
         setTotal(res.totalAmount);
       } catch (err) {
         console.error(err);
+        setLoading(false);
       } finally {
         setLoading(false);
       }

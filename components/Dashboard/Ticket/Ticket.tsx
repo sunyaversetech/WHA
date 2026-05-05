@@ -4,67 +4,104 @@ import { useGetTickets } from "@/services/dashboard.service";
 import { QRCodeCanvas } from "qrcode.react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { CalendarDays, MapPin, Tag, Ticket as TicketIcon } from "lucide-react";
 import {
-  CalendarDays,
-  MapPin,
-  Tag,
-  Ticket as TicketIcon,
-  X,
-} from "lucide-react";
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const QRDialog = ({
   open,
   onClose,
-  uniqueKey,
-  title,
-  isEvent,
+  item,
 }: {
   open: boolean;
   onClose: () => void;
-  uniqueKey: string;
-  title: string;
-  isEvent: boolean;
-}) => (
-  <Dialog open={open} onOpenChange={onClose}>
-    <DialogContent className="max-w-xs w-full rounded-2xl p-0 overflow-hidden border-none shadow-2xl bg-gradient-to-b from-[#1a1a2e] to-[#0f3460] text-white">
-      <div className="px-6 pt-6 pb-4 border-b border-white/10">
-        <div className="flex items-center justify-between mb-2">
-          {isEvent ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300">
-              <TicketIcon className="w-3 h-3" /> Event
-            </span>
+  item: any;
+}) => {
+  const isEvent = !!item?.event;
+  const title = item?.event?.title ?? item?.deal?.title ?? "Ticket";
+
+  const keys = isEvent
+    ? [item.uniqueKey]
+    : item.uniqueKeys && item.uniqueKeys.length > 0
+      ? item.uniqueKeys
+      : [item.uniqueKey];
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-xs w-full rounded-2xl p-0 overflow-hidden border-none shadow-2xl bg-gradient-to-b from-[#1a1a2e] to-[#0f3460] text-white">
+        <div className="px-6 pt-6 pb-4 border-b border-white/10 text-center">
+          <div className="flex items-center justify-center mb-2">
+            {isEvent ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300">
+                <TicketIcon className="w-3 h-3" /> Event Pass
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300">
+                <Tag className="w-3 h-3" /> Deal Voucher
+              </span>
+            )}
+          </div>
+          <DialogTitle className="text-base font-bold leading-snug">
+            {title}
+          </DialogTitle>
+        </div>
+
+        <div className="px-6 py-8">
+          {keys.length > 1 ? (
+            <Carousel className="w-full max-w-[200px] mx-auto">
+              <CarouselContent>
+                {keys.map((key: string, index: number) => (
+                  <CarouselItem
+                    key={index}
+                    className="flex flex-col items-center gap-4">
+                    <div className="bg-white p-4 rounded-2xl shadow-xl">
+                      <QRCodeCanvas value={key} size={160} level="H" />
+                    </div>
+                    <div className="text-center space-y-1">
+                      <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
+                        Code {index + 1} of {keys.length}
+                      </p>
+                      <p className="text-xs font-mono font-bold text-white/80">
+                        {key}
+                      </p>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="-left-8 bg-white/10 border-none hover:bg-white/20" />
+              <CarouselNext className="-right-8 bg-white/10 border-none hover:bg-white/20" />
+            </Carousel>
           ) : (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300">
-              <Tag className="w-3 h-3" /> Deal
-            </span>
+            <div className="flex flex-col items-center gap-4">
+              <div className="bg-white p-4 rounded-2xl shadow-xl">
+                <QRCodeCanvas value={keys[0]} size={160} level="H" />
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
+                  Unique Code
+                </p>
+                <p className="text-sm font-mono font-bold tracking-widest text-white/80 break-all">
+                  {keys[0]}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!isEvent && (
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-400 italic text-center mt-6">
+              Show this at checkout to redeem
+            </p>
           )}
         </div>
-        <DialogTitle className="text-base font-bold leading-snug line-clamp-2">
-          {title}
-        </DialogTitle>
-      </div>
-
-      <div className="flex flex-col items-center gap-4 px-6 py-8">
-        <div className="bg-white p-4 rounded-2xl shadow-xl">
-          <QRCodeCanvas value={uniqueKey} size={160} level="H" />
-        </div>
-        <div className="text-center space-y-1">
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
-            Unique Code
-          </p>
-          <p className="text-sm font-mono font-bold tracking-widest text-white/80 break-all">
-            {uniqueKey}
-          </p>
-        </div>
-        {!isEvent && (
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-400 italic">
-            Show this at checkout to redeem
-          </p>
-        )}
-      </div>
-    </DialogContent>
-  </Dialog>
-);
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const TicketCard = ({ item, onClick }: { item: any; onClick: () => void }) => {
   const isEvent = !!item.event;
@@ -307,18 +344,11 @@ const Ticket = () => {
           </div>
         </TabsContent>
       </Tabs>
-
       {selectedTicket && (
         <QRDialog
           open={!!selectedTicket}
           onClose={() => setSelectedTicket(null)}
-          uniqueKey={selectedTicket.uniqueKey}
-          title={
-            selectedTicket.event?.title ??
-            selectedTicket.deal?.title ??
-            "Ticket"
-          }
-          isEvent={!!selectedTicket.event}
+          item={selectedTicket}
         />
       )}
     </div>

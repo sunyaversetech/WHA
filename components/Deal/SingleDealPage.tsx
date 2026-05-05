@@ -23,6 +23,7 @@ import DealNotFoundPage from "./DealNotFound";
 import {
   useGetRedeem,
   useRedeemCode,
+  useRedeemMultipleCode,
 } from "@/services/redeemandverify.service";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -68,6 +69,9 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
   const { mutate, isPending } = useRedeemCode();
   const { data } = useGetRedeem();
   const queryClient = useQueryClient();
+  const { mutate: multipleMutate, isPending: isPendingMultiple } =
+    useRedeemMultipleCode();
+  const [quantity, setQuantity] = useState(1);
 
   const userRedemption = data?.data?.find(
     (redemption: any) =>
@@ -89,12 +93,14 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
     );
   }, [userRedemption]);
 
-  const finalizeRedemption = () => {
-    mutate(
+  const finalizeRedemption = (id: string) => {
+    multipleMutate(
       {
         dealId: deal?.data?._id ?? "",
         userId: session?.user.id ?? "",
         business: deal?.data?.user?._id ?? "",
+        quantity: quantity,
+        paymentIntentId: id,
       },
       {
         onSuccess: (data) => {
@@ -107,6 +113,9 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
           queryClient.invalidateQueries({ queryKey: ["redeem"] });
           toast.success("Payment successful! Your QR code is ready.");
           setIsModalOpen(false);
+        },
+        onError: (error) => {
+          toast.error(error.message || "Verification failed");
         },
       },
     );
@@ -122,11 +131,26 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
       return;
     }
 
-    mutate({
-      dealId: deal?.data._id ?? "",
-      userId: session.user.id,
-      business: deal?.data.user._id ?? "",
-    });
+    mutate(
+      {
+        dealId: deal?.data._id ?? "",
+        userId: session.user.id,
+        business: deal?.data.user._id ?? "",
+      },
+      {
+        onSuccess: (data) => {
+          setRedemptionResult({
+            success: true,
+            message: "success",
+            code: data.uniqueKey,
+            status: "pending",
+          });
+          queryClient.invalidateQueries({ queryKey: ["redeem"] });
+          toast.success("Your QR code is ready.");
+          setIsModalOpen(false);
+        },
+      },
+    );
   };
 
   if (isLoading) return <DealDetailSkeleton />;
@@ -160,7 +184,12 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
           dealId={deal.data._id}
           price={deal.data.price || 5}
           onClose={() => setIsModalOpen(false)}
-          onSuccess={finalizeRedemption}
+          onSuccess={(id: string) => {
+            console.log("id on success", id);
+            finalizeRedemption(id);
+          }}
+          quantity={quantity}
+          setQuantity={setQuantity}
         />
       )}
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4 mt-5">
@@ -254,9 +283,9 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                 </div> */}
                 <button
                   onClick={handleRedeemClick}
-                  disabled={isPending}
+                  disabled={isPending || isPendingMultiple}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-4 text-base transition-all shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-60">
-                  {isPending ? (
+                  {isPending || isPendingMultiple ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" /> Claiming…
                     </>

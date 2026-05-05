@@ -41,7 +41,7 @@ export const dealSchema = z.object({
   max_redemptions: z.number().min(1, "Max redemptions is required"),
   category: z.string().min(1, "Category is required"),
   city: z.string().min(1, "City is required"),
-  price: z.number().min(1, "Price is required"),
+  price: z.number().optional(),
   image: z
     .any()
     .refine((file) => file?.size <= 3000000, `Max image size is 3MB.`)
@@ -78,7 +78,9 @@ export default function DealForm() {
     formData.append("category", values.category);
     formData.append("max_redemptions", values.max_redemptions.toString());
     formData.append("city", values.city);
-    formData.append("price", values.price.toString());
+    if (values.price !== undefined && values.price !== null) {
+      formData.append("price", values.price.toString());
+    }
 
     if (values.image) {
       formData.append("image", values.image);

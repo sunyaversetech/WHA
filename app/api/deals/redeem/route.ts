@@ -3,11 +3,19 @@ import * as crypto from "crypto";
 import { connectToDb } from "@/lib/db";
 import { Deal } from "@/server/models/DealSchema.model";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../auth/[...nextauth]/route";
+import { sendEventMultipleTicketEmail, sendEventTicketEmail } from "@/lib/mail";
 
 export async function POST(req: Request) {
   try {
     await connectToDb();
     const { dealId, userId } = await req.json();
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
     const deal = await Deal.findById(dealId);
     if (!deal)
@@ -35,13 +43,15 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: "You already have a code for this",
-          code: alreadyClaimed.uniqueKey,
+          codes: alreadyClaimed.uniqueKeys,
         },
         { status: 400 },
       );
     }
 
-    const uniqueKey = crypto.randomBytes(4).toString("hex").toUpperCase();
+    const uniqueKeys = [
+      `WHA-DEAL-${crypto.randomBytes(4).toString("hex").toUpperCase()}`,
+    ];
 
     const updatedDeal = await Deal.findOneAndUpdate(
       { _id: dealId, current_redemptions: { $lt: deal.max_redemptions } },
@@ -59,12 +69,19 @@ export async function POST(req: Request) {
       deal: dealId,
       user: userId,
       business: deal.user,
-      uniqueKey,
+      uniqueKeys,
     });
+
+    await sendEventMultipleTicketEmail(
+      session.user.email!,
+      deal.title,
+      redemption.uniqueKeys,
+      session.user.name!,
+    );
 
     return NextResponse.json({
       success: true,
-      uniqueKey: redemption.uniqueKey,
+      codes: redemption.uniqueKeys,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

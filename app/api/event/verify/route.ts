@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     await connectToDb();
-    const { uniqueKey } = await request.json();
+    const { uniqueKey, event } = await request.json();
 
     const redemption = await EventRedemption.findOne({ uniqueKey });
 
@@ -23,7 +23,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (redemption.business.toString() !== session.user.id) {
+    if (
+      redemption.business.toString() !== session.user.id &&
+      event !== redemption.event
+    ) {
       return NextResponse.json(
         { message: "Unauthorized for this business." },
         { status: 403 },

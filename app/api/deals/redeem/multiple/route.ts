@@ -4,13 +4,25 @@ import crypto from "crypto";
 import Stripe from "stripe";
 import { Deal } from "@/server/models/DealSchema.model";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
+import { sendEventMultipleTicketEmail, sendEventTicketEmail } from "@/lib/mail";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+// Generate a single unique key
+const generateUniqueKey = (quantity: number) =>
+  `WHA-DEAL-${crypto.randomBytes(4).toString("hex").toUpperCase()}-${quantity}`;
 
 export async function POST(req: Request) {
   try {
     await connectToDb();
     const { dealId, userId, quantity, paymentIntentId } = await req.json();
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     if (paymentIntent.status !== "succeeded") {
@@ -21,6 +33,9 @@ export async function POST(req: Request) {
     }
 
     const deal = await Deal.findById(dealId);
+    if (!deal) {
+      return NextResponse.json({ error: "Deal not found" }, { status: 400 });
+    }
 
     if (deal.current_redemptions + quantity > deal.max_redemptions) {
       return NextResponse.json(
@@ -38,26 +53,36 @@ export async function POST(req: Request) {
       { new: true },
     );
 
-    if (!updatedDeal)
+    if (!updatedDeal) {
       return NextResponse.json(
         { error: "Tickets sold out during payment" },
         { status: 400 },
       );
+    }
 
-    const redemptionsData = Array.from({ length: quantity }).map(() => ({
+    const uniqueKeys = Array.from({ length: quantity }, () =>
+      generateUniqueKey(quantity),
+    );
+
+    const redemption = await Redemption.create({
       deal: dealId,
       user: userId,
       business: deal.user,
-      uniqueKey: crypto.randomBytes(4).toString("hex").toUpperCase(),
+      uniqueKeys,
       paymentIntentId,
       status: "pending",
-    }));
+    });
 
-    const createdRedemptions = await Redemption.insertMany(redemptionsData);
+    await sendEventMultipleTicketEmail(
+      session.user.email!,
+      deal.title,
+      uniqueKeys,
+      session.user.name!,
+    );
 
     return NextResponse.json({
       success: true,
-      codes: createdRedemptions.map((r) => r.uniqueKey),
+      codes: redemption.uniqueKeys,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

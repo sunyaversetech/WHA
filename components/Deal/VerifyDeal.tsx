@@ -5,18 +5,20 @@ import { ClipboardCheck, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { useVerifySingleDeal } from "@/services/deal.service";
+import { useSearchParams } from "next/navigation";
 
 export default function VerifyDealPage() {
   const [code, setCode] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const { mutate, isPending } = useVerifySingleDeal();
+  const params = useSearchParams();
 
   const handleVerify = async (manualCode?: string) => {
     const codeToVerify = manualCode || code;
     if (!codeToVerify) return toast.error("Please enter or scan a code");
 
     mutate(
-      { uniqueKey: codeToVerify },
+      { uniqueKey: codeToVerify, deal: params.get("id") || "" },
       {
         onSuccess: () => toast.success("Deal verified successfully!"),
         onError: (error) => toast.error(error.message || "Verification failed"),

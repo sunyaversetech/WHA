@@ -7,6 +7,8 @@ type RedeemCodeType = {
   dealId: string;
   userId: string;
   business: string;
+  paymentIntentId?: string;
+  quantity?: number;
 };
 
 type RedeemCodeResponseType = {
@@ -21,11 +23,12 @@ type RedeemCodeResponseType = {
 type RedeemCodeFormResponseType = {
   success: string;
   uniqueKey: string;
+  paymentIntentId?: string;
 };
 
 export const useRedeemCode = () => {
   return useMutation<RedeemCodeFormResponseType, any, RedeemCodeType>({
-    mutationKey: ["getRedeem"],
+    mutationKey: ["redeemCode"],
     mutationFn: (data: RedeemCodeType) =>
       Post<RedeemCodeType, RedeemCodeFormResponseType>({
         url: "/api/deals/redeem",
@@ -34,11 +37,11 @@ export const useRedeemCode = () => {
   });
 };
 
-export const useReddemMultipleCode = () => {
-  return useMutation<RedeemCodeFormResponseType, any, RedeemCodeType[]>({
+export const useRedeemMultipleCode = () => {
+  return useMutation<RedeemCodeFormResponseType, any, RedeemCodeType>({
     mutationKey: ["redeemMultiple"],
-    mutationFn: (data: RedeemCodeType[]) =>
-      Post<RedeemCodeType[], RedeemCodeFormResponseType>({
+    mutationFn: (data: RedeemCodeType) =>
+      Post<RedeemCodeType, RedeemCodeFormResponseType>({
         url: "/api/deals/redeem/multiple",
         data: data,
       }),

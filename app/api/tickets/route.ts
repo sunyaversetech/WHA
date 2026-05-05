@@ -5,6 +5,10 @@ import { NextResponse } from "next/server";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
 import { EventRedemption } from "@/server/models/EventCodeRemtion.model";
 
+import "@/server/models/Event.model";
+import "@/server/models/DealSchema.model";
+import "@/server/models/Auth.model";
+
 export async function GET(req: Request) {
   try {
     await connectToDb();
