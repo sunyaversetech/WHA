@@ -5,7 +5,7 @@ import { Deal } from "@/server/models/DealSchema.model";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
-import { sendEventMultipleTicketEmail, sendEventTicketEmail } from "@/lib/mail";
+import { sendEventMultipleTicketEmail } from "@/lib/mail";
 
 export async function POST(req: Request) {
   try {
@@ -53,6 +53,13 @@ export async function POST(req: Request) {
       `WHA-DEAL-${crypto.randomBytes(4).toString("hex").toUpperCase()}`,
     ];
 
+    const redemption = await Redemption.create({
+      deal: dealId,
+      user: userId,
+      business: deal.user,
+      uniqueKeys,
+    });
+
     const updatedDeal = await Deal.findOneAndUpdate(
       { _id: dealId, current_redemptions: { $lt: deal.max_redemptions } },
       { $inc: { current_redemptions: 1 } },
@@ -64,13 +71,6 @@ export async function POST(req: Request) {
         { error: "Deal just sold out" },
         { status: 400 },
       );
-
-    const redemption = await Redemption.create({
-      deal: dealId,
-      user: userId,
-      business: deal.user,
-      uniqueKeys,
-    });
 
     await sendEventMultipleTicketEmail(
       session.user.email!,

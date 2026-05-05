@@ -7,12 +7,9 @@ import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
 import { sendEventMultipleTicketEmail, sendEventTicketEmail } from "@/lib/mail";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import mongoose from "mongoose";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-// Generate a single unique key
-const generateUniqueKey = (quantity: number) =>
-  `WHA-DEAL-${crypto.randomBytes(4).toString("hex").toUpperCase()}-${quantity}`;
 
 export async function POST(req: Request) {
   try {
@@ -44,6 +41,21 @@ export async function POST(req: Request) {
       );
     }
 
+    const uniqueKeys = Array.from(
+      { length: quantity },
+      (_, i) =>
+        `WHA-DEAL-${crypto.randomBytes(4).toString("hex").toUpperCase()}-${i + 1}of${quantity}`,
+    );
+
+    const redemption = await Redemption.create({
+      deal: dealId,
+      user: userId,
+      business: deal.user,
+      uniqueKeys,
+      paymentIntentId,
+      status: "pending",
+    });
+
     const updatedDeal = await Deal.findOneAndUpdate(
       {
         _id: dealId,
@@ -59,19 +71,6 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-
-    const uniqueKeys = Array.from({ length: quantity }, () =>
-      generateUniqueKey(quantity),
-    );
-
-    const redemption = await Redemption.create({
-      deal: dealId,
-      user: userId,
-      business: deal.user,
-      uniqueKeys,
-      paymentIntentId,
-      status: "pending",
-    });
 
     await sendEventMultipleTicketEmail(
       session.user.email!,
