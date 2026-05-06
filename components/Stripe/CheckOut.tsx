@@ -11,6 +11,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import { Loader2, Plus, Minus, ShieldCheck } from "lucide-react";
 import { getPaymentIntentForQuantity } from "@/app/actions/stripe";
+import { useSession } from "next-auth/react";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
@@ -171,7 +172,6 @@ export default function StripeCheckout({
   );
 }
 
-// ─── Internal Form ───────────────────────────────────────────────────────────
 function InternalForm({
   fees,
   quantity,
@@ -189,6 +189,7 @@ function InternalForm({
 }) {
   const stripe = useStripe();
   const elements = useElements();
+  const { data } = useSession();
   const [isPaying, setIsPaying] = useState(false);
 
   const handlePay = async (e: React.FormEvent) => {
@@ -200,6 +201,23 @@ function InternalForm({
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         redirect: "if_required",
+        confirmParams: {
+          payment_method_data: {
+            billing_details: {
+              name: data?.user?.name ?? "Guest",
+              email: data?.user?.email ?? undefined,
+              phone: data?.user?.phone_number ?? undefined,
+              address: {
+                line1: data?.user?.location ?? "",
+                line2: "",
+                city: "",
+                state: "",
+                postal_code: "",
+                country: "",
+              },
+            },
+          },
+        },
       });
 
       if (error) {
@@ -216,13 +234,12 @@ function InternalForm({
 
   return (
     <form onSubmit={handlePay} className="space-y-6">
-      {/* Card input — no email/phone/name/address */}
       <PaymentElement
         options={{
           layout: "tabs",
           fields: {
             billingDetails: {
-              name: "never",
+              name: "auto",
               email: "never",
               phone: "never",
               address: "never",
@@ -294,7 +311,6 @@ function InternalForm({
         </div>
       </div>
 
-      {/* Pay Button */}
       <button
         type="submit"
         disabled={isPaying || !stripe || updatingTotal}
