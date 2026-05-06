@@ -12,6 +12,7 @@ import {
   ExternalLink,
   AlertCircle,
   Clock,
+  Ticket,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -318,20 +319,25 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                     </button>
                   </div>
                 </div> */}
-                <button
+                <Button
                   onClick={handleRedeemClick}
+                  variant={"outline"}
                   disabled={isPending || isPendingMultiple}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-4 text-base transition-all shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-60">
+                  className="w-full">
                   {isPending || isPendingMultiple ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" /> Claiming…
                     </>
                   ) : (
                     <>
-                      <Tag className="h-5 w-5" /> Redeem This Deal
+                      <Ticket className="h-5 w-5" /> $
+                      {(
+                        deal.data.price -
+                        (deal.data.price * deal.data.discount_percentage) / 100
+                      ).toFixed(2)}{" "}
                     </>
                   )}
-                </button>
+                </Button>
                 <p className="text-gray-400 text-xs">
                   Tap to claim your exclusive offer
                 </p>

@@ -119,7 +119,6 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
               </div>
             )}
 
-            {/* Footer */}
             <div className="flex items-center justify-between pt-2 border-t border-dashed border-gray-200 text-xs text-gray-500">
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
