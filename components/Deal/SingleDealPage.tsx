@@ -183,10 +183,14 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
       {isModalOpen && (
         <StripeCheckout
           dealId={deal.data._id}
-          price={deal.data.price || 5}
+          price={
+            (
+              deal.data.price -
+              (deal.data.price * deal.data.discount_percentage) / 100
+            ).toFixed(2) || ""
+          }
           onClose={() => setIsModalOpen(false)}
           onSuccess={(id: string) => {
-            console.log("id on success", id);
             finalizeRedemption(id);
           }}
           quantity={quantity}

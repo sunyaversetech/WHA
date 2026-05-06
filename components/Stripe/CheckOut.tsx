@@ -18,7 +18,7 @@ const stripePromise = loadStripe(
 );
 
 // Fee constants
-const SERVICE_FEE = 2.0; // flat $2.00 per order
+const SERVICE_FEE = 0; // flat $2.00 per order
 const SURCHARGE_PERCENT = 0.025; // 2.5% card processing surcharge
 
 // Generate a short invoice number (you can replace with a server-generated one)
@@ -58,7 +58,6 @@ export default function StripeCheckout({
 
   const elementsMountedRef = useRef(false);
 
-  // Initialize once on mount
   useEffect(() => {
     async function initIntent() {
       try {
@@ -73,10 +72,8 @@ export default function StripeCheckout({
       }
     }
     initIntent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Quantity change: update intent server-side but keep Elements mounted
   const onQuantityChange = useCallback(
     async (newQty: number) => {
       setQuantity(newQty);
@@ -268,7 +265,7 @@ function InternalForm({
             <span>
               Ticket × {quantity}
               <span className="text-gray-400 ml-1 text-xs">
-                (${price.toFixed(2)} each)
+                (${price} each)
               </span>
             </span>
             <span className="font-medium">${fees.ticketTotal.toFixed(2)}</span>
