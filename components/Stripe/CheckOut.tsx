@@ -1,7 +1,7 @@
 // components/StripeCheckout.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   PaymentElement,
   useStripe,
@@ -9,12 +9,37 @@ import {
   Elements,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { Loader2, Plus, Minus } from "lucide-react";
+import { Loader2, Plus, Minus, ShieldCheck } from "lucide-react";
 import { getPaymentIntentForQuantity } from "@/app/actions/stripe";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
 );
+
+// Fee constants
+const SERVICE_FEE = 2.0; // flat $2.00 per order
+const SURCHARGE_PERCENT = 0.025; // 2.5% card processing surcharge
+
+// Generate a short invoice number (you can replace with a server-generated one)
+function generateInvoiceNumber() {
+  const ts = Date.now().toString(36).toUpperCase();
+  const rand = Math.random().toString(36).substring(2, 5).toUpperCase();
+  return `INV-${ts}-${rand}`;
+}
+
+function computeFees(ticketPrice: number, quantity: number) {
+  const ticketTotal = ticketPrice * quantity; // price × qty
+  const orderTotal = ticketTotal + SERVICE_FEE; // + flat service fee
+  const surcharge = orderTotal * SURCHARGE_PERCENT; // 2.5% on order total
+  const totalToPay = orderTotal + surcharge;
+  return {
+    ticketTotal,
+    serviceFee: SERVICE_FEE,
+    orderTotal,
+    surcharge,
+    totalToPay,
+  };
+}
 
 export default function StripeCheckout({
   dealId,
@@ -25,57 +50,86 @@ export default function StripeCheckout({
   quantity,
 }: any) {
   const [clientSecret, setClientSecret] = useState("");
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [fees, setFees] = useState(() => computeFees(price, quantity));
+  const [initializing, setInitializing] = useState(true);
+  const [updatingTotal, setUpdatingTotal] = useState(false);
+  const [invoiceNumber] = useState(() => generateInvoiceNumber());
 
+  const elementsMountedRef = useRef(false);
+
+  // Initialize once on mount
   useEffect(() => {
-    async function updateIntent() {
-      setLoading(true);
+    async function initIntent() {
       try {
         const res = await getPaymentIntentForQuantity(dealId, quantity);
         setClientSecret(res.clientSecret as string);
-        setTotal(res.totalAmount);
+        setFees(computeFees(price, quantity));
+        elementsMountedRef.current = true;
       } catch (err) {
         console.error(err);
-        setLoading(false);
       } finally {
-        setLoading(false);
+        setInitializing(false);
       }
     }
-    updateIntent();
-  }, [quantity, dealId]);
+    initIntent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Quantity change: update intent server-side but keep Elements mounted
+  const onQuantityChange = useCallback(
+    async (newQty: number) => {
+      setQuantity(newQty);
+      setUpdatingTotal(true);
+      try {
+        await getPaymentIntentForQuantity(dealId, newQty);
+        setFees(computeFees(price, newQty));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setUpdatingTotal(false);
+      }
+    },
+    [dealId, price, setQuantity],
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-        {/* Header & Quantity Selector */}
+      <div
+        className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
+        style={{ maxHeight: "90vh", overflowY: "auto" }}>
+        {/* Header */}
         <div className="p-6 border-b border-gray-100 bg-gray-50/50">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold" style={{ color: "#051e3a" }}>
-              Secure Checkout
-            </h3>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-green-500" />
+              <h3 className="text-xl font-bold" style={{ color: "#051e3a" }}>
+                Secure Checkout
+              </h3>
+            </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600">
+              className="text-gray-400 hover:text-gray-600 text-lg leading-none">
               ✕
             </button>
           </div>
 
+          {/* Quantity Selector */}
           <div className="flex items-center justify-between bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
             <span className="text-sm font-medium text-gray-500 ml-2">
               Number of Tickets
             </span>
             <div className="flex items-center gap-4">
               <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition">
+                onClick={() => quantity > 1 && onQuantityChange(quantity - 1)}
+                disabled={quantity <= 1}
+                className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition disabled:opacity-40">
                 <Minus className="h-4 w-4" />
               </button>
               <span className="text-lg font-bold w-4 text-center">
                 {quantity}
               </span>
               <button
-                onClick={() => setQuantity(quantity + 1)}
+                onClick={() => onQuantityChange(quantity + 1)}
                 className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition">
                 <Plus className="h-4 w-4" />
               </button>
@@ -83,22 +137,30 @@ export default function StripeCheckout({
           </div>
         </div>
 
-        <div className="p-6">
-          {loading ? (
-            <div className="h-64 flex flex-col items-center justify-center gap-3">
+        <div className="p-6 space-y-6">
+          {/* Payment Element — mounted ONCE, never remounted */}
+          {initializing ? (
+            <div className="h-48 flex flex-col items-center justify-center gap-3">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-              <p className="text-sm text-gray-400">Updating total...</p>
+              <p className="text-sm text-gray-400">Setting up payment...</p>
             </div>
           ) : (
             clientSecret && (
+              // key is intentionally FIXED — never changes — so Elements never remounts
               <Elements
-                key={clientSecret}
+                key="stripe-elements-singleton"
                 stripe={stripePromise}
-                options={{ clientSecret }}>
+                options={{
+                  clientSecret,
+                  appearance: { theme: "stripe" },
+                }}>
                 <InternalForm
-                  total={total}
+                  fees={fees}
                   quantity={quantity}
+                  price={price}
+                  invoiceNumber={invoiceNumber}
                   onSuccess={onSuccess}
+                  updatingTotal={updatingTotal}
                 />
               </Elements>
             )
@@ -109,8 +171,22 @@ export default function StripeCheckout({
   );
 }
 
-// Separate internal component to use Stripe hooks
-function InternalForm({ total, quantity, onSuccess }: any) {
+// ─── Internal Form ───────────────────────────────────────────────────────────
+function InternalForm({
+  fees,
+  quantity,
+  price,
+  invoiceNumber,
+  onSuccess,
+  updatingTotal,
+}: {
+  fees: ReturnType<typeof computeFees>;
+  quantity: number;
+  price: number;
+  invoiceNumber: string;
+  onSuccess: (intentId: string, qty: number) => Promise<void>;
+  updatingTotal: boolean;
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [isPaying, setIsPaying] = useState(false);
@@ -129,7 +205,7 @@ function InternalForm({ total, quantity, onSuccess }: any) {
       if (error) {
         alert(error.message);
         setIsPaying(false);
-      } else if (paymentIntent && paymentIntent.status === "succeeded") {
+      } else if (paymentIntent?.status === "succeeded") {
         await onSuccess(paymentIntent.id, quantity);
       }
     } catch (err) {
@@ -140,24 +216,106 @@ function InternalForm({ total, quantity, onSuccess }: any) {
 
   return (
     <form onSubmit={handlePay} className="space-y-6">
-      <PaymentElement options={{ layout: "tabs" }} />
+      {/* Card input — no email/phone/name/address */}
+      <PaymentElement
+        options={{
+          layout: "tabs",
+          fields: {
+            billingDetails: {
+              name: "never",
+              email: "never",
+              phone: "never",
+              address: "never",
+            },
+          },
+        }}
+      />
 
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm text-gray-500">
-          <span>Processing Fee included</span>
-          <span>Total to pay</span>
+      {/* Order Summary */}
+      <div className="rounded-2xl border border-gray-200 overflow-hidden text-sm">
+        {/* Header row with invoice number */}
+        <div
+          className="flex items-center justify-between px-4 py-3"
+          style={{ backgroundColor: "#051e3a" }}>
+          <span className="font-semibold text-white tracking-wide">
+            Order Summary
+          </span>
+          <span className="text-xs text-blue-200 font-mono">
+            {invoiceNumber}
+          </span>
         </div>
-        <button
-          disabled={isPaying || !stripe}
-          style={{ backgroundColor: "#051e3a" }}
-          className="w-full text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:opacity-95 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2">
-          {isPaying ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            `Pay $${total.toFixed(2)}`
-          )}
-        </button>
+
+        <div className="bg-gray-50 divide-y divide-gray-100">
+          {/* Ticket line */}
+          <div className="flex justify-between items-center px-4 py-3 text-gray-700">
+            <span>
+              Ticket × {quantity}
+              <span className="text-gray-400 ml-1 text-xs">
+                (${price.toFixed(2)} each)
+              </span>
+            </span>
+            <span className="font-medium">${fees.ticketTotal.toFixed(2)}</span>
+          </div>
+
+          {/* Service fee */}
+          <div className="flex justify-between items-center px-4 py-3 text-gray-700">
+            <span>Service fee</span>
+            <span className="font-medium">${fees.serviceFee.toFixed(2)}</span>
+          </div>
+
+          {/* Order Total — bold separator */}
+          <div className="flex justify-between items-center px-4 py-3 font-semibold text-gray-900 bg-white border-t border-gray-200">
+            <span>Order Total</span>
+            <span>${fees.orderTotal.toFixed(2)}</span>
+          </div>
+
+          {/* Surcharge — below the line */}
+          <div className="flex justify-between items-center px-4 py-2.5 text-gray-500 bg-gray-50">
+            <span className="flex items-center gap-1">
+              Card processing surcharge
+              <span className="text-xs text-gray-400">(2.5%)</span>
+            </span>
+            <span>${fees.surcharge.toFixed(2)}</span>
+          </div>
+
+          {/* Total to Pay */}
+          <div
+            className="flex justify-between items-center px-4 py-3.5 font-bold text-white text-base"
+            style={{ backgroundColor: "#051e3a" }}>
+            <span>Total to Pay</span>
+            <span>
+              {updatingTotal ? (
+                <Loader2 className="h-4 w-4 animate-spin inline" />
+              ) : (
+                `$${fees.totalToPay.toFixed(2)}`
+              )}
+            </span>
+          </div>
+        </div>
       </div>
+
+      {/* Pay Button */}
+      <button
+        type="submit"
+        disabled={isPaying || !stripe || updatingTotal}
+        style={{ backgroundColor: "#051e3a" }}
+        className="w-full text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:opacity-95 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2">
+        {isPaying ? (
+          <Loader2 className="animate-spin" />
+        ) : updatingTotal ? (
+          <>
+            <Loader2 className="animate-spin h-5 w-5" />
+            Updating…
+          </>
+        ) : (
+          `Pay $${fees.totalToPay.toFixed(2)}`
+        )}
+      </button>
+
+      <p className="text-center text-xs text-gray-400 flex items-center justify-center gap-1">
+        <ShieldCheck className="h-3.5 w-3.5 text-green-500" />
+        Secured by Stripe · End-to-end encrypted
+      </p>
     </form>
   );
 }

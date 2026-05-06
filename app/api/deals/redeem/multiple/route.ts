@@ -7,7 +7,6 @@ import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
 import { sendEventMultipleTicketEmail, sendEventTicketEmail } from "@/lib/mail";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import mongoose from "mongoose";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
