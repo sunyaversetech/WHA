@@ -51,36 +51,50 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
   return (
     <div
       className="block cursor-pointer"
-      onClick={() => router.push(`/deals/${deal._id}`)}
-    >
+      onClick={() => router.push(`/deals/${deal._id}`)}>
       <div className="relative bg-white rounded-lg overflow-hidden border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-lg active:scale-[0.98]">
         <div className="absolute top-1/2 -left-2 w-4 h-4 bg-white border border-gray-200 rounded-full -translate-y-1/2" />
         <div className="absolute top-1/2 -right-2 w-4 h-4 bg-white border border-gray-200 rounded-full -translate-y-1/2" />
 
-        <div className="flex  justify-between grid grid-cols-12">
-          <div className="relative h-42 w-full col-span-4">
-            <div className="relative z-49"></div>
+        <div className="flex  justify-between grid grid-cols-12 xl:h-50 max-xl:h-60">
+          <div className="relative h-full w-full col-span-4 ">
+            {/* <div className="relative z-49"></div> */}
             <Image
               src={deal.image || "/placeholder.svg"}
               alt="Deal Banner"
               fill
-              className="object-cover"
+              className="object-cover "
             />
           </div>
           <div className="p-4 space-y-3 col-span-8">
             <div className="">
-              <h3 className="text-base md:text-lg font-bold text-gray-900 leading-snug line-clamp-1">
+              <h3 className="text-base flex justify-between md:text-lg font-bold text-gray-900 leading-snug line-clamp-1">
                 {deal.title}
+
+                <button
+                  disabled={isPending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddRemoveFavorite();
+                  }}
+                  className={`p-2 rounded-full transition ${
+                    isDealFavorite
+                      ? "text-red-500 bg-red-50"
+                      : "text-gray-400 bg-gray-100"
+                  }`}>
+                  <Heart
+                    className={`h-5 w-5 ${isDealFavorite ? "fill-current" : ""}`}
+                  />
+                </button>
               </h3>
             </div>
 
-            {/* Business Info */}
             {deal.user && (
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-md overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
                   <Image
-                    width={80}
-                    height={80}
+                    width={1000}
+                    height={1000}
                     src={deal?.user?.image || "/placeholder.svg"}
                     className="w-full h-full object-cover"
                     alt="Business"
@@ -116,22 +130,38 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
               </div>
 
               <div className="">
-                <button
-                  disabled={isPending}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddRemoveFavorite();
-                  }}
-                  className={`p-2 rounded-full transition ${
-                    isDealFavorite
-                      ? "text-red-500 bg-red-50"
-                      : "text-gray-400 bg-gray-100"
-                  }`}
-                >
-                  <Heart
-                    className={`h-5 w-5 ${isDealFavorite ? "fill-current" : ""}`}
-                  />
-                </button>
+                <h2 className="text-2xl flex flex-wrap justify-between items-start sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
+                  <div className="flex flex-col items-end max-xl:items-center">
+                    <div className="flex max-xl:flex-col items-center gap-2">
+                      {deal.discount_percentage > 0 ? (
+                        <div className="flex max-xl:flex-col gap-2 items-center">
+                          <span className="text-gray-400 max-md:text-xs line-through text-lg font-medium">
+                            ${deal.price}
+                          </span>
+                          <span className="text-blue-600 max-md:text-sm">
+                            $
+                            {(
+                              deal.price -
+                              (deal.price * deal.discount_percentage) / 100
+                            ).toFixed(2)}{" "}
+                          </span>
+                        </div>
+                      ) : (
+                        <span>
+                          {deal.price && deal.price > 0
+                            ? `$${deal.price}`
+                            : "Free"}
+                        </span>
+                      )}
+                    </div>
+
+                    {deal.discount_percentage > 0 && (
+                      <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full mt-1 uppercase tracking-wider">
+                        {deal.discount_percentage}% OFF
+                      </span>
+                    )}
+                  </div>
+                </h2>
               </div>
             </div>
           </div>

@@ -82,10 +82,29 @@ export default function EditDealForm() {
     formData.append("category", values.category);
     formData.append("max_redemptions", values.max_redemptions.toString());
     formData.append("city", values.city);
+    formData.append(
+      "discount_percentage",
+      values.discount_percentage?.toString() ?? "0",
+    );
+    if (values.price !== undefined && values.price !== null) {
+      formData.append("price", values.price.toString());
+    }
 
-    if (values.image) {
+    if (typeof values.image === "object") {
       formData.append("image", values.image);
     }
+
+    mutate(formData as any, {
+      onSuccess: () => {
+        form.reset();
+        toast.success("Deal created successfully");
+        router.push("/dashboard/deals");
+      },
+      onError: (error: any) => {
+        console.error("API Error:", error);
+        toast.error(error.response?.data?.error || "Failed to create deal");
+      },
+    });
 
     mutate(formData, {
       onSuccess: () => {
@@ -110,11 +129,11 @@ export default function EditDealForm() {
           <ChevronLeft
             onClick={() => router.back()}
             className="h-10 w-10 cursor-pointer rounded-full  p-1 -ml-2
-               text-[#ODODOD] 
-               transition-all hover:scale-105 active:scale-95"
+                 text-[#ODODOD] 
+                 transition-all hover:scale-105 active:scale-95"
           />
         </div>
-        <h1 className="text-2xl my-4">Edit Deal</h1>
+        <h1 className="text-2xl my-4">Create New Deal</h1>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 ">
           <FormField
             control={form.control}
@@ -124,6 +143,44 @@ export default function EditDealForm() {
                 <FormLabel>Deal Title</FormLabel>
                 <FormControl>
                   <Input placeholder="Summer Flash Sale" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Deal Price (optional for online payment only)
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter Price in AUD"
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="discount_percentage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Discount Percentage</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter Discount Percentage"
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -348,7 +405,7 @@ export default function EditDealForm() {
           />
 
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? "Submitting..." : "Edit Deal"}
+            {isPending ? "Submitting..." : "Create Deal"}
           </Button>
         </form>
       </div>

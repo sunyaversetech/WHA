@@ -14,6 +14,7 @@ export interface IDeal {
   city: string;
   image: File | string;
   price: number;
+  discount_percentage: number;
 }
 
 const DealSchema = new Schema<IDeal>(
@@ -34,6 +35,7 @@ const DealSchema = new Schema<IDeal>(
     current_redemptions: { type: Number, default: 0 },
     image: { type: String },
     price: { type: Number },
+    discount_percentage: { type: Number },
   },
   { timestamps: true },
 );

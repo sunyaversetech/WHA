@@ -20,6 +20,7 @@ export type DealsGetValues = {
   title: string;
   current_redemptions: number;
   max_redemptions: number;
+  discount_percentage: number;
   price: number;
   valid_till: Date;
   deals_for: string;

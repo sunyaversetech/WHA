@@ -5,6 +5,7 @@ import {
   User,
   HeartPlus,
   Ticket,
+  TicketCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -63,6 +64,13 @@ const UserSidebar = () => {
           link: buildPath("/dashboard/profile"),
           hasDropdown: false,
           active: pathname.startsWith("/dashboard/profile"),
+        },
+        {
+          name: "tickets",
+          icon: TicketCheck,
+          link: "/dashboard/tickets",
+          hasDropdown: false,
+          active: pathname.startsWith("/dashboard/tickets"),
         },
       ],
     },

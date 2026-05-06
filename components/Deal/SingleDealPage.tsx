@@ -206,8 +206,45 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
           <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 rounded-full bg-gray-50 border border-gray-100 z-10" />
 
           <div className="p-6 sm:p-8 md:-mt-7">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
-              {deal.data.title}
+            <h2 className="text-2xl flex flex-wrap justify-between items-start sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
+              <span className="flex-1 mr-4">{deal.data.title}</span>
+
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-2">
+                  {deal.data.discount_percentage > 0 ? (
+                    <>
+                      {/* Original Price with Strikethrough */}
+                      <span className="text-gray-400 line-through text-lg font-medium">
+                        ${deal.data.price}
+                      </span>
+                      {/* Calculated Discounted Price */}
+                      <span className="text-blue-600">
+                        $
+                        {(
+                          deal.data.price -
+                          (deal.data.price * deal.data.discount_percentage) /
+                            100
+                        ).toFixed(2)}
+                      </span>
+                    </>
+                  ) : (
+                    /* Regular Price (No Discount) */
+                    <span>
+                      {deal.data.price && deal.data.price > 0
+                        ? `$${deal.data.price}`
+                        : "Free"}
+                    </span>
+                  )}
+                  <span className="text-sm font-normal text-gray-500">AUD</span>
+                </div>
+
+                {/* Optional: Discount Badge */}
+                {deal.data.discount_percentage > 0 && (
+                  <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full mt-1 uppercase tracking-wider">
+                    {deal.data.discount_percentage}% OFF
+                  </span>
+                )}
+              </div>
             </h2>
             <p className="text-gray-500 text-base leading-relaxed mb-6">
               {deal.data.description}
@@ -296,15 +333,13 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                   )}
                 </button>
                 <p className="text-gray-400 text-xs">
-                  Tap to claim your exclusive offer — free &amp; instant
+                  Tap to claim your exclusive offer
                 </p>
               </div>
             )}
           </div>
         </div>
-        {/* ── END MAIN CARD ── */}
 
-        {/* ── DEAL INFO CARD ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 space-y-4">
           <h3 className="text-base font-bold text-gray-900">
             Deal Information

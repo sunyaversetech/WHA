@@ -42,6 +42,11 @@ export const dealSchema = z.object({
   category: z.string().min(1, "Category is required"),
   city: z.string().min(1, "City is required"),
   price: z.number().optional(),
+  discount_percentage: z
+    .number()
+    .gte(0, { message: "Discount must be greater than 0" })
+    .lt(80, { message: "Discount must be less than 80" })
+    .optional(),
   image: z
     .any()
     .refine((file) => file?.size <= 3000000, `Max image size is 3MB.`)
@@ -64,6 +69,7 @@ export default function DealForm() {
       category: "",
       city: "",
       price: 0,
+      discount_percentage: 0,
     },
   });
 
@@ -78,6 +84,10 @@ export default function DealForm() {
     formData.append("category", values.category);
     formData.append("max_redemptions", values.max_redemptions.toString());
     formData.append("city", values.city);
+    formData.append(
+      "discount_percentage",
+      values.discount_percentage?.toString() ?? "0",
+    );
     if (values.price !== undefined && values.price !== null) {
       formData.append("price", values.price.toString());
     }
@@ -136,6 +146,24 @@ export default function DealForm() {
                 <FormControl>
                   <Input
                     placeholder="Enter Price in AUD"
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="discount_percentage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Discount Percentage</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter Discount Percentage"
                     type="number"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}
