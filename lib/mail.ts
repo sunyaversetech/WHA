@@ -60,7 +60,7 @@ export const sendSimpleMail = async (
   try {
     const sender = {
       email: "no-reply@whaustralia.com",
-      name: "WhAustralia",
+      name: "Whats Happening Australia",
     };
 
     const recipients = [{ email }];
@@ -107,7 +107,7 @@ const generateEventTicketTemplate = (
         </p>
       </div>
       <div style="background-color: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #999;">
-        &copy; ${new Date().getFullYear()} WHAustralia. All rights reserved.
+        &copy; ${new Date().getFullYear()} Whats Happening Australia. All rights reserved.
       </div>
     </div>
   `;
@@ -220,7 +220,7 @@ const generateMultipleEventTicketTemplate = (
 
       <!-- Footer -->
       <div style="background-color: #f4f4f4; padding: 16px; text-align: center; font-size: 12px; color: #999;">
-        &copy; ${new Date().getFullYear()} WHAustralia. All rights reserved.
+        &copy; ${new Date().getFullYear()} Whats Happening Australia. All rights reserved.
       </div>
     </div>
   `;
@@ -235,7 +235,10 @@ export const sendEventMultipleTicketEmail = async (
   const client = new MailtrapClient({ token: process.env.MAIL_TOKEN! });
   try {
     await client.send({
-      from: { email: "no-reply@whaustralia.com", name: "WHA Australia" },
+      from: {
+        email: "no-reply@whaustralia.com",
+        name: "Whats Happening Australia",
+      },
       to: [{ email }],
       subject: `Your ${codes.length} Ticket${codes.length > 1 ? "s" : ""} for ${eventName}`,
       html: generateMultipleEventTicketTemplate(eventName, codes, userName),
