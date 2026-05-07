@@ -21,7 +21,7 @@ import {
 } from "../ui/drawer";
 
 export default function DealsPageClient() {
-  const { data: deals, isLoading } = useGetAllDeals();
+  const { data: deals, isLoading, isFetching } = useGetAllDeals();
   const searchParams = useSearchParams();
   const view = searchParams.get("view") || "list";
   const currentDate = new Date();
@@ -29,6 +29,8 @@ export default function DealsPageClient() {
   const data =
     deals?.data &&
     deals?.data?.filter((deal) => currentDate <= new Date(deal.valid_till));
+
+  const isActuallyLoading = isLoading || (!deals && isFetching);
 
   return (
     <div className={`flex flex-col h-[80vh] overflow-hidden `}>
@@ -81,7 +83,7 @@ export default function DealsPageClient() {
         </div>
 
         <div className="container-modern pb-20 px-6">
-          {isLoading ? (
+          {isActuallyLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[1, 2, 3, 4].map((i) => (
                 <Skeleton
