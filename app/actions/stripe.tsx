@@ -19,7 +19,6 @@ export async function getPaymentIntentForQuantity(
     const pricePerTicket = deal.price * ((100 - discount) / 100);
 
     const ticketTotal = pricePerTicket * quantity;
-
     const serviceFee = 0;
     const orderTotal = ticketTotal + serviceFee;
     const surcharge = orderTotal * 0.025;
@@ -30,12 +29,17 @@ export async function getPaymentIntentForQuantity(
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: "aud",
-      metadata: { dealId, quantity: quantity.toString() },
+      metadata: {
+        dealId,
+        quantity: quantity.toString(),
+        pricePerTicket: pricePerTicket.toFixed(2),
+      },
     });
 
     return {
       clientSecret: paymentIntent.client_secret,
       totalAmount: totalToPay,
+      paymentIntentId: paymentIntent.id,
     };
   } catch (error: any) {
     throw new Error(error.message);

@@ -53,6 +53,7 @@ export default function StripeCheckout({
   const [initializing, setInitializing] = useState(true);
   const [updatingTotal, setUpdatingTotal] = useState(false);
   const [invoiceNumber] = useState(() => generateInvoiceNumber());
+  const [paymentIntentId, setPaymentIntentId] = useState("");
 
   const elementsMountedRef = useRef(false);
 
@@ -61,6 +62,7 @@ export default function StripeCheckout({
       try {
         const res = await getPaymentIntentForQuantity(dealId, quantity);
         setClientSecret(res.clientSecret as string);
+        setPaymentIntentId(res.paymentIntentId);
         setFees(computeFees(price, quantity));
         elementsMountedRef.current = true;
       } catch (err) {
@@ -77,7 +79,9 @@ export default function StripeCheckout({
       setQuantity(newQty);
       setUpdatingTotal(true);
       try {
-        await getPaymentIntentForQuantity(dealId, newQty);
+        const res = await getPaymentIntentForQuantity(dealId, newQty);
+        setClientSecret(res.clientSecret as string);
+        setPaymentIntentId(res.paymentIntentId);
         setFees(computeFees(price, newQty));
       } catch (err) {
         console.error(err);
