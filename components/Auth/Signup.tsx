@@ -54,17 +54,24 @@ export default function SignupPage() {
   });
 
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
-    mutate(values as any, {
+    const formData = new FormData();
+
+    Object.entries(values).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
+    });
+
+    mutate(formData as any, {
       onSuccess: () => {
         toast.success("Signup successful! Please log in.");
         router.replace("/auth?tab=login");
       },
-      onError: (error) => {
+      onError: (error: any) => {
         toast.error(error.message || "Signup failed. Please try again.");
       },
     });
   };
-
   return (
     <div className="flex flex-col items-center justify-center mt-[20vh]">
       <div className="w-full max-w-md space-y-2 rounded-xl bg-white">

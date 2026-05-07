@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     const file = formData.get("image") as File | null;
 
-    if (!name || !email || !password || !business_name) {
+    if (!name || !email || !password) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 },
