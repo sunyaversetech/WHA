@@ -202,11 +202,6 @@ function InternalForm({
               phone: data?.user?.phone_number ?? undefined,
               address: {
                 line1: data?.user?.location ?? "",
-                line2: "",
-                city: "",
-                state: "",
-                postal_code: "",
-                country: "",
               },
             },
           },
@@ -230,6 +225,9 @@ function InternalForm({
       <PaymentElement
         options={{
           layout: "tabs",
+          business: {
+            name: "never",
+          },
           fields: {
             billingDetails: {
               name: "auto",
@@ -241,9 +239,7 @@ function InternalForm({
         }}
       />
 
-      {/* Order Summary */}
       <div className="rounded-2xl border border-gray-200 overflow-hidden text-sm">
-        {/* Header row with invoice number */}
         <div
           className="flex items-center justify-between px-4 py-3"
           style={{ backgroundColor: "#051e3a" }}>
@@ -256,7 +252,6 @@ function InternalForm({
         </div>
 
         <div className="bg-gray-50 divide-y divide-gray-100">
-          {/* Ticket line */}
           <div className="flex justify-between items-center px-4 py-3 text-gray-700">
             <span>
               Ticket × {quantity}
