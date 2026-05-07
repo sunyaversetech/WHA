@@ -199,6 +199,16 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
       )}
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4 mt-5">
         <div className="relative bg-white rounded-2xl shadow-md overflow-visible">
+          {deal.data.discount_percentage > 0 && (
+            <div className="absolute top-2 left-2 z-[100] flex flex-col items-center justify-center">
+              <div className="bg-green-600 text-white text-[10px] font-black w-fit h-7 p-2 rounded-md shadow-xl border-2 border-white flex flex-col items-center justify-center leading-tight uppercase text-center">
+                <span className="text-xs md:text-md">
+                  {deal.data.discount_percentage}% OFF
+                </span>
+                {/* <span>OFF</span> */}
+              </div>
+            </div>
+          )}
           <Image
             src={deal?.data?.image || "/placeholder.png"}
             alt={deal.data.title}
@@ -218,37 +228,28 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                 <div className="flex items-center gap-2">
                   {deal.data.discount_percentage > 0 ? (
                     <>
-                      {/* Original Price with Strikethrough */}
                       <span className="text-gray-400 line-through text-lg font-medium">
                         ${deal.data.price}
                       </span>
-                      {/* Calculated Discounted Price */}
                       <span className="text-blue-600">
-                        $
-                        {(
-                          deal.data.price -
-                          (deal.data.price * deal.data.discount_percentage) /
-                            100
-                        ).toFixed(2)}
+                        {deal.data.price
+                          ? ` $${(
+                              deal.data.price -
+                              (deal.data.price *
+                                deal.data.discount_percentage) /
+                                100
+                            ).toFixed(2)} AUD`
+                          : "Free"}
                       </span>
                     </>
                   ) : (
-                    /* Regular Price (No Discount) */
                     <span>
                       {deal.data.price && deal.data.price > 0
-                        ? `$${deal.data.price}`
+                        ? `$${deal.data.price} AUD`
                         : "Free"}
                     </span>
                   )}
-                  <span className="text-sm font-normal text-gray-500">AUD</span>
                 </div>
-
-                {/* Optional: Discount Badge */}
-                {deal.data.discount_percentage > 0 && (
-                  <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full mt-1 uppercase tracking-wider">
-                    {deal.data.discount_percentage}% OFF
-                  </span>
-                )}
               </div>
             </h2>
             <p className="text-gray-500 text-base leading-relaxed mb-6">
@@ -334,11 +335,14 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                     </>
                   ) : (
                     <>
-                      <Ticket className="h-5 w-5" /> $
-                      {(
-                        deal.data.price -
-                        (deal.data.price * deal.data.discount_percentage) / 100
-                      ).toFixed(2)}{" "}
+                      <Ticket className="h-5 w-5" />
+                      {deal.data.price
+                        ? `$ ${(
+                            deal.data.price -
+                            (deal.data.price * deal.data.discount_percentage) /
+                              100
+                          ).toFixed(2)}`
+                        : "Free"}{" "}
                     </>
                   )}
                 </Button>

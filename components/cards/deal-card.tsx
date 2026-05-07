@@ -50,15 +50,22 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
 
   return (
     <div
-      className="block cursor-pointer"
+      className="relative block cursor-pointer group"
       onClick={() => router.push(`/deals/${deal._id}`)}>
+      {deal.discount_percentage > 0 && (
+        <div className="absolute top-2 left-2 z-[100] flex flex-col items-center justify-center">
+          <div className="bg-green-600 text-white text-[10px] font-black w-fit h-7 p-2 rounded-md shadow-xl border-2 border-white flex flex-col items-center justify-center leading-tight uppercase text-center">
+            <span>{deal.discount_percentage}% OFF</span>
+            {/* <span>OFF</span> */}
+          </div>
+        </div>
+      )}
       <div className="relative bg-white rounded-lg overflow-hidden border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-lg active:scale-[0.98]">
         <div className="absolute top-1/2 -left-2 w-4 h-4 bg-white border border-gray-200 rounded-full -translate-y-1/2" />
         <div className="absolute top-1/2 -right-2 w-4 h-4 bg-white border border-gray-200 rounded-full -translate-y-1/2" />
 
-        <div className="flex  justify-between grid grid-cols-12 xl:h-50 max-xl:h-60">
+        <div className="flex  justify-between grid grid-cols-12 xl:h-50 max-xl:h-60 max-md:h-45">
           <div className="relative h-full w-full col-span-4 ">
-            {/* <div className="relative z-49"></div> */}
             <Image
               src={deal.image || "/placeholder.svg"}
               alt="Deal Banner"
@@ -120,20 +127,22 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
             )}
 
             <div className="flex items-center justify-between pt-2 border-t border-dashed border-gray-200 text-xs text-gray-500">
-              <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                <span>Expires:</span>
+              <div className="flex items-center gap-1 max-md:flex-col">
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Expires:
+                </span>
                 <span className="font-medium text-gray-700">
                   {formatDate(deal?.valid_till, "dd MMM yyyy")}
                 </span>
               </div>
 
-              <div className="">
+              <div className=" ">
                 <h2 className="text-2xl flex flex-wrap justify-between items-start sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
                   <div className="flex flex-col items-end max-xl:items-center">
                     <div className="flex max-xl:flex-col items-center gap-2">
                       {deal.discount_percentage > 0 ? (
-                        <div className="flex max-xl:flex-col gap-2 items-center">
+                        <div className="flex max-xl:flex-col gap-2 max-md:gap-0 max-md:mt-1 items-center">
                           <span className="text-gray-400 max-md:text-xs line-through text-lg font-medium">
                             ${deal.price}
                           </span>
@@ -146,19 +155,13 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
                           </span>
                         </div>
                       ) : (
-                        <span>
+                        <span className="max-md:text-sm">
                           {deal.price && deal.price > 0
                             ? `$${deal.price}`
                             : "Free"}
                         </span>
                       )}
                     </div>
-
-                    {deal.discount_percentage > 0 && (
-                      <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full mt-1 uppercase tracking-wider">
-                        {deal.discount_percentage}% OFF
-                      </span>
-                    )}
                   </div>
                 </h2>
               </div>

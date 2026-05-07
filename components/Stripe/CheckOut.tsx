@@ -17,11 +17,9 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
 );
 
-// Fee constants
-const SERVICE_FEE = 0; // flat $2.00 per order
-const SURCHARGE_PERCENT = 0.025; // 2.5% card processing surcharge
+const SERVICE_FEE = 0;
+const SURCHARGE_PERCENT = 0.025;
 
-// Generate a short invoice number (you can replace with a server-generated one)
 function generateInvoiceNumber() {
   const ts = Date.now().toString(36).toUpperCase();
   const rand = Math.random().toString(36).substring(2, 5).toUpperCase();
@@ -29,9 +27,9 @@ function generateInvoiceNumber() {
 }
 
 function computeFees(ticketPrice: number, quantity: number) {
-  const ticketTotal = ticketPrice * quantity; // price × qty
-  const orderTotal = ticketTotal + SERVICE_FEE; // + flat service fee
-  const surcharge = orderTotal * SURCHARGE_PERCENT; // 2.5% on order total
+  const ticketTotal = ticketPrice * quantity;
+  const orderTotal = ticketTotal + SERVICE_FEE;
+  const surcharge = orderTotal * SURCHARGE_PERCENT;
   const totalToPay = orderTotal + surcharge;
   return {
     ticketTotal,
@@ -95,7 +93,6 @@ export default function StripeCheckout({
       <div
         className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
         style={{ maxHeight: "90vh", overflowY: "auto" }}>
-        {/* Header */}
         <div className="p-6 border-b border-gray-100 bg-gray-50/50">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-2">
@@ -111,7 +108,6 @@ export default function StripeCheckout({
             </button>
           </div>
 
-          {/* Quantity Selector */}
           <div className="flex items-center justify-between bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
             <span className="text-sm font-medium text-gray-500 ml-2">
               Number of Tickets

@@ -66,6 +66,8 @@ export default function EditDealForm() {
         max_redemptions: deal.max_redemptions,
         city: deal.city,
         image: deal.image,
+        discount_percentage: deal.discount_percentage,
+        price: deal.price,
       });
     }
   }, [data, form]);

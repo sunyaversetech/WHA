@@ -48,12 +48,17 @@ export const dealSchema = z.object({
     .lt(80, { message: "Discount must be less than 80" })
     .optional(),
   image: z
-    .any()
-    .refine((file) => file?.size <= 3000000, `Max image size is 3MB.`)
-    .refine(
-      (file) => ["image/jpeg", "image/png", "image/webp"].includes(file?.type),
-      "Only .jpg, .png and .webp formats are supported.",
-    ),
+    .union([z.string(), z.any()])
+    .refine((val) => {
+      if (typeof val === "string") return true;
+
+      return val?.size <= 3000000;
+    }, `Max image size is 3MB.`)
+    .refine((val) => {
+      if (typeof val === "string") return true;
+
+      return ["image/jpeg", "image/png", "image/webp"].includes(val?.type);
+    }, "Only .jpg, .png and .webp formats are supported."),
 });
 
 export type DealFormValues = z.infer<typeof dealSchema>;

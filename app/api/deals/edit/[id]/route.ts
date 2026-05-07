@@ -10,7 +10,6 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-// Expanded schema to include all potential deal fields
 export const dealSchema = z.object({
   title: z.string().min(2, "Title is too short"),
   valid_till: z.coerce.date(),
@@ -20,6 +19,8 @@ export const dealSchema = z.object({
   city: z.string().optional(),
   max_redemptions: z.coerce.number().optional(),
   price: z.coerce.number().optional(),
+  discount_percentage: z.coerce.number().optional(),
+  image: z.any().optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: RouteContext) {

@@ -92,8 +92,7 @@ export default function DealsPageClient() {
             </div>
           ) : data && data.length > 0 ? (
             <div
-              className={`grid grid-cols-1 md:grid-cols-2  gap-3 md:gap-6 ${data.length === 1 ? "max-h-[20vh]" : "h-full"}`}
-            >
+              className={`grid grid-cols-1 md:grid-cols-2 max-md:mt-4  gap-3 md:gap-6 ${data.length === 1 ? "max-h-[20vh]" : "h-full"}`}>
               {data.map((deal) => (
                 <DealCard key={deal._id} deal={deal} />
               ))}
