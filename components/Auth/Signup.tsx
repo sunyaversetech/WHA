@@ -39,7 +39,7 @@ const signupSchema = z
 
 export default function SignupPage() {
   const router = useRouter();
-  const { mutate } = useSingup();
+  const { mutate, isPending } = useSingup();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof signupSchema>>({
@@ -222,8 +222,8 @@ export default function SignupPage() {
                 )}
               />
             </div>
-            <Button type="submit" className="w-full">
-              Sign Up
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? "Signing up..." : "Sign Up"}
             </Button>
           </form>
         </Form>
