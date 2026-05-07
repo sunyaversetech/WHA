@@ -15,7 +15,16 @@ export async function getPaymentIntentForQuantity(
     const deal = await Deal.findById(dealId);
     if (!deal) throw new Error("Deal not found");
 
-    const ticketTotal = deal.price * quantity;
+    // --- FIX STARTS HERE ---
+    // 1. Calculate the actual price after discount
+    // If price is 2 and discount is 50%, this becomes 1
+    const discount = deal.discount_percentage || 0;
+    const pricePerTicket = deal.price * ((100 - discount) / 100);
+
+    // 2. Use that discounted price for the total
+    const ticketTotal = pricePerTicket * quantity;
+    // --- FIX ENDS HERE ---
+
     const serviceFee = 0;
     const orderTotal = ticketTotal + serviceFee;
     const surcharge = orderTotal * 0.025;
