@@ -202,6 +202,10 @@ function InternalForm({
               phone: data?.user?.phone_number ?? undefined,
               address: {
                 line1: data?.user?.location ?? "",
+                country: "AU",
+                city: data?.user?.location ?? "Melbourne",
+                state: data?.user?.location ?? "VIC",
+                postal_code: data?.user?.location ?? "3000",
               },
             },
           },
