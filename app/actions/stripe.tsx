@@ -16,13 +16,13 @@ export async function getPaymentIntentForQuantity(
     const deal = await Deal.findById(dealId);
     if (!deal) throw new Error("Deal not found");
 
-    // Calculate total
-    const basePrice = deal.price * quantity;
-    const stripeFeePercentage = 0.029;
-    const fixedFee = 0.3;
-    const totalWithFees = (basePrice + fixedFee) / (1 - stripeFeePercentage);
+    const ticketTotal = deal.price * quantity;
+    const serviceFee = 0;
+    const orderTotal = ticketTotal + serviceFee;
+    const surcharge = orderTotal * 0.025;
+    const totalToPay = orderTotal + surcharge;
 
-    const amountInCents = Math.round(totalWithFees * 100);
+    const amountInCents = Math.round(totalToPay * 100);
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
@@ -32,7 +32,7 @@ export async function getPaymentIntentForQuantity(
 
     return {
       clientSecret: paymentIntent.client_secret,
-      totalAmount: totalWithFees,
+      totalAmount: totalToPay,
     };
   } catch (error: any) {
     throw new Error(error.message);
