@@ -200,7 +200,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4 mt-5">
         <div className="relative bg-white rounded-2xl shadow-md overflow-visible">
           {deal.data.discount_percentage > 0 && (
-            <div className="absolute top-2 left-2 z-[100] flex flex-col items-center justify-center">
+            <div className="absolute top-2 left-2 z-10 flex flex-col items-center justify-center">
               <div className="bg-green-600 text-white text-[10px] font-black w-fit h-7 p-2 rounded-md shadow-xl border-2 border-white flex flex-col items-center justify-center leading-tight uppercase text-center">
                 <span className="text-xs md:text-md">
                   {deal.data.discount_percentage}% OFF

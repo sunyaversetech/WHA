@@ -53,7 +53,7 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
       className="relative block cursor-pointer group"
       onClick={() => router.push(`/deals/${deal._id}`)}>
       {deal.discount_percentage > 0 && (
-        <div className="absolute top-2 left-2 z-[100] flex flex-col items-center justify-center">
+        <div className="absolute top-2 left-2 z-10 flex flex-col items-center justify-center">
           <div className="bg-green-600 text-white text-[10px] font-black w-fit h-7 p-2 rounded-md shadow-xl border-2 border-white flex flex-col items-center justify-center leading-tight uppercase text-center">
             <span>{deal.discount_percentage}% OFF</span>
             {/* <span>OFF</span> */}
