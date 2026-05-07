@@ -43,6 +43,11 @@ export default function MobileDashboard() {
       link: "/dashboard/favorite",
     },
     {
+      name: "Tickets",
+      icon: User,
+      link: "/dashboard/tickets",
+    },
+    {
       name: "Profile",
       icon: User,
       link: "/dashboard/profile",

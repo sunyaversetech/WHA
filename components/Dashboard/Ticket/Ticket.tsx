@@ -4,7 +4,13 @@ import { useGetTickets } from "@/services/dashboard.service";
 import { QRCodeCanvas } from "qrcode.react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { CalendarDays, MapPin, Tag, Ticket as TicketIcon } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  MapPin,
+  Tag,
+  Ticket as TicketIcon,
+} from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -12,6 +18,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 const QRDialog = ({
   open,
@@ -303,14 +311,16 @@ const Ticket = () => {
     }),
   );
 
-  console.log("upcomingTickets", upcomingTickets);
-
+  const router = useRouter();
   const pastTickets = tickets.filter(
     (t) => t.event && new Date(t.event.dateRange.from) < now,
   );
 
   return (
     <div className="p-6   min-h-screen">
+      <Button variant={"ghost"} onClick={() => router.back()}>
+        <ChevronLeft />
+      </Button>
       <div className="mb-8">
         <h1 className="text-4xl font-extrabold tracking-tight">Wallet</h1>
         <p className="text-muted-foreground mt-1">
