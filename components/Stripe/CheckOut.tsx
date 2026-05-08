@@ -54,6 +54,7 @@ export default function StripeCheckout({
   const [updatingTotal, setUpdatingTotal] = useState(false);
   const [invoiceNumber] = useState(() => generateInvoiceNumber());
   const [paymentIntentId, setPaymentIntentId] = useState("");
+  const [elementsKey, setElementsKey] = useState(0);
 
   const elementsMountedRef = useRef(false);
 
@@ -83,6 +84,7 @@ export default function StripeCheckout({
         setClientSecret(res.clientSecret as string);
         setPaymentIntentId(res.paymentIntentId);
         setFees(computeFees(price, newQty));
+        setElementsKey((prev) => prev + 1);
       } catch (err) {
         console.error(err);
       } finally {
@@ -136,7 +138,6 @@ export default function StripeCheckout({
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Payment Element — mounted ONCE, never remounted */}
           {initializing ? (
             <div className="h-48 flex flex-col items-center justify-center gap-3">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -144,9 +145,8 @@ export default function StripeCheckout({
             </div>
           ) : (
             clientSecret && (
-              // key is intentionally FIXED — never changes — so Elements never remounts
               <Elements
-                key="stripe-elements-singleton"
+                key={`stripe-elements-singleton-${elementsKey}`}
                 stripe={stripePromise}
                 options={{
                   clientSecret,
