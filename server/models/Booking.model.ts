@@ -1,0 +1,72 @@
+import mongoose from "mongoose";
+
+const booking_schema = new mongoose.Schema(
+  {
+    // Identification
+    business_id: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+
+    // Service & Provider Details
+    service_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Service",
+      required: true,
+    },
+    employee_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+      default: null, // Null means "Assigned On-Site" as per your requirement
+    },
+
+    // Timing
+    start_time: { type: Date, required: true },
+    end_time: { type: Date, required: true },
+    duration: { type: Number, required: true }, // Store in minutes for easy reporting
+
+    // Financials
+    total_price: { type: Number, required: true, min: 0 },
+    currency: { type: String, default: "AUD" },
+    payment_status: {
+      type: String,
+      enum: ["unpaid", "pending", "paid", "refunded", "failed"],
+      default: "unpaid",
+    },
+    payment_transaction_id: { type: String }, // Reference to Stripe/PayPal/Square
+
+    // Booking State
+    status: {
+      type: String,
+      enum: ["pending", "confirmed", "completed", "cancelled", "no_show"],
+      default: "pending",
+    },
+
+    notes: { type: String },
+    metadata: {
+      type: Map,
+      of: String,
+    },
+
+    is_reminder_sent: { type: Boolean, default: false },
+  },
+  {
+    timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
+  },
+);
+
+// Indexes for high-performance availability lookups
+// This allows you to quickly find all bookings for a specific employee on a specific day
+booking_schema.index({ employee_id: 1, start_time: 1, end_time: 1 });
+booking_schema.index({ business_id: 1, status: 1 });
+
+const Booking =
+  mongoose.models.Booking || mongoose.model("Booking", booking_schema);
+export default Booking;
