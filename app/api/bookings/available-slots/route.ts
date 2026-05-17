@@ -54,13 +54,12 @@ export async function GET(request: Request) {
     }
 
     if (employees_to_check.length === 0) {
-      return NextResponse.json(
-        { success: true, available_slots: [] },
-        {
-          comment:
-            "No active employees assigned to this service/business configuration.",
-        },
-      );
+      return NextResponse.json({
+        success: true,
+        available_slots: [],
+        comments:
+          "No active employees assigned to this service/business configuration.",
+      });
     }
 
     // 4. Set Day Boundaries for Booking Queries (UTC)
