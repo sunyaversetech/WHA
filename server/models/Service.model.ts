@@ -25,6 +25,7 @@ const service_schema = new mongoose.Schema(
 
     is_active: { type: Boolean, default: true },
     metadata: { type: Map, of: String },
+    buffer_time: { type: Number, default: 0 },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
