@@ -38,16 +38,15 @@ export default function LandingPage() {
           </div> */}
 
           {/* Banner Container: Standard 7:2 banner aspect ratio context on desktop, taller on mobile */}
-          <div className="relative aspect-[21/9] sm:aspect-[7/2] w-full">
+          <div className="relative aspect-[21/8] max-md:aspect-[7/2] w-full">
             <Image
               width={4000}
               height={4000}
-              src="https://images.pexels.com/photos/33926926/pexels-photo-33926926.jpeg"
+              src="/banner-img.png"
               alt="Promotional Advertisement"
               className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.02]"
             />
 
-            {/* Soft contrast matching gradient cover */}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-black/20" />
           </div>
         </Link>
