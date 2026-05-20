@@ -31,11 +31,11 @@ export default function LandingPage() {
           rel="noopener noreferrer"
           className="group relative block w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl">
           {/* Ad Label Tag Overlay */}
-          <div className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-full bg-black/40 backdrop-blur-md px-2.5 py-0.5 border border-white/10">
+          {/* <div className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-full bg-black/40 backdrop-blur-md px-2.5 py-0.5 border border-white/10">
             <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">
               Sponsored
             </span>
-          </div>
+          </div> */}
 
           {/* Banner Container: Standard 7:2 banner aspect ratio context on desktop, taller on mobile */}
           <div className="relative aspect-[21/9] sm:aspect-[7/2] w-full">
@@ -53,7 +53,7 @@ export default function LandingPage() {
         </Link>
       </div>
 
-      <div className=" px-4 pt-2 md:pt-6">
+      {/* <div className=" px-4 pt-2 md:pt-6">
         <CardSlider
           title=""
           icon={<Star className="h-3 w-3 md:h-5 md:w-5 text-white" />}>
@@ -61,7 +61,7 @@ export default function LandingPage() {
             <FeaturedCard key={item._id} item={item} />
           ))}
         </CardSlider>
-      </div>
+      </div> */}
 
       <div className="mt-2 md:mt-4 bg-white text-black rounded-t-3xl px-4 md:px-6">
         <div className="container-modern py-4 md:py-6 border-b border-divider ">
