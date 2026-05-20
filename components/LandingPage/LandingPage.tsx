@@ -38,7 +38,7 @@ export default function LandingPage() {
           </div> */}
 
           {/* Banner Container: Standard 7:2 banner aspect ratio context on desktop, taller on mobile */}
-          <div className="relative aspect-[21/8] max-md:aspect-[7/2] w-full">
+          <div className="relative aspect-[21/8] max-md:aspect-[10/5] w-full">
             <Image
               width={4000}
               height={4000}
