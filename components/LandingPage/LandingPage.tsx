@@ -11,6 +11,7 @@ import { useFilteredBusinesses } from "@/hooks/use-filtered-data";
 import { useGetLandingPageData } from "@/services/landing.service";
 import LandingPageSkeleton from "./LandingPageSkeleton";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 export default function LandingPage() {
   const { data, isLoading } = useGetLandingPageData();
@@ -22,37 +23,45 @@ export default function LandingPage() {
   if (isLoading) return <LandingPageSkeleton />;
   return (
     <div className="container-modern md:pt-14">
+      {/* Dynamic Vibe-Matching Promotional Ad Banner Section */}
+      <div className="px-4 pt-4 md:pt-8">
+        <Link
+          href="https://muktiandrevival.whaustralia.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group relative block w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl">
+          {/* Ad Label Tag Overlay */}
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-full bg-black/40 backdrop-blur-md px-2.5 py-0.5 border border-white/10">
+            <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">
+              Sponsored
+            </span>
+          </div>
+
+          {/* Banner Container: Standard 7:2 banner aspect ratio context on desktop, taller on mobile */}
+          <div className="relative aspect-[21/9] sm:aspect-[7/2] w-full">
+            <Image
+              width={4000}
+              height={4000}
+              src="https://images.pexels.com/photos/33926926/pexels-photo-33926926.jpeg"
+              alt="Promotional Advertisement"
+              className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.02]"
+            />
+
+            {/* Soft contrast matching gradient cover */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-black/20" />
+          </div>
+        </Link>
+      </div>
+
       <div className=" px-4 pt-2 md:pt-6">
         <CardSlider
           title=""
-          icon={<Star className="h-3 w-3 md:h-5 md:w-5 text-white" />}
-        >
+          icon={<Star className="h-3 w-3 md:h-5 md:w-5 text-white" />}>
           {data?.data?.sponser?.map((item: any) => (
             <FeaturedCard key={item._id} item={item} />
           ))}
         </CardSlider>
       </div>
-
-      {/* <div className=" !pr-0  pt-1 md:pt-6">
-        <h1>Top Businesses in Canberra</h1>
-        {data?.data?.business && data.data.business.length > 0 ? (
-          <Carousel className="w-full ">
-            <CarouselContent>
-              {data.data.business.map((item: any) => (
-                <CarouselItem key={item._id} className="basis-1/2 lg:basis-1/2">
-                  <FeaturedCard key={item._id} item={item} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
-        ) : (
-          <div className="mt-2 text-sm text-muted-foreground">
-            No featured businesses available right now.
-          </div>
-        )}
-      </div> */}
 
       <div className="mt-2 md:mt-4 bg-white text-black rounded-t-3xl px-4 md:px-6">
         <div className="container-modern py-4 md:py-6 border-b border-divider ">
@@ -90,8 +99,7 @@ export default function LandingPage() {
               <Link
                 key={index}
                 href={stat.href}
-                className={`flex-1  p-2 md:p-4 rounded-lg shadow-sm text-black bg-white/40 border border-secondary/20 backdrop-blur-sm transition-all ${stat.color} ${stat.hover} hover:shadow-md flex items-center justify-center sm:flex-col sm:text-center`}
-              >
+                className={`flex-1  p-2 md:p-4 rounded-lg shadow-sm text-black bg-white/40 border border-secondary/20 backdrop-blur-sm transition-all ${stat.color} ${stat.hover} hover:shadow-md flex items-center justify-center sm:flex-col sm:text-center`}>
                 <div className="flex text-black flex-col items-center">
                   <div className="flex items-center justify-center mb-1">
                     <stat.icon className="h-5 w-5 mr-2 text-primary" />
@@ -113,8 +121,7 @@ export default function LandingPage() {
           <CardSlider
             title={`Upcoming Events in ${city ? city : "Australia"}`}
             icon={<Calendar className="h-5 w-5 text-primary" />}
-            viewAllHref="/events"
-          >
+            viewAllHref="/events">
             {data?.data?.length === 0 ? (
               <PlaceholderCard type="events" />
             ) : (
@@ -128,28 +135,11 @@ export default function LandingPage() {
           </CardSlider>
         </div>
 
-        {/* <div className="pt-2 pb-4 md:py-6 pr-0 border-b border-divider">
-          <CardSlider
-            title="Active Deals"
-            icon={<Tag className="h-5 w-5 text-primary" />}
-            viewAllHref="/deals"
-          >
-            {(data?.data?.deals?.length ?? 0) === 0 ? (
-              <PlaceholderCard type="deals" />
-            ) : (
-              data?.data?.deals
-                ?.slice(0, 6)
-                .map((deal: any) => <DealCard key={deal._id} deal={deal} />)
-            )}
-          </CardSlider>
-        </div> */}
-
         <div className=" pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
           <CardSlider
             title={`Businesses in ${city ? city : "Australia"}`}
             icon={<Building className="h-5 w-5 text-primary" />}
-            viewAllHref="/businesses"
-          >
+            viewAllHref="/businesses">
             {businesses && businesses.length === 0 ? (
               <PlaceholderCard type="businesses" />
             ) : (
@@ -180,14 +170,12 @@ export default function LandingPage() {
               <a
                 href="mailto:info@whatshappeningaustralia.com"
                 className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-primary/10"
-                aria-label="Email"
-              >
+                aria-label="Email">
                 <svg
                   className="w-5 h-5 md:w-6 md:h-6 fill-current"
                   viewBox="0 0 24 24"
                   aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                  xmlns="http://www.w3.org/2000/svg">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 2v.01L12 13 20 6.01V6H4zm0 12h16V8l-8 7-8-7v10z" />
                 </svg>
                 <span className="font-medium text-sm md:text-base hidden md:block">
@@ -199,13 +187,11 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-primary/10"
-                aria-label="Instagram"
-              >
+                aria-label="Instagram">
                 <svg
                   className="w-5 h-5 md:w-6 md:h-6 fill-current"
                   viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
+                  aria-hidden="true">
                   <path d="M7.75 2h8.5A5.75 5.75 0 0122 7.75v8.5A5.75 5.75 0 0116.25 22h-8.5A5.75 5.75 0 012 16.25v-8.5A5.75 5.75 0 017.75 2zm0 1.5A4.25 4.25 0 003.5 7.75v8.5A4.25 4.25 0 007.75 20.5h8.5a4.25 4.25 0 004.25-4.25v-8.5A4.25 4.25 0 0016.25 3.5h-8.5zm8.88 2.3a1.125 1.125 0 110 2.25 1.125 1.125 0 010-2.25zM12 7a5 5 0 110 10 5 5 0 010-10zm0 1.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z" />
                 </svg>
                 <span className="font-medium text-sm md:text-base hidden md:block">
@@ -217,13 +203,11 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-primary/10"
-                aria-label="Facebook"
-              >
+                aria-label="Facebook">
                 <svg
                   className="w-5 h-5 md:w-6 md:h-6 fill-current"
                   viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
+                  aria-hidden="true">
                   <path d="M22 12a10 10 0 10-11.5 9.87v-6.99H8v-2.88h2.5v-2.2c0-2.48 1.49-3.85 3.77-3.85 1.09 0 2.23.2 2.23.2v2.45h-1.25c-1.23 0-1.61.77-1.61 1.56v1.85h2.74l-.44 2.88h-2.3v6.99A10 10 0 0022 12z" />
                 </svg>
                 <span className="font-medium text-sm md:text-base hidden md:block">
@@ -235,14 +219,12 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 text-secondary hover:text-secondary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-secondary/10"
-                aria-label="TikTok"
-              >
+                aria-label="TikTok">
                 <svg
                   className="w-5 h-5 md:w-6 md:h-6 fill-current"
                   viewBox="0 0 48 48"
                   aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                  xmlns="http://www.w3.org/2000/svg">
                   <path d="M41.5 14.7c-2.6 0-5-1-6.9-2.7v16.6c0 7.6-6.1 13.9-13.7 13.9-3.7 0-7.1-1.5-9.6-4-2.6-2.6-4-6-4-9.6s1.5-7.1 4-9.6c2.6-2.6 6-4 9.6-4 .8 0 1.6.1 2.3.2v6.7c-.7-.2-1.5-.3-2.3-.3-4.3 0-7.8 3.6-7.8 8s3.5 8 7.8 8c4.3 0 7.8-3.6 7.8-8V4h6.2c.2 2.6 1.4 5 3.3 6.7 1.8 1.7 4.2 2.7 6.7 2.8v6.2z" />
                 </svg>
                 <span className="font-medium text-sm md:text-base hidden md:block">

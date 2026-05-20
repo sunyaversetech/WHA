@@ -7,8 +7,8 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const date_param = searchParams.get("date"); // Expects YYYY-MM-DD
-  const employee_id = searchParams.get("employee_id"); // Can be null/omitted for "on-site assignment"
+  const date_param = searchParams.get("date");
+  const employee_id = searchParams.get("employee_id");
   const service_id = searchParams.get("service_id");
 
   if (!date_param || !service_id) {
@@ -21,13 +21,11 @@ export async function GET(request: Request) {
   try {
     await connectToDb();
 
-    // 1. Fetch Service details
     const service = await Service.findById(service_id);
     if (!service) {
       return NextResponse.json({ error: "Service not found" }, { status: 404 });
     }
 
-    // 2. Determine Day of the Week
     const days_of_week = [
       "sunday",
       "monday",
@@ -37,16 +35,16 @@ export async function GET(request: Request) {
       "friday",
       "saturday",
     ];
+
     const target_date = new Date(`${date_param}T00:00:00Z`);
     const day_name = days_of_week[target_date.getUTCDay()];
 
-    // 3. Resolve Pool of Employees to check
     let employees_to_check = [];
+
     if (employee_id && employee_id !== "null") {
       const selected_employee = await Employee.findById(employee_id);
       if (selected_employee) employees_to_check.push(selected_employee);
     } else {
-      // "On-site assignment" fallback: fetch all employees capable of performing this service
       employees_to_check = await Employee.find({
         _id: { $in: service.assigned_employees },
         is_active: true,

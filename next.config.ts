@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
         hostname: "wha-sunya-my-uploads.s3.ap-southeast-2.amazonaws.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+        pathname: "/**",
+      },
     ],
   },
   output: "standalone",

@@ -4,7 +4,6 @@ import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import Event from "@/server/models/Event.model";
 import { Deal } from "@/server/models/DealSchema.model";
-import { Category } from "@/server/models/Service.schema";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req: NextRequest) {
@@ -26,7 +25,6 @@ export async function POST(req: NextRequest) {
   }
   await Event.deleteMany({ user: user._id });
   await Deal.deleteMany({ user: user._id });
-  await Category.deleteMany({ user: user._id });
   await User.findByIdAndDelete(user._id);
   return NextResponse.json(user);
 }
