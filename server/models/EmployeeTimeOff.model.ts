@@ -8,4 +8,4 @@ const employee_time_off_schema = new mongoose.Schema({
 });
 
 export const EmployeeTimeOff =
-  models.EmployeeTimeOff || model("Employee", employee_time_off_schema);
+  models.EmployeeTimeOff || model("EmployeeTimeOff", employee_time_off_schema);

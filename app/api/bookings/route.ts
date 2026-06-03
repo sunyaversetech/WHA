@@ -5,6 +5,7 @@ import { connectToDb } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth"; // or your auth solution
 import { Service } from "@/server/models/Service.model";
+import { Employee } from "@/server/models/Employee.model";
 import Booking from "@/server/models/Booking.model";
 import { BookingLock } from "@/server/models/BookingLock.model";
 import { authOptions } from "../auth/[...nextauth]/route";
@@ -32,7 +33,6 @@ function toClientError(error: unknown): { message: string; code: string } {
     };
   }
   if (error instanceof Error) {
-    // Never leak internal messages to the client — log them instead
     return { code: "BOOKING_FAILED", message: error.message };
   }
   return { code: "UNKNOWN_ERROR", message: "An unexpected error occurred" };
@@ -95,9 +95,6 @@ export async function POST(request: Request) {
         user_id, // ← ownership check
         service_id: validated_data.service_id,
         start_time: new Date(validated_data.start_time),
-        ...(validated_data.employee_id && {
-          employee_id: validated_data.employee_id,
-        }),
         expires_at: { $gt: new Date() }, // ← expiry check
       }).session(db_session);
 
@@ -107,7 +104,13 @@ export async function POST(request: Request) {
         );
       }
 
-      // 5. Fetch service server-side — never trust client price
+      // Resolve the actual employee assigned during lock creation
+      const employee_id = lock.employee_id?.toString() || validated_data.employee_id;
+      if (!employee_id) {
+        throw new Error("EMPLOYEE_INVALID: No employee assigned to this lock");
+      }
+
+      // 5. Fetch service server-side
       const service = await Service.findById(validated_data.service_id).session(
         db_session,
       );
@@ -116,17 +119,48 @@ export async function POST(request: Request) {
       if (!service.is_active)
         throw new Error("SERVICE_UNAVAILABLE: Service is not currently active");
 
+      // 6. Look up employee overrides for duration and pricing
+      let duration = service.base_duration;
+      let total_price = service.base_price;
+
+      const employee = await Employee.findById(employee_id).session(db_session);
+      if (employee) {
+        const override = employee.service_overrides?.find(
+          (o: any) => o.service_id.toString() === service._id.toString(),
+        );
+        if (override) {
+          if (override.custom_duration) duration = override.custom_duration;
+          if (override.custom_price !== undefined && override.custom_price !== null) {
+            total_price = override.custom_price;
+          }
+        }
+      }
+
       const start_date = new Date(validated_data.start_time);
       const end_date = new Date(
-        start_date.getTime() + service.base_duration * 60_000,
+        start_date.getTime() + duration * 60_000,
       );
 
-      // 6. Final overlap check within the transaction (handles race conditions)
-      const overlap = await Booking.findOne({
-        employee_id: validated_data.employee_id,
+      // Define time window to check overlaps around the booking time (e.g. 12 hours)
+      const buffer_check_start = new Date(start_date.getTime() - 12 * 3600 * 1000);
+      const buffer_check_end = new Date(end_date.getTime() + 12 * 3600 * 1000);
+
+      // Fetch all bookings for this employee around the scheduled window
+      const potential_overlaps = await Booking.find({
+        employee_id,
         status: { $nin: ["cancelled", "no_show"] },
-        $or: [{ start_time: { $lt: end_date }, end_time: { $gt: start_date } }],
-      }).session(db_session);
+        start_time: { $lt: buffer_check_end },
+        end_time: { $gt: buffer_check_start },
+      }).populate("service_id").session(db_session);
+
+      const candidate_buffer = service.buffer_time || 0;
+      const candidate_blocked_end = new Date(end_date.getTime() + candidate_buffer * 60_000);
+
+      const overlap = potential_overlaps.find((b) => {
+        const buffer = (b.service_id as any)?.buffer_time || 0;
+        const blocked_end = new Date(b.end_time.getTime() + buffer * 60_000);
+        return start_date < blocked_end && candidate_blocked_end > b.start_time;
+      });
 
       if (overlap) {
         throw new Error("SLOT_TAKEN: This time slot is no longer available");
@@ -138,14 +172,14 @@ export async function POST(request: Request) {
           {
             business_id: service.business_id, // pull from service, not client
             service_id: validated_data.service_id,
-            employee_id: validated_data.employee_id ?? null,
+            employee_id,
             user_id,
             start_time: start_date,
             end_time: end_date,
-            duration: service.base_duration,
-            total_price: service.base_price, // ← server-side price
+            duration,
+            total_price, // ← server-side override price
             status: "confirmed",
-            payment_status: "pending", // ← set to pending; confirm after payment
+            payment_status: "pending",
             idempotency_key: validated_data.idempotency_key ?? null,
           },
         ],
@@ -157,9 +191,6 @@ export async function POST(request: Request) {
         session: db_session,
       });
     });
-
-    // 9. Trigger payment flow AFTER the transaction commits (outside the txn)
-    // await initiatePayment(new_booking._id, new_booking.total_price);
 
     logger.info({ booking_id: new_booking._id, user_id }, "Booking created");
 

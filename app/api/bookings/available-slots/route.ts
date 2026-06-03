@@ -5,21 +5,18 @@ import { connectToDb } from "@/lib/db";
 import Booking from "@/server/models/Booking.model";
 import { BookingLock } from "@/server/models/BookingLock.model";
 import { Employee } from "@/server/models/Employee.model";
+import { EmployeeTimeOff } from "@/server/models/EmployeeTimeOff.model";
 import { Service } from "@/server/models/Service.model";
 import { logger } from "@/lib/logger";
 
-// ─── Constants ─────────────────────────────────────────────────────────────
-
 const DEAD_BOOKING_STATUSES = ["cancelled", "no_show", "refunded"];
 const DEFAULT_SLOT_STEP_MINUTES = 30;
-
-// ─── Schema ────────────────────────────────────────────────────────────────
 
 const query_schema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date must be YYYY-MM-DD"),
   service_id: z.string().min(1),
   employee_id: z.string().min(1).optional(),
-  timezone: z.string().min(1).default("UTC"), // e.g. "Asia/Kathmandu"
+  timezone: z.string().min(1).default("UTC"),
 });
 
 const DAYS = [
@@ -32,9 +29,7 @@ const DAYS = [
   "saturday",
 ];
 
-/** Convert "HH:MM" + a date string + timezone into a UTC Date */
 function to_utc(date_str: string, time_str: string, timezone: string): Date {
-  // e.g. "2026-06-02T09:00:00" interpreted in the business timezone
   const local_iso = `${date_str}T${time_str}:00`;
   return new Date(
     new Intl.DateTimeFormat("en-CA", {
@@ -46,15 +41,12 @@ function to_utc(date_str: string, time_str: string, timezone: string): Date {
       minute: "2-digit",
       second: "2-digit",
       hour12: false,
-    }).format(new Date(local_iso)), // round-trip to resolve the offset
+    }).format(new Date(local_iso)),
   );
-  // For production, prefer a library like `date-fns-tz`:
-  // return zonedTimeToUtc(`${date_str}T${time_str}:00`, timezone);
 }
 
-/** Get the day name in the business's local timezone */
 function get_local_day_name(date_str: string, timezone: string): string {
-  const d = new Date(`${date_str}T12:00:00Z`); // noon UTC — safe for day detection
+  const d = new Date(`${date_str}T12:00:00Z`);
   const local_day = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     weekday: "long",
@@ -62,10 +54,7 @@ function get_local_day_name(date_str: string, timezone: string): string {
   return local_day.toLowerCase();
 }
 
-// ─── GET /api/bookings/available-slots ─────────────────────────────────────
-
 export async function GET(request: Request) {
-  // 1. Validate query params
   const { searchParams } = new URL(request.url);
 
   let params: z.infer<typeof query_schema>;
@@ -151,20 +140,26 @@ export async function GET(request: Request) {
 
     const employee_ids = employees_to_check.map((e) => e._id);
 
-    // 6. Fetch bookings + active (non-expired) locks in one round trip each
-    const [existing_bookings, existing_locks] = await Promise.all([
+    // 6. Fetch bookings + active (non-expired) locks + employee time off
+    const [existing_bookings, existing_locks, time_offs] = await Promise.all([
       Booking.find({
         employee_id: { $in: employee_ids },
         status: { $nin: DEAD_BOOKING_STATUSES },
         start_time: { $lt: end_of_day },
         end_time: { $gt: start_of_day },
-      }).lean(),
+      }).populate("service_id").lean(),
 
       BookingLock.find({
         employee_id: { $in: employee_ids },
         start_time: { $lt: end_of_day },
         end_time: { $gt: start_of_day },
         expires_at: { $gt: new Date() }, // ← only active locks
+      }).populate("service_id").lean(),
+
+      EmployeeTimeOff.find({
+        employee_id: { $in: employee_ids },
+        start_time: { $lt: end_of_day },
+        end_time: { $gt: start_of_day },
       }).lean(),
     ]);
 
@@ -222,13 +217,25 @@ export async function GET(request: Request) {
         // Must fit inside shift window
         if (runner < shift_start || slot_end > shift_end) continue;
 
-        // Must not overlap any booking or active lock
-        const has_collision = blocked_records.some(
-          (r) =>
-            r.employee_id.toString() === employee._id.toString() &&
-            runner < r.end_time &&
-            slot_end > r.start_time,
+        // Must not overlap any scheduled time off
+        const has_time_off = time_offs.some(
+          (to) =>
+            to.employee_id.toString() === employee._id.toString() &&
+            runner < to.end_time &&
+            slot_end > to.start_time,
         );
+        if (has_time_off) continue;
+
+        // Must not overlap any booking or active lock (respecting buffer time)
+        const candidate_buffer = service.buffer_time || 0;
+        const candidate_blocked_end = new Date(slot_end.getTime() + candidate_buffer * 60_000);
+
+        const has_collision = blocked_records.some((r) => {
+          if (r.employee_id.toString() !== employee._id.toString()) return false;
+          const buffer = (r.service_id as any)?.buffer_time || 0;
+          const blocked_end = new Date(r.end_time.getTime() + buffer * 60_000);
+          return runner < blocked_end && candidate_blocked_end > r.start_time;
+        });
 
         if (!has_collision) {
           available = true;
