@@ -84,14 +84,20 @@ export default function BookingWizard() {
   // ─── Pre-selection effect ──────────────────────────────────────────────────
   useEffect(() => {
     if (businessIdFromUrl) {
-      setSelectedBusinessId(businessIdFromUrl);
+      setTimeout(() => {
+
+        setSelectedBusinessId(businessIdFromUrl);
+      }, 0
+    )
     }
   }, [businessIdFromUrl]);
 
   // Set today as default date on mount
   useEffect(() => {
     const todayStr = new Date().toISOString().split("T")[0];
-    setSelectedDate(todayStr);
+    setTimeout(() => {
+      setSelectedDate(todayStr);
+    }, 0)
   }, []);
 
   // ─── List of next 14 days for horizontal selector ──────────────────────────

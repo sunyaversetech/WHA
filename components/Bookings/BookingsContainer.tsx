@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import BookingWizard from "./BookingWizard";
 import BookingList from "./BookingList";
 import { Calendar, ClipboardList } from "lucide-react";
@@ -10,22 +9,22 @@ type TabType = "book" | "list";
 
 export default function BookingsContainer() {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<TabType>("book");
+  const router = useRouter();
+  const pathname = usePathname();
 
-  useEffect(() => {
-    // If a business is preselected or we are redirected for a new booking, show the booking tab.
-    // If the URL has an explicit tab query, we can respect that as well.
-    const urlTab = searchParams.get("tab") as TabType | null;
-    const businessId = searchParams.get("business_id");
+  // Determine active tab directly from query parameters to avoid state duplication
+  const urlTab = searchParams.get("tab") as TabType | null;
+  const businessId = searchParams.get("business_id");
 
-    if (urlTab === "book" || urlTab === "list") {
-      setActiveTab(urlTab);
-    } else if (businessId) {
-      setActiveTab("book");
-    } else {
-      setActiveTab("list"); // Default to list for regular visits to /bookings
-    }
-  }, [searchParams]);
+  const activeTab: TabType = (urlTab === "book" || urlTab === "list")
+    ? urlTab
+    : (businessId ? "book" : "list");
+
+  const handleTabChange = (tab: TabType) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <main className="min-h-screen bg-[#f8fafc] pb-20 pt-24">
@@ -36,7 +35,7 @@ export default function BookingsContainer() {
           <div className="bg-white p-1.5 rounded-full shadow-md border border-slate-200 flex gap-1">
             <button
               type="button"
-              onClick={() => setActiveTab("list")}
+              onClick={() => handleTabChange("list")}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
                 activeTab === "list"
                   ? "bg-[#051e3a] text-white shadow-sm"
@@ -47,7 +46,7 @@ export default function BookingsContainer() {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab("book")}
+              onClick={() => handleTabChange("book")}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
                 activeTab === "book"
                   ? "bg-[#051e3a] text-white shadow-sm"
