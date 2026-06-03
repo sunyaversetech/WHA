@@ -15,7 +15,6 @@ const booking_schema = new mongoose.Schema(
       index: true,
     },
 
-    // Service & Provider Details
     service_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Service",
@@ -24,10 +23,9 @@ const booking_schema = new mongoose.Schema(
     employee_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Employee",
-      default: null, // Null means "Assigned On-Site" as per your requirement
+      default: null,
     },
 
-    // Timing
     start_time: { type: Date, required: true },
     end_time: { type: Date, required: true },
     duration: { type: Number, required: true }, // Store in minutes for easy reporting
@@ -62,8 +60,6 @@ const booking_schema = new mongoose.Schema(
   },
 );
 
-// Indexes for high-performance availability lookups
-// This allows you to quickly find all bookings for a specific employee on a specific day
 booking_schema.index({ employee_id: 1, start_time: 1, end_time: 1 });
 booking_schema.index({ business_id: 1, status: 1 });
 
