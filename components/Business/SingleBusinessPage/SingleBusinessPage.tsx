@@ -416,7 +416,12 @@ export default function BusinessPage() {
                   )
                 </span>
               </div>
-              <Button className="wha-btn-primary w-full">Book Now</Button>
+              <Button 
+                className="wha-btn-primary w-full"
+                onClick={() => router.push(`/bookings?business_id=${businessId}`)}
+              >
+                Book Now
+              </Button>
               <Separator />
               <h3 className="font-bold mb-2">Business Operating Hours</h3>
 

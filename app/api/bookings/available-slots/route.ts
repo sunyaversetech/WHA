@@ -147,14 +147,18 @@ export async function GET(request: Request) {
         status: { $nin: DEAD_BOOKING_STATUSES },
         start_time: { $lt: end_of_day },
         end_time: { $gt: start_of_day },
-      }).populate("service_id").lean(),
+      })
+        .populate("service_id")
+        .lean(),
 
       BookingLock.find({
         employee_id: { $in: employee_ids },
         start_time: { $lt: end_of_day },
         end_time: { $gt: start_of_day },
         expires_at: { $gt: new Date() }, // ← only active locks
-      }).populate("service_id").lean(),
+      })
+        .populate("service_id")
+        .lean(),
 
       EmployeeTimeOff.find({
         employee_id: { $in: employee_ids },
@@ -228,10 +232,13 @@ export async function GET(request: Request) {
 
         // Must not overlap any booking or active lock (respecting buffer time)
         const candidate_buffer = service.buffer_time || 0;
-        const candidate_blocked_end = new Date(slot_end.getTime() + candidate_buffer * 60_000);
+        const candidate_blocked_end = new Date(
+          slot_end.getTime() + candidate_buffer * 60_000,
+        );
 
         const has_collision = blocked_records.some((r) => {
-          if (r.employee_id.toString() !== employee._id.toString()) return false;
+          if (r.employee_id.toString() !== employee._id.toString())
+            return false;
           const buffer = (r.service_id as any)?.buffer_time || 0;
           const blocked_end = new Date(r.end_time.getTime() + buffer * 60_000);
           return runner < blocked_end && candidate_blocked_end > r.start_time;

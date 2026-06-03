@@ -51,6 +51,14 @@ const navItems = [
     href: "/businesses",
     img: "/navbar/corporate-culture.png",
   },
+  // {
+  //   id: "booking",
+  //   label: "Booking",
+  //   isNew: true,
+  //   activeImg: "/navbar/calendar.gif",
+  //   href: "/bookings",
+  //   img: "/navbar/calendar.png",
+  // },
 ];
 
 export default function Navbar() {
@@ -66,7 +74,9 @@ export default function Navbar() {
         ? "deals"
         : pathname.startsWith("/businesses")
           ? "business"
-          : "",
+          : pathname.startsWith("/bookings")
+            ? "booking"
+            : "",
   );
 
   const [isSticky, setIsSticky] = useState(false);

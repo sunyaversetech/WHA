@@ -217,3 +217,45 @@ export async function POST(request: Request) {
     await db_session.endSession();
   }
 }
+
+// ─── GET /api/bookings ──────────────────────────────────────────────────────
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      {
+        success: false,
+        code: "UNAUTHORIZED",
+        message: "You must be logged in",
+      },
+      { status: 401 },
+    );
+  }
+  const user_id = session.user.id;
+
+  await connectToDb();
+
+  try {
+    const bookings = await Booking.find({ user_id })
+      .populate("service_id")
+      .populate("employee_id")
+      .sort({ start_time: -1 })
+      .lean();
+
+    return NextResponse.json({
+      success: true,
+      data: bookings,
+    });
+  } catch (error: any) {
+    logger.error({ error, user_id }, "Failed to fetch bookings");
+    return NextResponse.json(
+      {
+        success: false,
+        code: "FETCH_FAILED",
+        message: error.message || "Unable to fetch bookings",
+      },
+      { status: 500 },
+    );
+  }
+}

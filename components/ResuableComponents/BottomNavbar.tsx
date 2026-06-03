@@ -36,6 +36,7 @@ export default function BottomNav() {
     { name: "Events", path: "/events", icon: CalendarDays },
     { name: "Deals", path: "/deals", icon: Tag },
     { name: "Businesses", path: "/businesses", icon: Building2 },
+    { name: "Bookings", path: "/bookings", icon: Calendar },
     {
       name: "Profile",
       path: session ? "/dashboard" : "/auth",

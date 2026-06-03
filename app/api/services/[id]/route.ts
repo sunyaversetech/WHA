@@ -67,13 +67,19 @@ export async function PATCH(
     Object.assign(service, otherFields);
 
     if (assigned_employees !== undefined) {
-      const old_employees = service.assigned_employees.map((e: any) => e.toString());
+      const old_employees = service.assigned_employees.map((e: any) =>
+        e.toString(),
+      );
       const new_employees = assigned_employees.map((e: any) => e.toString());
 
       // Find employees to add S to
-      const to_add = new_employees.filter((e: string) => !old_employees.includes(e));
+      const to_add = new_employees.filter(
+        (e: string) => !old_employees.includes(e),
+      );
       // Find employees to remove S from
-      const to_remove = old_employees.filter((e: string) => !new_employees.includes(e));
+      const to_remove = old_employees.filter(
+        (e: string) => !new_employees.includes(e),
+      );
 
       // Update Service
       service.assigned_employees = assigned_employees;
