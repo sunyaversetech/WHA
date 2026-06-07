@@ -121,7 +121,7 @@ export async function Delete<ResponseType>({
   url?: string;
 }): Promise<ResponseType> {
   try {
-    const res = await fetch(`${apiUrl}${url}`, {
+    const res = await fetch(`${url}`, {
       method: "DELETE",
       headers: await getHeaders(),
     });

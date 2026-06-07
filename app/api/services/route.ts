@@ -17,8 +17,16 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    const { name, category, base_price, base_duration, assigned_employees } =
-      body;
+    const {
+      name,
+      category,
+      base_price,
+      base_duration,
+      assigned_employees,
+      description,
+      require_employee_selection,
+      is_active,
+    } = body;
 
     const new_service = await Service.create({
       business_id,
@@ -27,6 +35,9 @@ export async function POST(request: Request) {
       base_price,
       base_duration,
       assigned_employees: assigned_employees || [],
+      description: description,
+      require_employee_selection: require_employee_selection || false,
+      is_active: is_active || false,
     });
 
     if (assigned_employees?.length > 0) {

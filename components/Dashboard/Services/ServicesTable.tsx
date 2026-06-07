@@ -33,7 +33,7 @@ export function ServicesTable() {
       {
         onSuccess: () => {
           toast.success("Service deleted successfully");
-          queryClient.invalidateQueries({ queryKey: ["service"] });
+          queryClient.invalidateQueries({ queryKey: ["getservices"] });
         },
         onError: (error: any) => {
           toast.error(

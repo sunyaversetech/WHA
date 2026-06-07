@@ -16,7 +16,7 @@ export const useDeleteServices = () => {
     mutationKey: ["deleteServices"],
     mutationFn: (data: { id: string }) =>
       Delete<ApiResponseType<{ id: string }>>({
-        url: `/api/services/${data.id}`,
+        url: `/api/services/single/${data.id}`,
       }),
   });
 };
