@@ -2,7 +2,7 @@ import mongoose, { model, models } from "mongoose";
 
 const employee_schema = new mongoose.Schema(
   {
-    business_id: { type: String, required: true, index: true },
+    business_id: { type: String, required: true, index: true, ref: "User" },
     full_name: { type: String, required: true },
     email: { type: String, lowercase: true },
     phone_number: { type: String },

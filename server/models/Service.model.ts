@@ -6,6 +6,7 @@ const service_schema = new mongoose.Schema(
       type: String,
       required: true,
       index: true,
+      ref: "User",
     },
     name: { type: String, required: true },
     description: { type: String },

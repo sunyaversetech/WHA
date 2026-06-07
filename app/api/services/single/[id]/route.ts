@@ -1,9 +1,10 @@
-// app/api/services/[id]/route.ts
 import { connectToDb } from "@/lib/db";
 import { Employee } from "@/server/models/Employee.model";
 import { Service } from "@/server/models/Service.model";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(
   request: Request,
@@ -13,6 +14,10 @@ export async function GET(
     await connectToDb();
     const { id } = await params;
 
+    const session = await getServerSession(authOptions);
+    if (!session)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, error: "Invalid Service ID" },
@@ -21,6 +26,14 @@ export async function GET(
     }
 
     const service = await Service.findById(id).populate("assigned_employees");
+
+    if (session.user.id !== service?.business_id.toString()) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 403 },
+      );
+    }
+
     if (!service) {
       return NextResponse.json(
         { success: false, error: "Service not found" },
@@ -37,7 +50,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
+export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -63,7 +76,6 @@ export async function PATCH(
       );
     }
 
-    // Update basic fields
     Object.assign(service, otherFields);
 
     if (assigned_employees !== undefined) {
@@ -72,19 +84,15 @@ export async function PATCH(
       );
       const new_employees = assigned_employees.map((e: any) => e.toString());
 
-      // Find employees to add S to
       const to_add = new_employees.filter(
         (e: string) => !old_employees.includes(e),
       );
-      // Find employees to remove S from
       const to_remove = old_employees.filter(
         (e: string) => !new_employees.includes(e),
       );
 
-      // Update Service
       service.assigned_employees = assigned_employees;
 
-      // Sync employees
       if (to_add.length > 0) {
         await Employee.updateMany(
           { _id: { $in: to_add } },

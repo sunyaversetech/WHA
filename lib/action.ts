@@ -114,8 +114,10 @@ export async function PATCH<PayloadType, ResponseType>({
  * @returns {Promise<any>} The data returned from the API response
  */
 export async function Delete<ResponseType>({
+  data,
   url,
 }: {
+  data?: any;
   url?: string;
 }): Promise<ResponseType> {
   try {

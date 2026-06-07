@@ -135,8 +135,7 @@ export default function BusinessReviewSection({
             reviews.splice(0, 3)?.map((review) => (
               <div
                 key={review._id}
-                className="p-6 rounded-2xl border   hover:border-slate-200 transition-all shadow-sm"
-              >
+                className="p-6 rounded-2xl border   hover:border-slate-200 transition-all shadow-sm">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
                     <Avatar>
