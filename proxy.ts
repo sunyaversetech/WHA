@@ -1,10 +1,8 @@
-// proxy.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-// Explicitly pass variables to guarantee availability during the proxy lifecycle
 const redisClient = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
@@ -19,7 +17,6 @@ const ratelimiter = new Ratelimit({
 
 export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api")) {
-    // Add an emergency guard clause to skip checking if keys aren't loaded yet
     if (
       !process.env.UPSTASH_REDIS_REST_URL ||
       !process.env.UPSTASH_REDIS_REST_TOKEN

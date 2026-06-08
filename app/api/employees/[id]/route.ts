@@ -29,7 +29,10 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ success: true, data: employee }, { status: 200 });
+    return NextResponse.json(
+      { success: true, data: employee },
+      { status: 200 },
+    );
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message },
@@ -68,13 +71,21 @@ export async function PATCH(
     Object.assign(employee, otherFields);
 
     if (service_overrides !== undefined) {
-      const old_services = employee.service_overrides.map((s: any) => s.service_id.toString());
-      const new_services = service_overrides.map((s: any) => s.service_id.toString());
+      const old_services = employee.service_overrides.map((s: any) =>
+        s.service_id.toString(),
+      );
+      const new_services = service_overrides.map((s: any) =>
+        s.service_id.toString(),
+      );
 
       // Find services to add employee to
-      const to_add = new_services.filter((s: string) => !old_services.includes(s));
+      const to_add = new_services.filter(
+        (s: string) => !old_services.includes(s),
+      );
       // Find services to remove employee from
-      const to_remove = old_services.filter((s: string) => !new_services.includes(s));
+      const to_remove = old_services.filter(
+        (s: string) => !new_services.includes(s),
+      );
 
       employee.service_overrides = service_overrides;
 
@@ -95,7 +106,10 @@ export async function PATCH(
 
     await employee.save();
 
-    return NextResponse.json({ success: true, data: employee }, { status: 200 });
+    return NextResponse.json(
+      { success: true, data: employee },
+      { status: 200 },
+    );
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message },
@@ -128,7 +142,9 @@ export async function DELETE(
     }
 
     // Remove references in Services
-    const service_ids = employee.service_overrides.map((s: any) => s.service_id);
+    const service_ids = employee.service_overrides.map(
+      (s: any) => s.service_id,
+    );
     if (service_ids.length > 0) {
       await Service.updateMany(
         { _id: { $in: service_ids } },

@@ -36,6 +36,10 @@ const employee_schema = new mongoose.Schema(
       },
     ],
 
+    employee_photo: {
+      type: String,
+    },
+
     is_active: { type: Boolean, default: true },
   },
   {
