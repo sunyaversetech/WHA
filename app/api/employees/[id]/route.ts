@@ -6,10 +6,8 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { uploadToS3 } from "@/server/lib/function";
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+type Props = { params: Promise<{ id: string }> };
+export async function GET(request: Request, { params }: Props) {
   try {
     await connectToDb();
     const { id } = await params;
@@ -41,10 +39,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: Request, { params }: Props) {
   try {
     await connectToDb();
     const { id } = await params;

@@ -69,10 +69,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(request: Request) {
   try {
     await connectToDb();
     const session = await getServerSession(authOptions);
