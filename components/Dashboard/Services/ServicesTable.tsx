@@ -20,6 +20,7 @@ import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
 import { useGetServices } from "@/services/booking.service";
 import { useDeleteServices } from "@/services/services.service";
 import { useQueryClient } from "@tanstack/react-query";
+import AssignEmployee from "../Employee/Form/AssignEmployee";
 
 export function ServicesTable() {
   const router = useRouter();
@@ -109,6 +110,8 @@ export function ServicesTable() {
                   )}
                 </TableCell>
                 <TableCell className="text-right">
+                  <AssignEmployee serviceId={service._id} />
+
                   <div className="flex justify-end gap-2">
                     <Button
                       variant="ghost"

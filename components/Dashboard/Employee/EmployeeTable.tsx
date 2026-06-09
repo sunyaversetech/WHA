@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { IEmployee } from "./Form/schema";
 import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
 import { useGetEmployees } from "@/services/employee.service";
+import AssignEmployee from "./Form/AssignEmployee";
 
 interface EmployeeTableProps {
   initialEmployees: IEmployee[];

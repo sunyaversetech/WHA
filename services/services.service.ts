@@ -39,3 +39,18 @@ export const useGetSingleService = (id: string) => {
     `/api/services/single/${id}`,
   );
 };
+
+export const useAssignEmployees = () => {
+  return useMutation<
+    ApiResponseType<any>,
+    any,
+    { serviceId: string; employeeId: string[] }
+  >({
+    mutationKey: ["assignEmployees"],
+    mutationFn: (data: { serviceId: string; employeeId: string[] }) =>
+      Post<any, ApiResponseType<any>>({
+        url: `/api/services/assign-employee`,
+        data: data,
+      }),
+  });
+};

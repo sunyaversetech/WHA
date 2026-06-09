@@ -15,16 +15,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const service = await Service.findById(serviceId);
-    const employee = await Employee.findById(employeeId);
-
-    if (service.business_id !== employee.business_id) {
-      return NextResponse.json(
-        { error: "Unauthorized business mismatch" },
-        { status: 403 },
-      );
-    }
-
     const updatedService = await Service.findByIdAndUpdate(
       serviceId,
       { $addToSet: { assigned_employees: employeeId } },
