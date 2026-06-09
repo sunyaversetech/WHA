@@ -39,7 +39,7 @@ export const employeeSchema = z.object({
     .or(z.literal("")),
   phone_number: z.string().optional(),
   bio: z.string().optional(),
-  employee_photo: z.string().optional(),
+  employee_photo: z.any(),
   is_active: z.boolean(),
   availability_schedule: z.array(availabilitySchema),
   service_overrides: z.array(serviceOverrideSchema),

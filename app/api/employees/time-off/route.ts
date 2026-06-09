@@ -43,7 +43,10 @@ export async function GET(request: Request) {
     }
 
     const time_offs = await EmployeeTimeOff.find(query).sort({ start_time: 1 });
-    return NextResponse.json({ success: true, data: time_offs }, { status: 200 });
+    return NextResponse.json(
+      { success: true, data: time_offs },
+      { status: 200 },
+    );
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message },
@@ -84,14 +87,19 @@ export async function POST(request: Request) {
       reason: validated.reason,
     });
 
-    return NextResponse.json({ success: true, data: time_off }, { status: 201 });
+    return NextResponse.json(
+      { success: true, data: time_off },
+      { status: 201 },
+    );
   } catch (error: any) {
     if (error instanceof ZodError) {
       return NextResponse.json(
         {
           success: false,
           error: "Validation error",
-          details: error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join("; "),
+          details: error.issues
+            .map((e) => `${e.path.join(".")}: ${e.message}`)
+            .join("; "),
         },
         { status: 422 },
       );

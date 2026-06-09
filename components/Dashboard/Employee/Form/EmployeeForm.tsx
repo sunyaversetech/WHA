@@ -41,6 +41,9 @@ const DAYS_OF_WEEK = [
 export function EmployeeForm({ initialData, businessId }: EmployeeFormProps) {
   const router = useRouter();
   const { mutate, isPending } = useCreateOrUpdateEmployee();
+  const [previewUrl, setPreviewUrl] = useState(
+    initialData?.employee_photo || "",
+  );
   const isEditMode = !!initialData;
 
   const form = useForm<EmployeeFormValues>({
@@ -79,11 +82,34 @@ export function EmployeeForm({ initialData, businessId }: EmployeeFormProps) {
   });
 
   async function onSubmit(data: EmployeeFormValues) {
-    mutate(data, {
+    const formData = new FormData();
+
+    formData.append("full_name", data.full_name);
+    formData.append("email", data.email || "");
+    formData.append("phone_number", data.phone_number || "");
+    formData.append("bio", data.bio || "");
+    formData.append("is_active", String(data.is_active));
+
+    formData.append(
+      "availability_schedule",
+      JSON.stringify(data.availability_schedule),
+    );
+    formData.append(
+      "service_overrides",
+      JSON.stringify(data.service_overrides),
+    );
+
+    if (data.employee_photo instanceof File) {
+      formData.append("employee_photo", data.employee_photo);
+    }
+
+    mutate(formData as any, {
       onSuccess: () => {
-        router.push("/dashboard/employees");
+        router.push("/dashboard/employee");
       },
-      onError: () => {},
+      onError: (err) => {
+        console.error("Mutation error:", err);
+      },
     });
   }
 
@@ -91,12 +117,12 @@ export function EmployeeForm({ initialData, businessId }: EmployeeFormProps) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 max-w-4xl bg-card p-6 border rounded-xl shadow-sm">
+        className="space-y-8  p-6  rounded-xl shadow-sm">
         {/* Photo URL & Profile Header Row */}
         <div className="flex flex-col sm:flex-row gap-6 items-center border-b pb-6">
           <Avatar className="h-24 w-24 border-2 border-muted">
-            <AvatarImage src={form.watch("employee_photo")} alt="Preview" />
-            <AvatarFallback>
+            <AvatarImage src={previewUrl} alt="Preview" />
+            <AvatarFallback className="bg-gray-300">
               <User className="h-12 w-12 text-muted-foreground" />
             </AvatarFallback>
           </Avatar>
@@ -105,18 +131,39 @@ export function EmployeeForm({ initialData, businessId }: EmployeeFormProps) {
             <FormField
               control={form.control}
               name="employee_photo"
-              render={({ field }) => (
+              render={({ field: { value, onChange, ...fieldProps } }) => (
                 <FormItem>
-                  <FormLabel>Employee Photo URL</FormLabel>
+                  <FormLabel>Employee Photo</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="https://example.com/photo.jpg"
-                      {...field}
-                    />
+                    <div className="flex flex-col gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            // Set the raw file object into React Hook Form
+                            onChange(file);
+                            // Create a temporary URL for the <Avatar /> preview
+                            setPreviewUrl(URL.createObjectURL(file));
+                          }
+                        }}
+                        {...fieldProps}
+                      />
+                      {value instanceof File && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            onChange(initialData?.employee_photo || "");
+                            setPreviewUrl(initialData?.employee_photo || "");
+                          }}>
+                          Reset to original
+                        </Button>
+                      )}
+                    </div>
                   </FormControl>
-                  <FormDescription>
-                    Provide an hosted image address string asset.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

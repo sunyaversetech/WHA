@@ -1,10 +1,10 @@
-// app/api/employees/[id]/route.ts
 import { connectToDb } from "@/lib/db";
 import { Employee } from "@/server/models/Employee.model";
 import { Service } from "@/server/models/Service.model";
 import { EmployeeTimeOff } from "@/server/models/EmployeeTimeOff.model";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
+import { uploadToS3 } from "@/server/lib/function";
 
 export async function GET(
   request: Request,
@@ -56,8 +56,7 @@ export async function PATCH(
       );
     }
 
-    const body = await request.json();
-    const { service_overrides, ...otherFields } = body;
+    const formData = await request.formData();
 
     const employee = await Employee.findById(id);
     if (!employee) {
@@ -67,10 +66,36 @@ export async function PATCH(
       );
     }
 
-    // Update basic fields
-    Object.assign(employee, otherFields);
+    if (formData.has("full_name"))
+      employee.full_name = formData.get("full_name") as string;
+    if (formData.has("email")) employee.email = formData.get("email") as string;
 
-    if (service_overrides !== undefined) {
+    if (formData.has("availability_schedule")) {
+      employee.availability_schedule = JSON.parse(
+        (formData.get("availability_schedule") as string) || "[]",
+      );
+    }
+
+    const employee_photo = formData.get("employee_photo") as File | null;
+    if (
+      employee_photo &&
+      employee_photo.size > 0 &&
+      employee_photo instanceof File
+    ) {
+      const buffer = Buffer.from(await employee_photo.arrayBuffer());
+      const uploadResult = await uploadToS3(
+        buffer,
+        employee_photo.name,
+        employee_photo.type,
+      );
+      employee.employee_photo = uploadResult.Location;
+    }
+
+    if (formData.has("service_overrides")) {
+      const service_overrides = JSON.parse(
+        (formData.get("service_overrides") as string) || "[]",
+      );
+
       const old_services = employee.service_overrides.map((s: any) =>
         s.service_id.toString(),
       );
@@ -78,18 +103,15 @@ export async function PATCH(
         s.service_id.toString(),
       );
 
-      // Find services to add employee to
       const to_add = new_services.filter(
         (s: string) => !old_services.includes(s),
       );
-      // Find services to remove employee from
       const to_remove = old_services.filter(
         (s: string) => !new_services.includes(s),
       );
 
       employee.service_overrides = service_overrides;
 
-      // Sync services
       if (to_add.length > 0) {
         await Service.updateMany(
           { _id: { $in: to_add } },

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { IEmployee } from "./Form/schema";
 import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
+import { useGetEmployees } from "@/services/employee.service";
 
 interface EmployeeTableProps {
   initialEmployees: IEmployee[];
@@ -31,10 +32,11 @@ interface EmployeeTableProps {
 export function EmployeeTable({ initialEmployees }: EmployeeTableProps) {
   const router = useRouter();
   const [employees, setEmployees] = useState<IEmployee[]>(initialEmployees);
+  const { data: employeesData, isLoading } = useGetEmployees();
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/app/api/employees/${id}`, {
+      const response = await fetch(`/app/api/employee/${id}`, {
         method: "DELETE",
       });
       const result = await response.json();
@@ -49,6 +51,8 @@ export function EmployeeTable({ initialEmployees }: EmployeeTableProps) {
     } catch (error: any) {}
   };
 
+  if (isLoading) return <div>Loading...</div>;
+
   return (
     <div className="rounded-xl border bg-background shadow-xs overflow-hidden">
       <Table>
@@ -62,7 +66,7 @@ export function EmployeeTable({ initialEmployees }: EmployeeTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {!employees || employees?.length === 0 ? (
+          {!employeesData?.data || employeesData.data?.length === 0 ? (
             <TableRow>
               <TableCell
                 colSpan={5}
@@ -71,7 +75,7 @@ export function EmployeeTable({ initialEmployees }: EmployeeTableProps) {
               </TableCell>
             </TableRow>
           ) : (
-            employees?.map((employee) => (
+            employeesData?.data?.map((employee) => (
               <TableRow
                 key={employee._id}
                 className="hover:bg-muted/20 transition-colors">
@@ -86,7 +90,7 @@ export function EmployeeTable({ initialEmployees }: EmployeeTableProps) {
                       <AvatarFallback className="bg-primary/5 text-primary text-xs">
                         {employee.full_name
                           .split(" ")
-                          .map((n) => n[0])
+                          .map((n: string) => n[0])
                           .join("")
                           .toUpperCase()}
                       </AvatarFallback>
