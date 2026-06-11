@@ -34,9 +34,16 @@ export const useCreateOrUpdateService = () => {
 
 export const useGetSingleService = (id: string) => {
   return useFetcher<ApiResponseType<any>>(
-    ["service", id],
+    ["singleservice", id],
     null,
     `/api/services/single/${id}`,
+  );
+};
+export const useGetUserService = () => {
+  return useFetcher<ApiResponseType<any>>(
+    ["userservice"],
+    null,
+    `/api/services/user`,
   );
 };
 

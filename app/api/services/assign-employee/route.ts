@@ -25,8 +25,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Service not found" }, { status: 404 });
     }
 
-    // 3. Update Employee: Add service to service_overrides
-    // We check if it already exists to avoid duplicates in the overrides list
     const updatedEmployee = await Employee.findOneAndUpdate(
       {
         _id: employeeId,

@@ -1,20 +1,21 @@
 "use client";
 import Link from "next/link";
-import { Calendar, Sparkles, Building, Tag, Users, Star } from "lucide-react";
+import { Calendar, Sparkles, Building, Tag, Users } from "lucide-react";
 import EventCard from "@/components/cards/event-card";
 import BusinessCard from "@/components/cards/business-card";
 import PlaceholderCard from "@/components/cards/placeholder-card";
 import CardSlider from "@/components/ui/card-slider";
-import FeaturedCard from "@/components/cards/featured-card";
 import { useFilteredBusinesses } from "@/hooks/use-filtered-data";
 
 import { useGetLandingPageData } from "@/services/landing.service";
 import LandingPageSkeleton from "./LandingPageSkeleton";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { useGetUserService } from "@/services/services.service";
 
 export default function LandingPage() {
   const { data, isLoading } = useGetLandingPageData();
+  const { data: servicesData } = useGetUserService();
 
   const param = useSearchParams();
   const city = param.get("city") || "";
@@ -23,21 +24,12 @@ export default function LandingPage() {
   if (isLoading) return <LandingPageSkeleton />;
   return (
     <div className="container-modern md:pt-14">
-      {/* Dynamic Vibe-Matching Promotional Ad Banner Section */}
       <div className="px-4 pt-4 md:pt-8">
         <Link
           href="https://muktiandrevival.whaustralia.com/"
           target="_blank"
           rel="noopener noreferrer"
           className="group relative block w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl">
-          {/* Ad Label Tag Overlay */}
-          {/* <div className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-full bg-black/40 backdrop-blur-md px-2.5 py-0.5 border border-white/10">
-            <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">
-              Sponsored
-            </span>
-          </div> */}
-
-          {/* Banner Container: Standard 7:2 banner aspect ratio context on desktop, taller on mobile */}
           <div className="relative aspect-[21/8] max-md:aspect-[10/5] w-full">
             <Image
               width={4000}
@@ -51,16 +43,6 @@ export default function LandingPage() {
           </div>
         </Link>
       </div>
-
-      {/* <div className=" px-4 pt-2 md:pt-6">
-        <CardSlider
-          title=""
-          icon={<Star className="h-3 w-3 md:h-5 md:w-5 text-white" />}>
-          {data?.data?.sponser?.map((item: any) => (
-            <FeaturedCard key={item._id} item={item} />
-          ))}
-        </CardSlider>
-      </div> */}
 
       <div className="mt-2 md:mt-4 bg-white text-black rounded-t-3xl px-4 md:px-6">
         <div className="container-modern py-4 md:py-6 border-b border-divider ">
