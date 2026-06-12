@@ -8,6 +8,8 @@ import {
   BadgeDollarSign,
   Settings,
   TicketCheck,
+  Users,
+  HandPlatter,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -89,6 +91,25 @@ const Sidebar = () => {
     //     },
     //   ],
     // },
+    {
+      groupLabel: "Bookings",
+      items: [
+        {
+          name: "Services",
+          icon: HandPlatter,
+          link: buildPath("/dashboard/services"),
+          hasDropdown: false,
+          active: pathname.startsWith("/dashboard/services"),
+        },
+        {
+          name: "Employee",
+          icon: Users,
+          link: buildPath("/dashboard/employee"),
+          hasDropdown: false,
+          active: pathname.startsWith("/dashboard/employee"),
+        },
+      ],
+    },
     {
       groupLabel: "Profile",
       items: [

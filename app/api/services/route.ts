@@ -10,11 +10,11 @@ export async function POST(request: Request) {
     await connectToDb();
 
     const session = await getServerSession(authOptions);
-    if (!session)
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const business_id = (session.user as any).id;
-
     const body = await request.json();
 
     const {
@@ -28,9 +28,13 @@ export async function POST(request: Request) {
       is_active,
     } = body;
 
+    // Optional Frontend Case Insensitivity Check:
+    // Trimming whitespaces to prevent variations like "Haircut" vs "Haircut "
+    const cleanName = name?.trim();
+
     const new_service = await Service.create({
       business_id,
-      name,
+      name: cleanName,
       category,
       base_price,
       base_duration,
@@ -52,6 +56,17 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error: any) {
+    // Catch MongoDB E11000 Duplicate Key Error
+    if (error.code === 11000) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "A service with this name already exists for your business.",
+        },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 },
@@ -63,9 +78,9 @@ export async function GET(request: Request) {
   try {
     await connectToDb();
     const session = await getServerSession(authOptions);
+
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     const services = await Service.find({
       business_id: (session.user as any).id,
     })

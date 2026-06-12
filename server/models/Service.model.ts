@@ -34,6 +34,7 @@ const service_schema = new mongoose.Schema(
 );
 
 service_schema.index({ business_id: 1, category: 1 });
+service_schema.index({ business_id: 1, name: 1 }, { unique: true });
 
 // const Service = mongoose.model("Service", service_schema);
 export const Service = models.Service || model("Service", service_schema);

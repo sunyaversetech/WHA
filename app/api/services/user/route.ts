@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { connectToDb } from "@/lib/db";
 import { authOptions } from "../../auth/[...nextauth]/route";
-import Service from "@/app/dashboard/inventory/page";
 import mongoose from "mongoose";
+import { Service } from "@/server/models/Service.model";
 
 export async function GET(request: Request) {
   try {
@@ -50,7 +50,6 @@ export async function GET(request: Request) {
       },
       { $unwind: "$business_details" },
 
-      // Step D: Distance math: √((lat2 - lat1)² + (lng2 - lng1)²)
       {
         $addFields: {
           distance: {
