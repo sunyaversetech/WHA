@@ -4,7 +4,7 @@ const employee_schema = new mongoose.Schema(
   {
     business_id: { type: String, required: true, index: true, ref: "User" },
     full_name: { type: String, required: true },
-    email: { type: String, lowercase: true },
+    email: { type: String, lowercase: true, unique: true },
     phone_number: { type: String },
     bio: { type: String },
 

@@ -15,8 +15,6 @@ const service_schema = new mongoose.Schema(
     base_price: { type: Number, required: true, min: 0 },
     base_duration: { type: Number, required: true },
 
-    require_employee_selection: { type: Boolean, default: false },
-
     assigned_employees: [
       {
         type: mongoose.Schema.Types.ObjectId,

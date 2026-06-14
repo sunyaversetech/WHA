@@ -131,7 +131,7 @@ const TicketCard = ({ item, onClick }: { item: any; onClick: () => void }) => {
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
-      className="relative cursor-pointer w-full overflow-hidden rounded-2xl shadow-xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] text-white border border-white/10 hover:border-indigo-400/40 hover:shadow-indigo-900/40 transition-all duration-200 active:scale-[0.98]">
+      className="relative cursor-pointer w-full overflow-hidden rounded-2xl shadow-xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] text-white  hover:border-indigo-400/40 hover:shadow-indigo-900/40 transition-all duration-200 active:scale-[0.98]">
       <span className="absolute top-[45%] -left-1 -translate-x-1/2 w-6 h-6 rounded-full bg-background border border-white/10 z-10" />
       <span className="absolute top-[45%] -right-7 -translate-x-1/2 w-6 h-6 rounded-full bg-background border border-white/10 z-10" />
 

@@ -104,7 +104,7 @@ const Sidebar = () => {
         {
           name: "Employee",
           icon: Users,
-          link: buildPath("/dashboard/employee"),
+          link: buildPath("/dashboard/employees"),
           hasDropdown: false,
           active: pathname.startsWith("/dashboard/employee"),
         },
