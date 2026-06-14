@@ -26,7 +26,7 @@ export const useCreateOrUpdateService = () => {
     mutationKey: ["createOrUpdateService"],
     mutationFn: (data: any) =>
       Post<any, ApiResponseType<any>>({
-        url: data._id ? `/api/services/${data._id}` : "/api/services",
+        url: data._id ? `/api/services/single/${data._id}` : "/api/services",
         data: data,
       }),
   });

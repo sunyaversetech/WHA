@@ -120,7 +120,7 @@ export function ServicesTable() {
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right flex gap-5 justify-end">
                     <AssignEmployee serviceId={service._id} />
 
                     <div className="flex justify-end gap-2">

@@ -63,6 +63,7 @@ export function ServiceForm({ initialData }: ServiceFormProps) {
     resolver: zodResolver(serviceSchema),
     defaultValues: initialData
       ? {
+          _id: initialData._id,
           name: initialData.name,
           description: initialData.description,
           category: initialData.category,
@@ -73,7 +74,10 @@ export function ServiceForm({ initialData }: ServiceFormProps) {
             initialData.require_employee_selection || false,
           is_active:
             initialData.is_active !== undefined ? initialData.is_active : true,
-          assigned_employees: initialData.assigned_employees || [],
+          assigned_employees:
+            typeof initialData?.assigned_employees === "object"
+              ? initialData?.assigned_employees?.map((e: any) => e._id)
+              : "",
         }
       : {
           name: "",

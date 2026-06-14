@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const serviceSchema = z.object({
+  _id: z.string().optional(),
   name: z
     .string()
     .min(2, "Name must be at least 2 characters.")
@@ -15,7 +16,11 @@ export const serviceSchema = z.object({
   buffer_time: z.number().min(0, "Buffer time cannot be negative."),
   require_employee_selection: z.boolean(),
   is_active: z.boolean(),
-  assigned_employees: z.array(z.string()).optional().or(z.literal("")),
+  assigned_employees: z
+    .array(z.string())
+    .optional()
+    .or(z.literal(""))
+    .or(z.array(z.any()).optional()),
 });
 
 export type ServiceFormValues = z.infer<typeof serviceSchema>;
