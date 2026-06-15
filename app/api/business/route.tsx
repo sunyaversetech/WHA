@@ -1,6 +1,7 @@
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import { Review } from "@/server/models/Review.model";
+import { Service } from "@/server/models/Service.model";
 import { NextRequest, NextResponse } from "next/server";
 
 function escapeRegex(text: string) {
@@ -58,16 +59,27 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .lean();
 
+    const businessHexIds = businesses.map((b) => b._id.toString());
+    const services = await Service.find({
+      business_id: { $in: businessHexIds },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    console.log("Fetched Services Count:", services.length);
+
     const businessesWithReviews = businesses.map((business: any) => {
+      const businessIdStr = business._id.toString();
       const currentBusinessSlug = business.business_name
         ?.toLowerCase()
         .replace(/[^a-z0-9]/g, "");
       return {
         ...business,
         reviews: reviews.filter((review) => {
-          // const reviewBusinessIdStr = review.business_id?.toString();
-
           return review.business_id === currentBusinessSlug;
+        }),
+        services: services.filter((service) => {
+          return service.business_id === businessIdStr;
         }),
       };
     });

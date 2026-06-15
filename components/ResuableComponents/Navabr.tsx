@@ -281,8 +281,7 @@ export default function Navbar() {
             <Link
               href={buildPath("/")}
               onClick={() => setActiveTab("")}
-              className="flex items-center"
-            >
+              className="flex items-center">
               <Image
                 src="/wha/logo.png"
                 alt="logo"
@@ -307,8 +306,7 @@ export default function Navbar() {
                     }}
                     className={`relative flex items-center gap-2 pb-2 transition-all duration-300 ${
                       isActive ? "text-black" : "text-gray-500 hover:text-black"
-                    }`}
-                  >
+                    }`}>
                     <Image
                       src={isActive ? item.activeImg : item.img}
                       className="h-7 w-7"
@@ -341,7 +339,10 @@ export default function Navbar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger>
                     <Avatar className="h-10 w-10 border rounded-full">
-                      <AvatarImage src={session?.user?.image ?? ""} />
+                      <AvatarImage
+                        className="object-cover"
+                        src={session?.user?.image ?? ""}
+                      />
                       <AvatarFallback>
                         {session?.user?.name?.charAt(0) || "U"}
                       </AvatarFallback>
@@ -350,8 +351,7 @@ export default function Navbar() {
 
                   <DropdownMenuContent
                     align="end"
-                    className="w-68 p-3 rounded-2xl bg-white/90 backdrop-blur-lg shadow-xl"
-                  >
+                    className="w-68 p-3 rounded-2xl bg-white/90 backdrop-blur-lg shadow-xl">
                     <p className="font-semibold">{session.user?.name}</p>
                     <p className="text-sm text-muted-foreground mb-2 truncate">
                       {session.user?.email}
@@ -361,8 +361,7 @@ export default function Navbar() {
 
                     <Link
                       href={buildPath("/dashboard")}
-                      className="block px-2 py-2 rounded-md hover:bg-gray-100"
-                    >
+                      className="block px-2 py-2 rounded-md hover:bg-gray-100">
                       Dashboard
                     </Link>
 

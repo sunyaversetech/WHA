@@ -5,9 +5,9 @@ import { useMutation } from "@tanstack/react-query";
 import { Post } from "@/lib/action";
 import { OperatingHourPostType } from "@/components/Dashboard/Settings/OperatingHours";
 import { BusinessHoursData } from "@/components/Business/SingleBusinessPage/Hours";
-import { EventType } from "./event.service";
 import { DealsGetValues } from "./deal.service";
 import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
+import { EmployeeType, ServiceType } from "./booking.service";
 
 export type UserBusinessType = {
   _id?: string;
@@ -16,6 +16,8 @@ export type UserBusinessType = {
   email: string;
   city: string;
   city_name: string;
+  services: ServiceType[];
+  employees: EmployeeType[];
   hours?: BusinessHoursData;
   location: string;
   community: string;

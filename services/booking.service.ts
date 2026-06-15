@@ -6,7 +6,7 @@ import { Get, Post } from "@/lib/action";
 
 export interface ServiceType {
   _id: string;
-  business_id: string;
+  business_id: any;
   name: string;
   description?: string;
   category: string;
@@ -26,6 +26,7 @@ export interface EmployeeType {
   phone_number?: string;
   bio?: string;
   is_active: boolean;
+  employee_photo?: string;
 }
 
 export interface BookingType {

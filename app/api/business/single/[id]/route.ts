@@ -1,9 +1,11 @@
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import { Deal } from "@/server/models/DealSchema.model";
+import { Employee } from "@/server/models/Employee.model";
 import Event from "@/server/models/Event.model";
 import { OperatingHours } from "@/server/models/OperatingHour.model";
 import { Review } from "@/server/models/Review.model";
+import { Service } from "@/server/models/Service.model";
 import { NextRequest, NextResponse } from "next/server";
 
 type Props = { params: Promise<{ id: string }> };
@@ -44,6 +46,14 @@ export async function GET(req: NextRequest, { params }: Props) {
       createdAt: -1,
     });
 
+    const services = await Service.find({
+      business_id: business._id,
+    })
+      .populate("assigned_employees business_id")
+      .sort({ createdAt: -1 })
+      .lean();
+    const employees = await Employee.find({ business_id: business._id });
+
     const hours = await OperatingHours.findOne({ business_id: business._id });
 
     return NextResponse.json(
@@ -54,6 +64,8 @@ export async function GET(req: NextRequest, { params }: Props) {
           hours: hours,
           event: event,
           deal: deal,
+          services: services,
+          employees: employees,
         },
         message: "Businesses retrieved successfully",
       },
