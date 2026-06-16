@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiResponseType } from "./apitypes";
 import { Get, Post } from "@/lib/action";
+import { Booking } from "@/components/Dashboard/Bookings/BookingsListBusiness";
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
 
@@ -132,8 +133,8 @@ export const useCreateBooking = () => {
   });
 };
 
-export const useGetUserBookings = () => {
-  return useQuery<{ success: boolean; data: BookingType[] }>({
+export const useGetBusinessBookings = () => {
+  return useQuery<{ success: boolean; data: Booking[] }>({
     queryKey: ["userbookings"],
     queryFn: () => Get({ url: "/api/bookings" }),
   });

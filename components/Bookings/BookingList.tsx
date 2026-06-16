@@ -10,11 +10,7 @@ import {
   Calendar,
   Clock,
   User,
-  MapPin,
-  Info,
-  DollarSign,
   AlertCircle,
-  Briefcase,
   CheckCircle,
   XCircle,
   HelpCircle,
@@ -25,7 +21,11 @@ export default function BookingList() {
   const router = useRouter();
   const { onOpen: openAuthModal } = useAuthModal();
 
-  const { data: bookingsResponse, isLoading: loadingBookings, refetch } = useGetUserBookings();
+  const {
+    data: bookingsResponse,
+    isLoading: loadingBookings,
+    refetch,
+  } = useGetUserBookings();
   const { data: businessesResponse } = useGetALLBusiness();
 
   // Map business names for fast lookup
@@ -103,16 +103,18 @@ export default function BookingList() {
           <AlertCircle className="w-8 h-8" />
         </div>
         <div className="space-y-2">
-          <h3 className="text-xl font-semibold text-slate-800 font-marcellus">Sign in to view bookings</h3>
+          <h3 className="text-xl font-semibold text-slate-800 font-marcellus">
+            Sign in to view bookings
+          </h3>
           <p className="text-slate-500 text-sm">
-            Access your active reservations, treatment history, and cancel or reschedule appointments.
+            Access your active reservations, treatment history, and cancel or
+            reschedule appointments.
           </p>
         </div>
         <button
           type="button"
           onClick={openAuthModal}
-          className="btn-wha-primary w-full"
-        >
+          className="btn-wha-primary w-full">
           Login / Sign Up
         </button>
       </div>
@@ -123,7 +125,9 @@ export default function BookingList() {
     <div className="space-y-6 max-w-4xl mx-auto py-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl md:text-2xl font-normal text-slate-800 font-marcellus">My Appointments</h2>
+          <h2 className="text-xl md:text-2xl font-normal text-slate-800 font-marcellus">
+            My Appointments
+          </h2>
           <p className="text-slate-500 text-xs md:text-sm mt-0.5">
             Manage your scheduled wellness and beauty reservations.
           </p>
@@ -131,8 +135,7 @@ export default function BookingList() {
         <button
           type="button"
           onClick={() => refetch()}
-          className="text-xs font-semibold text-[#3771db] hover:text-[#2a59b2] transition-colors"
-        >
+          className="text-xs font-semibold text-[#3771db] hover:text-[#2a59b2] transition-colors">
           Refresh List
         </button>
       </div>
@@ -140,7 +143,9 @@ export default function BookingList() {
       {loadingBookings ? (
         <div className="space-y-4">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="h-32 bg-white border rounded-xl animate-pulse p-5 space-y-3">
+            <div
+              key={n}
+              className="h-32 bg-white border rounded-xl animate-pulse p-5 space-y-3">
               <div className="flex justify-between">
                 <div className="h-4 w-1/3 bg-slate-100 rounded" />
                 <div className="h-4 w-20 bg-slate-100 rounded" />
@@ -156,20 +161,22 @@ export default function BookingList() {
       ) : bookingsResponse?.data && bookingsResponse.data.length > 0 ? (
         <div className="space-y-4">
           {bookingsResponse.data.map((booking) => {
-            const businessName = businessMap.get(booking.business_id) || "WHA Salon Partner";
-            const serviceName = typeof booking.service_id === "object" && booking.service_id 
-              ? booking.service_id.name 
-              : "Beauty Treatment";
-            
-            const employeeName = typeof booking.employee_id === "object" && booking.employee_id 
-              ? booking.employee_id.full_name 
-              : "Specialist Team";
+            const businessName =
+              businessMap.get(booking.business_id) || "WHA Salon Partner";
+            const serviceName =
+              typeof booking.service_id === "object" && booking.service_id
+                ? booking.service_id.name
+                : "Beauty Treatment";
+
+            const employeeName =
+              typeof booking.employee_id === "object" && booking.employee_id
+                ? booking.employee_id.full_name
+                : "Specialist Team";
 
             return (
               <div
                 key={booking._id}
-                className="bg-white rounded-xl border border-slate-200 p-5 md:p-6 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
-              >
+                className="bg-white rounded-xl border border-slate-200 p-5 md:p-6 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-bold text-slate-800 text-base md:text-lg font-montserrat">
@@ -219,9 +226,12 @@ export default function BookingList() {
         <div className="bg-white rounded-xl border border-dashed p-10 text-center text-slate-500 space-y-4">
           <Calendar className="w-12 h-12 mx-auto text-slate-300" />
           <div>
-            <h4 className="font-semibold text-slate-700">No appointments found</h4>
+            <h4 className="font-semibold text-slate-700">
+              No appointments found
+            </h4>
             <p className="text-slate-500 text-xs md:text-sm mt-1">
-              You do not have any upcoming or past wellness reservations scheduled.
+              You do not have any upcoming or past wellness reservations
+              scheduled.
             </p>
           </div>
         </div>

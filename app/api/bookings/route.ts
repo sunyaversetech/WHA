@@ -223,8 +223,6 @@ export async function POST(request: Request) {
   }
 }
 
-// ─── GET /api/bookings ──────────────────────────────────────────────────────
-
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -242,7 +240,7 @@ export async function GET() {
   await connectToDb();
 
   try {
-    const bookings = await Booking.find({ user_id })
+    const bookings = await Booking.find({ business_id: user_id })
       .populate("service_id")
       .populate("employee_id")
       .sort({ start_time: -1 })

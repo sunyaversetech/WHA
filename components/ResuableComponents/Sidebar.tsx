@@ -10,6 +10,7 @@ import {
   TicketCheck,
   Users,
   HandPlatter,
+  Book,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -107,6 +108,13 @@ const Sidebar = () => {
           link: buildPath("/dashboard/employees"),
           hasDropdown: false,
           active: pathname.startsWith("/dashboard/employee"),
+        },
+        {
+          name: "Booking Lists",
+          icon: Book,
+          link: buildPath("/dashboard/bookings"),
+          hasDropdown: false,
+          active: pathname.startsWith("/dashboard/bookings"),
         },
       ],
     },
