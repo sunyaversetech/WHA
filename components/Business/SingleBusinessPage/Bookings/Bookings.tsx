@@ -99,7 +99,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const finalPrice = totalBasePrice * multiplier;
   const finalDuration = totalBaseDuration * multiplier;
 
-  // Exact 7-day rolling horizon boundary rule
   const maxBookingDays = useMemo(() => {
     return Array.from({ length: 7 }).map((_, i) => addDays(new Date(), i));
   }, []);
@@ -163,7 +162,9 @@ export default function BookingContainer({ services }: BookingContainerProps) {
 
     try {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const startTimeISO = `${formattedDate}T${selectedSlot}:00.000Z`;
+
+      // Clean, absolute standard ISO string execution fallback safety
+      const startTimeISO = new Date(selectedSlot).toISOString();
 
       const lockPayload = {
         service_id: primaryServiceId,

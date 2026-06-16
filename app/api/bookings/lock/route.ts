@@ -12,16 +12,14 @@ import { BookingLock } from "@/server/models/BookingLock.model";
 import { logger } from "@/lib/logger";
 import { authOptions } from "../../auth/[...nextauth]/route";
 
-// ─── Schema ────────────────────────────────────────────────────────────────
-
 const lock_schema = z.object({
   service_id: z.string().min(1),
-  employee_id: z.string().nullable().optional(), // Nullable/optional for "Any Employee"
-  start_time: z.string().datetime(),
+  employee_id: z.string().nullable().optional(),
+  start_time: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date format provided",
+  }),
   timezone: z.string().min(1).default("UTC"),
 });
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function to_utc(date_str: string, time_str: string, timezone: string): Date {
   const local_iso = `${date_str}T${time_str}:00`;
@@ -43,7 +41,9 @@ function get_local_day_name(date: Date, timezone: string): string {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     weekday: "long",
-  }).format(date).toLowerCase();
+  })
+    .format(date)
+    .toLowerCase();
 }
 
 function get_local_date_string(date: Date, timezone: string): string {
@@ -129,7 +129,8 @@ export async function POST(request: Request) {
         candidate_ids = [requested_employee_id];
       } else {
         // No preference: consider all assigned employees
-        candidate_ids = service.assigned_employees?.map((id: any) => id.toString()) || [];
+        candidate_ids =
+          service.assigned_employees?.map((id: any) => id.toString()) || [];
       }
 
       if (candidate_ids.length === 0) {
@@ -147,8 +148,15 @@ export async function POST(request: Request) {
       }
 
       const requested_start = new Date(validated_data.start_time);
-      const local_date_str = get_local_date_string(requested_start, validated_data.timezone);
-      const day_name = get_local_day_name(requested_start, validated_data.timezone);
+      requested_start.setUTCMilliseconds(0);
+      const local_date_str = get_local_date_string(
+        requested_start,
+        validated_data.timezone,
+      );
+      const day_name = get_local_day_name(
+        requested_start,
+        validated_data.timezone,
+      );
 
       // Define day boundaries to query existing bookings, locks, and time off
       const day_start = new Date(`${local_date_str}T00:00:00Z`);
@@ -161,14 +169,18 @@ export async function POST(request: Request) {
           status: { $nin: ["cancelled", "no_show", "refunded"] },
           start_time: { $lt: day_end },
           end_time: { $gt: day_start },
-        }).populate("service_id").session(db_session),
+        })
+          .populate("service_id")
+          .session(db_session),
 
         BookingLock.find({
           employee_id: { $in: candidate_ids },
           expires_at: { $gt: new Date() },
           start_time: { $lt: day_end },
           end_time: { $gt: day_start },
-        }).populate("service_id").session(db_session),
+        })
+          .populate("service_id")
+          .session(db_session),
 
         EmployeeTimeOff.find({
           employee_id: { $in: candidate_ids },
@@ -193,12 +205,23 @@ export async function POST(request: Request) {
           (o: any) => o.service_id.toString() === service._id.toString(),
         );
         const duration = override?.custom_duration ?? service.base_duration;
-        const requested_end = new Date(requested_start.getTime() + duration * 60_000);
+        const requested_end = new Date(
+          requested_start.getTime() + duration * 60_000,
+        );
 
         // C. Must fit inside working shift
-        const shift_start = to_utc(local_date_str, sched.shift_start, validated_data.timezone);
-        const shift_end = to_utc(local_date_str, sched.shift_end, validated_data.timezone);
-        if (requested_start < shift_start || requested_end > shift_end) continue;
+        const shift_start = to_utc(
+          local_date_str,
+          sched.shift_start,
+          validated_data.timezone,
+        );
+        const shift_end = to_utc(
+          local_date_str,
+          sched.shift_end,
+          validated_data.timezone,
+        );
+        if (requested_start < shift_start || requested_end > shift_end)
+          continue;
 
         // D. Check time-off collision
         const has_time_off = time_offs.some(
@@ -211,14 +234,23 @@ export async function POST(request: Request) {
 
         // E. Check booking & lock collision (including buffer time)
         const candidate_buffer = service.buffer_time || 0;
-        const candidate_blocked_end = new Date(requested_end.getTime() + candidate_buffer * 60_000);
+        const candidate_blocked_end = new Date(
+          requested_end.getTime() + candidate_buffer * 60_000,
+        );
 
-        const has_collision = [...existing_bookings, ...existing_locks].some((r) => {
-          if (r.employee_id.toString() !== emp._id.toString()) return false;
-          const buffer = (r.service_id as any)?.buffer_time || 0;
-          const blocked_end = new Date(r.end_time.getTime() + buffer * 60_000);
-          return requested_start < blocked_end && candidate_blocked_end > r.start_time;
-        });
+        const has_collision = [...existing_bookings, ...existing_locks].some(
+          (r) => {
+            if (r.employee_id.toString() !== emp._id.toString()) return false;
+            const buffer = (r.service_id as any)?.buffer_time || 0;
+            const blocked_end = new Date(
+              r.end_time.getTime() + buffer * 60_000,
+            );
+            return (
+              requested_start < blocked_end &&
+              candidate_blocked_end > r.start_time
+            );
+          },
+        );
 
         if (!has_collision) {
           selected_employee = emp;
@@ -232,7 +264,9 @@ export async function POST(request: Request) {
       }
 
       assigned_employee_id = selected_employee._id.toString();
-      const requested_end = new Date(requested_start.getTime() + final_duration * 60_000);
+      const requested_end = new Date(
+        requested_start.getTime() + final_duration * 60_000,
+      );
 
       // 5. Release any stale locks this user already holds on this slot
       await BookingLock.deleteMany(
@@ -264,7 +298,11 @@ export async function POST(request: Request) {
     });
 
     logger.info(
-      { user_id, service_id: validated_data.service_id, employee_id: assigned_employee_id! },
+      {
+        user_id,
+        service_id: validated_data.service_id,
+        employee_id: assigned_employee_id!,
+      },
       "Slot lock created",
     );
 

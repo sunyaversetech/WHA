@@ -11,17 +11,13 @@ import { BookingLock } from "@/server/models/BookingLock.model";
 import { authOptions } from "../auth/[...nextauth]/route";
 import logger from "@/lib/logger";
 
-// ─── Schema ────────────────────────────────────────────────────────────────
-
 const create_booking_schema = z.object({
   service_id: z.string().min(1),
   employee_id: z.string().nullable().optional(),
   start_time: z.string().datetime(),
   lock_id: z.string().min(1),
-  idempotency_key: z.string().uuid().optional(), // client-generated UUID
+  idempotency_key: z.string().uuid().optional(),
 });
-
-// ─── Helper ────────────────────────────────────────────────────────────────
 
 function toClientError(error: unknown): { message: string; code: string } {
   if (error instanceof ZodError) {
@@ -88,14 +84,16 @@ export async function POST(request: Request) {
     let new_booking: any;
 
     await db_session.withTransaction(async () => {
+      const start_date = new Date(validated_data.start_time);
+      start_date.setUTCMilliseconds(0);
       // 4. Validate & consume the lock — the lock MUST belong to this user
       //    and cover exactly this slot
       const lock = await BookingLock.findOne({
         _id: validated_data.lock_id,
-        user_id, // ← ownership check
+        user_id,
         service_id: validated_data.service_id,
-        start_time: new Date(validated_data.start_time),
-        expires_at: { $gt: new Date() }, // ← expiry check
+        start_time: start_date,
+        expires_at: { $gt: new Date() },
       }).session(db_session);
 
       if (!lock) {
@@ -105,7 +103,8 @@ export async function POST(request: Request) {
       }
 
       // Resolve the actual employee assigned during lock creation
-      const employee_id = lock.employee_id?.toString() || validated_data.employee_id;
+      const employee_id =
+        lock.employee_id?.toString() || validated_data.employee_id;
       if (!employee_id) {
         throw new Error("EMPLOYEE_INVALID: No employee assigned to this lock");
       }
@@ -130,19 +129,21 @@ export async function POST(request: Request) {
         );
         if (override) {
           if (override.custom_duration) duration = override.custom_duration;
-          if (override.custom_price !== undefined && override.custom_price !== null) {
+          if (
+            override.custom_price !== undefined &&
+            override.custom_price !== null
+          ) {
             total_price = override.custom_price;
           }
         }
       }
 
-      const start_date = new Date(validated_data.start_time);
-      const end_date = new Date(
-        start_date.getTime() + duration * 60_000,
-      );
+      const end_date = new Date(start_date.getTime() + duration * 60_000);
 
       // Define time window to check overlaps around the booking time (e.g. 12 hours)
-      const buffer_check_start = new Date(start_date.getTime() - 12 * 3600 * 1000);
+      const buffer_check_start = new Date(
+        start_date.getTime() - 12 * 3600 * 1000,
+      );
       const buffer_check_end = new Date(end_date.getTime() + 12 * 3600 * 1000);
 
       // Fetch all bookings for this employee around the scheduled window
@@ -151,10 +152,14 @@ export async function POST(request: Request) {
         status: { $nin: ["cancelled", "no_show"] },
         start_time: { $lt: buffer_check_end },
         end_time: { $gt: buffer_check_start },
-      }).populate("service_id").session(db_session);
+      })
+        .populate("service_id")
+        .session(db_session);
 
       const candidate_buffer = service.buffer_time || 0;
-      const candidate_blocked_end = new Date(end_date.getTime() + candidate_buffer * 60_000);
+      const candidate_blocked_end = new Date(
+        end_date.getTime() + candidate_buffer * 60_000,
+      );
 
       const overlap = potential_overlaps.find((b) => {
         const buffer = (b.service_id as any)?.buffer_time || 0;
