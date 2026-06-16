@@ -4,7 +4,10 @@ import React, { useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useAuthModal } from "@/components/Auth/DialogLogin/use-auth-model";
-import { useGetUserBookings, BookingType } from "@/services/booking.service";
+import {
+  useGetBusinessBookings,
+  BookingType,
+} from "@/services/booking.service";
 import { useGetALLBusiness } from "@/services/business.service";
 import {
   Calendar,
@@ -25,7 +28,7 @@ export default function BookingList() {
     data: bookingsResponse,
     isLoading: loadingBookings,
     refetch,
-  } = useGetUserBookings();
+  } = useGetBusinessBookings();
   const { data: businessesResponse } = useGetALLBusiness();
 
   // Map business names for fast lookup
