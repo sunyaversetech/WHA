@@ -26,10 +26,9 @@ export async function POST(request: Request) {
       description,
       require_employee_selection,
       is_active,
+      inventory,
     } = body;
 
-    // Optional Frontend Case Insensitivity Check:
-    // Trimming whitespaces to prevent variations like "Haircut" vs "Haircut "
     const cleanName = name?.trim();
 
     const new_service = await Service.create({
@@ -40,6 +39,7 @@ export async function POST(request: Request) {
       base_duration,
       assigned_employees: assigned_employees || [],
       description: description,
+      inventory,
       require_employee_selection: require_employee_selection || false,
       is_active: is_active || false,
     });

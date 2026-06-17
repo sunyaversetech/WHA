@@ -9,11 +9,14 @@ import {
   User,
   ChevronLeft,
   Plus,
+  Minus,
   MapPin,
+  Layers,
+  Timer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// UI Imports (Modify paths based on your design system framework template)
+// UI Imports
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -37,13 +40,21 @@ export default function BookingContainer({ services }: BookingContainerProps) {
 
   const [currentStep, setCurrentStep] = useState<StepType>("services");
   const [selectedServices, setSelectedServices] = useState<ServiceType[]>([]);
+
+  // Trackers: Multiplier for hours/duration (1x, 2x, 3x, 4x) vs Physical Items Inventory Stock
+  const [selectedMultipliers, setSelectedMultipliers] = useState<
+    Record<string, number>
+  >({});
+  const [selectedQuantities, setSelectedQuantities] = useState<
+    Record<string, number>
+  >({});
+
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeType | null>(
     null,
   );
   const [isNoPreference, setIsNoPreference] = useState<boolean>(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedSlot, setSelectedSlot] = useState<string>("");
-  const [multiplier, setMultiplier] = useState<number>(1);
 
   // Dynamic Categories Tab Array Construction
   const categories = useMemo(() => {
@@ -88,16 +99,22 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const lockMutation = useCreateBookingLock();
   const bookingMutation = useCreateBooking();
 
-  const totalBasePrice = selectedServices.reduce(
-    (acc, curr) => acc + curr.base_price,
-    0,
-  );
-  const totalBaseDuration = selectedServices.reduce(
-    (acc, curr) => acc + curr.base_duration,
-    0,
-  );
-  const finalPrice = totalBasePrice * multiplier;
-  const finalDuration = totalBaseDuration * multiplier;
+  // Dynamic calculation computed aggregate totals map (Price = Base * Hour Multiplier * Item Quantity)
+  const finalPrice = useMemo(() => {
+    return selectedServices.reduce((acc, curr) => {
+      const mult = selectedMultipliers[curr._id] || 1;
+      const qty = selectedQuantities[curr._id] || 1;
+      return acc + curr.base_price * mult * qty;
+    }, 0);
+  }, [selectedServices, selectedMultipliers, selectedQuantities]);
+
+  const finalDuration = useMemo(() => {
+    return selectedServices.reduce((acc, curr) => {
+      const mult = selectedMultipliers[curr._id] || 1;
+      // Duration only scales by hour block selection, not physical equipment stock count
+      return acc + curr.base_duration * mult;
+    }, 0);
+  }, [selectedServices, selectedMultipliers]);
 
   const maxBookingDays = useMemo(() => {
     return Array.from({ length: 7 }).map((_, i) => addDays(new Date(), i));
@@ -106,12 +123,13 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   // Open Dialog Action Handler
   const handleOpenBookingWizard = (service: ServiceType) => {
     setSelectedServices([service]);
+    setSelectedMultipliers({ [service._id]: 1 });
+    setSelectedQuantities({ [service._id]: 1 });
     setCurrentStep("services");
     setIsNoPreference(true);
     setSelectedEmployee(null);
     setSelectedDate(new Date());
     setSelectedSlot("");
-    setMultiplier(1);
     setIsDialogOpen(true);
   };
 
@@ -122,20 +140,52 @@ export default function BookingContainer({ services }: BookingContainerProps) {
         setSelectedServices(
           selectedServices.filter((s) => s._id !== service._id),
         );
+
+        const updatedMults = { ...selectedMultipliers };
+        delete updatedMults[service._id];
+        setSelectedMultipliers(updatedMults);
+
+        const updatedQtys = { ...selectedQuantities };
+        delete updatedQtys[service._id];
+        setSelectedQuantities(updatedQtys);
       }
     } else {
       setSelectedServices([...selectedServices, service]);
+      setSelectedMultipliers({ ...selectedMultipliers, [service._id]: 1 });
+      setSelectedQuantities({ ...selectedQuantities, [service._id]: 1 });
     }
   };
 
-  // ─── REFIXED STEP NAVIGATION FLOW BUSINESS LOGIC ───
+  const handleSelectMultiplier = (serviceId: string, value: number) => {
+    setSelectedMultipliers({
+      ...selectedMultipliers,
+      [serviceId]: value,
+    });
+  };
+
+  const handleUpdateQuantity = (
+    serviceId: string,
+    delta: number,
+    maxInventory?: number,
+  ) => {
+    const currentQty = selectedQuantities[serviceId] || 1;
+    const nextQty = currentQty + delta;
+    const maxAllowed = maxInventory !== undefined ? maxInventory : 99;
+
+    if (nextQty >= 1 && nextQty <= maxAllowed) {
+      setSelectedQuantities({
+        ...selectedQuantities,
+        [serviceId]: nextQty,
+      });
+    }
+  };
+
+  // Step Navigation Logic Flows
   const handleNextStep = () => {
     if (currentStep === "services") {
-      // If there are employees nested inside the service data, route cleanly to Step 2
       if (dynamicAvailableEmployees.length > 0) {
         setCurrentStep("professionals");
       } else {
-        // Fallback safety if no employees exist in arrays
         setIsNoPreference(true);
         setCurrentStep("time");
       }
@@ -162,15 +212,21 @@ export default function BookingContainer({ services }: BookingContainerProps) {
 
     try {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      // Clean, absolute standard ISO string execution fallback safety
       const startTimeISO = new Date(selectedSlot).toISOString();
+
+      // itemsPayload scales values matching your database constraints
+      const itemsPayload = selectedServices.map((srv) => ({
+        service_id: srv._id,
+        quantity: selectedQuantities[srv._id] || 1,
+        multiplier: selectedMultipliers[srv._id] || 1,
+      }));
 
       const lockPayload = {
         service_id: primaryServiceId,
         employee_id: isNoPreference ? null : selectedEmployee?._id,
         start_time: startTimeISO,
         timezone,
+        items: itemsPayload,
       };
 
       const lockRes = await lockMutation.mutateAsync(lockPayload);
@@ -183,6 +239,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
             (isNoPreference ? null : selectedEmployee?._id),
           start_time: startTimeISO,
           lock_id: lockRes.lock_id,
+          items: itemsPayload,
         };
 
         await bookingMutation.mutateAsync(bookingPayload);
@@ -197,15 +254,16 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     setIsDialogOpen(false);
     setCurrentStep("services");
     setSelectedServices([]);
+    setSelectedMultipliers({});
+    setSelectedQuantities({});
     setSelectedEmployee(null);
     setIsNoPreference(true);
     setSelectedSlot("");
-    setMultiplier(1);
   };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-6 space-y-6">
-      {/* ─── MAIN SERVICES BACKEND DISPLAY OVERVIEW DASHBOARD ─── */}
+      {/* ─── MAIN SERVICES DISPLAY DASHBOARD ─── */}
       <div className="space-y-6">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-100">
           {categories.map((cat) => (
@@ -223,15 +281,23 @@ export default function BookingContainer({ services }: BookingContainerProps) {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {filteredDashboardServices.map((service) => (
             <div
               key={service._id}
               className="flex items-center w-full justify-between p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all">
               <div className="space-y-1 pr-4">
-                <span className="text-[10px] uppercase font-bold text-primary tracking-wider bg-purple-50 px-2 py-0.5 rounded-md">
-                  {service.category}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-bold text-primary tracking-wider bg-purple-50 px-2 py-0.5 rounded-md">
+                    {service.category}
+                  </span>
+                  {service.inventory !== undefined && service.inventory > 0 && (
+                    <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider bg-amber-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+                      <Layers className="w-2.5 h-2.5" /> Stock:{" "}
+                      {service.inventory}
+                    </span>
+                  )}
+                </div>
                 <h3 className="font-bold text-base text-slate-900 pt-1">
                   {service.name}
                 </h3>
@@ -302,7 +368,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                 </nav>
               </div>
 
-              {/* STEP 1: INNER MODAL MULTI-SELECT COMPLEMENTARY SERVICES */}
+              {/* STEP 1: SERVICES WITH DURATION MULTIPLIERS & INVENTORY COMPONENT CONTROLLERS */}
               {currentStep === "services" && (
                 <div className="space-y-4 pt-4">
                   <div className="space-y-1">
@@ -310,48 +376,144 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                       Select services
                     </h2>
                     <p className="text-xs text-slate-400">
-                      Add or manage treatments for your visit sequence today.
+                      Configure your booking duration and specify equipment
+                      units based on remaining stock.
                     </p>
                   </div>
-                  <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                  <div className="space-y-3.5 max-h-[420px] overflow-y-auto pr-1">
                     {services.map((item) => {
                       const isChecked = selectedServices.some(
                         (s) => s._id === item._id,
                       );
+                      const currentMult = selectedMultipliers[item._id] || 1;
+                      const currentQty = selectedQuantities[item._id] || 1;
+                      const hasInventory =
+                        item.inventory !== undefined && item.inventory > 0;
+
                       return (
                         <div
                           key={item._id}
-                          onClick={() => handleToggleServiceSelection(item)}
                           className={cn(
-                            "p-4 bg-white border rounded-2xl cursor-pointer flex items-center justify-between transition-all",
+                            "p-4 bg-white border rounded-2xl flex flex-col gap-4 transition-all",
                             isChecked
-                              ? "border-primary "
-                              : "border-slate-100 hover:border-slate-200",
+                              ? "border-primary shadow-sm"
+                              : "border-slate-100",
                           )}>
-                          <div className="space-y-0.5">
-                            <h4 className="font-bold text-sm text-slate-900">
-                              {item.name}
-                            </h4>
-                            <p className="text-xs text-slate-400">
-                              {item.base_duration} mins • {item.category}
-                            </p>
-                            <p className="text-xs font-extrabold text-slate-900 pt-1">
-                              AUD {item.base_price}
-                            </p>
-                          </div>
                           <div
-                            className={cn(
-                              "w-5 h-5 rounded-full flex items-center justify-center border transition-all",
-                              isChecked
-                                ? "bg-primary border-primary-600 text-white"
-                                : "border-slate-200",
-                            )}>
-                            {isChecked ? (
-                              <Check className="w-3 h-3" />
-                            ) : (
-                              <Plus className="w-3 h-3 text-slate-400" />
-                            )}
+                            onClick={() => handleToggleServiceSelection(item)}
+                            className="flex items-center justify-between cursor-pointer">
+                            <div className="space-y-0.5">
+                              <h4 className="font-bold text-sm text-slate-900">
+                                {item.name}
+                              </h4>
+                              <p className="text-xs text-slate-400">
+                                Base: {item.base_duration} mins •{" "}
+                                {item.category}
+                              </p>
+                              <div className="flex items-center gap-2 pt-1">
+                                <p className="text-xs font-extrabold text-slate-900">
+                                  AUD {item.base_price} / block
+                                </p>
+                                {hasInventory && (
+                                  <span className="text-[10px] text-amber-600 bg-amber-50 font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                    <Layers className="w-2.5 h-2.5" /> Stock
+                                    Available: {item.inventory}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div
+                              className={cn(
+                                "w-5 h-5 rounded-full flex items-center justify-center border transition-all",
+                                isChecked
+                                  ? "bg-primary border-primary text-white"
+                                  : "border-slate-200",
+                              )}>
+                              {isChecked ? (
+                                <Check className="w-3 h-3" />
+                              ) : (
+                                <Plus className="w-3 h-3 text-slate-400" />
+                              )}
+                            </div>
                           </div>
+
+                          {/* Render Options context only when row is checked */}
+                          {isChecked && (
+                            <div className="border-t border-slate-100 pt-3 space-y-3.5">
+                              {/* 1. Duration / Time Block Multipliers (1hr, 2hr, 3hr, 4hr) */}
+                              <div className="space-y-1.5">
+                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                  <Timer className="w-3 h-3" /> Select Rental
+                                  Duration:
+                                </label>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                  {[1, 2, 3, 4].map((multiplierValue) => (
+                                    <button
+                                      type="button"
+                                      key={multiplierValue}
+                                      onClick={() =>
+                                        handleSelectMultiplier(
+                                          item._id,
+                                          multiplierValue,
+                                        )
+                                      }
+                                      className={cn(
+                                        "py-2 text-xs font-bold rounded-xl border text-center transition-all",
+                                        currentMult === multiplierValue
+                                          ? "bg-black text-white border-black shadow-sm"
+                                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100",
+                                      )}>
+                                      {multiplierValue}{" "}
+                                      {multiplierValue === 1 ? "Hr" : "Hrs"}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {hasInventory && (
+                                <div className="flex items-center justify-between pt-2.5 border-t border-dashed border-slate-100 bg-slate-50/70 p-2.5 rounded-xl">
+                                  <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
+                                    <Layers className="w-3.5 h-3.5 text-slate-400" />{" "}
+                                    Quantity of items (Kayaks/Boards):
+                                  </span>
+                                  <div className="flex items-center gap-3">
+                                    <button
+                                      type="button"
+                                      disabled={currentQty <= 1}
+                                      onClick={() =>
+                                        handleUpdateQuantity(
+                                          item._id,
+                                          -1,
+                                          item.inventory,
+                                        )
+                                      }
+                                      className="w-7 h-7 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-40">
+                                      <Minus className="w-3 h-3" />
+                                    </button>
+                                    <span className="text-sm font-black text-slate-900 w-4 text-center">
+                                      {currentQty}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      disabled={
+                                        currentQty >= (item.inventory || 1)
+                                      }
+                                      onClick={() =>
+                                        handleUpdateQuantity(
+                                          item._id,
+                                          1,
+                                          item.inventory,
+                                        )
+                                      }
+                                      className="w-7 h-7 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-40">
+                                      <Plus className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -359,7 +521,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                 </div>
               )}
 
-              {/* STEP 2: PROFESSIONAL SELECTION (PROCESSED DIRECTLY FROM NESTED KEY DATA) */}
+              {/* STEP 2: PROFESSIONAL SELECTION */}
               {currentStep === "professionals" && (
                 <div className="space-y-4 pt-4">
                   <div className="space-y-1">
@@ -368,7 +530,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     </h2>
                     <p className="text-xs text-slate-400">
                       Pick an assigned stylist or proceed with standard maximum
-                      availability.
+                      availability open parameters.
                     </p>
                   </div>
                   <div className="space-y-2.5">
@@ -380,7 +542,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                       className={cn(
                         "p-4 bg-white border rounded-2xl cursor-pointer flex items-center justify-between transition-all",
                         isNoPreference
-                          ? "border-primary-600 ring-2 ring-primary"
+                          ? "border-primary ring-1 ring-primary"
                           : "border-slate-100",
                       )}>
                       <div className="flex items-center gap-3">
@@ -392,7 +554,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                             Any Employee Available
                           </h4>
                           <p className="text-xs text-slate-400">
-                            Optimizes calendar open slot metrics
+                            Optimizes calendar open slot metrics automatically
                           </p>
                         </div>
                       </div>
@@ -417,7 +579,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                           className={cn(
                             "p-4 bg-white border rounded-2xl cursor-pointer flex items-center justify-between transition-all",
                             isSelected
-                              ? "border-primary-600 ring-2 ring-primary"
+                              ? "border-primary ring-1 ring-primary"
                               : "border-slate-100",
                           )}>
                           <div className="flex items-center gap-3">
@@ -454,7 +616,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                 </div>
               )}
 
-              {/* STEP 3: DATE & TIME TRACK MATRIX (STRICT 7-DAY CAP) */}
+              {/* STEP 3: DATE & TIME TRACK MATRIX */}
               {currentStep === "time" && (
                 <div className="space-y-4 pt-4">
                   <div className="space-y-1">
@@ -483,7 +645,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                           className={cn(
                             "flex flex-col items-center justify-center p-2.5 w-14 rounded-xl border transition-all shrink-0",
                             isSameDay
-                              ? "bg-primary border-primary-600 text-white shadow-sm"
+                              ? "bg-primary border-primary text-white shadow-sm"
                               : "bg-white border-slate-200 text-slate-800 hover:border-slate-300",
                           )}>
                           <span className="text-[9px] font-bold opacity-80 uppercase">
@@ -497,26 +659,15 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     })}
                   </div>
 
-                  {/* Session Extender Blocks */}
-                  <div className="space-y-2 bg-white p-4 border border-slate-100 rounded-2xl">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                      Duration Multiplier:
+                  {/* Operational Time Overview Statistics Bar */}
+                  <div className="p-3.5 bg-slate-100/60 rounded-2xl border border-slate-200/40 flex justify-between items-center text-xs">
+                    <span className="font-semibold text-slate-500">
+                      Total Pipeline Duration:
                     </span>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[1, 2, 3].map((m) => (
-                        <button
-                          key={m}
-                          onClick={() => setMultiplier(m)}
-                          className={cn(
-                            "py-2 px-3 border text-xs rounded-xl font-bold transition-all",
-                            multiplier === m
-                              ? "bg-black text-white border-black"
-                              : "bg-slate-50 border-slate-200 hover:bg-slate-100",
-                          )}>
-                          {m}x Slots ({totalBaseDuration * m}m)
-                        </button>
-                      ))}
-                    </div>
+                    <span className="font-black text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-primary" />{" "}
+                      {finalDuration} mins
+                    </span>
                   </div>
 
                   {/* Active Open Slots Panel */}
@@ -531,7 +682,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                       </div>
                     ) : slotsData?.available_slots &&
                       slotsData.available_slots.length > 0 ? (
-                      <div className="grid grid-cols-4 gap-2 max-h-[160px] overflow-y-auto pr-1">
+                      <div className="grid grid-cols-4 gap-2 max-h-[190px] overflow-y-auto pr-1">
                         {slotsData.available_slots.map((slot) => (
                           <button
                             key={slot}
@@ -539,7 +690,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                             className={cn(
                               "text-center py-2 px-1 rounded-xl text-xs font-bold transition-all border",
                               selectedSlot === slot
-                                ? "bg-primary border-primary-600 text-white shadow-sm"
+                                ? "bg-primary border-primary text-white shadow-sm"
                                 : "bg-white border-slate-100 text-slate-700 hover:border-slate-300",
                             )}>
                             {formatDate(slot, "h:mm a")}
@@ -566,8 +717,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     Appointment Secured!
                   </h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Your appointment details have successfully matching log
-                    values. Check confirmation overview logs for updates.
+                    Your appointment details have successfully updated matching
+                    log values. Check confirmation overview logs for updates.
                   </p>
                   <Button
                     onClick={handleGlobalWizardReset}
@@ -588,6 +739,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
             )}
           </div>
 
+          {/* Right Sidebar Breakdown Panel Summary Canvas */}
           {currentStep !== "confirm" && (
             <div className="w-full md:w-[340px] bg-white border-t md:border-t-0 md:border-l border-slate-100 p-6 flex flex-col justify-between">
               <div className="space-y-6">
@@ -602,12 +754,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     <h4 className="font-black text-slate-900 text-xs">
                       {services[0]?.business_id?.business_name}
                     </h4>
-                    {/* <p className="text-[10px] text-amber-500 font-bold flex items-center gap-0.5">
-                      ★ {services[0]?.business_id?.rating}
-                      <span className="text-slate-400 font-normal">
-                        {services[0]?.business_id?.rating}
-                      </span>
-                    </p> */}
                     <p className="text-[10px] text-slate-400 flex items-center gap-0.5">
                       <MapPin className="w-2.5 h-2.5" />{" "}
                       {services[0]?.business_id?.location.split(",")[0]},{" "}
@@ -623,23 +769,35 @@ export default function BookingContainer({ services }: BookingContainerProps) {
 
                   {selectedServices.length > 0 ? (
                     <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-                      {selectedServices.map((srv) => (
-                        <div
-                          key={srv._id}
-                          className="flex justify-between items-start text-xs border-b border-slate-50 pb-2">
-                          <div>
-                            <h5 className="font-bold text-slate-900">
-                              {srv.name}
-                            </h5>
-                            <p className="text-[10px] text-slate-400 mt-0.5">
-                              {srv.base_duration * multiplier} mins
-                            </p>
+                      {selectedServices.map((srv) => {
+                        const mult = selectedMultipliers[srv._id] || 1;
+                        const qty = selectedQuantities[srv._id] || 1;
+                        return (
+                          <div
+                            key={srv._id}
+                            className="flex justify-between items-start text-xs border-b border-slate-50 pb-2">
+                            <div>
+                              <h5 className="font-bold text-slate-900">
+                                {srv.name}
+                              </h5>
+                              <p className="text-[10px] text-slate-400 mt-0.5 flex flex-col gap-0.5">
+                                <span>
+                                  Duration: {srv.base_duration * mult} mins (
+                                  {mult}h)
+                                </span>
+                                {qty > 1 && (
+                                  <span className="text-primary font-bold">
+                                    Equipment Units: ×{qty}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                            <span className="font-bold text-slate-900">
+                              AUD {srv.base_price * mult * qty}
+                            </span>
                           </div>
-                          <span className="font-bold text-slate-900">
-                            AUD {srv.base_price * multiplier}
-                          </span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-xs text-slate-400 italic text-center py-2">

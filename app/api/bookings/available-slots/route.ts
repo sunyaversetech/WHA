@@ -1,4 +1,3 @@
-// app/api/bookings/available-slots/route.ts
 import { z, ZodError } from "zod";
 import { NextResponse } from "next/server";
 import { connectToDb } from "@/lib/db";
@@ -11,6 +10,9 @@ import { logger } from "@/lib/logger";
 
 const DEAD_BOOKING_STATUSES = ["cancelled", "no_show", "refunded"];
 const DEFAULT_SLOT_STEP_MINUTES = 30;
+
+const DEFAULT_BUSINESS_START = "08:00";
+const DEFAULT_BUSINESS_END = "18:00";
 
 const query_schema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date must be YYYY-MM-DD"),
@@ -84,7 +86,6 @@ export async function GET(request: Request) {
     );
   }
 
-  // 2. Reject past dates outright
   const today = new Date().toISOString().split("T")[0];
   if (params.date < today) {
     return NextResponse.json(
@@ -100,7 +101,7 @@ export async function GET(request: Request) {
   try {
     await connectToDb();
 
-    // 3. Fetch service
+    // 1. Fetch service info
     const service = await Service.findById(params.service_id).lean();
     if (!service) {
       return NextResponse.json(
@@ -115,11 +116,144 @@ export async function GET(request: Request) {
       );
     }
 
+    const day_name = get_local_day_name(params.date, params.timezone);
+    const start_of_day = new Date(`${params.date}T00:00:00Z`);
+    const end_of_day = new Date(`${params.date}T23:59:59.999Z`);
+    const step_minutes: number =
+      service.slot_interval ?? DEFAULT_SLOT_STEP_MINUTES;
+    const step_ms = step_minutes * 60_000;
+    const now = new Date();
+    const available_slots: string[] = [];
+
+    // ==========================================
+    // BRANCH A: INVENTORY / ITEM BASED LOGIC
+    // ==========================================
+    if (service.business_type === "item_based") {
+      const max_inventory = Number(service.inventory) || 0;
+      if (max_inventory <= 0) {
+        return NextResponse.json({
+          success: true,
+          count: 0,
+          available_slots: [],
+        });
+      }
+
+      // Fetch ALL bookings and active locks for this item service during the targeted day window
+      const [bookings, locks] = await Promise.all([
+        Booking.find({
+          service_id: service._id,
+          status: { $nin: DEAD_BOOKING_STATUSES },
+          start_time: { $lt: end_of_day },
+          end_time: { $gt: start_of_day },
+        })
+          .populate("service_id")
+          .lean(),
+
+        BookingLock.find({
+          service_id: service._id,
+          start_time: { $lt: end_of_day },
+          end_time: { $gt: start_of_day },
+          expires_at: { $gt: now },
+        })
+          .populate("service_id")
+          .lean(),
+      ]);
+
+      // Determine operational window constraints (e.g., standard business hours)
+      const open_time = to_utc(
+        params.date,
+        DEFAULT_BUSINESS_START,
+        params.timezone,
+      );
+      const close_time = to_utc(
+        params.date,
+        DEFAULT_BUSINESS_END,
+        params.timezone,
+      );
+      const duration = service.base_duration;
+
+      // Initialize the chronological runner timeline
+      let runner =
+        params.date === today
+          ? new Date(Math.max(now.getTime(), open_time.getTime()))
+          : open_time;
+
+      runner = new Date(Math.ceil(runner.getTime() / step_ms) * step_ms);
+
+      while (runner < close_time) {
+        const slot_end = new Date(runner.getTime() + duration * 60_000);
+        const candidate_buffer = service.buffer_time || 0;
+        const candidate_blocked_end = new Date(
+          slot_end.getTime() + candidate_buffer * 60_000,
+        );
+
+        // Don't generate slots running past close times
+        if (slot_end > close_time) break;
+
+        // Peak Allocation Math: Check resource consumption across points of interest in this window
+        let peak_allocated = 0;
+        const check_points = Array.from(
+          new Set([
+            runner.getTime(),
+            ...bookings.map((b) => b.start_time.getTime()),
+            ...locks.map((l) => l.start_time.getTime()),
+          ]),
+        );
+
+        for (const time_ms of check_points) {
+          const target_time = new Date(time_ms);
+
+          // Only calculate intersections if within the candidate user exploration window
+          if (target_time >= runner && target_time < candidate_blocked_end) {
+            // Sum active booking counts
+            const booked_at_spot = bookings.reduce((sum, b) => {
+              const b_buffer = (b.service_id as any)?.buffer_time || 0;
+              const b_blocked_end = new Date(
+                b.end_time.getTime() + b_buffer * 60_000,
+              );
+              return target_time >= b.start_time && target_time < b_blocked_end
+                ? sum + (b.inventory_quantity || 1)
+                : sum;
+            }, 0);
+
+            // Sum temporary active checkout locks holding down units
+            const locked_at_spot = locks.reduce((sum, l) => {
+              const l_buffer = (l.service_id as any)?.buffer_time || 0;
+              const l_blocked_end = new Date(
+                l.end_time.getTime() + l_buffer * 60_000,
+              );
+              return target_time >= l.start_time && target_time < l_blocked_end
+                ? sum + (l.inventory_quantity || 1)
+                : sum;
+            }, 0);
+
+            const total_at_spot = booked_at_spot + locked_at_spot;
+            if (total_at_spot > peak_allocated) {
+              peak_allocated = total_at_spot;
+            }
+          }
+        }
+
+        // If at least one item unit remains free for the whole duration, expose the slot
+        if (max_inventory - peak_allocated > 0) {
+          available_slots.push(runner.toISOString());
+        }
+
+        runner = new Date(runner.getTime() + step_ms);
+      }
+
+      return NextResponse.json({
+        success: true,
+        count: available_slots.length,
+        available_slots,
+      });
+    }
+
+    // ==========================================
+    // BRANCH B: STANDARD EMPLOYEE LOGIC (Your Existing Code)
+    // ==========================================
     const employees_to_check = params.employee_id
-      ? await Employee.find({
-          _id: params.employee_id,
-          is_active: true,
-        }).lean()
+      ? await Employee.find({ _id: params.employee_id, is_active: true }).lean()
       : await Employee.find({
           _id: { $in: service.assigned_employees },
           is_active: true,
@@ -133,14 +267,8 @@ export async function GET(request: Request) {
       });
     }
 
-    // 5. Build UTC day boundaries from the business timezone
-    const day_name = get_local_day_name(params.date, params.timezone);
-    const start_of_day = new Date(`${params.date}T00:00:00Z`);
-    const end_of_day = new Date(`${params.date}T23:59:59.999Z`);
-
     const employee_ids = employees_to_check.map((e) => e._id);
 
-    // 6. Fetch bookings + active (non-expired) locks + employee time off
     const [existing_bookings, existing_locks, time_offs] = await Promise.all([
       Booking.find({
         employee_id: { $in: employee_ids },
@@ -155,7 +283,7 @@ export async function GET(request: Request) {
         employee_id: { $in: employee_ids },
         start_time: { $lt: end_of_day },
         end_time: { $gt: start_of_day },
-        expires_at: { $gt: new Date() }, // ← only active locks
+        expires_at: { $gt: now },
       })
         .populate("service_id")
         .lean(),
@@ -169,14 +297,6 @@ export async function GET(request: Request) {
 
     const blocked_records = [...existing_bookings, ...existing_locks];
 
-    // 7. Slot step — prefer service config, fall back to constant
-    const step_minutes: number =
-      service.slot_interval ?? DEFAULT_SLOT_STEP_MINUTES;
-
-    const available_slots: string[] = [];
-    const now = new Date();
-
-    // 8. Loop — start from now if today, otherwise from earliest possible shift
     const earliest_shift_start = employees_to_check.reduce((earliest, emp) => {
       const sched = emp.availability_schedule?.find(
         (s: any) => s.day_of_week === day_name && s.is_working,
@@ -186,14 +306,11 @@ export async function GET(request: Request) {
       return shift_utc < earliest ? shift_utc : earliest;
     }, end_of_day);
 
-    // Start from now (if today) or from first shift start — skip midnight-to-shift dead time
     let runner =
       params.date === today
         ? new Date(Math.max(now.getTime(), earliest_shift_start.getTime()))
         : earliest_shift_start;
 
-    // Snap runner to the next clean step boundary
-    const step_ms = step_minutes * 60_000;
     runner = new Date(Math.ceil(runner.getTime() / step_ms) * step_ms);
 
     while (runner < end_of_day) {
@@ -218,10 +335,8 @@ export async function GET(request: Request) {
         const shift_end = to_utc(params.date, sched.shift_end, params.timezone);
         const slot_end = new Date(runner.getTime() + duration * 60_000);
 
-        // Must fit inside shift window
         if (runner < shift_start || slot_end > shift_end) continue;
 
-        // Must not overlap any scheduled time off
         const has_time_off = time_offs.some(
           (to) =>
             to.employee_id.toString() === employee._id.toString() &&
@@ -230,14 +345,16 @@ export async function GET(request: Request) {
         );
         if (has_time_off) continue;
 
-        // Must not overlap any booking or active lock (respecting buffer time)
         const candidate_buffer = service.buffer_time || 0;
         const candidate_blocked_end = new Date(
           slot_end.getTime() + candidate_buffer * 60_000,
         );
 
         const has_collision = blocked_records.some((r) => {
-          if (r.employee_id.toString() !== employee._id.toString())
+          if (
+            !r.employee_id ||
+            r.employee_id.toString() !== employee._id.toString()
+          )
             return false;
           const buffer = (r.service_id as any)?.buffer_time || 0;
           const blocked_end = new Date(r.end_time.getTime() + buffer * 60_000);

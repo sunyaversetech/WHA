@@ -15,6 +15,11 @@ export const serviceSchema = z.object({
   base_duration: z.number().min(1, "Duration must be at least 1 minute."),
   buffer_time: z.number().min(0, "Buffer time cannot be negative."),
   require_employee_selection: z.boolean(),
+  business_type: z.enum(["employee_based", "item_based"]),
+  inventory: z
+    .number()
+    .min(0, "Inventory must be 0 or greater.")
+    .or(z.literal("")),
   is_active: z.boolean(),
   assigned_employees: z
     .array(z.string())

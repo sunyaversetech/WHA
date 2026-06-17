@@ -3,16 +3,8 @@ import mongoose, { models, model } from "mongoose";
 
 const booking_lock_schema = new mongoose.Schema(
   {
-    business_id: {
-      type: String,
-      required: true,
-      index: true,
-    },
-    user_id: {
-      type: String, // Or mongoose.Schema.Types.ObjectId depending on your NextAuth adapter
-      required: true,
-      index: true,
-    },
+    business_id: { type: String, required: true, index: true },
+    user_id: { type: String, required: true, index: true },
     service_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Service",
@@ -23,23 +15,16 @@ const booking_lock_schema = new mongoose.Schema(
       ref: "Employee",
       default: null,
     },
-    start_time: {
-      type: Date,
-      required: true,
-    },
-    end_time: {
-      type: Date,
-      required: true,
-    },
+    inventory_quantity: { type: Number, default: 0 },
+    start_time: { type: Date, required: true },
+    end_time: { type: Date, required: true },
     expires_at: {
       type: Date,
       required: true,
-      default: () => new Date(Date.now() + 5 * 60 * 1000), // 5-minute fallback
+      default: () => new Date(Date.now() + 5 * 60 * 1000),
     },
   },
-  {
-    timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
-  },
+  { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } },
 );
 
 booking_lock_schema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });

@@ -11,6 +11,7 @@ export interface ServiceType {
   name: string;
   description?: string;
   category: string;
+  inventory: number;
   base_price: number;
   base_duration: number;
   require_employee_selection: boolean;
