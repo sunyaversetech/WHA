@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// UI Imports
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -34,6 +33,16 @@ interface BookingContainerProps {
 
 type StepType = "services" | "professionals" | "time" | "confirm";
 
+// Helper function to turn raw duration minutes into clean human-readable text
+function formatDurationLabel(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+
+  if (hours === 0) return `${mins} mins`;
+  if (mins === 0) return hours === 1 ? "1 hr" : `${hours} hrs`;
+  return `${hours} ${hours === 1 ? "hr" : "hrs"} ${mins} mins`;
+}
+
 export default function BookingContainer({ services }: BookingContainerProps) {
   const [activeTab, setActiveTab] = useState<string>("Featured");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -41,7 +50,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const [currentStep, setCurrentStep] = useState<StepType>("services");
   const [selectedServices, setSelectedServices] = useState<ServiceType[]>([]);
 
-  // Trackers: Multiplier for hours/duration (1x, 2x, 3x, 4x) vs Physical Items Inventory Stock
   const [selectedMultipliers, setSelectedMultipliers] = useState<
     Record<string, number>
   >({});
@@ -56,7 +64,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedSlot, setSelectedSlot] = useState<string>("");
 
-  // Dynamic Categories Tab Array Construction
   const categories = useMemo(() => {
     return [
       "Featured",
@@ -64,13 +71,11 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     ];
   }, [services]);
 
-  // Main Dashboard Services Filter
   const filteredDashboardServices = services.filter((s) => {
     if (activeTab === "Featured") return s.is_active;
     return s.category === activeTab && s.is_active;
   });
 
-  // Extract all unique assigned employees across ALL currently checked services combined
   const dynamicAvailableEmployees = useMemo(() => {
     const empMap = new Map<string, EmployeeType>();
     selectedServices.forEach((srv) => {
@@ -94,6 +99,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     formattedDate,
     employeeParam === "any" ? null : employeeParam,
     Intl.DateTimeFormat().resolvedOptions().timeZone,
+    services[0]?.business_id?._id,
   );
 
   const lockMutation = useCreateBookingLock();
@@ -111,7 +117,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const finalDuration = useMemo(() => {
     return selectedServices.reduce((acc, curr) => {
       const mult = selectedMultipliers[curr._id] || 1;
-      // Duration only scales by hour block selection, not physical equipment stock count
       return acc + curr.base_duration * mult;
     }, 0);
   }, [selectedServices, selectedMultipliers]);
@@ -214,7 +219,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const startTimeISO = new Date(selectedSlot).toISOString();
 
-      // itemsPayload scales values matching your database constraints
       const itemsPayload = selectedServices.map((srv) => ({
         service_id: srv._id,
         quantity: selectedQuantities[srv._id] || 1,
@@ -293,7 +297,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                   </span>
                   {service.inventory !== undefined && service.inventory > 0 && (
                     <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider bg-amber-50 px-2 py-0.5 rounded-md flex items-center gap-1">
-                      <Layers className="w-2.5 h-2.5" /> Stock:{" "}
+                      <Layers className="w-2.5 h-2.5" /> Total Stock:{" "}
                       {service.inventory}
                     </span>
                   )}
@@ -368,7 +372,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                 </nav>
               </div>
 
-              {/* STEP 1: SERVICES WITH DURATION MULTIPLIERS & INVENTORY COMPONENT CONTROLLERS */}
+              {/* STEP 1: SERVICES CONFIGURATION */}
               {currentStep === "services" && (
                 <div className="space-y-4 pt-4">
                   <div className="space-y-1">
@@ -376,8 +380,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                       Select services
                     </h2>
                     <p className="text-xs text-slate-400">
-                      Configure your booking duration and specify equipment
-                      units based on remaining stock.
+                      Configure your booking timeline intervals scaling directly
+                      from the base service settings.
                     </p>
                   </div>
                   <div className="space-y-3.5 max-h-[420px] overflow-y-auto pr-1">
@@ -386,7 +390,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                         (s) => s._id === item._id,
                       );
                       const currentMult = selectedMultipliers[item._id] || 1;
-                      const currentQty = selectedQuantities[item._id] || 1;
                       const hasInventory =
                         item.inventory !== undefined && item.inventory > 0;
 
@@ -416,8 +419,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                                 </p>
                                 {hasInventory && (
                                   <span className="text-[10px] text-amber-600 bg-amber-50 font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                                    <Layers className="w-2.5 h-2.5" /> Stock
-                                    Available: {item.inventory}
+                                    <Layers className="w-2.5 h-2.5" /> Max
+                                    Stock: {item.inventory}
                                   </span>
                                 )}
                               </div>
@@ -438,80 +441,40 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                             </div>
                           </div>
 
-                          {/* Render Options context only when row is checked */}
                           {isChecked && (
                             <div className="border-t border-slate-100 pt-3 space-y-3.5">
-                              {/* 1. Duration / Time Block Multipliers (1hr, 2hr, 3hr, 4hr) */}
+                              {/* Duration Options calculated dynamically based on base_duration multipliers (1x, 2x, 3x, 4x) */}
                               <div className="space-y-1.5">
                                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                                  <Timer className="w-3 h-3" /> Select Rental
-                                  Duration:
+                                  <Timer className="w-3 h-3" /> Choose Duration
+                                  Block:
                                 </label>
                                 <div className="grid grid-cols-4 gap-1.5">
-                                  {[1, 2, 3, 4].map((multiplierValue) => (
-                                    <button
-                                      type="button"
-                                      key={multiplierValue}
-                                      onClick={() =>
-                                        handleSelectMultiplier(
-                                          item._id,
-                                          multiplierValue,
-                                        )
-                                      }
-                                      className={cn(
-                                        "py-2 text-xs font-bold rounded-xl border text-center transition-all",
-                                        currentMult === multiplierValue
-                                          ? "bg-black text-white border-black shadow-sm"
-                                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100",
-                                      )}>
-                                      {multiplierValue}{" "}
-                                      {multiplierValue === 1 ? "Hr" : "Hrs"}
-                                    </button>
-                                  ))}
+                                  {[1, 2, 3, 4].map((multiplierValue) => {
+                                    const calculatedMins =
+                                      item.base_duration * multiplierValue;
+                                    return (
+                                      <button
+                                        type="button"
+                                        key={multiplierValue}
+                                        onClick={() =>
+                                          handleSelectMultiplier(
+                                            item._id,
+                                            multiplierValue,
+                                          )
+                                        }
+                                        className={cn(
+                                          "py-2 px-1 text-[11px] font-bold rounded-xl border text-center transition-all whitespace-nowrap overflow-hidden text-ellipsis",
+                                          currentMult === multiplierValue
+                                            ? "bg-black text-white border-black shadow-sm"
+                                            : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100",
+                                        )}>
+                                        {formatDurationLabel(calculatedMins)}
+                                      </button>
+                                    );
+                                  })}
                                 </div>
                               </div>
-
-                              {hasInventory && (
-                                <div className="flex items-center justify-between pt-2.5 border-t border-dashed border-slate-100 bg-slate-50/70 p-2.5 rounded-xl">
-                                  <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
-                                    <Layers className="w-3.5 h-3.5 text-slate-400" />{" "}
-                                    Quantity of items (Kayaks/Boards):
-                                  </span>
-                                  <div className="flex items-center gap-3">
-                                    <button
-                                      type="button"
-                                      disabled={currentQty <= 1}
-                                      onClick={() =>
-                                        handleUpdateQuantity(
-                                          item._id,
-                                          -1,
-                                          item.inventory,
-                                        )
-                                      }
-                                      className="w-7 h-7 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-40">
-                                      <Minus className="w-3 h-3" />
-                                    </button>
-                                    <span className="text-sm font-black text-slate-900 w-4 text-center">
-                                      {currentQty}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      disabled={
-                                        currentQty >= (item.inventory || 1)
-                                      }
-                                      onClick={() =>
-                                        handleUpdateQuantity(
-                                          item._id,
-                                          1,
-                                          item.inventory,
-                                        )
-                                      }
-                                      className="w-7 h-7 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-40">
-                                      <Plus className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
                             </div>
                           )}
                         </div>
@@ -529,8 +492,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                       Select professional
                     </h2>
                     <p className="text-xs text-slate-400">
-                      Pick an assigned stylist or proceed with standard maximum
-                      availability open parameters.
+                      Pick an assigned specialist or proceed with standard
+                      maximum availability open parameters.
                     </p>
                   </div>
                   <div className="space-y-2.5">
@@ -616,7 +579,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                 </div>
               )}
 
-              {/* STEP 3: DATE & TIME TRACK MATRIX */}
+              {/* STEP 3: DATE & TIME TRACK MATRIX WITH INVENTORY SELECTOR */}
               {currentStep === "time" && (
                 <div className="space-y-4 pt-4">
                   <div className="space-y-1">
@@ -624,8 +587,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                       Select date and time
                     </h2>
                     <p className="text-xs text-slate-400">
-                      Appointments can be configured up to one week in advance
-                      maximum.
+                      Appointments can be configured up to one week in advance.
                     </p>
                   </div>
 
@@ -666,7 +628,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     </span>
                     <span className="font-black text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-primary" />{" "}
-                      {finalDuration} mins
+                      {formatDurationLabel(finalDuration)}
                     </span>
                   </div>
 
@@ -686,7 +648,18 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                         {slotsData.available_slots.map((slot) => (
                           <button
                             key={slot}
-                            onClick={() => setSelectedSlot(slot)}
+                            onClick={() => {
+                              setSelectedSlot(slot);
+                              // Auto reset or clamp quantities when switching between time frames
+                              selectedServices.forEach((s) => {
+                                if (!selectedQuantities[s._id]) {
+                                  setSelectedQuantities((prev) => ({
+                                    ...prev,
+                                    [s._id]: 1,
+                                  }));
+                                }
+                              });
+                            }}
                             className={cn(
                               "text-center py-2 px-1 rounded-xl text-xs font-bold transition-all border",
                               selectedSlot === slot
@@ -698,12 +671,78 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-400 text-center py-6 bg-white border rounded-2xl italic">
-                        No free open times or hours assigned for this specific
-                        day.
+                      <p className="text-xs text-destructive text-center py-6 bg-red-50 border border-red-100 rounded-2xl font-medium italic">
+                        No openings or hours assigned for this specific day.
                       </p>
                     )}
                   </div>
+
+                  {/* Contextual Asset Stock Controller (Shown during Time Selection Step) */}
+                  {selectedSlot &&
+                    selectedServices.some(
+                      (s) => s.inventory !== undefined && s.inventory > 0,
+                    ) && (
+                      <div className="pt-2 border-t border-slate-100 space-y-2">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                          Configure Quantities for Selected Time
+                        </span>
+                        {selectedServices.map((item) => {
+                          if (
+                            item.inventory === undefined ||
+                            item.inventory <= 0
+                          )
+                            return null;
+                          const currentQty = selectedQuantities[item._id] || 1;
+
+                          return (
+                            <div
+                              key={item._id}
+                              className="flex items-center justify-between border border-dashed border-slate-200 bg-white p-3 rounded-xl shadow-sm">
+                              <div className="space-y-0.5">
+                                <span className="text-xs font-bold text-slate-800 block">
+                                  {item.name}
+                                </span>
+                                <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                  <Layers className="w-3 h-3 text-slate-400" />{" "}
+                                  Max Available Stock: {item.inventory}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <button
+                                  type="button"
+                                  disabled={currentQty <= 1}
+                                  onClick={() =>
+                                    handleUpdateQuantity(
+                                      item._id,
+                                      -1,
+                                      item.inventory,
+                                    )
+                                  }
+                                  className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="text-sm font-black text-slate-900 w-4 text-center">
+                                  {currentQty}
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={currentQty >= (item.inventory || 1)}
+                                  onClick={() =>
+                                    handleUpdateQuantity(
+                                      item._id,
+                                      1,
+                                      item.inventory,
+                                    )
+                                  }
+                                  className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                 </div>
               )}
 
@@ -782,8 +821,10 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                               </h5>
                               <p className="text-[10px] text-slate-400 mt-0.5 flex flex-col gap-0.5">
                                 <span>
-                                  Duration: {srv.base_duration * mult} mins (
-                                  {mult}h)
+                                  Duration:{" "}
+                                  {formatDurationLabel(
+                                    srv.base_duration * mult,
+                                  )}
                                 </span>
                                 {qty > 1 && (
                                   <span className="text-primary font-bold">
@@ -824,7 +865,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     <div className="bg-purple-50/70 p-3 rounded-xl flex items-center gap-2 text-xs font-bold text-primary">
                       <Clock className="w-4 h-4 text-primary" />
                       <span>
-                        {format(selectedDate, "eeee, MMM dd")} at {selectedSlot}
+                        {format(selectedDate, "eeee, MMM dd")} at{" "}
+                        {formatDate(selectedSlot, "h:mm a")}
                       </span>
                     </div>
                   )}

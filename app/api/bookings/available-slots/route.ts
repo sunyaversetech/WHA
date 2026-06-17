@@ -7,6 +7,8 @@ import { Employee } from "@/server/models/Employee.model";
 import { EmployeeTimeOff } from "@/server/models/EmployeeTimeOff.model";
 import { Service } from "@/server/models/Service.model";
 import { logger } from "@/lib/logger";
+import User from "@/server/models/Auth.model";
+import { OperatingHours } from "@/server/models/OperatingHour.model";
 
 const DEAD_BOOKING_STATUSES = ["cancelled", "no_show", "refunded"];
 const DEFAULT_SLOT_STEP_MINUTES = 30;
@@ -19,17 +21,8 @@ const query_schema = z.object({
   service_id: z.string().min(1),
   employee_id: z.string().min(1).optional(),
   timezone: z.string().min(1).default("UTC"),
+  business_id: z.string().min(1).optional(),
 });
-
-const DAYS = [
-  "sunday",
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-];
 
 function to_utc(date_str: string, time_str: string, timezone: string): Date {
   const local_iso = `${date_str}T${time_str}:00`;
@@ -66,6 +59,7 @@ export async function GET(request: Request) {
       service_id: searchParams.get("service_id"),
       employee_id: searchParams.get("employee_id") ?? undefined,
       timezone: searchParams.get("timezone") ?? "UTC",
+      business_id: searchParams.get("business_id") ?? undefined,
     });
   } catch (error) {
     if (error instanceof ZodError) {
@@ -100,15 +94,15 @@ export async function GET(request: Request) {
 
   try {
     await connectToDb();
-
-    // 1. Fetch service info
     const service = await Service.findById(params.service_id).lean();
+
     if (!service) {
       return NextResponse.json(
         { success: false, code: "SERVICE_NOT_FOUND" },
         { status: 404 },
       );
     }
+
     if (!service.is_active) {
       return NextResponse.json(
         { success: false, code: "SERVICE_UNAVAILABLE" },
@@ -125,9 +119,7 @@ export async function GET(request: Request) {
     const now = new Date();
     const available_slots: string[] = [];
 
-    // ==========================================
-    // BRANCH A: INVENTORY / ITEM BASED LOGIC
-    // ==========================================
+    // ─── 1. ITEM BASED REVENUE PIPELINE ───
     if (service.business_type === "item_based") {
       const max_inventory = Number(service.inventory) || 0;
       if (max_inventory <= 0) {
@@ -138,7 +130,6 @@ export async function GET(request: Request) {
         });
       }
 
-      // Fetch ALL bookings and active locks for this item service during the targeted day window
       const [bookings, locks] = await Promise.all([
         Booking.find({
           service_id: service._id,
@@ -159,7 +150,6 @@ export async function GET(request: Request) {
           .lean(),
       ]);
 
-      // Determine operational window constraints (e.g., standard business hours)
       const open_time = to_utc(
         params.date,
         DEFAULT_BUSINESS_START,
@@ -172,7 +162,6 @@ export async function GET(request: Request) {
       );
       const duration = service.base_duration;
 
-      // Initialize the chronological runner timeline
       let runner =
         params.date === today
           ? new Date(Math.max(now.getTime(), open_time.getTime()))
@@ -187,10 +176,8 @@ export async function GET(request: Request) {
           slot_end.getTime() + candidate_buffer * 60_000,
         );
 
-        // Don't generate slots running past close times
         if (slot_end > close_time) break;
 
-        // Peak Allocation Math: Check resource consumption across points of interest in this window
         let peak_allocated = 0;
         const check_points = Array.from(
           new Set([
@@ -203,9 +190,7 @@ export async function GET(request: Request) {
         for (const time_ms of check_points) {
           const target_time = new Date(time_ms);
 
-          // Only calculate intersections if within the candidate user exploration window
           if (target_time >= runner && target_time < candidate_blocked_end) {
-            // Sum active booking counts
             const booked_at_spot = bookings.reduce((sum, b) => {
               const b_buffer = (b.service_id as any)?.buffer_time || 0;
               const b_blocked_end = new Date(
@@ -216,7 +201,6 @@ export async function GET(request: Request) {
                 : sum;
             }, 0);
 
-            // Sum temporary active checkout locks holding down units
             const locked_at_spot = locks.reduce((sum, l) => {
               const l_buffer = (l.service_id as any)?.buffer_time || 0;
               const l_blocked_end = new Date(
@@ -234,7 +218,6 @@ export async function GET(request: Request) {
           }
         }
 
-        // If at least one item unit remains free for the whole duration, expose the slot
         if (max_inventory - peak_allocated > 0) {
           available_slots.push(runner.toISOString());
         }
@@ -249,9 +232,7 @@ export async function GET(request: Request) {
       });
     }
 
-    // ==========================================
-    // BRANCH B: STANDARD EMPLOYEE LOGIC (Your Existing Code)
-    // ==========================================
+    // ─── 2. PROFESSIONAL BASED / SERVICE PARAMETERS ───
     const employees_to_check = params.employee_id
       ? await Employee.find({ _id: params.employee_id, is_active: true }).lean()
       : await Employee.find({
@@ -259,11 +240,73 @@ export async function GET(request: Request) {
           is_active: true,
         }).lean();
 
+    // FALLBACK: Execute timeline computation using Business Operating Hours if no staff are assigned/available
     if (employees_to_check.length === 0) {
+      if (!params.business_id) {
+        return NextResponse.json({
+          success: true,
+          count: 0,
+          available_slots: [],
+        });
+      }
+
+      const business_hours = await OperatingHours.findOne({
+        business_id: params.business_id,
+      }).lean();
+
+      if (!business_hours) {
+        return NextResponse.json({
+          success: true,
+          count: 0,
+          available_slots: [],
+        });
+      }
+
+      // Maps to schema structure: "schedule", "day", "isOpen"
+      const day_schedule = (business_hours.schedule as any[])?.find(
+        (h) => h.day.toLowerCase() === day_name.toLowerCase() && h.isOpen,
+      );
+
+      if (!day_schedule) {
+        return NextResponse.json({
+          success: true,
+          count: 0,
+          available_slots: [],
+        });
+      }
+
+      // Maps to schema properties: "openTime" and "closeTime"
+      const open_time = to_utc(
+        params.date,
+        day_schedule.openTime,
+        params.timezone,
+      );
+      const close_time = to_utc(
+        params.date,
+        day_schedule.closeTime,
+        params.timezone,
+      );
+      const duration = service.base_duration;
+
+      let runner =
+        params.date === today
+          ? new Date(Math.max(now.getTime(), open_time.getTime()))
+          : open_time;
+
+      runner = new Date(Math.ceil(runner.getTime() / step_ms) * step_ms);
+
+      while (runner < close_time) {
+        const slot_end = new Date(runner.getTime() + duration * 60_000);
+        if (slot_end > close_time) break;
+
+        available_slots.push(runner.toISOString());
+        runner = new Date(runner.getTime() + step_ms);
+      }
+
       return NextResponse.json({
         success: true,
-        count: 0,
-        available_slots: [],
+        count: available_slots.length,
+        available_slots,
       });
     }
 

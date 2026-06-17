@@ -26,25 +26,6 @@ const service_schema = new mongoose.Schema(
     metadata: { type: Map, of: String },
     buffer_time: { type: Number, default: 0 },
     inventory: { type: Number, default: 0 },
-    availability_schedule: [
-      {
-        day_of_week: {
-          type: String,
-          enum: [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-          ],
-        },
-        is_working: { type: Boolean, default: true },
-        shift_start: { type: String },
-        shift_end: { type: String },
-      },
-    ],
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
@@ -54,5 +35,4 @@ const service_schema = new mongoose.Schema(
 service_schema.index({ business_id: 1, category: 1 });
 service_schema.index({ business_id: 1, name: 1 }, { unique: true });
 
-// const Service = mongoose.model("Service", service_schema);
 export const Service = models.Service || model("Service", service_schema);
