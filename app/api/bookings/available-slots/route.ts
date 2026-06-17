@@ -7,8 +7,8 @@ import { Employee } from "@/server/models/Employee.model";
 import { EmployeeTimeOff } from "@/server/models/EmployeeTimeOff.model";
 import { Service } from "@/server/models/Service.model";
 import { logger } from "@/lib/logger";
-import User from "@/server/models/Auth.model";
 import { OperatingHours } from "@/server/models/OperatingHour.model";
+import mongoose from "mongoose";
 
 const DEAD_BOOKING_STATUSES = ["cancelled", "no_show", "refunded"];
 const DEFAULT_SLOT_STEP_MINUTES = 30;
@@ -94,6 +94,7 @@ export async function GET(request: Request) {
 
   try {
     await connectToDb();
+
     const service = await Service.findById(params.service_id).lean();
 
     if (!service) {

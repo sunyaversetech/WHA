@@ -15,6 +15,18 @@ const service_schema = new mongoose.Schema(
     base_price: { type: Number, required: true, min: 0 },
     base_duration: { type: Number, required: true },
 
+    business_type: {
+      type: String,
+      enum: ["employee_based", "item_based"],
+      default: "employee_based",
+      required: true,
+    },
+
+    slot_interval: {
+      type: Number,
+      default: null,
+    },
+
     assigned_employees: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -25,6 +37,8 @@ const service_schema = new mongoose.Schema(
     is_active: { type: Boolean, default: true },
     metadata: { type: Map, of: String },
     buffer_time: { type: Number, default: 0 },
+
+    // inventory is only meaningful when business_type === "item_based"
     inventory: { type: Number, default: 0 },
   },
   {
