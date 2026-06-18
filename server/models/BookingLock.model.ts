@@ -27,30 +27,7 @@ const booking_lock_schema = new mongoose.Schema(
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } },
 );
 
-// TTL index — MongoDB auto-deletes expired locks
 booking_lock_schema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
-
-// ─── FIX 3: Split unique indexes by business_type use-case ────────────────────
-//
-// OLD (broken) index:
-//   { business_id, employee_id, start_time, end_time } — unique
-//
-// Why it broke item-based inventory:
-//   For item-based services there is NO employee_id (it's null).
-//   MongoDB treats all nulls as equal in unique indexes, so the SECOND
-//   user trying to lock the same time slot gets an E11000 duplicate key
-//   error. Their lock is never created, yet the booking route proceeds
-//   without a valid lock — skipping the inventory concurrency check entirely.
-//
-// Fix — two separate, purpose-fit indexes:
-//
-//   1. Employee-based: one employee can only hold one lock per time window.
-//      Partial filter excludes item-based locks (employee_id != null).
-//
-//   2. Item-based: one USER can only hold one lock per service+time window
-//      (prevents the same user double-locking). Multiple different users
-//      CAN each hold their own lock, which is correct — their quantities
-//      are summed during the inventory check.
 
 booking_lock_schema.index(
   {

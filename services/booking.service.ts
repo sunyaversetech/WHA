@@ -100,6 +100,7 @@ export const useGetAvailableSlots = (
   employeeId?: string | null,
   timezone: string = "UTC",
   businessId?: string,
+  duration_minutes?: number,
 ) => {
   return useQuery<AvailableSlotsResponse>({
     queryKey: [
@@ -109,9 +110,10 @@ export const useGetAvailableSlots = (
       employeeId,
       timezone,
       businessId,
+      duration_minutes,
     ],
     queryFn: () => {
-      const url = `/api/bookings/available-slots?service_id=${serviceId}&date=${date}${businessId ? `&business_id=${businessId}` : ""}${
+      const url = `/api/bookings/available-slots?service_id=${serviceId}&date=${date}${businessId ? `&business_id=${businessId}` : ""}${`&duration_minutes=${duration_minutes}`}${
         employeeId && employeeId !== "any" ? `&employee_id=${employeeId}` : ""
       }&timezone=${encodeURIComponent(timezone)}`;
       return Get({ url });

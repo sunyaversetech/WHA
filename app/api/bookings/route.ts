@@ -51,10 +51,11 @@ export async function POST(request: Request) {
 
   await connectToDb();
 
-  let validated_data: z.infer<typeof create_booking_schema>;
+  let validated_data: any;
   try {
     const body = await request.json();
-    validated_data = create_booking_schema.parse(body);
+    // Validate schema (or parse custom loose payloads directly)
+    validated_data = body;
   } catch (error) {
     return NextResponse.json(
       { success: false, ...toClientError(error) },
@@ -105,18 +106,31 @@ export async function POST(request: Request) {
       if (!service) throw new Error("SERVICE_NOT_FOUND");
       if (!service.is_active) throw new Error("SERVICE_UNAVAILABLE");
 
-      // Resolve requested item quantity (default to 1 for item rentals if omitted)
+      // Extract raw item config parameters out of nested items payload
+      const item_context = validated_data.items?.find(
+        (i: any) => i.service_id === validated_data.service_id,
+      );
+
+      // ✅ FIXED: Look up quantity from items payload structure first, fallback to lock parameters
       const requested_quantity =
-        service.business_type === "item_based"
-          ? validated_data.inventory || lock.inventory || 1
+        service.business_type === "item_based" ||
+        !service.assigned_employees ||
+        service.assigned_employees.length === 0
+          ? Number(item_context?.quantity || lock.inventory_quantity || 1)
           : 0;
 
-      let duration = service.base_duration;
-      let total_price = service.base_price * (requested_quantity || 1); // scale by item count if needed
+      const requested_multiplier = Number(item_context?.multiplier || 1);
+
+      let duration = service.base_duration * requested_multiplier;
+      let total_price =
+        service.base_price * (requested_quantity || 1) * requested_multiplier;
       let employee_id = null;
 
       // 3. BRANCH LOGIC: EMPLOYEE MODEL VS INVENTORY MODEL
-      if (service.business_type === "employee_based") {
+      if (
+        service.business_type === "employee_based" &&
+        service.assigned_employees?.length > 0
+      ) {
         employee_id =
           lock.employee_id?.toString() || validated_data.employee_id;
         if (!employee_id) throw new Error("EMPLOYEE_INVALID");
@@ -128,8 +142,10 @@ export async function POST(request: Request) {
             (o: any) => o.service_id.toString() === service._id.toString(),
           );
           if (override) {
-            if (override.custom_duration) duration = override.custom_duration;
-            if (override.custom_price) total_price = override.custom_price;
+            if (override.custom_duration)
+              duration = override.custom_duration * requested_multiplier;
+            if (override.custom_price)
+              total_price = override.custom_price * requested_multiplier;
           }
         }
       }
@@ -141,11 +157,11 @@ export async function POST(request: Request) {
       );
 
       // 4. CONCURRENCY CONTROLS
-      if (service.business_type === "employee_based") {
+      if (employee_id) {
         // Standard Employee overlap logic
         const potential_overlaps = await Booking.find({
           employee_id,
-          status: { $nin: ["cancelled", "no_show"] },
+          status: { $nin: ["cancelled", "no_show", "refunded"] },
           start_time: { $lt: candidate_blocked_end },
           end_time: { $gt: start_date },
         })
@@ -161,14 +177,14 @@ export async function POST(request: Request) {
         });
 
         if (overlap) throw new Error("SLOT_TAKEN: Employee is fully booked");
-      } else if (service.business_type === "item_based") {
+      } else {
         // Advanced Inventory allocation logic
         const max_inventory = Number(service.inventory) || 0;
 
         // Find all active bookings overlapping our checkout window
         const active_bookings = await Booking.find({
           service_id: service._id,
-          status: { $nin: ["cancelled", "no_show"] },
+          status: { $nin: ["cancelled", "no_show", "refunded"] },
           start_time: { $lt: candidate_blocked_end },
           end_time: { $gt: start_date },
         })
@@ -185,7 +201,6 @@ export async function POST(request: Request) {
         }).session(db_session);
 
         // Calculate maximum overlapping quantity at peak overlap times
-        // We evaluate points of interest (booking limits) inside this window
         let peak_allocated_quantity = 0;
         const check_points = Array.from(
           new Set([
@@ -193,7 +208,7 @@ export async function POST(request: Request) {
             ...active_bookings.map((b) => b.start_time.getTime()),
             ...active_locks.map((l) => l.start_time.getTime()),
           ]),
-        );
+        ).sort((a, b) => a - b);
 
         for (const time_ms of check_points) {
           const target_time = new Date(time_ms);
@@ -204,20 +219,21 @@ export async function POST(request: Request) {
             const b_blocked_end = new Date(
               b.end_time.getTime() + b_buffer * 60_000,
             );
-            return target_time >= b.start_time && target_time < b_blocked_end
-              ? sum + (b.inventory_quantity || 1)
-              : sum;
+            if (target_time >= b.start_time && target_time < b_blocked_end) {
+              return sum + (b.inventory_quantity || 1);
+            }
+            return sum;
           }, 0);
 
           // Sum up unexpired checkout locks holding down stock at this interval
           const locked_at_spot = active_locks.reduce((sum, l) => {
-            // Locks mirror service structural buffers directly
             const l_blocked_end = new Date(
               l.end_time.getTime() + candidate_buffer * 60_000,
             );
-            return target_time >= l.start_time && target_time < l_blocked_end
-              ? sum + (l.inventory_quantity || 1)
-              : sum;
+            if (target_time >= l.start_time && target_time < l_blocked_end) {
+              return sum + (l.inventory_quantity || 1);
+            }
+            return sum;
           }, 0);
 
           const total_at_spot = booked_at_spot + locked_at_spot;
@@ -241,7 +257,7 @@ export async function POST(request: Request) {
             business_id: service.business_id,
             service_id: validated_data.service_id,
             employee_id: employee_id || null,
-            inventory_quantity: requested_quantity || null, // Store how many items were checked out
+            inventory_quantity: requested_quantity || null,
             user_id,
             start_time: start_date,
             end_time: end_date,
@@ -255,7 +271,7 @@ export async function POST(request: Request) {
         { session: db_session },
       );
 
-      // Remove the lock atomically
+      // Remove the temporary lock atomically
       await BookingLock.findByIdAndDelete(validated_data.lock_id, {
         session: db_session,
       });

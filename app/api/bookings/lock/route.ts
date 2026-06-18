@@ -250,13 +250,11 @@ export async function POST(request: Request) {
           }
         }
 
-        // Remove old locks held by this specific user for this service before re-building a position
         await BookingLock.deleteMany(
           { user_id, service_id: validated_data.service_id },
           { session: db_session },
         );
 
-        // Write safe new lock document tracking quantity metrics
         const [new_lock] = await BookingLock.create(
           [
             {
@@ -267,17 +265,14 @@ export async function POST(request: Request) {
               inventory_quantity: requested_quantity,
               start_time: requested_start,
               end_time: requested_end,
-              expires_at: new Date(Date.now() + 5 * 60_000), // 5 min TTL
+              expires_at: new Date(Date.now() + 5 * 60_000),
             },
           ],
           { session: db_session },
         );
 
         lock_id = new_lock._id.toString();
-      }
-
-      // ─── FORK B: PROFESSIONAL / EMPLOYEE BASED TRANSFERS ───
-      else {
+      } else {
         let candidate_ids: string[] = [];
         const requested_employee_id = validated_data.employee_id;
 

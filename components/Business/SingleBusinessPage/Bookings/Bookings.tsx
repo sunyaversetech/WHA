@@ -94,14 +94,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const employeeParam =
     isNoPreference || !selectedEmployee ? "any" : selectedEmployee._id;
 
-  const { data: slotsData, isLoading: isLoadingSlots } = useGetAvailableSlots(
-    primaryServiceId,
-    formattedDate,
-    employeeParam === "any" ? null : employeeParam,
-    Intl.DateTimeFormat().resolvedOptions().timeZone,
-    services[0]?.business_id?._id,
-  );
-
   const lockMutation = useCreateBookingLock();
   const bookingMutation = useCreateBooking();
 
@@ -120,6 +112,15 @@ export default function BookingContainer({ services }: BookingContainerProps) {
       return acc + curr.base_duration * mult;
     }, 0);
   }, [selectedServices, selectedMultipliers]);
+
+  const { data: slotsData, isLoading: isLoadingSlots } = useGetAvailableSlots(
+    primaryServiceId,
+    formattedDate,
+    employeeParam === "any" ? null : employeeParam,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    services[0]?.business_id?._id,
+    finalDuration,
+  );
 
   const maxBookingDays = useMemo(() => {
     return Array.from({ length: 7 }).map((_, i) => addDays(new Date(), i));
