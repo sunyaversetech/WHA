@@ -23,12 +23,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import AssignEmployee from "../Employee/Form/AssignEmployee";
 import { DynamicBreadcrumb } from "@/components/ui/DynamicBreadCrumb";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import BusinessType from "../Settings/BusinessType";
 
 export function ServicesTable() {
   const router = useRouter();
   const { data } = useGetServices();
   const { mutate } = useDeleteServices();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
 
   const handleDelete = async (id: string) => {
     mutate(
@@ -46,6 +49,14 @@ export function ServicesTable() {
       },
     );
   };
+
+  if (!session?.user?.business_type) {
+    return (
+      <>
+        <BusinessType />
+      </>
+    );
+  }
 
   return (
     <>

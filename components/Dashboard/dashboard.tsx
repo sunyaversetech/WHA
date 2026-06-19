@@ -84,11 +84,11 @@ export default function Dashboard() {
                         key={item._id}>
                         <div>
                           <p className="font-medium text-gray-800">
-                            {item.item_id.title}
+                            {item?.item_id?.title}
                           </p>
                           <p className="text-sm text-gray-500">
                             {formatDate(
-                              item.item_id.dateRange.from,
+                              item?.item_id?.dateRange?.from,
                               "yyyy-MM-dd",
                             )}{" "}
                             to{" "}
@@ -143,7 +143,7 @@ export default function Dashboard() {
                         key={item._id}>
                         <div>
                           <p className="font-medium text-gray-800">
-                            {item.deal.title}
+                            {item?.deal?.title}
                           </p>
                         </div>
                         <span className="text-sm text-green-600 font-medium">

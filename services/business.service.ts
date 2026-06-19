@@ -103,7 +103,7 @@ export const useUpdateBusinessType = () => {
         { business_type: string },
         ApiResponseType<{ business_type: string }>
       >({
-        url: "/api/business/operating-hours",
+        url: "/api/business/businesstype",
         data: data,
       }),
   });
