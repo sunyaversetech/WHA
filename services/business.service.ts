@@ -91,6 +91,24 @@ export const useUpdateOperatingHours = () => {
   });
 };
 
+export const useUpdateBusinessType = () => {
+  return useMutation<
+    ApiResponseType<{ business_type: string }>,
+    any,
+    { business_type: string }
+  >({
+    mutationKey: ["updateOperatingHours"],
+    mutationFn: (data: { business_type: string }) =>
+      Post<
+        { business_type: string },
+        ApiResponseType<{ business_type: string }>
+      >({
+        url: "/api/business/operating-hours",
+        data: data,
+      }),
+  });
+};
+
 export const useGetOperatingHours = () => {
   return useFetcher<ApiResponseType<OperatingHourPostType>>(
     ["getOperatingHours"],

@@ -48,6 +48,7 @@ export const authOptions: NextAuthOptions = {
           isblocked: user.isblocked,
           location: user.location,
           phone_number: user.phone_number,
+          business_type: user.business_type,
         };
       },
     }),
@@ -72,6 +73,7 @@ export const authOptions: NextAuthOptions = {
             category: "user",
             phone_number: user.phone_number,
             emailVerified: new Date(),
+            business_type: "employee_based",
           });
           user.id = newUser._id.toString();
         } else {
@@ -106,6 +108,7 @@ export const authOptions: NextAuthOptions = {
         token.verified = (user as any).verified ?? false;
         token.location = (user as any).location ?? "";
         token.phone_number = (user as any).phone_number ?? "";
+        token.business_type = (user as any).business_type ?? null;
       }
 
       if (trigger === "update" && session) {
@@ -127,6 +130,7 @@ export const authOptions: NextAuthOptions = {
           token.verified = (dbUser as any).verified ?? false;
           token.location = (dbUser as any).location ?? "";
           token.phone_number = (dbUser as any).phone_number ?? "";
+          token.business_type = (dbUser as any).business_type ?? "";
         }
       }
       return token;
@@ -145,6 +149,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).verified = token.verified;
         (session.user as any).location = token.location;
         (session.user as any).phone_number = token.phone_number;
+        (session.user as any).business_type = token.business_type;
       }
       return session;
     },

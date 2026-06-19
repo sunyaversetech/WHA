@@ -97,7 +97,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const lockMutation = useCreateBookingLock();
   const bookingMutation = useCreateBooking();
 
-  // Dynamic calculation computed aggregate totals map (Price = Base * Hour Multiplier * Item Quantity)
   const finalPrice = useMemo(() => {
     return selectedServices.reduce((acc, curr) => {
       const mult = selectedMultipliers[curr._id] || 1;

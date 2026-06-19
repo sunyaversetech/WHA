@@ -50,7 +50,7 @@ const DEFAULT_SCHEDULE = [
 ].map((day) => ({
   day,
   isOpen: true,
-  openTime: "06:00", // Use 24h format "06:00" for HTML time inputs
+  openTime: "06:00",
   closeTime: "22:00",
 }));
 

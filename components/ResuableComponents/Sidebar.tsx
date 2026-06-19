@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 
 export type NavItem = {
   icon: LucideIcon;
@@ -32,6 +33,7 @@ export type NavGroup = {
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
   const currentCity = searchParams.get("city");
   const buildPath = (href: string) => {
@@ -94,29 +96,42 @@ const Sidebar = () => {
     // },
     {
       groupLabel: "Bookings",
-      items: [
-        {
-          name: "Services",
-          icon: HandPlatter,
-          link: buildPath("/dashboard/services"),
-          hasDropdown: false,
-          active: pathname.startsWith("/dashboard/services"),
-        },
-        {
-          name: "Employee",
-          icon: Users,
-          link: buildPath("/dashboard/employees"),
-          hasDropdown: false,
-          active: pathname.startsWith("/dashboard/employee"),
-        },
-        {
-          name: "Booking Lists",
-          icon: Book,
-          link: buildPath("/dashboard/bookings"),
-          hasDropdown: false,
-          active: pathname.startsWith("/dashboard/bookings"),
-        },
-      ],
+      items:
+        session?.user?.business_type === "" ||
+        session?.user?.business_type === null ||
+        session?.user?.business_type === undefined
+          ? [
+              {
+                name: "Services",
+                icon: HandPlatter,
+                link: buildPath("/dashboard/services"),
+                hasDropdown: false,
+                active: pathname.startsWith("/dashboard/services"),
+              },
+            ] // Fix: Return an empty array instead of ""
+          : [
+              {
+                name: "Services",
+                icon: HandPlatter,
+                link: buildPath("/dashboard/services"),
+                hasDropdown: false,
+                active: pathname.startsWith("/dashboard/services"),
+              },
+              {
+                name: "Employee",
+                icon: Users,
+                link: buildPath("/dashboard/employees"),
+                hasDropdown: false,
+                active: pathname.startsWith("/dashboard/employee"),
+              },
+              {
+                name: "Booking Lists",
+                icon: Book,
+                link: buildPath("/dashboard/bookings"),
+                hasDropdown: false,
+                active: pathname.startsWith("/dashboard/bookings"),
+              },
+            ],
     },
     {
       groupLabel: "Profile",

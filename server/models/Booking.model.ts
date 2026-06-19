@@ -26,23 +26,12 @@ const booking_schema = new mongoose.Schema(
       default: null,
     },
 
-    // ─── FIX 4: Added idempotency_key ─────────────────────────────────────────
-    // The POST /bookings route does:
-    //   Booking.findOne({ idempotency_key, user_id })
-    // to prevent double-submissions. Without this field in the schema,
-    // Mongoose never stores or queries it, so every retry creates a
-    // duplicate booking — and the dedup guard is useless.
     idempotency_key: {
       type: String,
       default: null,
       index: true, // Fast lookup on retry
     },
 
-    // ─── FIX 5: Added inventory_quantity ──────────────────────────────────────
-    // The POST route saves inventory_quantity on item-based bookings and the
-    // available-slots route reads it back to calculate remaining stock.
-    // Without this field the stored value is always undefined, so
-    // peak_allocated_quantity is always 0 → inventory is never decremented.
     inventory_quantity: {
       type: Number,
       default: null, // null for employee-based bookings; a number for item-based
@@ -52,7 +41,6 @@ const booking_schema = new mongoose.Schema(
     end_time: { type: Date, required: true },
     duration: { type: Number, required: true }, // minutes
 
-    // Financials
     total_price: { type: Number, required: true, min: 0 },
     currency: { type: String, default: "AUD" },
     payment_status: {
