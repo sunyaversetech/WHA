@@ -219,7 +219,7 @@ export default function BookingList() {
                     </span>
                   </div>
 
-                  <div>{renderStatusBadge(booking.status)}</div>
+                  <div>{renderStatusBadge(booking.status as any)}</div>
                 </div>
               </div>
             );
