@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useMemo } from "react";
 import { format, addDays, formatDate } from "date-fns";
 import {
@@ -9,12 +11,14 @@ import {
   User,
   ChevronLeft,
   Plus,
-  Minus,
   MapPin,
   Layers,
   Timer,
+  Minus,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -24,8 +28,9 @@ import {
   EmployeeType,
   useGetAvailableSlots,
   useCreateBookingLock,
-  useCreateBooking,
 } from "@/services/booking.service";
+
+import { useCreateCheckoutSession } from "@/services/booking.service";
 
 interface BookingContainerProps {
   services: ServiceType[];
@@ -33,7 +38,6 @@ interface BookingContainerProps {
 
 type StepType = "services" | "professionals" | "time" | "confirm";
 
-// Helper function to turn raw duration minutes into clean human-readable text
 function formatDurationLabel(totalMinutes: number): string {
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;
@@ -63,6 +67,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const [isNoPreference, setIsNoPreference] = useState<boolean>(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedSlot, setSelectedSlot] = useState<string>("");
+  const [isRedirectingToStripe, setIsRedirectingToStripe] =
+    useState<boolean>(false);
 
   const categories = useMemo(() => {
     return [
@@ -88,14 +94,13 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     return Array.from(empMap.values());
   }, [selectedServices]);
 
-  // --- API Sync Parameters & Pricing Formulas ---
   const primaryServiceId = selectedServices[0]?._id || "";
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
   const employeeParam =
     isNoPreference || !selectedEmployee ? "any" : selectedEmployee._id;
 
   const lockMutation = useCreateBookingLock();
-  const bookingMutation = useCreateBooking();
+  const checkoutMutation = useCreateCheckoutSession(); // Payment gateway hook initialization
 
   const finalPrice = useMemo(() => {
     return selectedServices.reduce((acc, curr) => {
@@ -125,7 +130,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     return Array.from({ length: 7 }).map((_, i) => addDays(new Date(), i));
   }, []);
 
-  // Open Dialog Action Handler
   const handleOpenBookingWizard = (service: ServiceType) => {
     setSelectedServices([service]);
     setSelectedMultipliers({ [service._id]: 1 });
@@ -185,7 +189,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     }
   };
 
-  // Step Navigation Logic Flows
   const handleNextStep = () => {
     if (currentStep === "services") {
       if (dynamicAvailableEmployees.length > 0) {
@@ -197,7 +200,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     } else if (currentStep === "professionals") {
       setCurrentStep("time");
     } else if (currentStep === "time") {
-      handleExecuteBookingPipeline();
+      handleExecuteBookingAndPaymentPipeline();
     }
   };
 
@@ -212,7 +215,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     }
   };
 
-  const handleExecuteBookingPipeline = async () => {
+  // Securely lock the slot window and obtain a secure Stripe Checkout routing reference
+  const handleExecuteBookingAndPaymentPipeline = async () => {
     if (selectedServices.length === 0 || !selectedSlot) return;
 
     try {
@@ -236,21 +240,39 @@ export default function BookingContainer({ services }: BookingContainerProps) {
       const lockRes = await lockMutation.mutateAsync(lockPayload);
 
       if (lockRes.success) {
-        const bookingPayload = {
+        setIsRedirectingToStripe(true);
+
+        const checkoutPayload = {
+          lock_id: lockRes.lock_id,
           service_id: primaryServiceId,
           employee_id:
             lockRes.employee_id ||
             (isNoPreference ? null : selectedEmployee?._id),
           start_time: startTimeISO,
-          lock_id: lockRes.lock_id,
           items: itemsPayload,
+          success_url: `${window.location.origin}/dashboard/bookings/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${window.location.origin}/dashboard/bookings?payment_cancelled=true`,
         };
 
-        await bookingMutation.mutateAsync(bookingPayload);
-        setCurrentStep("confirm");
+        const checkoutRes = await checkoutMutation.mutateAsync(checkoutPayload);
+        if (checkoutRes?.data?.url) {
+          window.location.href = checkoutRes.data.url;
+        } else {
+          throw new Error(
+            "Missing url destination reference inside payment instantiation response.",
+          );
+        }
       }
-    } catch (err) {
-      console.error("Booking state pipeline submission failure:", err);
+    } catch (err: any) {
+      setIsRedirectingToStripe(false);
+      console.error(
+        "Booking payment state submission processing fatal termination:",
+        err,
+      );
+      toast.error(
+        err?.response?.data?.message ||
+          "Failed to initialize payment gateway. Please select another slot.",
+      );
     }
   };
 
@@ -263,7 +285,13 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     setSelectedEmployee(null);
     setIsNoPreference(true);
     setSelectedSlot("");
+    setIsRedirectingToStripe(false);
   };
+
+  const isMutationLoading =
+    lockMutation.isPending ||
+    checkoutMutation.isPending ||
+    isRedirectingToStripe;
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-6 space-y-6">
@@ -326,13 +354,17 @@ export default function BookingContainer({ services }: BookingContainerProps) {
       {/* ─── BOOKING WORKFLOW MULTI-STEP DIALOG ─── */}
       <Dialog
         open={isDialogOpen}
-        onOpenChange={(v) => !v && handleGlobalWizardReset()}>
+        onOpenChange={(v) =>
+          !v && !isMutationLoading && handleGlobalWizardReset()
+        }>
         <DialogContent className="min-w-5xl p-0 overflow-hidden bg-[#F9F9F9] rounded-3xl border-none flex flex-col md:flex-row h-[90vh] max-h-[720px] shadow-2xl">
           {/* Left Panel Step Canvas */}
           <div className="flex-1 p-6 md:p-8 overflow-y-auto flex flex-col justify-between space-y-6">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                {currentStep !== "services" && currentStep !== "confirm" ? (
+                {currentStep !== "services" &&
+                currentStep !== "confirm" &&
+                !isMutationLoading ? (
                   <button
                     onClick={handleBackStep}
                     className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-400 hover:text-black transition-colors">
@@ -367,7 +399,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     className={cn(
                       currentStep === "time" && "text-primary font-extrabold",
                     )}>
-                    Time
+                    Checkout
                   </span>
                 </nav>
               </div>
@@ -443,7 +475,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
 
                           {isChecked && (
                             <div className="border-t border-slate-100 pt-3 space-y-3.5">
-                              {/* Duration Options calculated dynamically based on base_duration multipliers (1x, 2x, 3x, 4x) */}
                               <div className="space-y-1.5">
                                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                                   <Timer className="w-3 h-3" /> Choose Duration
@@ -600,6 +631,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                       return (
                         <button
                           key={day.toISOString()}
+                          disabled={isMutationLoading}
                           onClick={() => {
                             setSelectedDate(day);
                             setSelectedSlot("");
@@ -608,7 +640,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                             "flex flex-col items-center justify-center p-2.5 w-14 rounded-xl border transition-all shrink-0",
                             isSameDay
                               ? "bg-primary border-primary text-white shadow-sm"
-                              : "bg-white border-slate-200 text-slate-800 hover:border-slate-300",
+                              : "bg-white border-slate-200 text-slate-800 hover:border-slate-300 disabled:opacity-50",
                           )}>
                           <span className="text-[9px] font-bold opacity-80 uppercase">
                             {format(day, "EEE")}
@@ -621,7 +653,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     })}
                   </div>
 
-                  {/* Operational Time Overview Statistics Bar */}
                   <div className="p-3.5 bg-slate-100/60 rounded-2xl border border-slate-200/40 flex justify-between items-center text-xs">
                     <span className="font-semibold text-slate-500">
                       Total Pipeline Duration:
@@ -648,9 +679,9 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                         {slotsData.available_slots.map((slot) => (
                           <button
                             key={slot}
+                            disabled={isMutationLoading}
                             onClick={() => {
                               setSelectedSlot(slot);
-                              // Auto reset or clamp quantities when switching between time frames
                               selectedServices.forEach((s) => {
                                 if (!selectedQuantities[s._id]) {
                                   setSelectedQuantities((prev) => ({
@@ -664,7 +695,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                               "text-center py-2 px-1 rounded-xl text-xs font-bold transition-all border",
                               selectedSlot === slot
                                 ? "bg-primary border-primary text-white shadow-sm"
-                                : "bg-white border-slate-100 text-slate-700 hover:border-slate-300",
+                                : "bg-white border-slate-100 text-slate-700 hover:border-slate-300 disabled:opacity-50",
                             )}>
                             {formatDate(slot, "h:mm a")}
                           </button>
@@ -677,7 +708,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     )}
                   </div>
 
-                  {/* Contextual Asset Stock Controller (Shown during Time Selection Step) */}
+                  {/* Contextual Asset Stock Controller */}
                   {selectedSlot &&
                     selectedServices.some(
                       (s) => s.inventory !== undefined && s.inventory > 0,
@@ -710,7 +741,9 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                               <div className="flex items-center gap-3">
                                 <button
                                   type="button"
-                                  disabled={currentQty <= 1}
+                                  disabled={
+                                    currentQty <= 1 || isMutationLoading
+                                  }
                                   onClick={() =>
                                     handleUpdateQuantity(
                                       item._id,
@@ -726,7 +759,10 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                                 </span>
                                 <button
                                   type="button"
-                                  disabled={currentQty >= (item.inventory || 1)}
+                                  disabled={
+                                    currentQty >= (item.inventory || 1) ||
+                                    isMutationLoading
+                                  }
                                   onClick={() =>
                                     handleUpdateQuantity(
                                       item._id,
@@ -746,7 +782,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                 </div>
               )}
 
-              {/* STEP 4: TRANSACTION SUCCESS VIEW */}
+              {/* STEP 4: BACKUP TRANSACTIONS PREVIEW (Normally offloaded to Stripe URL) */}
               {currentStep === "confirm" && (
                 <div className="text-center py-12 space-y-4 max-w-sm mx-auto">
                   <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
@@ -771,8 +807,9 @@ export default function BookingContainer({ services }: BookingContainerProps) {
             {currentStep !== "confirm" && (
               <Button
                 variant="ghost"
+                disabled={isMutationLoading}
                 onClick={handleGlobalWizardReset}
-                className="text-xs text-slate-400 hover:text-slate-600 mt-4 justify-start w-fit p-0 h-auto font-medium">
+                className="text-xs text-slate-400 hover:text-slate-600 mt-4 justify-start w-fit p-0 h-auto font-medium disabled:opacity-40">
                 Cancel Registration
               </Button>
             )}
@@ -887,21 +924,37 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                   disabled={
                     selectedServices.length === 0 ||
                     (currentStep === "time" && !selectedSlot) ||
-                    lockMutation.isPending ||
-                    bookingMutation.isPending
+                    isMutationLoading
                   }
                   onClick={handleNextStep}
-                  className="w-full bg-black hover:bg-slate-900 text-white font-bold text-xs h-12 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all">
-                  {lockMutation.isPending || bookingMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  className={cn(
+                    "w-full font-bold text-xs h-12 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all",
+                    currentStep === "time"
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "bg-black hover:bg-slate-900 text-white",
+                  )}>
+                  {isMutationLoading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>
+                        {isRedirectingToStripe
+                          ? "Opening Stripe secure portal..."
+                          : "Processing secure hold..."}
+                      </span>
+                    </div>
                   ) : (
                     <>
-                      <span>
-                        {currentStep === "time"
-                          ? "Confirm Appointment"
-                          : "Continue"}
-                      </span>
-                      <ChevronRight className="w-4 h-4" />
+                      {currentStep === "time" ? (
+                        <>
+                          <CreditCard className="w-4 h-4" />
+                          <span>Pay Now & Confirm</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Continue</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </>
+                      )}
                     </>
                   )}
                 </Button>

@@ -133,6 +133,40 @@ export const useCreateBookingLock = () => {
   });
 };
 
+export interface CheckoutSessionPayload {
+  lock_id: string;
+  service_id: string;
+  employee_id: string | null | undefined;
+  start_time: string;
+  items: {
+    service_id: string;
+    quantity: number;
+    multiplier: number;
+  }[];
+  success_url: string;
+  cancel_url: string;
+}
+
+export interface CheckoutSessionResponse {
+  success: boolean;
+  url: string;
+}
+
+export const useCreateCheckoutSession = () => {
+  return useMutation<
+    ApiResponseType<CheckoutSessionResponse>,
+    Error,
+    CheckoutSessionPayload
+  >({
+    mutationKey: ["createCheckoutSession"],
+    mutationFn: (data: CheckoutSessionPayload) =>
+      Post<CheckoutSessionPayload, ApiResponseType<CheckoutSessionResponse>>({
+        url: "/api/checkout-session",
+        data,
+      }),
+  });
+};
+
 export const useUpdateBookingStatus = () => {
   return useMutation<
     { bookingId: string; newStatus: string; notes: string },
