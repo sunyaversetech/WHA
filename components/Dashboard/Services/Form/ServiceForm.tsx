@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 interface ServiceFormProps {
   initialData?: IService | null;
@@ -54,6 +55,7 @@ interface ServiceFormProps {
 export function ServiceForm({ initialData }: ServiceFormProps) {
   const router = useRouter();
   const { mutate, isPending } = useCreateOrUpdateService();
+  const { data: session } = useSession();
   const { data: employee } = useGetEmployees();
 
   const isEditMode = !!initialData;
@@ -237,8 +239,7 @@ export function ServiceForm({ initialData }: ServiceFormProps) {
 
           <hr className="my-4" />
 
-          {/* Business Model Select Dropdown */}
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4 hidden">
             <FormField
               control={form.control}
               name="business_type"
@@ -247,7 +248,7 @@ export function ServiceForm({ initialData }: ServiceFormProps) {
                   <FormLabel>Service Operational Model</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}>
+                    defaultValue={session?.user?.business_type ?? ""}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select how this service is fulfilled" />

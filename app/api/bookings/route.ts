@@ -54,7 +54,6 @@ export async function POST(request: Request) {
   let validated_data: any;
   try {
     const body = await request.json();
-    // Validate schema (or parse custom loose payloads directly)
     validated_data = body;
   } catch (error) {
     return NextResponse.json(
@@ -271,7 +270,6 @@ export async function POST(request: Request) {
         { session: db_session },
       );
 
-      // Remove the temporary lock atomically
       await BookingLock.findByIdAndDelete(validated_data.lock_id, {
         session: db_session,
       });

@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiResponseType } from "./apitypes";
-import { Get, Post } from "@/lib/action";
+import { Get, PATCH, Post } from "@/lib/action";
 import { Booking } from "@/components/Dashboard/Bookings/BookingsListBusiness";
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
@@ -133,6 +133,28 @@ export const useCreateBookingLock = () => {
   });
 };
 
+export const useUpdateBookingStatus = () => {
+  return useMutation<
+    { bookingId: string; newStatus: string; notes: string },
+    Error,
+    { bookingId: string; newStatus: string; notes: string }
+  >({
+    mutationKey: ["createBookingLock"],
+    mutationFn: (data: {
+      bookingId: string;
+      newStatus: string;
+      notes: string;
+    }) =>
+      PATCH<
+        { bookingId: string; newStatus: string; notes: string },
+        { bookingId: string; newStatus: string; notes: string }
+      >({
+        url: "/api/bookings/status",
+        data,
+      }),
+  });
+};
+
 export const useCreateBooking = () => {
   return useMutation<BookingResponse, Error, BookingPayload>({
     mutationKey: ["createBooking"],
@@ -146,7 +168,7 @@ export const useCreateBooking = () => {
 
 export const useGetBusinessBookings = () => {
   return useQuery<{ success: boolean; data: Booking[] }>({
-    queryKey: ["userbookings"],
+    queryKey: ["businessbookings"],
     queryFn: () => Get({ url: "/api/bookings" }),
   });
 };
