@@ -1,7 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiResponseType } from "./apitypes";
 import { Get, PATCH, Post } from "@/lib/action";
-import { Booking } from "@/components/Dashboard/Bookings/BookingsListBusiness";
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
 
@@ -50,24 +49,31 @@ export interface BookingType {
 }
 
 export interface BookingLockPayload {
+  business_id: string;
   service_id: string;
-  employee_id?: string | null;
+  employee_id: string | null;
   start_time: string;
+  end_time: string;
   timezone: string;
+  inventory_quantity: number;
+  items: {
+    service_id: string;
+    quantity: number;
+    multiplier: number;
+  }[];
 }
 
 export interface BookingLockResponse {
   success: boolean;
   lock_id: string;
-  employee_id: string;
+  total_price: number;
 }
 
 export interface BookingPayload {
-  service_id: string;
-  employee_id?: string | null;
-  start_time: string;
   lock_id: string;
-  idempotency_key?: string;
+  payment_transaction_id: string;
+  payment_status: "unpaid" | "pending" | "paid" | "refunded" | "failed";
+  status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
 }
 
 export interface BookingResponse {
@@ -133,34 +139,11 @@ export const useCreateBookingLock = () => {
   });
 };
 
-export interface CheckoutSessionPayload {
-  lock_id: string;
-  service_id: string;
-  employee_id: string | null | undefined;
-  start_time: string;
-  items: {
-    service_id: string;
-    quantity: number;
-    multiplier: number;
-  }[];
-  success_url: string;
-  cancel_url: string;
-}
-
-export interface CheckoutSessionResponse {
-  success: boolean;
-  url: string;
-}
-
 export const useCreateCheckoutSession = () => {
-  return useMutation<
-    ApiResponseType<CheckoutSessionResponse>,
-    Error,
-    CheckoutSessionPayload
-  >({
+  return useMutation<any, Error, any>({
     mutationKey: ["createCheckoutSession"],
-    mutationFn: (data: CheckoutSessionPayload) =>
-      Post<CheckoutSessionPayload, ApiResponseType<CheckoutSessionResponse>>({
+    mutationFn: (data: any) =>
+      Post<any, any>({
         url: "/api/checkout-session",
         data,
       }),
@@ -173,7 +156,7 @@ export const useUpdateBookingStatus = () => {
     Error,
     { bookingId: string; newStatus: string; notes: string }
   >({
-    mutationKey: ["createBookingLock"],
+    mutationKey: ["updateBookingStatus"],
     mutationFn: (data: {
       bookingId: string;
       newStatus: string;
@@ -201,7 +184,7 @@ export const useCreateBooking = () => {
 };
 
 export const useGetBusinessBookings = () => {
-  return useQuery<{ success: boolean; data: Booking[] }>({
+  return useQuery<{ success: boolean; data: any[] }>({
     queryKey: ["businessbookings"],
     queryFn: () => Get({ url: "/api/bookings" }),
   });

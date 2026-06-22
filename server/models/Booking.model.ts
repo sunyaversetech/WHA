@@ -4,7 +4,7 @@ const booking_schema = new mongoose.Schema(
   {
     // Identification
     business_id: {
-      type: String,
+      type: String, // Kept as String identifier matching your global context
       required: true,
       index: true,
     },
@@ -14,7 +14,6 @@ const booking_schema = new mongoose.Schema(
       required: true,
       index: true,
     },
-
     service_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Service",
@@ -25,22 +24,22 @@ const booking_schema = new mongoose.Schema(
       ref: "Employee",
       default: null,
     },
-
     idempotency_key: {
       type: String,
       default: null,
-      index: true, // Fast lookup on retry
+      index: true,
     },
-
     inventory_quantity: {
       type: Number,
-      default: null, // null for employee-based bookings; a number for item-based
+      default: null,
     },
 
+    // Timing Configuration metrics
     start_time: { type: Date, required: true },
     end_time: { type: Date, required: true },
     duration: { type: Number, required: true }, // minutes
 
+    // Pricing & Currency
     total_price: { type: Number, required: true, min: 0 },
     currency: { type: String, default: "AUD" },
     payment_status: {
@@ -49,6 +48,17 @@ const booking_schema = new mongoose.Schema(
       default: "unpaid",
     },
     payment_transaction_id: { type: String },
+
+    // ─── ADDED STRIPE TRACEABILITY METRICS (SNAKE_CASE) ───
+    stripe_session_id: {
+      type: String,
+      index: true,
+      default: null,
+    },
+    payment_intent_id: {
+      type: String,
+      default: null,
+    },
 
     // Booking State
     status: {
@@ -69,7 +79,6 @@ const booking_schema = new mongoose.Schema(
       type: Map,
       of: String,
     },
-
     is_reminder_sent: { type: Boolean, default: false },
   },
   {
@@ -77,6 +86,7 @@ const booking_schema = new mongoose.Schema(
   },
 );
 
+// Performance Optimization Indexes
 booking_schema.index({ employee_id: 1, start_time: 1, end_time: 1 });
 booking_schema.index({ business_id: 1, status: 1 });
 booking_schema.index(

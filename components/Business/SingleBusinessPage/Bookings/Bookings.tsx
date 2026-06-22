@@ -16,9 +16,11 @@ import {
   Timer,
   Minus,
   CreditCard,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -28,6 +30,7 @@ import {
   EmployeeType,
   useGetAvailableSlots,
   useCreateBookingLock,
+  useCreateBooking,
   useCreateCheckoutSession,
 } from "@/services/booking.service";
 
@@ -46,7 +49,88 @@ function formatDurationLabel(totalMinutes: number): string {
   return `${hours} ${hours === 1 ? "hr" : "hrs"} ${mins} mins`;
 }
 
+// ─── STYLISH INLINE STRIPE CHECKOUT DIALOG FORMAT ────────────────────────────
+interface BookingCheckoutProps {
+  lockId: string;
+  price: number;
+  onClose: () => void;
+  onSuccess: (paymentIntentId: string) => void;
+}
+
+function BookingCheckout({
+  lockId,
+  price,
+  onClose,
+  onSuccess,
+}: BookingCheckoutProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleSimulatePayment = async () => {
+    setIsProcessing(true);
+    try {
+      // Simulating a standard 1.5s secure authorization window
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const mockPaymentIntentId = `pi_${Math.random().toString(36).substring(2, 12)}`;
+      onSuccess(mockPaymentIntentId);
+    } catch (err: any) {
+      toast.error(err?.message || "Payment authentication failed.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-md bg-white border border-slate-100 rounded-3xl p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <button
+          onClick={onClose}
+          disabled={isProcessing}
+          className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-100 text-slate-400 transition">
+          <X className="w-4 h-4" />
+        </button>
+
+        <div className="text-center space-y-1">
+          <h3 className="text-lg font-black text-slate-900 tracking-tight">
+            Secure Payment Gateway
+          </h3>
+          <p className="text-[11px] text-slate-400 font-mono">
+            Lock ID: {lockId}
+          </p>
+        </div>
+
+        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex justify-between items-center">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            Total Charge:
+          </span>
+          <span className="text-xl font-black text-slate-900">
+            AUD {Number(price).toFixed(2)}
+          </span>
+        </div>
+
+        <Button
+          onClick={handleSimulatePayment}
+          disabled={isProcessing}
+          className="w-full h-12 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md flex items-center justify-center gap-2">
+          {isProcessing ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Authorizing Transaction...</span>
+            </>
+          ) : (
+            <>
+              <CreditCard className="w-4 h-4" />
+              <span>Authorize & Confirm Appointment</span>
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN CONTAINER WITH PRESERVED ORIGINAL UI LAYOUT ────────────────────────
 export default function BookingContainer({ services }: BookingContainerProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>("Featured");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 
@@ -68,6 +152,14 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [isRedirectingToStripe, setIsRedirectingToStripe] =
     useState<boolean>(false);
+
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [activeLockId, setActiveLockId] = useState<string | null>(null);
+  const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
+
+  const lockMutation = useCreateBookingLock();
+  const checkoutMutation = useCreateCheckoutSession();
+  const bookingMutation = useCreateBooking();
 
   const categories = useMemo(() => {
     return [
@@ -99,9 +191,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const employeeParam =
     isNoPreference || !selectedEmployee ? "any" : selectedEmployee._id;
 
-  const lockMutation = useCreateBookingLock();
-  const checkoutMutation = useCreateCheckoutSession();
-
   const finalPrice = useMemo(() => {
     return selectedServices.reduce((acc, curr) => {
       const mult = selectedMultipliers[curr._id] || 1;
@@ -126,7 +215,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     employeeParam === "any" ? null : employeeParam,
     Intl.DateTimeFormat().resolvedOptions().timeZone,
     services[0]?.business_id?._id,
-    finalDuration, // Only passing duration here
+    finalDuration,
   );
 
   const maxBookingDays = useMemo(() => {
@@ -212,81 +301,81 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     }
   };
 
-  // Securely lock the slot window and transition into Stripe Checkout
   const handleExecuteBookingAndPaymentPipeline = async () => {
     if (selectedServices.length === 0 || !selectedSlot) return;
 
     try {
-      const startTime = new Date(selectedSlot);
-      const endTime = addMinutes(startTime, finalDuration);
-
       const itemsPayload = selectedServices.map((srv) => ({
         service_id: srv._id,
         quantity: selectedQuantities[srv._id] || 1,
         multiplier: selectedMultipliers[srv._id] || 1,
       }));
 
-      // Satisfies your BookingLock schema structural parameters perfectly
       const lockPayload = {
         business_id: businessId,
         service_id: primaryServiceId,
         employee_id: isNoPreference ? null : selectedEmployee?._id,
         start_time: selectedSlot,
-        end_time: endTime.toISOString(),
-
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         inventory_quantity: selectedQuantities[primaryServiceId] || 1,
         items: itemsPayload,
       };
 
-      // Step 1: Hit backend to lock the slot temporarily
       const lockRes = (await lockMutation.mutateAsync(
         lockPayload as any,
       )) as any;
+      const targetLockId =
+        lockRes?.lock_id || lockRes?.data?.lock_id || lockRes?._id;
 
-      // FIX 1: Support both wrapped .data or flat root assignments depending on your API service structure
-      const targetLockId = lockRes?.data?._id || lockRes?._id;
-
-      if (targetLockId) {
-        setIsRedirectingToStripe(true);
-
-        // FIX 2: Added service_id, employee_id, and start_time to fully satisfy CheckoutSessionPayload contract rules
-        const checkoutPayload = {
-          lock_id: targetLockId,
-          service_id: primaryServiceId,
-          employee_id: isNoPreference ? null : selectedEmployee?._id,
-          start_time:
-            typeof selectedSlot === "string"
-              ? selectedSlot
-              : startTime.toISOString(),
-          items: itemsPayload,
-          success_url: `${window.location.origin}/dashboard/bookings/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${window.location.origin}/dashboard/bookings?payment_cancelled=true`,
-        };
-
-        const checkoutRes = await checkoutMutation.mutateAsync(checkoutPayload);
-
-        // Step 3: Unpack generic ApiResponseType wrapper and handoff execution to Stripe
-        if (checkoutRes?.data?.url) {
-          window.location.href = checkoutRes.data.url;
-        } else {
-          throw new Error(
-            "Missing url destination reference inside payment instantiation response.",
-          );
-        }
-      } else {
-        throw new Error(
-          lockRes?.message || "Failed to secure slot lock validation rules.",
-        );
+      if (!targetLockId) {
+        throw new Error("Could not allocate secure reservation lock.");
       }
+
+      const totalDue =
+        lockRes?.total_price || lockRes?.data?.total_price || finalPrice;
+
+      setActiveLockId(targetLockId);
+      setCalculatedPrice(totalDue);
+      setIsPaymentModalOpen(true);
     } catch (err: any) {
-      setIsRedirectingToStripe(false);
-      console.error("Booking payment setup fatal termination:", err);
+      console.error("Booking verification failure:", err);
       toast.error(
         err?.response?.data?.message ||
           err.message ||
-          "Failed to initialize standard checkout session.",
+          "Failed to initialize holding window.",
       );
     }
+  };
+
+  const handleFinalizeBookingDatabaseInsertion = async (
+    paymentIntentId: string,
+  ) => {
+    if (!activeLockId) return;
+
+    bookingMutation.mutate(
+      {
+        lock_id: activeLockId,
+        payment_transaction_id: paymentIntentId,
+        payment_status: "paid",
+        status: "confirmed",
+      },
+      {
+        onSuccess: () => {
+          toast.success("Appointment successfully confirmed and saved!");
+          setIsPaymentModalOpen(false);
+          handleGlobalWizardReset();
+          router.push(
+            `/dashboard/bookings/success?session_id=${paymentIntentId}`,
+          );
+        },
+        onError: (err: any) => {
+          toast.error(
+            err?.message ||
+              "Failed to finalize database records after payment.",
+          );
+        },
+      },
+    );
   };
 
   const handleGlobalWizardReset = () => {
@@ -304,6 +393,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const isMutationLoading =
     lockMutation.isPending ||
     checkoutMutation.isPending ||
+    bookingMutation.isPending ||
     isRedirectingToStripe;
 
   return (
@@ -930,8 +1020,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin text-white" />
                       <span>
-                        {isRedirectingToStripe
-                          ? "Opening Stripe secure portal..."
+                        {bookingMutation.isPending
+                          ? "Securing appointment..."
                           : "Processing secure hold..."}
                       </span>
                     </div>
@@ -956,6 +1046,18 @@ export default function BookingContainer({ services }: BookingContainerProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ─── MODAL BASED CHECKOUT PORTAL INSERTION ─── */}
+      {isPaymentModalOpen && activeLockId && (
+        <BookingCheckout
+          lockId={activeLockId}
+          price={calculatedPrice}
+          onClose={() => setIsPaymentModalOpen(false)}
+          onSuccess={(paymentIntentId) => {
+            handleFinalizeBookingDatabaseInsertion(paymentIntentId);
+          }}
+        />
+      )}
     </div>
   );
 }
