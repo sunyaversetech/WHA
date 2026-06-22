@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { format, addDays, formatDate } from "date-fns";
+import { format, addDays, formatDate, addMinutes } from "date-fns";
 import {
   Clock,
   ChevronRight,
@@ -28,9 +28,8 @@ import {
   EmployeeType,
   useGetAvailableSlots,
   useCreateBookingLock,
+  useCreateCheckoutSession,
 } from "@/services/booking.service";
-
-import { useCreateCheckoutSession } from "@/services/booking.service";
 
 interface BookingContainerProps {
   services: ServiceType[];
@@ -95,12 +94,13 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   }, [selectedServices]);
 
   const primaryServiceId = selectedServices[0]?._id || "";
+  const businessId = services[0]?.business_id?._id || "";
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
   const employeeParam =
     isNoPreference || !selectedEmployee ? "any" : selectedEmployee._id;
 
   const lockMutation = useCreateBookingLock();
-  const checkoutMutation = useCreateCheckoutSession(); // Payment gateway hook initialization
+  const checkoutMutation = useCreateCheckoutSession();
 
   const finalPrice = useMemo(() => {
     return selectedServices.reduce((acc, curr) => {
@@ -117,13 +117,16 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     }, 0);
   }, [selectedServices, selectedMultipliers]);
 
+  const startTime = new Date(selectedSlot);
+  const endTime = addMinutes(startTime, finalDuration);
+
   const { data: slotsData, isLoading: isLoadingSlots } = useGetAvailableSlots(
     primaryServiceId,
     formattedDate,
     employeeParam === "any" ? null : employeeParam,
     Intl.DateTimeFormat().resolvedOptions().timeZone,
     services[0]?.business_id?._id,
-    finalDuration,
+    finalDuration, // Only passing duration here
   );
 
   const maxBookingDays = useMemo(() => {
@@ -139,6 +142,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     setSelectedEmployee(null);
     setSelectedDate(new Date());
     setSelectedSlot("");
+    setIsRedirectingToStripe(false);
     setIsDialogOpen(true);
   };
 
@@ -149,7 +153,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
         setSelectedServices(
           selectedServices.filter((s) => s._id !== service._id),
         );
-
         const updatedMults = { ...selectedMultipliers };
         delete updatedMults[service._id];
         setSelectedMultipliers(updatedMults);
@@ -166,10 +169,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   };
 
   const handleSelectMultiplier = (serviceId: string, value: number) => {
-    setSelectedMultipliers({
-      ...selectedMultipliers,
-      [serviceId]: value,
-    });
+    setSelectedMultipliers({ ...selectedMultipliers, [serviceId]: value });
   };
 
   const handleUpdateQuantity = (
@@ -182,10 +182,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     const maxAllowed = maxInventory !== undefined ? maxInventory : 99;
 
     if (nextQty >= 1 && nextQty <= maxAllowed) {
-      setSelectedQuantities({
-        ...selectedQuantities,
-        [serviceId]: nextQty,
-      });
+      setSelectedQuantities({ ...selectedQuantities, [serviceId]: nextQty });
     }
   };
 
@@ -215,13 +212,13 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     }
   };
 
-  // Securely lock the slot window and obtain a secure Stripe Checkout routing reference
+  // Securely lock the slot window and transition into Stripe Checkout
   const handleExecuteBookingAndPaymentPipeline = async () => {
     if (selectedServices.length === 0 || !selectedSlot) return;
 
     try {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const startTimeISO = new Date(selectedSlot).toISOString();
+      const startTime = new Date(selectedSlot);
+      const endTime = addMinutes(startTime, finalDuration);
 
       const itemsPayload = selectedServices.map((srv) => ({
         service_id: srv._id,
@@ -229,32 +226,46 @@ export default function BookingContainer({ services }: BookingContainerProps) {
         multiplier: selectedMultipliers[srv._id] || 1,
       }));
 
+      // Satisfies your BookingLock schema structural parameters perfectly
       const lockPayload = {
+        business_id: businessId,
         service_id: primaryServiceId,
         employee_id: isNoPreference ? null : selectedEmployee?._id,
-        start_time: startTimeISO,
-        timezone,
+        start_time: selectedSlot,
+        end_time: endTime.toISOString(),
+
+        inventory_quantity: selectedQuantities[primaryServiceId] || 1,
         items: itemsPayload,
       };
 
-      const lockRes = await lockMutation.mutateAsync(lockPayload);
+      // Step 1: Hit backend to lock the slot temporarily
+      const lockRes = (await lockMutation.mutateAsync(
+        lockPayload as any,
+      )) as any;
 
-      if (lockRes.success) {
+      // FIX 1: Support both wrapped .data or flat root assignments depending on your API service structure
+      const targetLockId = lockRes?.data?._id || lockRes?._id;
+
+      if (targetLockId) {
         setIsRedirectingToStripe(true);
 
+        // FIX 2: Added service_id, employee_id, and start_time to fully satisfy CheckoutSessionPayload contract rules
         const checkoutPayload = {
-          lock_id: lockRes.lock_id,
+          lock_id: targetLockId,
           service_id: primaryServiceId,
-          employee_id:
-            lockRes.employee_id ||
-            (isNoPreference ? null : selectedEmployee?._id),
-          start_time: startTimeISO,
+          employee_id: isNoPreference ? null : selectedEmployee?._id,
+          start_time:
+            typeof selectedSlot === "string"
+              ? selectedSlot
+              : startTime.toISOString(),
           items: itemsPayload,
           success_url: `${window.location.origin}/dashboard/bookings/success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${window.location.origin}/dashboard/bookings?payment_cancelled=true`,
         };
 
         const checkoutRes = await checkoutMutation.mutateAsync(checkoutPayload);
+
+        // Step 3: Unpack generic ApiResponseType wrapper and handoff execution to Stripe
         if (checkoutRes?.data?.url) {
           window.location.href = checkoutRes.data.url;
         } else {
@@ -262,16 +273,18 @@ export default function BookingContainer({ services }: BookingContainerProps) {
             "Missing url destination reference inside payment instantiation response.",
           );
         }
+      } else {
+        throw new Error(
+          lockRes?.message || "Failed to secure slot lock validation rules.",
+        );
       }
     } catch (err: any) {
       setIsRedirectingToStripe(false);
-      console.error(
-        "Booking payment state submission processing fatal termination:",
-        err,
-      );
+      console.error("Booking payment setup fatal termination:", err);
       toast.error(
         err?.response?.data?.message ||
-          "Failed to initialize payment gateway. Please select another slot.",
+          err.message ||
+          "Failed to initialize standard checkout session.",
       );
     }
   };
@@ -610,7 +623,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                 </div>
               )}
 
-              {/* STEP 3: DATE & TIME TRACK MATRIX WITH INVENTORY SELECTOR */}
+              {/* STEP 3: DATE & TIME TRACK MATRIX */}
               {currentStep === "time" && (
                 <div className="space-y-4 pt-4">
                   <div className="space-y-1">
@@ -646,6 +659,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                             {format(day, "EEE")}
                           </span>
                           <span className="text-base font-black">
+                            {" "}
                             {format(day, "d")}
                           </span>
                         </button>
@@ -781,27 +795,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     )}
                 </div>
               )}
-
-              {/* STEP 4: BACKUP TRANSACTIONS PREVIEW (Normally offloaded to Stripe URL) */}
-              {currentStep === "confirm" && (
-                <div className="text-center py-12 space-y-4 max-w-sm mx-auto">
-                  <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                    <Check className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-2xl font-black text-slate-900">
-                    Appointment Secured!
-                  </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Your appointment details have successfully updated matching
-                    log values. Check confirmation overview logs for updates.
-                  </p>
-                  <Button
-                    onClick={handleGlobalWizardReset}
-                    className="w-full mt-2 bg-black text-white rounded-xl text-xs h-11 font-bold">
-                    Close Window
-                  </Button>
-                </div>
-              )}
             </div>
 
             {currentStep !== "confirm" && (
@@ -832,8 +825,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                     </h4>
                     <p className="text-[10px] text-slate-400 flex items-center gap-0.5">
                       <MapPin className="w-2.5 h-2.5" />{" "}
-                      {services[0]?.business_id?.location.split(",")[0]},{" "}
-                      {services[0]?.business_id?.location.split(",")[1]}
+                      {services[0]?.business_id?.location?.split(",")[0]},{" "}
+                      {services[0]?.business_id?.location?.split(",")[1]}
                     </p>
                   </div>
                 </div>
@@ -865,7 +858,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                                 </span>
                                 {qty > 1 && (
                                   <span className="text-primary font-bold">
-                                    Equipment Units: ×{qty}
+                                    Units: ×{qty}
                                   </span>
                                 )}
                               </p>
