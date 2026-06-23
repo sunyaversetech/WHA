@@ -14,21 +14,16 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { getBookingPaymentIntent } from "@/app/actions/bookingstripe";
 
-// ─── Stripe singleton — module level so it's never re-created ────────────────
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
 );
 
 const SURCHARGE_PERCENT = 0.025;
-
-// ─── Types ───────────────────────────────────────────────────────────────────
+const RESERVATION_LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes hardcoded block
 
 export interface BookingCheckoutProps {
-  /** The lock ID returned by the lock API — passed through to confirm booking */
   lockId: string;
-  /** Total appointment price in AUD (already computed by the wizard) */
   price: number;
-  /** Human-readable summary fields shown in the order card */
   summary: {
     serviceName: string;
     employeeName?: string | null;
@@ -103,6 +98,12 @@ export default function BookingCheckout({
   const [invoiceNumber] = useState(() => generateInvoiceNumber());
   const fees = computeFees(price);
 
+  // FIXED: Using a lazy state initialization function.
+  // React guarantees this only executes once on initial layout mount, satisfying compiler purity rules.
+  const [absoluteExpiryTime] = useState<number>(() => {
+    return Date.now() + RESERVATION_LOCK_DURATION_MS;
+  });
+
   // Create a PaymentIntent as soon as the modal mounts
   useEffect(() => {
     let cancelled = false;
@@ -138,9 +139,9 @@ export default function BookingCheckout({
   }, [lockId, fees.totalToPay]);
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div
-        className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
+        className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden h-[70vh]"
         style={{ maxHeight: "92vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}>
         {/* Header */}
@@ -223,7 +224,9 @@ export default function BookingCheckout({
                 fees={fees}
                 invoiceNumber={invoiceNumber}
                 onSuccess={onSuccess}
+                onClose={onClose}
                 isConfirming={isConfirming}
+                targetExpiry={absoluteExpiryTime}
               />
             </Elements>
           ) : null}
@@ -239,23 +242,64 @@ interface BookingPaymentFormProps {
   fees: Fees;
   invoiceNumber: string;
   onSuccess: (paymentIntentId: string) => void;
+  onClose: () => void;
   isConfirming: boolean;
+  targetExpiry: number;
 }
 
 function BookingPaymentForm({
   fees,
   invoiceNumber,
   onSuccess,
+  onClose,
   isConfirming,
+  targetExpiry,
 }: BookingPaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { data: session } = useSession();
   const [isPaying, setIsPaying] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number>(15 * 60);
+
+  // Manage internal reactive countdown timer loop
+  useEffect(() => {
+    const checkTimeRemaining = () => {
+      const remainingSeconds = Math.max(
+        0,
+        Math.floor((targetExpiry - Date.now()) / 1000),
+      );
+      setTimeLeft(remainingSeconds);
+
+      if (remainingSeconds <= 0) {
+        clearInterval(timerInterval);
+        toast.error(
+          "Your reservation lock session expired. Please start booking again.",
+        );
+        onClose();
+      }
+    };
+
+    // Run baseline calculation
+    checkTimeRemaining();
+
+    const timerInterval = setInterval(checkTimeRemaining, 1000);
+    return () => clearInterval(timerInterval);
+  }, [targetExpiry, onClose]);
+
+  const formatCountdown = (totalSecs: number) => {
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements || isPaying || isConfirming) return;
+
+    if (timeLeft <= 0) {
+      toast.error("Time has expired. This session is no longer valid.");
+      return;
+    }
 
     setIsPaying(true);
     try {
@@ -266,25 +310,19 @@ function BookingPaymentForm({
           payment_method_data: {
             billing_details: {
               name: session?.user?.name ?? "Guest",
-              email: session?.user?.email ?? undefined,
             },
           },
         },
       });
 
       if (error) {
-        // Surface Stripe's own user-friendly error message
         toast.error(error.message ?? "Payment failed. Please try again.");
         setIsPaying(false);
         return;
       }
 
       if (paymentIntent?.status === "succeeded") {
-        // Hand the confirmed payment intent ID back to the parent which will
-        // then hit the booking confirmation API
         onSuccess(paymentIntent.id);
-        // Note: do NOT setIsPaying(false) here — isConfirming takes over the
-        // loading state while the booking API call completes.
       } else {
         toast.error("Payment was not completed. Please try again.");
         setIsPaying(false);
@@ -299,15 +337,38 @@ function BookingPaymentForm({
 
   return (
     <form onSubmit={handlePay} className="space-y-6">
+      {/* Dynamic Expiry Warning Message Block */}
+      <div
+        className={`p-3.5 rounded-2xl flex items-center justify-between border transition-all ${
+          timeLeft < 60
+            ? "bg-rose-50 border-rose-200 text-rose-700 animate-pulse animate-duration-1000"
+            : "bg-amber-50 border-amber-200 text-amber-800"
+        }`}>
+        <div className="flex items-center gap-2.5">
+          <Clock
+            className={`w-4 h-4 ${timeLeft < 60 ? "text-rose-500" : "text-amber-500"}`}
+          />
+          <div className="text-xs">
+            <span className="font-bold block">
+              Holding your reservation slot
+            </span>
+            <span className="opacity-80">Complete before expiration</span>
+          </div>
+        </div>
+        <div className="font-mono font-bold tracking-tight bg-white px-2.5 py-1 rounded-xl shadow-sm border text-sm">
+          {formatCountdown(timeLeft)}
+        </div>
+      </div>
+
       <PaymentElement
         options={{
           layout: "tabs",
           fields: {
             billingDetails: {
               name: "auto",
-              email: "never",
-              phone: "never",
-              address: "never",
+              email: "auto",
+              phone: "auto",
+              address: "auto",
             },
           },
         }}
@@ -350,7 +411,7 @@ function BookingPaymentForm({
       {/* Pay Button */}
       <button
         type="submit"
-        disabled={isLoading || !stripe}
+        disabled={isLoading || !stripe || timeLeft <= 0}
         className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-4 rounded-2xl font-bold text-base shadow-lg transition-all active:scale-[0.98] flex justify-center items-center gap-2">
         {isLoading ? (
           <>

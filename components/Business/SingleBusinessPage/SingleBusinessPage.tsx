@@ -120,7 +120,7 @@ export default function BusinessPage() {
   if (isLoading) return <Loading />;
 
   return (
-    <div className="container-modern mx-auto p-6 md:mt-20">
+    <div className="container-modern mx-auto p-6 md:mt-20 z-1">
       <div className="flex flex-col md:flex-col">
         <div className="order-2 md:order-1 mt-4 md:mt-0 mb-4">
           <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">

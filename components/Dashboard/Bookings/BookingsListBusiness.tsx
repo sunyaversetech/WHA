@@ -112,10 +112,6 @@ export interface Booking {
   __v: number;
 }
 
-interface BookingsTableProps {
-  bookings: Booking[];
-}
-
 export default function BookingsTable({
   bookings,
 }: {

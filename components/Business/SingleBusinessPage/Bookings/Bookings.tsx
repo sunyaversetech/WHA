@@ -383,7 +383,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   // ─── RENDER ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-4 py-6 space-y-6 z-1">
       {/* ─── SERVICES DASHBOARD ─── */}
       <div className="space-y-6">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-100">
@@ -446,441 +446,456 @@ export default function BookingContainer({ services }: BookingContainerProps) {
         onOpenChange={(open) => {
           if (!open && !isMutationLoading) handleGlobalWizardReset();
         }}>
-        <DialogContent className="min-w-5xl p-0 overflow-hidden bg-[#F9F9F9] rounded-3xl border-none flex flex-col md:flex-row h-[90vh] max-h-[720px] shadow-2xl">
+        <DialogContent className="min-w-5xl z-50 p-0 overflow-hidden bg-[#F9F9F9] rounded-3xl border-none flex flex-col md:flex-row h-[90vh] max-h-[720px] shadow-2xl">
           {/* Left Step Canvas */}
-          <div className="flex-1 p-6 md:p-8 overflow-y-auto flex flex-col justify-between space-y-6">
-            <div>
-              {/* Step Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                {currentStep !== "services" && !isMutationLoading ? (
-                  <button
-                    onClick={handleBackStep}
-                    className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-400 hover:text-black transition-colors">
-                    <ChevronLeft className="w-4 h-4" /> Back
-                  </button>
-                ) : (
-                  <div />
-                )}
-
-                <nav className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  <span
-                    className={cn(
-                      currentStep === "services" &&
-                        "text-primary font-extrabold",
-                    )}>
-                    Services
-                  </span>
-                  {dynamicAvailableEmployees.length > 0 && (
-                    <>
-                      <ChevronRight className="w-3 h-3 text-slate-300" />
-                      <span
-                        className={cn(
-                          currentStep === "professionals" &&
-                            "text-primary font-extrabold",
-                        )}>
-                        Professional
-                      </span>
-                    </>
+          {isPaymentModalOpen && activeLockId && checkoutSummary ? (
+            <div className="z-[999] h-[40vh]">
+              <BookingCheckout
+                lockId={activeLockId}
+                price={calculatedPrice}
+                summary={checkoutSummary}
+                onClose={() => setIsPaymentModalOpen(false)}
+                isConfirming={bookingMutation.isPending}
+                onSuccess={handleFinalizeBookingDatabaseInsertion}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 p-6 md:p-8 overflow-y-auto flex flex-col justify-between space-y-6">
+              <div>
+                {/* Step Header */}
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  {currentStep !== "services" && !isMutationLoading ? (
+                    <button
+                      onClick={handleBackStep}
+                      className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-400 hover:text-black transition-colors">
+                      <ChevronLeft className="w-4 h-4" /> Back
+                    </button>
+                  ) : (
+                    <div />
                   )}
-                  <ChevronRight className="w-3 h-3 text-slate-300" />
-                  <span
-                    className={cn(
-                      currentStep === "time" && "text-primary font-extrabold",
-                    )}>
-                    Checkout
-                  </span>
-                </nav>
-              </div>
 
-              {/* STEP 1: SERVICES */}
-              {currentStep === "services" && (
-                <div className="space-y-4 pt-4">
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-black text-slate-900">
-                      Select services
-                    </h2>
-                    <p className="text-xs text-slate-400">
-                      Configure your booking timeline intervals scaling directly
-                      from the base service settings.
-                    </p>
-                  </div>
-
-                  <div className="space-y-3.5 max-h-[420px] overflow-y-auto pr-1">
-                    {services.map((item) => {
-                      const isChecked = selectedServices.some(
-                        (s) => s._id === item._id,
-                      );
-                      const currentMult = selectedMultipliers[item._id] || 1;
-                      const hasInventory =
-                        item.inventory !== undefined && item.inventory > 0;
-
-                      return (
-                        <div
-                          key={item._id}
+                  <nav className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <span
+                      className={cn(
+                        currentStep === "services" &&
+                          "text-primary font-extrabold",
+                      )}>
+                      Services
+                    </span>
+                    {dynamicAvailableEmployees.length > 0 && (
+                      <>
+                        <ChevronRight className="w-3 h-3 text-slate-300" />
+                        <span
                           className={cn(
-                            "p-4 bg-white border rounded-2xl flex flex-col gap-4 transition-all",
-                            isChecked
-                              ? "border-primary shadow-sm"
-                              : "border-slate-100",
+                            currentStep === "professionals" &&
+                              "text-primary font-extrabold",
                           )}>
+                          Professional
+                        </span>
+                      </>
+                    )}
+                    <ChevronRight className="w-3 h-3 text-slate-300" />
+                    <span
+                      className={cn(
+                        currentStep === "time" && "text-primary font-extrabold",
+                      )}>
+                      Checkout
+                    </span>
+                  </nav>
+                </div>
+
+                {/* STEP 1: SERVICES */}
+                {currentStep === "services" && (
+                  <div className="space-y-4 pt-4">
+                    <div className="space-y-1">
+                      <h2 className="text-2xl font-black text-slate-900">
+                        Select services
+                      </h2>
+                      <p className="text-xs text-slate-400">
+                        Configure your booking timeline intervals scaling
+                        directly from the base service settings.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3.5 max-h-[420px] overflow-y-auto pr-1">
+                      {services.map((item) => {
+                        const isChecked = selectedServices.some(
+                          (s) => s._id === item._id,
+                        );
+                        const currentMult = selectedMultipliers[item._id] || 1;
+                        const hasInventory =
+                          item.inventory !== undefined && item.inventory > 0;
+
+                        return (
                           <div
-                            onClick={() => handleToggleServiceSelection(item)}
-                            className="flex items-center justify-between cursor-pointer">
-                            <div className="space-y-0.5">
-                              <h4 className="font-bold text-sm text-slate-900">
-                                {item.name}
-                              </h4>
-                              <p className="text-xs text-slate-400">
-                                Base: {item.base_duration} mins •{" "}
-                                {item.category}
-                              </p>
-                              <div className="flex items-center gap-2 pt-1">
-                                <p className="text-xs font-extrabold text-slate-900">
-                                  AUD {item.base_price} / block
+                            key={item._id}
+                            className={cn(
+                              "p-4 bg-white border rounded-2xl flex flex-col gap-4 transition-all",
+                              isChecked
+                                ? "border-primary shadow-sm"
+                                : "border-slate-100",
+                            )}>
+                            <div
+                              onClick={() => handleToggleServiceSelection(item)}
+                              className="flex items-center justify-between cursor-pointer">
+                              <div className="space-y-0.5">
+                                <h4 className="font-bold text-sm text-slate-900">
+                                  {item.name}
+                                </h4>
+                                <p className="text-xs text-slate-400">
+                                  Base: {item.base_duration} mins •{" "}
+                                  {item.category}
                                 </p>
-                                {hasInventory && (
-                                  <span className="text-[10px] text-amber-600 bg-amber-50 font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                                    <Layers className="w-2.5 h-2.5" /> Max
-                                    Stock: {item.inventory}
-                                  </span>
+                                <div className="flex items-center gap-2 pt-1">
+                                  <p className="text-xs font-extrabold text-slate-900">
+                                    AUD {item.base_price} / block
+                                  </p>
+                                  {hasInventory && (
+                                    <span className="text-[10px] text-amber-600 bg-amber-50 font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                      <Layers className="w-2.5 h-2.5" /> Max
+                                      Stock: {item.inventory}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div
+                                className={cn(
+                                  "w-5 h-5 rounded-full flex items-center justify-center border transition-all",
+                                  isChecked
+                                    ? "bg-primary border-primary text-white"
+                                    : "border-slate-200",
+                                )}>
+                                {isChecked ? (
+                                  <Check className="w-3 h-3" />
+                                ) : (
+                                  <Plus className="w-3 h-3 text-slate-400" />
                                 )}
                               </div>
                             </div>
 
-                            <div
-                              className={cn(
-                                "w-5 h-5 rounded-full flex items-center justify-center border transition-all",
-                                isChecked
-                                  ? "bg-primary border-primary text-white"
-                                  : "border-slate-200",
-                              )}>
-                              {isChecked ? (
-                                <Check className="w-3 h-3" />
-                              ) : (
-                                <Plus className="w-3 h-3 text-slate-400" />
-                              )}
-                            </div>
-                          </div>
-
-                          {isChecked && (
-                            <div className="border-t border-slate-100 pt-3 space-y-3.5">
-                              <div className="space-y-1.5">
-                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                                  <Timer className="w-3 h-3" /> Choose Duration
-                                  Block:
-                                </label>
-                                <div className="grid grid-cols-4 gap-1.5">
-                                  {[1, 2, 3, 4].map((multiplierValue) => {
-                                    const calculatedMins =
-                                      item.base_duration * multiplierValue;
-                                    return (
-                                      <button
-                                        type="button"
-                                        key={multiplierValue}
-                                        onClick={() =>
-                                          handleSelectMultiplier(
-                                            item._id,
-                                            multiplierValue,
-                                          )
-                                        }
-                                        className={cn(
-                                          "py-2 px-1 text-[11px] font-bold rounded-xl border text-center transition-all whitespace-nowrap overflow-hidden text-ellipsis",
-                                          currentMult === multiplierValue
-                                            ? "bg-black text-white border-black shadow-sm"
-                                            : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100",
-                                        )}>
-                                        {formatDurationLabel(calculatedMins)}
-                                      </button>
-                                    );
-                                  })}
+                            {isChecked && (
+                              <div className="border-t border-slate-100 pt-3 space-y-3.5">
+                                <div className="space-y-1.5">
+                                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                    <Timer className="w-3 h-3" /> Choose
+                                    Duration Block:
+                                  </label>
+                                  <div className="grid grid-cols-4 gap-1.5">
+                                    {[1, 2, 3, 4].map((multiplierValue) => {
+                                      const calculatedMins =
+                                        item.base_duration * multiplierValue;
+                                      return (
+                                        <button
+                                          type="button"
+                                          key={multiplierValue}
+                                          onClick={() =>
+                                            handleSelectMultiplier(
+                                              item._id,
+                                              multiplierValue,
+                                            )
+                                          }
+                                          className={cn(
+                                            "py-2 px-1 text-[11px] font-bold rounded-xl border text-center transition-all whitespace-nowrap overflow-hidden text-ellipsis",
+                                            currentMult === multiplierValue
+                                              ? "bg-black text-white border-black shadow-sm"
+                                              : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100",
+                                          )}>
+                                          {formatDurationLabel(calculatedMins)}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* STEP 2: PROFESSIONALS */}
-              {currentStep === "professionals" && (
-                <div className="space-y-4 pt-4">
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-black text-slate-900">
-                      Select professional
-                    </h2>
-                    <p className="text-xs text-slate-400">
-                      Pick an assigned specialist or proceed with open
-                      parameters.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    <div
-                      onClick={() => {
-                        setIsNoPreference(true);
-                        setSelectedEmployee(null);
-                      }}
-                      className={cn(
-                        "p-4 bg-white border rounded-2xl cursor-pointer flex items-center justify-between transition-all",
-                        isNoPreference
-                          ? "border-primary ring-1 ring-primary"
-                          : "border-slate-100",
-                      )}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
-                          <Shuffle className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-sm text-slate-900">
-                            Any Employee Available
-                          </h4>
-                          <p className="text-xs text-slate-400">
-                            Optimizes calendar open slot metrics automatically
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant={isNoPreference ? "default" : "outline"}
-                        size="sm"
-                        className="rounded-full px-4 text-xs h-8">
-                        {isNoPreference ? "Selected" : "Select"}
-                      </Button>
+                {/* STEP 2: PROFESSIONALS */}
+                {currentStep === "professionals" && (
+                  <div className="space-y-4 pt-4">
+                    <div className="space-y-1">
+                      <h2 className="text-2xl font-black text-slate-900">
+                        Select professional
+                      </h2>
+                      <p className="text-xs text-slate-400">
+                        Pick an assigned specialist or proceed with open
+                        parameters.
+                      </p>
                     </div>
 
-                    {dynamicAvailableEmployees.map((emp) => {
-                      const isSelected =
-                        selectedEmployee?._id === emp._id && !isNoPreference;
-                      return (
-                        <div
-                          key={emp._id}
-                          onClick={() => {
-                            setIsNoPreference(false);
-                            setSelectedEmployee(emp);
-                          }}
-                          className={cn(
-                            "p-4 bg-white border rounded-2xl cursor-pointer flex items-center justify-between transition-all",
-                            isSelected
-                              ? "border-primary ring-1 ring-primary"
-                              : "border-slate-100",
-                          )}>
-                          <div className="flex items-center gap-3">
-                            {emp.employee_photo ? (
-                              <img
-                                src={emp.employee_photo}
-                                alt={emp.full_name}
-                                className="w-10 h-10 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                                <User className="w-4 h-4" />
-                              </div>
-                            )}
-                            <div>
-                              <h4 className="font-bold text-sm text-slate-900">
-                                {emp.full_name}
-                              </h4>
-                              <p className="text-xs text-slate-400">
-                                Assigned Treatment Specialist
-                              </p>
-                            </div>
+                    <div className="space-y-2.5">
+                      <div
+                        onClick={() => {
+                          setIsNoPreference(true);
+                          setSelectedEmployee(null);
+                        }}
+                        className={cn(
+                          "p-4 bg-white border rounded-2xl cursor-pointer flex items-center justify-between transition-all",
+                          isNoPreference
+                            ? "border-primary ring-1 ring-primary"
+                            : "border-slate-100",
+                        )}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <Shuffle className="w-4 h-4" />
                           </div>
-                          <Button
-                            variant={isSelected ? "default" : "outline"}
-                            size="sm"
-                            className="rounded-full px-4 text-xs h-8">
-                            {isSelected ? "Selected" : "Select"}
-                          </Button>
+                          <div>
+                            <h4 className="font-bold text-sm text-slate-900">
+                              Any Employee Available
+                            </h4>
+                            <p className="text-xs text-slate-400">
+                              Optimizes calendar open slot metrics automatically
+                            </p>
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 3: DATE & TIME */}
-              {currentStep === "time" && (
-                <div className="space-y-4 pt-4">
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-black text-slate-900">
-                      Select date and time
-                    </h2>
-                    <p className="text-xs text-slate-400">
-                      Appointments can be configured up to one week in advance.
-                    </p>
-                  </div>
-
-                  {/* Date Picker */}
-                  <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-none">
-                    {maxBookingDays.map((day) => {
-                      const isSameDay =
-                        format(selectedDate, "yyyy-MM-dd") ===
-                        format(day, "yyyy-MM-dd");
-                      return (
-                        <button
-                          key={day.toISOString()}
-                          disabled={isMutationLoading}
-                          onClick={() => {
-                            setSelectedDate(day);
-                            setSelectedSlot("");
-                          }}
-                          className={cn(
-                            "flex flex-col items-center justify-center p-2.5 w-14 rounded-xl border transition-all shrink-0",
-                            isSameDay
-                              ? "bg-primary border-primary text-white shadow-sm"
-                              : "bg-white border-slate-200 text-slate-800 hover:border-slate-300 disabled:opacity-50",
-                          )}>
-                          <span className="text-[9px] font-bold opacity-80 uppercase">
-                            {format(day, "EEE")}
-                          </span>
-                          <span className="text-base font-black">
-                            {format(day, "d")}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Duration Summary */}
-                  <div className="p-3.5 bg-slate-100/60 rounded-2xl border border-slate-200/40 flex justify-between items-center text-xs">
-                    <span className="font-semibold text-slate-500">
-                      Total Pipeline Duration:
-                    </span>
-                    <span className="font-black text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-primary" />{" "}
-                      {formatDurationLabel(finalDuration)}
-                    </span>
-                  </div>
-
-                  {/* Time Slots */}
-                  <div className="space-y-2">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                      Available Openings
-                    </span>
-                    {isLoadingSlots ? (
-                      <div className="flex items-center justify-center py-8 text-xs text-slate-400 gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                        Computing open timelines...
+                        <Button
+                          variant={isNoPreference ? "default" : "outline"}
+                          size="sm"
+                          className="rounded-full px-4 text-xs h-8">
+                          {isNoPreference ? "Selected" : "Select"}
+                        </Button>
                       </div>
-                    ) : slotsData?.available_slots &&
-                      slotsData.available_slots.length > 0 ? (
-                      <div className="grid grid-cols-4 gap-2 max-h-[190px] overflow-y-auto pr-1">
-                        {slotsData.available_slots.map((slot) => (
-                          <button
-                            key={slot}
-                            disabled={isMutationLoading}
+
+                      {dynamicAvailableEmployees.map((emp) => {
+                        const isSelected =
+                          selectedEmployee?._id === emp._id && !isNoPreference;
+                        return (
+                          <div
+                            key={emp._id}
                             onClick={() => {
-                              setSelectedSlot(slot);
-                              selectedServices.forEach((s) => {
-                                if (!selectedQuantities[s._id]) {
-                                  setSelectedQuantities((prev) => ({
-                                    ...prev,
-                                    [s._id]: 1,
-                                  }));
-                                }
-                              });
+                              setIsNoPreference(false);
+                              setSelectedEmployee(emp);
                             }}
                             className={cn(
-                              "text-center py-2 px-1 rounded-xl text-xs font-bold transition-all border",
-                              selectedSlot === slot
-                                ? "bg-primary border-primary text-white shadow-sm"
-                                : "bg-white border-slate-100 text-slate-700 hover:border-slate-300 disabled:opacity-50",
+                              "p-4 bg-white border rounded-2xl cursor-pointer flex items-center justify-between transition-all",
+                              isSelected
+                                ? "border-primary ring-1 ring-primary"
+                                : "border-slate-100",
                             )}>
-                            {formatDate(new Date(slot), "h:mm a")}
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-destructive text-center py-6 bg-red-50 border border-red-100 rounded-2xl font-medium italic">
-                        No openings or hours assigned for this specific day.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Quantity Controls (inventory-based services only) */}
-                  {selectedSlot &&
-                    selectedServices.some(
-                      (s) => s.inventory !== undefined && s.inventory > 0,
-                    ) && (
-                      <div className="pt-2 border-t border-slate-100 space-y-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                          Configure Quantities
-                        </span>
-                        {selectedServices.map((item) => {
-                          if (
-                            item.inventory === undefined ||
-                            item.inventory <= 0
-                          )
-                            return null;
-                          const currentQty = selectedQuantities[item._id] || 1;
-                          return (
-                            <div
-                              key={item._id}
-                              className="flex items-center justify-between border border-dashed border-slate-200 bg-white p-3 rounded-xl shadow-sm">
-                              <div className="space-y-0.5">
-                                <span className="text-xs font-bold text-slate-800 block">
-                                  {item.name}
-                                </span>
-                                <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                  <Layers className="w-3 h-3 text-slate-400" />{" "}
-                                  Max Stock: {item.inventory}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <button
-                                  type="button"
-                                  disabled={
-                                    currentQty <= 1 || isMutationLoading
-                                  }
-                                  onClick={() =>
-                                    handleUpdateQuantity(
-                                      item._id,
-                                      -1,
-                                      item.inventory,
-                                    )
-                                  }
-                                  className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
-                                  <Minus className="w-3 h-3" />
-                                </button>
-                                <span className="text-sm font-black text-slate-900 w-4 text-center">
-                                  {currentQty}
-                                </span>
-                                <button
-                                  type="button"
-                                  disabled={
-                                    currentQty >= (item.inventory || 1) ||
-                                    isMutationLoading
-                                  }
-                                  onClick={() =>
-                                    handleUpdateQuantity(
-                                      item._id,
-                                      1,
-                                      item.inventory,
-                                    )
-                                  }
-                                  className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
-                                  <Plus className="w-3 h-3" />
-                                </button>
+                            <div className="flex items-center gap-3">
+                              {emp.employee_photo ? (
+                                <img
+                                  src={emp.employee_photo}
+                                  alt={emp.full_name}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                  <User className="w-4 h-4" />
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="font-bold text-sm text-slate-900">
+                                  {emp.full_name}
+                                </h4>
+                                <p className="text-xs text-slate-400">
+                                  Assigned Treatment Specialist
+                                </p>
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                </div>
-              )}
-            </div>
+                            <Button
+                              variant={isSelected ? "default" : "outline"}
+                              size="sm"
+                              className="rounded-full px-4 text-xs h-8">
+                              {isSelected ? "Selected" : "Select"}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-            <Button
-              variant="ghost"
-              disabled={isMutationLoading}
-              onClick={handleGlobalWizardReset}
-              className="text-xs text-slate-400 hover:text-slate-600 mt-4 justify-start w-fit p-0 h-auto font-medium disabled:opacity-40">
-              Cancel Registration
-            </Button>
-          </div>
+                {/* STEP 3: DATE & TIME */}
+                {currentStep === "time" && (
+                  <div className="space-y-4 pt-4">
+                    <div className="space-y-1">
+                      <h2 className="text-2xl font-black text-slate-900">
+                        Select date and time
+                      </h2>
+                      <p className="text-xs text-slate-400">
+                        Appointments can be configured up to one week in
+                        advance.
+                      </p>
+                    </div>
+
+                    {/* Date Picker */}
+                    <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-none">
+                      {maxBookingDays.map((day) => {
+                        const isSameDay =
+                          format(selectedDate, "yyyy-MM-dd") ===
+                          format(day, "yyyy-MM-dd");
+                        return (
+                          <button
+                            key={day.toISOString()}
+                            disabled={isMutationLoading}
+                            onClick={() => {
+                              setSelectedDate(day);
+                              setSelectedSlot("");
+                            }}
+                            className={cn(
+                              "flex flex-col items-center justify-center p-2.5 w-14 rounded-xl border transition-all shrink-0",
+                              isSameDay
+                                ? "bg-primary border-primary text-white shadow-sm"
+                                : "bg-white border-slate-200 text-slate-800 hover:border-slate-300 disabled:opacity-50",
+                            )}>
+                            <span className="text-[9px] font-bold opacity-80 uppercase">
+                              {format(day, "EEE")}
+                            </span>
+                            <span className="text-base font-black">
+                              {format(day, "d")}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Duration Summary */}
+                    <div className="p-3.5 bg-slate-100/60 rounded-2xl border border-slate-200/40 flex justify-between items-center text-xs">
+                      <span className="font-semibold text-slate-500">
+                        Total Pipeline Duration:
+                      </span>
+                      <span className="font-black text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-primary" />{" "}
+                        {formatDurationLabel(finalDuration)}
+                      </span>
+                    </div>
+
+                    {/* Time Slots */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                        Available Openings
+                      </span>
+                      {isLoadingSlots ? (
+                        <div className="flex items-center justify-center py-8 text-xs text-slate-400 gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                          Computing open timelines...
+                        </div>
+                      ) : slotsData?.available_slots &&
+                        slotsData.available_slots.length > 0 ? (
+                        <div className="grid grid-cols-4 gap-2 max-h-[190px] overflow-y-auto pr-1">
+                          {slotsData.available_slots.map((slot) => (
+                            <button
+                              key={slot}
+                              disabled={isMutationLoading}
+                              onClick={() => {
+                                setSelectedSlot(slot);
+                                selectedServices.forEach((s) => {
+                                  if (!selectedQuantities[s._id]) {
+                                    setSelectedQuantities((prev) => ({
+                                      ...prev,
+                                      [s._id]: 1,
+                                    }));
+                                  }
+                                });
+                              }}
+                              className={cn(
+                                "text-center py-2 px-1 rounded-xl text-xs font-bold transition-all border",
+                                selectedSlot === slot
+                                  ? "bg-primary border-primary text-white shadow-sm"
+                                  : "bg-white border-slate-100 text-slate-700 hover:border-slate-300 disabled:opacity-50",
+                              )}>
+                              {formatDate(new Date(slot), "h:mm a")}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-destructive text-center py-6 bg-red-50 border border-red-100 rounded-2xl font-medium italic">
+                          No openings or hours assigned for this specific day.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Quantity Controls (inventory-based services only) */}
+                    {selectedSlot &&
+                      selectedServices.some(
+                        (s) => s.inventory !== undefined && s.inventory > 0,
+                      ) && (
+                        <div className="pt-2 border-t border-slate-100 space-y-2">
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                            Configure Quantities
+                          </span>
+                          {selectedServices.map((item) => {
+                            if (
+                              item.inventory === undefined ||
+                              item.inventory <= 0
+                            )
+                              return null;
+                            const currentQty =
+                              selectedQuantities[item._id] || 1;
+                            return (
+                              <div
+                                key={item._id}
+                                className="flex items-center justify-between border border-dashed border-slate-200 bg-white p-3 rounded-xl shadow-sm">
+                                <div className="space-y-0.5">
+                                  <span className="text-xs font-bold text-slate-800 block">
+                                    {item.name}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                    <Layers className="w-3 h-3 text-slate-400" />{" "}
+                                    Max Stock: {item.inventory}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      currentQty <= 1 || isMutationLoading
+                                    }
+                                    onClick={() =>
+                                      handleUpdateQuantity(
+                                        item._id,
+                                        -1,
+                                        item.inventory,
+                                      )
+                                    }
+                                    className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <span className="text-sm font-black text-slate-900 w-4 text-center">
+                                    {currentQty}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      currentQty >= (item.inventory || 1) ||
+                                      isMutationLoading
+                                    }
+                                    onClick={() =>
+                                      handleUpdateQuantity(
+                                        item._id,
+                                        1,
+                                        item.inventory,
+                                      )
+                                    }
+                                    className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                  </div>
+                )}
+              </div>
+
+              <Button
+                variant="ghost"
+                disabled={isMutationLoading}
+                onClick={handleGlobalWizardReset}
+                className="text-xs text-slate-400 hover:text-slate-600 mt-4 justify-start w-fit p-0 h-auto font-medium disabled:opacity-40">
+                Cancel Registration
+              </Button>
+            </div>
+          )}
 
           {/* Right Sidebar Summary Panel */}
           <div className="w-full md:w-[340px] bg-white border-t md:border-t-0 md:border-l border-slate-100 p-6 flex flex-col justify-between">
@@ -1023,16 +1038,18 @@ export default function BookingContainer({ services }: BookingContainerProps) {
       </Dialog>
 
       {/* ─── STRIPE PAYMENT CHECKOUT MODAL ─── */}
-      {isPaymentModalOpen && activeLockId && checkoutSummary && (
-        <BookingCheckout
-          lockId={activeLockId}
-          price={calculatedPrice}
-          summary={checkoutSummary}
-          onClose={() => setIsPaymentModalOpen(false)}
-          isConfirming={bookingMutation.isPending}
-          onSuccess={handleFinalizeBookingDatabaseInsertion}
-        />
-      )}
+      {/* <div className="z-999">
+        {isPaymentModalOpen && activeLockId && checkoutSummary && (
+          <BookingCheckout
+            lockId={activeLockId}
+            price={calculatedPrice}
+            summary={checkoutSummary}
+            onClose={() => setIsPaymentModalOpen(false)}
+            isConfirming={bookingMutation.isPending}
+            onSuccess={handleFinalizeBookingDatabaseInsertion}
+          />
+        )}
+      </div> */}
     </div>
   );
 }
