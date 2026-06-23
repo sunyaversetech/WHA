@@ -53,7 +53,6 @@ export interface BookingLockPayload {
   service_id: string;
   employee_id: string | null;
   start_time: string;
-  end_time: string;
   timezone: string;
   inventory_quantity: number;
   items: {
@@ -74,6 +73,7 @@ export interface BookingPayload {
   payment_transaction_id: string;
   payment_status: "unpaid" | "pending" | "paid" | "refunded" | "failed";
   status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
+  start_time: string;
 }
 
 export interface BookingResponse {
@@ -139,17 +139,6 @@ export const useCreateBookingLock = () => {
   });
 };
 
-export const useCreateCheckoutSession = () => {
-  return useMutation<any, Error, any>({
-    mutationKey: ["createCheckoutSession"],
-    mutationFn: (data: any) =>
-      Post<any, any>({
-        url: "/api/checkout-session",
-        data,
-      }),
-  });
-};
-
 export const useUpdateBookingStatus = () => {
   return useMutation<
     { bookingId: string; newStatus: string; notes: string },
@@ -184,8 +173,8 @@ export const useCreateBooking = () => {
 };
 
 export const useGetBusinessBookings = () => {
-  return useQuery<{ success: boolean; data: any[] }>({
-    queryKey: ["businessbookings"],
+  return useQuery<{ success: boolean; data: BookingType[] }>({
+    queryKey: ["getbookings"],
     queryFn: () => Get({ url: "/api/bookings" }),
   });
 };

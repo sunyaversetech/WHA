@@ -21,7 +21,7 @@ const booking_lock_schema = new mongoose.Schema(
     expires_at: {
       type: Date,
       required: true,
-      default: () => new Date(Date.now() + 5 * 60 * 1000),
+      default: () => new Date(Date.now() + 15 * 60 * 1000), // Extended buffer
     },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } },
