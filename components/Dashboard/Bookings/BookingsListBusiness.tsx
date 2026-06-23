@@ -39,7 +39,10 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Import your booking status mutation hook
-import { useUpdateBookingStatus } from "@/services/booking.service";
+import {
+  BookingType,
+  useUpdateBookingStatus,
+} from "@/services/booking.service";
 
 export interface ServiceId {
   _id: string;
@@ -113,8 +116,14 @@ interface BookingsTableProps {
   bookings: Booking[];
 }
 
-export default function BookingsTable({ bookings }: BookingsTableProps) {
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+export default function BookingsTable({
+  bookings,
+}: {
+  bookings: BookingType[];
+}) {
+  const [selectedBooking, setSelectedBooking] = useState<BookingType | null>(
+    null,
+  );
   const queryClient = useQueryClient();
 
   const { mutate: updateStatus, isPending: isUpdating } =
@@ -459,12 +468,12 @@ export default function BookingsTable({ bookings }: BookingsTableProps) {
                   </div>
                   <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                     <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
-                    <span>
+                    {/* <span>
                       Reminders:{" "}
                       <span className="font-semibold">
                         {selectedBooking.is_reminder_sent ? "Sent" : "Inactive"}
                       </span>
-                    </span>
+                    </span> */}
                   </div>
                 </div>
               </div>
