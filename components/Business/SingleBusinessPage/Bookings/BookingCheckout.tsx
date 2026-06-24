@@ -139,9 +139,9 @@ export default function BookingCheckout({
   }, [lockId, fees.totalToPay]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div className="   w-full">
       <div
-        className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden h-[70vh]"
+        className="bg-white rounded-3xl w-full h-full  shadow-2xl overflow-hidden "
         style={{ maxHeight: "92vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-100 bg-gray-50/60">
@@ -152,13 +152,13 @@ export default function BookingCheckout({
                 Secure Checkout
               </h3>
             </div>
-            <button
+            {/* <button
               type="button"
               onClick={onClose}
               disabled={isConfirming}
               className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 transition disabled:opacity-40">
               <X className="w-4 h-4" />
-            </button>
+            </button> */}
           </div>
 
           {/* Appointment Summary Card */}

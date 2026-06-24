@@ -449,16 +449,14 @@ export default function BookingContainer({ services }: BookingContainerProps) {
         <DialogContent className="min-w-5xl z-50 p-0 overflow-hidden bg-[#F9F9F9] rounded-3xl border-none flex flex-col md:flex-row h-[90vh] max-h-[720px] shadow-2xl">
           {/* Left Step Canvas */}
           {isPaymentModalOpen && activeLockId && checkoutSummary ? (
-            <div className="z-[999] h-[40vh]">
-              <BookingCheckout
-                lockId={activeLockId}
-                price={calculatedPrice}
-                summary={checkoutSummary}
-                onClose={() => setIsPaymentModalOpen(false)}
-                isConfirming={bookingMutation.isPending}
-                onSuccess={handleFinalizeBookingDatabaseInsertion}
-              />
-            </div>
+            <BookingCheckout
+              lockId={activeLockId}
+              price={calculatedPrice}
+              summary={checkoutSummary}
+              onClose={() => setIsPaymentModalOpen(false)}
+              isConfirming={bookingMutation.isPending}
+              onSuccess={handleFinalizeBookingDatabaseInsertion}
+            />
           ) : (
             <div className="flex-1 p-6 md:p-8 overflow-y-auto flex flex-col justify-between space-y-6">
               <div>
@@ -898,142 +896,146 @@ export default function BookingContainer({ services }: BookingContainerProps) {
           )}
 
           {/* Right Sidebar Summary Panel */}
-          <div className="w-full md:w-[340px] bg-white border-t md:border-t-0 md:border-l border-slate-100 p-6 flex flex-col justify-between">
-            <div className="space-y-6">
-              {/* Business Header */}
-              <div className="flex gap-3 items-center pb-4 border-b border-slate-100">
-                <div
-                  className="w-11 h-11 rounded-xl bg-slate-900 bg-cover bg-center"
-                  style={{
-                    backgroundImage: `url('https://wha-sunya-my-uploads.s3.ap-southeast-2.amazonaws.com/profile_1780979383458.jpeg')`,
-                  }}
-                />
-                <div>
-                  <h4 className="font-black text-slate-900 text-xs">
-                    {services[0]?.business_id?.business_name}
-                  </h4>
-                  <p className="text-[10px] text-slate-400 flex items-center gap-0.5">
-                    <MapPin className="w-2.5 h-2.5" />{" "}
-                    {services[0]?.business_id?.location?.split(",")[0]},{" "}
-                    {services[0]?.business_id?.location?.split(",")[1]}
-                  </p>
-                </div>
-              </div>
-
-              {/* Selected Services Summary */}
-              <div className="space-y-4">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Selected Treatments
-                </span>
-
-                {selectedServices.length > 0 ? (
-                  <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-                    {selectedServices.map((srv) => {
-                      const mult = selectedMultipliers[srv._id] || 1;
-                      const qty = selectedQuantities[srv._id] || 1;
-                      return (
-                        <div
-                          key={srv._id}
-                          className="flex justify-between items-start text-xs border-b border-slate-50 pb-2">
-                          <div>
-                            <h5 className="font-bold text-slate-900">
-                              {srv.name}
-                            </h5>
-                            <p className="text-[10px] text-slate-400 mt-0.5 flex flex-col gap-0.5">
-                              <span>
-                                Duration:{" "}
-                                {formatDurationLabel(srv.base_duration * mult)}
-                              </span>
-                              {qty > 1 && (
-                                <span className="text-primary font-bold">
-                                  Units: ×{qty}
-                                </span>
-                              )}
-                            </p>
-                          </div>
-                          <span className="font-bold text-slate-900">
-                            AUD {srv.base_price * mult * qty}
-                          </span>
-                        </div>
-                      );
-                    })}
+          {!isPaymentModalOpen && !activeLockId && !checkoutSummary && (
+            <div className="w-full md:w-[340px] bg-white border-t md:border-t-0 md:border-l border-slate-100 p-6 flex flex-col justify-between">
+              <div className="space-y-6">
+                {/* Business Header */}
+                <div className="flex gap-3 items-center pb-4 border-b border-slate-100">
+                  <div
+                    className="w-11 h-11 rounded-xl bg-slate-900 bg-cover bg-center"
+                    style={{
+                      backgroundImage: `url('https://wha-sunya-my-uploads.s3.ap-southeast-2.amazonaws.com/profile_1780979383458.jpeg')`,
+                    }}
+                  />
+                  <div>
+                    <h4 className="font-black text-slate-900 text-xs">
+                      {services[0]?.business_id?.business_name}
+                    </h4>
+                    <p className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                      <MapPin className="w-2.5 h-2.5" />{" "}
+                      {services[0]?.business_id?.location?.split(",")[0]},{" "}
+                      {services[0]?.business_id?.location?.split(",")[1]}
+                    </p>
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-400 italic text-center py-2">
-                    No selections registered.
-                  </p>
-                )}
+                </div>
 
-                {(selectedEmployee || isNoPreference) &&
-                  selectedServices.length > 0 && (
-                    <div className="pt-2 flex items-center gap-2 text-[11px] font-bold text-slate-600">
-                      <User className="w-3.5 h-3.5 text-primary" />
-                      <span>
-                        Professional:{" "}
-                        <span className="text-slate-900">
-                          {isNoPreference
-                            ? "Any Employee Available"
-                            : selectedEmployee?.full_name}
+                {/* Selected Services Summary */}
+                <div className="space-y-4">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Selected Treatments
+                  </span>
+
+                  {selectedServices.length > 0 ? (
+                    <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                      {selectedServices.map((srv) => {
+                        const mult = selectedMultipliers[srv._id] || 1;
+                        const qty = selectedQuantities[srv._id] || 1;
+                        return (
+                          <div
+                            key={srv._id}
+                            className="flex justify-between items-start text-xs border-b border-slate-50 pb-2">
+                            <div>
+                              <h5 className="font-bold text-slate-900">
+                                {srv.name}
+                              </h5>
+                              <p className="text-[10px] text-slate-400 mt-0.5 flex flex-col gap-0.5">
+                                <span>
+                                  Duration:{" "}
+                                  {formatDurationLabel(
+                                    srv.base_duration * mult,
+                                  )}
+                                </span>
+                                {qty > 1 && (
+                                  <span className="text-primary font-bold">
+                                    Units: ×{qty}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                            <span className="font-bold text-slate-900">
+                              AUD {srv.base_price * mult * qty}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic text-center py-2">
+                      No selections registered.
+                    </p>
+                  )}
+
+                  {(selectedEmployee || isNoPreference) &&
+                    selectedServices.length > 0 && (
+                      <div className="pt-2 flex items-center gap-2 text-[11px] font-bold text-slate-600">
+                        <User className="w-3.5 h-3.5 text-primary" />
+                        <span>
+                          Professional:{" "}
+                          <span className="text-slate-900">
+                            {isNoPreference
+                              ? "Any Employee Available"
+                              : selectedEmployee?.full_name}
+                          </span>
                         </span>
+                      </div>
+                    )}
+
+                  {selectedSlot && (
+                    <div className="bg-purple-50/70 p-3 rounded-xl flex items-center gap-2 text-xs font-bold text-primary">
+                      <Clock className="w-4 h-4 text-primary" />
+                      <span>
+                        {format(selectedDate, "eeee, MMM dd")} at{" "}
+                        {formatDate(new Date(selectedSlot), "h:mm a")}
                       </span>
                     </div>
                   )}
-
-                {selectedSlot && (
-                  <div className="bg-purple-50/70 p-3 rounded-xl flex items-center gap-2 text-xs font-bold text-primary">
-                    <Clock className="w-4 h-4 text-primary" />
-                    <span>
-                      {format(selectedDate, "eeee, MMM dd")} at{" "}
-                      {formatDate(new Date(selectedSlot), "h:mm a")}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Price & CTA */}
-            <div className="space-y-3.5 pt-4 border-t border-slate-100">
-              <div className="flex justify-between items-center px-1">
-                <span className="font-bold text-xs text-slate-900">
-                  Subtotal Balance
-                </span>
-                <span className="font-black text-xl text-slate-900">
-                  AUD {finalPrice}
-                </span>
+                </div>
               </div>
 
-              <Button
-                disabled={
-                  selectedServices.length === 0 ||
-                  (currentStep === "time" && !selectedSlot) ||
-                  isMutationLoading
-                }
-                onClick={handleNextStep}
-                className={cn(
-                  "w-full font-bold text-xs h-12 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all",
-                  currentStep === "time"
-                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                    : "bg-black hover:bg-slate-900 text-white",
-                )}>
-                {isMutationLoading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
-                    <span>Securing hold...</span>
-                  </div>
-                ) : currentStep === "time" ? (
-                  <>
-                    <CreditCard className="w-4 h-4" />
-                    <span>Pay Now & Confirm</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Continue</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </>
-                )}
-              </Button>
+              {/* Price & CTA */}
+              <div className="space-y-3.5 pt-4 border-t border-slate-100">
+                <div className="flex justify-between items-center px-1">
+                  <span className="font-bold text-xs text-slate-900">
+                    Subtotal Balance
+                  </span>
+                  <span className="font-black text-xl text-slate-900">
+                    AUD {finalPrice}
+                  </span>
+                </div>
+
+                <Button
+                  disabled={
+                    selectedServices.length === 0 ||
+                    (currentStep === "time" && !selectedSlot) ||
+                    isMutationLoading
+                  }
+                  onClick={handleNextStep}
+                  className={cn(
+                    "w-full font-bold text-xs h-12 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all",
+                    currentStep === "time"
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "bg-black hover:bg-slate-900 text-white",
+                  )}>
+                  {isMutationLoading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Securing hold...</span>
+                    </div>
+                  ) : currentStep === "time" ? (
+                    <>
+                      <CreditCard className="w-4 h-4" />
+                      <span>Pay Now & Confirm</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Continue</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
 
