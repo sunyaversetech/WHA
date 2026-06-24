@@ -19,6 +19,10 @@ export async function POST(request: Request) {
     const full_name = formData.get("full_name") as string;
     const email = formData.get("email") as string;
 
+    const bio = formData.get("bio") as string;
+    const phone_number = formData.get("phone_number") as string;
+    const is_active = formData.get("is_active") as string;
+
     const availability_schedule = JSON.parse(
       (formData.get("availability_schedule") as string) || "[]",
     );
@@ -44,6 +48,9 @@ export async function POST(request: Request) {
       business_id: session.user.id,
       full_name,
       email,
+      bio,
+      phone_number,
+      is_active,
       employee_photo: employee_photo_url,
       availability_schedule,
       service_overrides: service_overrides || [],

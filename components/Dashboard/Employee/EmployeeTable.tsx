@@ -170,7 +170,9 @@ export function EmployeeTable({ initialEmployees }: EmployeeTableProps) {
                         size="icon"
                         className="h-8 w-8 hover:text-blue-500 hover:bg-blue-500/5"
                         onClick={() =>
-                          router.push(`/employees/edit/${employee._id}`)
+                          router.push(
+                            `/dashboard/employees/edit/${employee._id}`,
+                          )
                         }>
                         <Edit2 className="h-4 w-4" />
                       </Button>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useForm, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Trash2, User } from "lucide-react";
@@ -25,7 +25,6 @@ import { useCreateOrUpdateEmployee } from "@/services/employee.service";
 
 interface EmployeeFormProps {
   initialData?: IEmployee | null;
-  businessId: string; // Passed from server session
 }
 
 const DAYS_OF_WEEK = [
@@ -38,9 +37,11 @@ const DAYS_OF_WEEK = [
   "sunday",
 ];
 
-export function EmployeeForm({ initialData, businessId }: EmployeeFormProps) {
+export function EmployeeForm({ initialData }: EmployeeFormProps) {
   const router = useRouter();
   const { mutate, isPending } = useCreateOrUpdateEmployee();
+  const pathname = usePathname();
+  console.log("pathname", pathname.includes("edit"));
   const [previewUrl, setPreviewUrl] = useState(
     initialData?.employee_photo || "",
   );
@@ -50,6 +51,7 @@ export function EmployeeForm({ initialData, businessId }: EmployeeFormProps) {
     resolver: zodResolver(employeeSchema),
     defaultValues: initialData
       ? {
+          _id: initialData._id,
           full_name: initialData.full_name,
           email: initialData.email || "",
           phone_number: initialData.phone_number || "",
@@ -76,6 +78,21 @@ export function EmployeeForm({ initialData, businessId }: EmployeeFormProps) {
         },
   });
 
+  useEffect(() => {
+    if (pathname.includes("edit") && initialData) {
+      setPreviewUrl(initialData.employee_photo);
+      form.setValue("_id", initialData._id);
+      form.setValue("employee_photo", initialData.employee_photo);
+      form.setValue("full_name", initialData.full_name);
+      form.setValue("email", initialData.email);
+      form.setValue("phone_number", initialData.phone_number);
+      form.setValue("bio", initialData.bio);
+      form.setValue("is_active", initialData.is_active);
+      form.setValue("availability_schedule", initialData.availability_schedule);
+      form.setValue("service_overrides", initialData.service_overrides);
+    }
+  }, [initialData, pathname, form]);
+
   const { fields: availabilityFields } = useFieldArray({
     control: form.control,
     name: "availability_schedule",
@@ -83,6 +100,8 @@ export function EmployeeForm({ initialData, businessId }: EmployeeFormProps) {
 
   async function onSubmit(data: EmployeeFormValues) {
     const formData = new FormData();
+
+    if (data._id) formData.append("_id", data._id);
 
     formData.append("full_name", data.full_name);
     formData.append("email", data.email || "");
@@ -105,7 +124,7 @@ export function EmployeeForm({ initialData, businessId }: EmployeeFormProps) {
 
     mutate(formData as any, {
       onSuccess: () => {
-        router.push("/dashboard/employee");
+        router.push("/dashboard/employees");
       },
       onError: (err) => {
         console.error("Mutation error:", err);

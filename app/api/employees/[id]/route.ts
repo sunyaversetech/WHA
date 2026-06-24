@@ -39,7 +39,7 @@ export async function GET(request: Request, { params }: Props) {
   }
 }
 
-export async function PATCH(request: Request, { params }: Props) {
+export async function POST(request: Request, { params }: Props) {
   try {
     await connectToDb();
     const { id } = await params;
@@ -70,6 +70,12 @@ export async function PATCH(request: Request, { params }: Props) {
         (formData.get("availability_schedule") as string) || "[]",
       );
     }
+
+    if (formData.has("bio")) employee.bio = formData.get("bio") as string;
+    if (formData.has("phone_number"))
+      employee.phone_number = formData.get("phone_number") as string;
+    if (formData.has("is_active"))
+      employee.is_active = formData.get("is_active") as string;
 
     const employee_photo = formData.get("employee_photo") as File | null;
     if (

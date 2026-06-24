@@ -26,7 +26,9 @@ export const useCreateOrUpdateEmployee = () => {
     mutationKey: ["createOrUpdateEmployee"],
     mutationFn: (data: any) =>
       Post<any, ApiResponseType<any>>({
-        url: data._id ? `/api/employees/${data._id}` : "/api/employees",
+        url: data.get("_id")
+          ? `/api/employees/${data.get("_id")}`
+          : "/api/employees",
         data: data,
       }),
   });
@@ -36,6 +38,6 @@ export const useGetSingleEmployee = (id: string) => {
   return useFetcher<ApiResponseType<any>>(
     ["employee", id],
     null,
-    `/api/employees/single/${id}`,
+    `/api/employees/${id}`,
   );
 };

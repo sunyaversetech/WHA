@@ -144,7 +144,6 @@ export default function BookingCheckout({
         className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden h-[70vh]"
         style={{ maxHeight: "92vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
         <div className="p-6 border-b border-gray-100 bg-gray-50/60">
           <div className="flex justify-between items-center mb-5">
             <div className="flex items-center gap-2">

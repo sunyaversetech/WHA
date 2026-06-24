@@ -31,6 +31,7 @@ export const serviceOverrideSchema = z.object({
 });
 
 export const employeeSchema = z.object({
+  _id: z.string().optional(),
   full_name: z.string().min(2, "Full name must be at least 2 characters."),
   email: z
     .string()
