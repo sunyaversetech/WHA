@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ChevronLeft,
@@ -31,11 +31,13 @@ import {
   CarTaxiFront,
   ChefHat,
   Pin,
+  BookType,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -50,6 +52,15 @@ import { cn } from "@/lib/utils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { LocationFormField } from "@/components/ui/LocationFormFiled";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DEFAULT_SCHEDULE } from "../Dashboard/Settings/OperatingHours";
+import { Switch } from "../ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 const communities = ["Australian", "Nepali", "Others"];
 const categories = [
@@ -91,27 +102,30 @@ const cities = [
 export const signupSchema = z
   .object({
     _id: z.string().optional(),
+    is24_7: z.boolean(),
+    business_type: z.string().min(1, "Select a business type"),
     name: z.string().min(2, "Contact name is required"),
     business_name: z.string().min(2, "Business name is required"),
     phone_number: z.string().min(10, "Valid phone number required"),
     business_category: z.string().min(1, "Select a category"),
     community: z.string().min(1, "Select a community"),
+    schedule: z.array(z.any()).min(1, "Schedule is required"),
     city: z.string().min(1, "City is required"),
     location: z.string().min(2, "Location is required"),
     longitude: z.number().optional(),
     latitude: z.number().optional(),
     image: z
       .any()
+      .refine((file) => file instanceof File, "Image is required")
       .refine(
-        (file) => !file || file.size <= 3 * 1024 * 1024,
+        (file) => file && file.size <= 3 * 1024 * 1024,
         "Max file size is 3MB",
       )
       .refine(
         (file) =>
-          !file || ["image/jpeg", "image/jpg", "image/png"].includes(file.type),
+          file && ["image/jpeg", "image/jpg", "image/png"].includes(file.type),
         ".jpg, .jpeg, and .png files are accepted",
-      )
-      .optional(),
+      ),
     email: z.email().min(1, "Invalid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
@@ -131,10 +145,11 @@ export type SingUPFormSchema = z.infer<typeof signupSchema>;
 
 const STEPS = [
   { id: 1, title: "Business Info", icon: Briefcase },
-  { id: 2, title: "Category", icon: ChartBarStacked },
-  { id: 3, title: "Business Location", icon: Pin },
-  { id: 4, title: "Personal Info", icon: User },
-  { id: 5, title: "Security", icon: Lock },
+  { id: 2, title: "Business Type", icon: BookType },
+  { id: 3, title: "Category", icon: ChartBarStacked },
+  { id: 4, title: "Business Location", icon: Pin },
+  { id: 5, title: "Personal Info", icon: User },
+  { id: 6, title: "Security", icon: Lock },
 ];
 
 export default function BusinessSignup() {
@@ -157,9 +172,15 @@ export default function BusinessSignup() {
       email: "",
       password: "",
       confirmPassword: "",
+      schedule: DEFAULT_SCHEDULE,
       category: "business",
       accpetalltermsandcondition: false,
     },
+  });
+
+  const { fields } = useFieldArray({
+    control: form.control,
+    name: "schedule",
   });
 
   const nextStep = async () => {
@@ -261,7 +282,6 @@ export default function BusinessSignup() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Step 1: Business Info */}
           {step === 1 && (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
               <FormField
@@ -277,6 +297,38 @@ export default function BusinessSignup() {
                         className="h-12 sm:h-15 text-base focus:outline-none focus:ring-0 focus-visible:ring-0"
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="business_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Service Operational Model</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select how this service is fulfilled" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="employee_based">
+                          Staff / Employee Based (e.g., Haircut, Massage,
+                          Consulting)
+                        </SelectItem>
+                        <SelectItem value="item_based">
+                          Item / Inventory Based (e.g., Kayak, Boat, Surfboard
+                          rentals)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Determines whether customers reserve human staff time or
+                      physical stock assets.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -375,8 +427,106 @@ export default function BusinessSignup() {
             </div>
           )}
 
-          {/* Step 2: Category */}
           {step === 2 && (
+            <>
+              <div>
+                <div className="space-y-6 flex items-center ">
+                  <h2 className="text-xl font-bold">Operating Hours</h2>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="is24_7"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-blue-900">
+                        24/7 Operation
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                {!form.watch("is24_7") && (
+                  <div className="space-y-4">
+                    {fields.map((field, index) => (
+                      <div key={field.id} className="flex items-center gap-8">
+                        {/* Day Toggle */}
+                        <FormField
+                          control={form.control}
+                          name={`schedule.${index}.isOpen`}
+                          render={({ field }) => (
+                            <FormItem className="flex items-center space-x-3 w-32">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-medium">
+                                {fields[index].day}
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Open Time */}
+                        <FormField
+                          control={form.control}
+                          name={`schedule.${index}.openTime`}
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormLabel className="text-xs text-gray-500">
+                                Open
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="time"
+                                  {...field}
+                                  disabled={
+                                    !form.watch(`schedule.${index}.isOpen`)
+                                  }
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`schedule.${index}.closeTime`}
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormLabel className="text-xs text-gray-500">
+                                Close
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="time"
+                                  {...field}
+                                  disabled={
+                                    !form.watch(`schedule.${index}.isOpen`)
+                                  }
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Step 2: Category */}
+          {step === 3 && (
             <div className="flex items-center justify-center m-auto">
               <FormField
                 control={form.control}
@@ -411,7 +561,7 @@ export default function BusinessSignup() {
           )}
 
           {/* Step 3: Business Location */}
-          {step === 3 && (
+          {step === 4 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <FormField
                 control={form.control}
@@ -445,7 +595,7 @@ export default function BusinessSignup() {
           )}
 
           {/* Step 4: Personal Info */}
-          {step === 4 && (
+          {step === 5 && (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
               <FormField
                 control={form.control}
@@ -513,7 +663,7 @@ export default function BusinessSignup() {
           )}
 
           {/* Step 5: Security */}
-          {step === 5 && (
+          {step === 6 && (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
               <FormField
                 control={form.control}

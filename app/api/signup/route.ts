@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
     const password = formData.get("password") as string;
     const category = formData.get("category") as string; // 'business'
     const business_name = formData.get("business_name") as string;
+    const business_type = formData.get("business_type") as string;
     const business_category = formData.get("business_category") as string;
     const phone_number = formData.get("phone_number") as string;
     const city = formData.get("city") as string;
@@ -24,6 +25,8 @@ export async function POST(req: NextRequest) {
     const community_name = formData.get("community_name") as string;
     const location = formData.get("location") as string;
     const latitude = Number(formData.get("latitude"));
+    const schedule = JSON.parse((formData.get("schedule") as string) || "[]");
+    const is24_7 = formData.get("is24_7") === "true";
     const longitude = Number(formData.get("longitude"));
     const accpetalltermsandcondition =
       formData.get("accpetalltermsandcondition") === "true";
@@ -63,6 +66,9 @@ export async function POST(req: NextRequest) {
       business_category,
       phone_number,
       city,
+      schedule,
+      is24_7,
+      business_type,
       city_name: city === "other" ? city_name : city,
       community,
       community_name: community === "others" ? community_name : community,

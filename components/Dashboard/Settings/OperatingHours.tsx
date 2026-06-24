@@ -39,7 +39,7 @@ const operatinghoursformSchema = z.object({
 
 export type OperatingHourPostType = z.infer<typeof operatinghoursformSchema>;
 
-const DEFAULT_SCHEDULE = [
+export const DEFAULT_SCHEDULE = [
   "Monday",
   "Tuesday",
   "Wednesday",
