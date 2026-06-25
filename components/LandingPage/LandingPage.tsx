@@ -1,239 +1,230 @@
 "use client";
+
 import Link from "next/link";
-import { Calendar, Sparkles, Building, Tag, Users } from "lucide-react";
+import { Calendar, Building, Tag, Mail, MapPin } from "lucide-react";
 import EventCard from "@/components/cards/event-card";
 import BusinessCard from "@/components/cards/business-card";
 import PlaceholderCard from "@/components/cards/placeholder-card";
 import CardSlider from "@/components/ui/card-slider";
 import { useFilteredBusinesses } from "@/hooks/use-filtered-data";
-
 import { useGetLandingPageData } from "@/services/landing.service";
 import LandingPageSkeleton from "./LandingPageSkeleton";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { useGetUserService } from "@/services/services.service";
+
+const STAT_ITEMS = (data: any) => [
+  {
+    count: data?.data?.upcomingevents?.length ?? 0,
+    label: "Upcoming Events",
+    icon: Calendar,
+    href: "/events",
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+  },
+  {
+    count: data?.data?.deals?.length ?? 0,
+    label: "Active Deals",
+    icon: Tag,
+    href: "/deals",
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+  },
+  {
+    count: data?.data?.business?.length ?? 0,
+    label: "Local Businesses",
+    icon: Building,
+    href: "/businesses",
+    color: "text-primary",
+    bg: "bg-accent",
+  },
+];
+
+const InstagramIcon = () => (
+  <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M7.75 2h8.5A5.75 5.75 0 0122 7.75v8.5A5.75 5.75 0 0116.25 22h-8.5A5.75 5.75 0 012 16.25v-8.5A5.75 5.75 0 017.75 2zm0 1.5A4.25 4.25 0 003.5 7.75v8.5A4.25 4.25 0 007.75 20.5h8.5a4.25 4.25 0 004.25-4.25v-8.5A4.25 4.25 0 0016.25 3.5h-8.5zm8.88 2.3a1.125 1.125 0 110 2.25 1.125 1.125 0 010-2.25zM12 7a5 5 0 110 10 5 5 0 010-10zm0 1.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z"/>
+  </svg>
+);
+
+const FacebookIcon = () => (
+  <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M22 12a10 10 0 10-11.5 9.87v-6.99H8v-2.88h2.5v-2.2c0-2.48 1.49-3.85 3.77-3.85 1.09 0 2.23.2 2.23.2v2.45h-1.25c-1.23 0-1.61.77-1.61 1.56v1.85h2.74l-.44 2.88h-2.3v6.99A10 10 0 0022 12z"/>
+  </svg>
+);
+
+const SOCIAL_LINKS = [
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/whatshappening_australia",
+    Icon: InstagramIcon,
+    color: "hover:text-pink-500",
+  },
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/whatshappeningaustralia",
+    Icon: FacebookIcon,
+    color: "hover:text-blue-600",
+  },
+  {
+    label: "Email",
+    href: "mailto:info@whatshappeningaustralia.com",
+    Icon: () => <Mail className="h-4 w-4" />,
+    color: "hover:text-secondary",
+  },
+];
 
 export default function LandingPage() {
   const { data, isLoading } = useGetLandingPageData();
-  const { data: servicesData } = useGetUserService();
-
   const param = useSearchParams();
   const city = param.get("city") || "";
   const businesses = useFilteredBusinesses(data?.data.business || []);
 
   if (isLoading) return <LandingPageSkeleton />;
-  return (
-    <div className="container-modern md:pt-14">
-      <div className="px-4 pt-4 md:pt-8">
-        <Link
-          href="https://muktiandrevival.whaustralia.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group relative block w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl">
-          <div className="relative aspect-[21/8] max-md:aspect-[10/5] w-full">
-            <Image
-              width={4000}
-              height={4000}
-              src="/banner-img.png"
-              alt="Promotional Advertisement"
-              className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.02]"
-            />
 
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-black/20" />
-          </div>
-        </Link>
+  const stats = STAT_ITEMS(data);
+  const locationLabel = city || "Australia";
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* ── Hero Banner ── */}
+      <div className="md:pt-14">
+        <div className="px-4 pt-4 md:pt-6">
+          <Link
+            href="https://muktiandrevival.whaustralia.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative block w-full overflow-hidden rounded-2xl shadow-lg
+                       transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+            aria-label="View featured promotion">
+            <div className="relative aspect-[21/8] max-md:aspect-[10/5] w-full bg-slate-900">
+              <Image
+                fill
+                src="/banner-img.png"
+                alt="Promotional Advertisement"
+                className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.02]"
+                priority
+                sizes="100vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-black/10" />
+            </div>
+          </Link>
+        </div>
       </div>
 
-      <div className="mt-2 md:mt-4 bg-white text-black rounded-t-3xl px-4 md:px-6">
-        <div className="container-modern py-4 md:py-6 border-b border-divider ">
-          <h2 className="pb-2 md:pb-4">
-            Explore whats active right now in {city ? city : "Australia"}
-          </h2>
+      {/* ── Main content ── */}
+      <div className="bg-white rounded-t-3xl mt-3 md:mt-4">
 
-          <div className="flex flex-wrap justify-between gap-2 mx-auto  md:max-w-full rounded-lg ">
-            {[
-              {
-                count: data?.data?.upcomingevents?.length ?? 0,
-                label: "Events",
-                color: "bg-primary/10 text-primary",
-                hover: "hover:bg-primary/20",
-                href: "/events",
-                icon: Calendar,
-              },
-              {
-                count: data?.data?.deals?.length ?? 0,
-                label: "Deals",
-                color: "bg-secondary/10 text-secondary",
-                hover: "hover:bg-secondary/20",
-                href: "/deals",
-                icon: Tag,
-              },
-              {
-                count: data?.data?.business?.length,
-                label: "Businesses",
-                color: "bg-neutral/10 text-neutral",
-                hover: "hover:bg-neutral/20",
-                href: "/businesses",
-                icon: Building,
-              },
-            ].map((stat, index) => (
-              <Link
-                key={index}
-                href={stat.href}
-                className={`flex-1  p-2 md:p-4 rounded-lg shadow-sm text-black bg-white/40 border border-secondary/20 backdrop-blur-sm transition-all ${stat.color} ${stat.hover} hover:shadow-md flex items-center justify-center sm:flex-col sm:text-center`}>
-                <div className="flex text-black flex-col items-center">
-                  <div className="flex items-center justify-center mb-1">
-                    <stat.icon className="h-5 w-5 mr-2 text-primary" />
-                    <span className="text-lg font-bold sm:text-xl md:text-2xl text-black">
-                      {stat.count}
-                    </span>
+        {/* ── Stats row ── */}
+        <div className="container-modern px-4 md:px-6 pt-6 pb-4 md:pt-8 md:pb-6 border-b border-divider">
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin className="h-4 w-4 text-secondary flex-shrink-0" />
+            <h2 className="text-sm md:text-base font-semibold text-muted-foreground">
+              What&apos;s happening in{" "}
+              <span className="text-primary font-bold">{locationLabel}</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <Link
+                  key={stat.label}
+                  href={stat.href}
+                  className={`group flex flex-col items-center justify-center gap-1.5 p-3 md:p-5
+                             rounded-xl border border-border ${stat.bg}
+                             hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}>
+                  <div className={`p-2 rounded-lg bg-white/80 shadow-sm`}>
+                    <Icon className={`h-4 w-4 md:h-5 md:w-5 ${stat.color}`} />
                   </div>
-
-                  <div className="text-xs font-medium uppercase tracking-wider text-center text-black">
+                  <span className={`text-xl md:text-2xl font-black ${stat.color}`}>
+                    {stat.count}
+                  </span>
+                  <span className="text-[10px] md:text-xs font-semibold text-center text-muted-foreground uppercase tracking-wide leading-tight">
                     {stat.label}
-                  </div>
-                </div>
-              </Link>
-            ))}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </div>
 
-        <div className="container-modern pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
+        {/* ── Upcoming Events ── */}
+        <div className="container-modern px-4 md:px-6 pt-5 pb-5 md:pt-7 md:pb-7 !pr-0 border-b border-divider">
           <CardSlider
-            title={`Upcoming Events in ${city ? city : "Australia"}`}
-            icon={<Calendar className="h-5 w-5 text-primary" />}
+            title={`Upcoming Events in ${locationLabel}`}
+            icon={<Calendar className="h-4 w-4 text-secondary" />}
             viewAllHref="/events">
-            {data?.data?.length === 0 ? (
+            {!data?.data?.upcomingevents?.length ? (
               <PlaceholderCard type="events" />
             ) : (
-              data?.data?.upcomingevents &&
-              data?.data?.upcomingevents
+              data.data.upcomingevents
                 .slice(0, 6)
-                .map((events: any) => (
-                  <EventCard key={events.id} event={events} />
-                ))
+                .map((event: any) => <EventCard key={event.id} event={event} />)
             )}
           </CardSlider>
         </div>
 
-        <div className=" pt-2 pb-4 md:py-6 !pr-0 border-b border-divider">
+        {/* ── Local Businesses ── */}
+        <div className="container-modern px-4 md:px-6 pt-5 pb-5 md:pt-7 md:pb-7 !pr-0 border-b border-divider">
           <CardSlider
-            title={`Businesses in ${city ? city : "Australia"}`}
-            icon={<Building className="h-5 w-5 text-primary" />}
+            title={`Businesses in ${locationLabel}`}
+            icon={<Building className="h-4 w-4 text-secondary" />}
             viewAllHref="/businesses">
-            {businesses && businesses.length === 0 ? (
+            {!businesses?.length ? (
               <PlaceholderCard type="businesses" />
             ) : (
-              businesses &&
               businesses
                 .slice(0, 6)
-                .map((business: any) => (
-                  <BusinessCard key={business.id} business={business} />
-                ))
+                .map((business: any) => <BusinessCard key={business.id} business={business} />)
             )}
           </CardSlider>
         </div>
 
-        <div className="pt-2 pb-4 md:py-6  border-b border-divider">
-          <div className="card-lg !rounded-lg p-2 md:p-6 lg:p-8">
-            <div className="text-center mb-2 md:mb-6">
-              <div className="flex items-center justify-center space-x-3  md:mb-4">
-                <div className="p-2 bg-primary rounded-lg">
-                  <Users className="h-4 w-4 md:h-5 md:w-5 text-white" />
-                </div>
-                <h2 className="text-secondary  md:text-lg lg:text-xl font-semibold">
-                  Connect with Us
-                </h2>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-3 md:gap-4">
-              <a
-                href="mailto:info@whatshappeningaustralia.com"
-                className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-primary/10"
-                aria-label="Email">
-                <svg
-                  className="w-5 h-5 md:w-6 md:h-6 fill-current"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 2v.01L12 13 20 6.01V6H4zm0 12h16V8l-8 7-8-7v10z" />
-                </svg>
-                <span className="font-medium text-sm md:text-base hidden md:block">
-                  Email
-                </span>
-              </a>
-              <a
-                href="https://www.instagram.com/whatshappening_australia"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-primary/10"
-                aria-label="Instagram">
-                <svg
-                  className="w-5 h-5 md:w-6 md:h-6 fill-current"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true">
-                  <path d="M7.75 2h8.5A5.75 5.75 0 0122 7.75v8.5A5.75 5.75 0 0116.25 22h-8.5A5.75 5.75 0 012 16.25v-8.5A5.75 5.75 0 017.75 2zm0 1.5A4.25 4.25 0 003.5 7.75v8.5A4.25 4.25 0 007.75 20.5h8.5a4.25 4.25 0 004.25-4.25v-8.5A4.25 4.25 0 0016.25 3.5h-8.5zm8.88 2.3a1.125 1.125 0 110 2.25 1.125 1.125 0 010-2.25zM12 7a5 5 0 110 10 5 5 0 010-10zm0 1.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z" />
-                </svg>
-                <span className="font-medium text-sm md:text-base hidden md:block">
-                  Instagram
-                </span>
-              </a>
-              <a
-                href="https://www.facebook.com/whatshappeningaustralia"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-primary/10"
-                aria-label="Facebook">
-                <svg
-                  className="w-5 h-5 md:w-6 md:h-6 fill-current"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true">
-                  <path d="M22 12a10 10 0 10-11.5 9.87v-6.99H8v-2.88h2.5v-2.2c0-2.48 1.49-3.85 3.77-3.85 1.09 0 2.23.2 2.23.2v2.45h-1.25c-1.23 0-1.61.77-1.61 1.56v1.85h2.74l-.44 2.88h-2.3v6.99A10 10 0 0022 12z" />
-                </svg>
-                <span className="font-medium text-sm md:text-base hidden md:block">
-                  Facebook
-                </span>
-              </a>
-              <a
-                href="https://www.tiktok.com/@whatshappeningaus"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-secondary hover:text-secondary/80 transition-colors p-2 md:p-3 rounded-lg hover:bg-secondary/10"
-                aria-label="TikTok">
-                <svg
-                  className="w-5 h-5 md:w-6 md:h-6 fill-current"
-                  viewBox="0 0 48 48"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path d="M41.5 14.7c-2.6 0-5-1-6.9-2.7v16.6c0 7.6-6.1 13.9-13.7 13.9-3.7 0-7.1-1.5-9.6-4-2.6-2.6-4-6-4-9.6s1.5-7.1 4-9.6c2.6-2.6 6-4 9.6-4 .8 0 1.6.1 2.3.2v6.7c-.7-.2-1.5-.3-2.3-.3-4.3 0-7.8 3.6-7.8 8s3.5 8 7.8 8c4.3 0 7.8-3.6 7.8-8V4h6.2c.2 2.6 1.4 5 3.3 6.7 1.8 1.7 4.2 2.7 6.7 2.8v6.2z" />
-                </svg>
-                <span className="font-medium text-sm md:text-base hidden md:block">
-                  TikTok
-                </span>
-              </a>
+        {/* ── Connect with us ── */}
+        <div className="px-4 md:px-6 py-6 md:py-8 border-b border-divider">
+          <div className="bg-accent rounded-2xl px-5 py-6 md:px-8 md:py-8">
+            <h2 className="text-sm md:text-base font-bold text-primary mb-1">
+              Stay Connected
+            </h2>
+            <p className="text-xs md:text-sm text-muted-foreground mb-5">
+              Follow What&apos;s Happening Australia for the latest events, deals & community news.
+            </p>
+            <div className="flex items-center gap-3 flex-wrap">
+              {SOCIAL_LINKS.map(({ label, href, Icon, color }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target={href.startsWith("http") ? "_blank" : undefined}
+                  rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  aria-label={label}
+                  className={`flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-border
+                             text-sm font-semibold text-muted-foreground shadow-sm
+                             hover:shadow transition-all duration-150 ${color}`}>
+                  <Icon />
+                  <span className="hidden sm:inline">{label}</span>
+                </a>
+              ))}
             </div>
           </div>
         </div>
-      </div>
 
-      <div className=" px-6 py-4 md:py-6">
-        <div className="card p-3 md:p-4 lg:p-6">
-          <div className="flex items-start space-x-3 md:space-x-4">
-            <div className="p-2 bg-yellow-500/20 rounded-xl flex-shrink-0">
-              <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-yellow-600" />
-            </div>
+        {/* ── Platform notice ── */}
+        <div className="px-4 md:px-6 py-4 md:py-6">
+          <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+            <span className="text-lg flex-shrink-0" aria-hidden="true">⚠️</span>
             <div>
-              <h3 className="font-semibold text-yellow-800 mb-1 md:mb-2 text-sm">
+              <p className="text-xs md:text-sm font-semibold text-amber-800 mb-0.5">
                 Platform in Development
-              </h3>
-              <p className="text-yellow-700 text-xs md:text-sm">
-                Information may be outdated. Please check official business
-                sites for up-to-date details.
+              </p>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                Some information may be outdated. Please check official business sites for the most up-to-date details.
               </p>
             </div>
           </div>
         </div>
+
+        {/* ── Footer spacer for mobile bottom nav ── */}
+        <div className="h-4" />
       </div>
     </div>
   );

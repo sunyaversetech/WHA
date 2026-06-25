@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 
-import { Marcellus, Montserrat, Quicksand } from "next/font/google";
+import { Inter, Quicksand } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/Auth/SessionWrapper";
 import ReactQueryContext from "@/lib/ReactQueryContext";
@@ -11,29 +11,26 @@ import NavbarProvider from "@/components/ResuableComponents/NavbarProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthModal } from "@/components/Auth/DialogLogin/AuthModel";
 
-// const marcellus = Marcellus({
-//   weight: "400",
-//   subsets: ["latin"],
-//   display: "swap",
-//   variable: "--font-marcellus",
-// });
-
-// const montserrat = Montserrat({
-//   subsets: ["latin"],
-//   display: "swap",
-//   variable: "--font-montserrat",
-//   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-// });
-
-// FONTS
+/* Brand fonts:
+   Quicksand — headings, nav, buttons (friendly & rounded)
+   Inter      — body text, data, forms (legible & neutral) */
 const quicksand = Quicksand({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-quicksand",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Whats Happening Australia",
-  description: "Events, Deals, Local Businesses, and Community News",
+  title: "What's Happening Australia",
+  description: "Discover events, local businesses, deals, and community news across Australia.",
 };
 
 export default function RootLayout({
@@ -44,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={` ${quicksand.className}  antialiased bg-white overflow-y-scroll overflow-x-hidden `}
+        className={`${quicksand.variable} ${inter.variable} ${quicksand.className} antialiased bg-background overflow-y-scroll overflow-x-hidden`}
       >
         <ReactQueryContext>
           <CityFilterProvider>

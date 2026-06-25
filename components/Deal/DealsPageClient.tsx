@@ -1,118 +1,67 @@
 "use client";
 
-import DealCard from "@/components/cards/deal-card";
-import { SlidersVertical, Tag } from "lucide-react";
+import { Tag } from "lucide-react";
 import { useGetAllDeals } from "@/services/deal.service";
+import DealCard from "@/components/cards/deal-card";
 import DealsHeader from "./DealFilter";
+import FilterPanel from "@/components/ResuableComponents/FilterPanel";
 import { Skeleton } from "../ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
-import { Button } from "../ui/button";
 import { useSearchParams } from "next/navigation";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTitle,
-  DrawerTrigger,
-} from "../ui/drawer";
 
 export default function DealsPageClient() {
   const { data: deals, isLoading, isFetching } = useGetAllDeals();
   const searchParams = useSearchParams();
-  const view = searchParams.get("view") || "list";
   const currentDate = new Date();
 
-  const data =
-    deals?.data &&
-    deals?.data?.filter((deal) => currentDate <= new Date(deal.valid_till));
+  const data = deals?.data?.filter(
+    (deal) => currentDate <= new Date(deal.valid_till),
+  );
 
   const isActuallyLoading = isLoading || (!deals && isFetching);
+  const cityLabel = searchParams.get("city") ?? "Australia";
 
   return (
-    <div className={`flex flex-col h-[80vh] overflow-hidden `}>
-      {/* <div className="flex-none h-22 max-md:h-fit border-b flex items-center justify-center">
-        <div className="w-full max-md:hidden">
-          <DealsSearchWithDates />
-        </div>
-        <div className="w-full hidden max-md:flex">
-          <MobileDealsSearchWithDates />
-        </div>
-      </div> */}
+    <div className="flex flex-col min-h-screen pt-20 md:pt-40">
 
-      <div className="flex-1 overflow-y-auto pt-18 md:pt-42 h-[10vh]  overscroll-contain no-scrollbar relative">
-        <div className="sticky top-0 z-50 bg-gray-100/20 backdrop-blur-md">
-          <div className="container-modern px-6 py-4">
-            <div className="flex items-end justify-end">
-              <Drawer>
-                <DrawerTrigger asChild className="hidden max-md:flex">
-                  <Button variant="outline" size="sm">
-                    <SlidersVertical className="h-4 w-4" />
-                    Filters
-                  </Button>
-                </DrawerTrigger>
-                <DrawerContent className="max-w-4xl w-full z-[9999] min-h-[40vh] p-4">
-                  <DrawerTitle className="text-lg font-bold mb-4">
-                    Filter Deals
-                  </DrawerTitle>
-                  <DealsHeader />
-                </DrawerContent>
-              </Drawer>
-
-              <Dialog>
-                {view === "list" && (
-                  <DialogTrigger asChild className="flex max-md:hidden">
-                    <Button variant="outline" size="sm">
-                      <SlidersVertical className="h-4 w-4" />
-                      Filters
-                    </Button>
-                  </DialogTrigger>
-                )}
-                <DialogContent className="max-w-4xl w-full">
-                  <DialogTitle className="text-lg font-bold mb-4">
-                    Filter Deals
-                  </DialogTitle>
-                  <DealsHeader />
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-        </div>
-
-        <div className="container-modern pb-20 px-6">
-          {isActuallyLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton
-                  key={i}
-                  className="h-42 w-full animate-pulse rounded-xl"
-                />
-              ))}
-            </div>
-          ) : data && data.length > 0 ? (
-            <div
-              className={`grid grid-cols-1 md:grid-cols-2 max-md:mt-4  gap-3 md:gap-6 ${data.length === 1 ? "max-h-[20vh]" : "h-full"}`}>
-              {data.map((deal) => (
-                <DealCard key={deal._id} deal={deal} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 card-lg">
-              <div className="p-8">
-                <Tag className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                  No deals found
-                </h3>
-                <p className="text-gray-500 mb-6">
-                  Try adjusting your search or filters
-                </p>
-              </div>
-            </div>
+      {/* ── Toolbar ── */}
+      <div className="sticky top-[76px] md:top-[156px] z-40 bg-white border-b border-border px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+        <p className="text-xs md:text-sm font-medium text-muted-foreground">
+          {!isActuallyLoading && (
+            <>
+              <span className="font-bold text-primary">{data?.length ?? 0}</span>{" "}
+              deal{(data?.length ?? 0) !== 1 ? "s" : ""} in {cityLabel}
+            </>
           )}
-        </div>
+        </p>
+
+        <FilterPanel title="Filter Deals" categoriesContent={<DealsHeader />} />
+      </div>
+
+      {/* ── Content ── */}
+      <div className="px-4 md:px-6 py-4 pb-20">
+        {isActuallyLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-44 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : data && data.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.map((deal) => (
+              <DealCard key={deal._id} deal={deal} />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="p-5 bg-muted rounded-full mb-4">
+              <Tag className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-base font-bold text-primary mb-1">No deals found</h3>
+            <p className="text-sm text-muted-foreground">
+              Try adjusting your filters or check back later for new deals.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

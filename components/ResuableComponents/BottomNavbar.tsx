@@ -4,17 +4,22 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Home,
-  Search,
-  Calendar,
-  User,
-  Store,
-  Handshake,
-  Heart,
   CalendarDays,
   Tag,
   Building2,
+  Calendar,
+  User,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+
+const NAV_LINKS = (isLoggedIn: boolean) => [
+  { name: "Home",       path: "/",           icon: Home },
+  { name: "Events",     path: "/events",     icon: CalendarDays },
+  { name: "Deals",      path: "/deals",      icon: Tag },
+  { name: "Businesses", path: "/businesses", icon: Building2 },
+  { name: "Bookings",   path: "/bookings",   icon: Calendar },
+  { name: "Profile",    path: isLoggedIn ? "/dashboard" : "/auth", icon: User },
+];
 
 export default function BottomNav() {
   const { data: session } = useSession();
@@ -22,62 +27,49 @@ export default function BottomNav() {
   const searchParams = useSearchParams();
   const currentCity = searchParams.get("city");
 
-  const isActive = (path: string) => {
-    return pathname === path || pathname.startsWith(path + "/");
-  };
+  const buildPath = (href: string) =>
+    currentCity ? `${href}?city=${currentCity}` : href;
 
-  const buildPath = (href: string) => {
-    if (!currentCity) return href;
-    return `${href}?city=${currentCity}`;
-  };
+  const isActive = (path: string) =>
+    path === "/" ? pathname === "/" : pathname.startsWith(path);
 
-  const navLinks = [
-    { name: "Home", path: "/", icon: Home },
-    { name: "Events", path: "/events", icon: CalendarDays },
-    { name: "Deals", path: "/deals", icon: Tag },
-    { name: "Businesses", path: "/businesses", icon: Building2 },
-    { name: "Bookings", path: "/bookings", icon: Calendar },
-    {
-      name: "Profile",
-      path: session ? "/dashboard" : "/auth",
-      icon: User,
-    },
-  ];
+  const links = NAV_LINKS(!!session);
 
   return (
-    <nav className="md:hidden fixed bottom-0 z-49 w-full">
-      <div
-        className="flex items-center justify-between
-      bg-white/60 backdrop-blur-2xl
-      border border-white/40
-      shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
-      >
-        {navLinks.map((link) => {
-          const Icon = link.icon;
-
-          const basePath = link.path;
-          const fullPath = buildPath(basePath);
-          const active = isActive(basePath);
-
+    <nav
+      aria-label="Mobile navigation"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50
+                 bg-white/90 backdrop-blur-xl
+                 border-t border-border
+                 shadow-[0_-2px_12px_rgba(0,0,0,0.06)]">
+      <div className="flex items-stretch">
+        {links.map(({ name, path, icon: Icon }) => {
+          const active = isActive(path);
           return (
             <Link
-              key={link.name}
-              href={fullPath}
-              className="flex-1 flex justify-center"
-            >
-              <div
-                className={`flex flex-col items-center justify-center
-      w-full h-14 border-t-2
-      transition-colors duration-150
-      ${
-        active
-          ? "text-wha-secondary border-wha-secondary"
-          : "text-wha-primary border-transparent"
-      }`}
-              >
-                <Icon size={22} strokeWidth={2} />
-                <span className="text-[10px] font-bold pt-1">{link.name}</span>
-              </div>
+              key={name}
+              href={buildPath(path)}
+              aria-label={name}
+              aria-current={active ? "page" : undefined}
+              className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5
+                         min-h-[56px] touch-manipulation
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-secondary">
+              <Icon
+                size={20}
+                strokeWidth={active ? 2.5 : 1.8}
+                className={`transition-colors duration-150 ${
+                  active ? "text-secondary" : "text-muted-foreground"
+                }`}
+              />
+              <span
+                className={`text-[9px] font-bold tracking-tight transition-colors duration-150 ${
+                  active ? "text-secondary" : "text-muted-foreground"
+                }`}>
+                {name}
+              </span>
+              {active && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[2px] bg-secondary rounded-full" />
+              )}
             </Link>
           );
         })}
