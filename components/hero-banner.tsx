@@ -82,7 +82,8 @@ export default function HeroBanner({
       {eventIds && eventIds[currentSlide] && (
         <Link
           href={getDetailLink()}
-          className="absolute bottom-6 left-6  backdrop-blur-md bg-white/20 text-white px-5 py-2 rounded-md font-medium shadow-lg transition-colors z-30 hover:bg-white/30 transition-all shadow-md hover:shadow-lg text-sm md:text-base">
+          className="absolute bottom-6 left-6  backdrop-blur-md bg-white/20 text-white px-5 py-2 rounded-md font-medium shadow-lg transition-colors z-30 hover:bg-white/30 transition-all shadow-md hover:shadow-lg text-sm md:text-base"
+        >
           View Details
         </Link>
       )}
@@ -90,13 +91,15 @@ export default function HeroBanner({
       <button
         onClick={prevSlide}
         className="absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm rounded-full p-1 md:p-2 text-white hover:bg-white/30 transition-colors z-20"
-        aria-label="Previous slide">
+        aria-label="Previous slide"
+      >
         <ChevronLeft className="h-6 w-6 md:h-8 md:w-8" />
       </button>
       <button
         onClick={nextSlide}
         className="absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm rounded-full p-1 md:p-2 text-white hover:bg-white/30 transition-colors z-20"
-        aria-label="Next slide">
+        aria-label="Next slide"
+      >
         <ChevronRight className="h-6 w-6 md:h-8 md:w-8" />
       </button>
       {/* Dots Indicator */}

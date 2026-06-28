@@ -2,23 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import {
-  Home,
-  CalendarDays,
-  Tag,
-  Building2,
-  Calendar,
-  User,
-} from "lucide-react";
+import { Home, Calendar, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 const NAV_LINKS = (isLoggedIn: boolean) => [
-  { name: "Home",       path: "/",           icon: Home },
-  { name: "Events",     path: "/events",     icon: CalendarDays },
-  { name: "Deals",      path: "/deals",      icon: Tag },
-  { name: "Businesses", path: "/businesses", icon: Building2 },
-  { name: "Bookings",   path: "/bookings",   icon: Calendar },
-  { name: "Profile",    path: isLoggedIn ? "/dashboard" : "/auth", icon: User },
+  { name: "Home",     path: "/",                              icon: Home     },
+  { name: "Bookings", path: "/bookings",                      icon: Calendar },
+  { name: "Profile",  path: isLoggedIn ? "/dashboard" : "/auth", icon: User },
 ];
 
 export default function BottomNav() {
@@ -41,7 +31,8 @@ export default function BottomNav() {
       className="md:hidden fixed bottom-0 left-0 right-0 z-50
                  bg-white/90 backdrop-blur-xl
                  border-t border-border
-                 shadow-[0_-2px_12px_rgba(0,0,0,0.06)]">
+                 shadow-[0_-2px_12px_rgba(0,0,0,0.06)]"
+    >
       <div className="flex items-stretch">
         {links.map(({ name, path, icon: Icon }) => {
           const active = isActive(path);
@@ -53,7 +44,8 @@ export default function BottomNav() {
               aria-current={active ? "page" : undefined}
               className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5
                          min-h-[56px] touch-manipulation
-                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-secondary">
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-secondary"
+            >
               <Icon
                 size={20}
                 strokeWidth={active ? 2.5 : 1.8}
@@ -64,7 +56,8 @@ export default function BottomNav() {
               <span
                 className={`text-[9px] font-bold tracking-tight transition-colors duration-150 ${
                   active ? "text-secondary" : "text-muted-foreground"
-                }`}>
+                }`}
+              >
                 {name}
               </span>
               {active && (

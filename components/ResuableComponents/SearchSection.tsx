@@ -100,14 +100,16 @@ export default function HomePageSearchWithDates({
       <FontImport />
       <div
         className="esw-root flex w-fit items-center justify-center m-auto py-8"
-        ref={containerRef}>
+        ref={containerRef}
+      >
         <div
           className={[
             "relative flex items-center rounded-full p-1.5 transition-all duration-300",
             isExpanded
               ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
               : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
-          ].join(" ")}>
+          ].join(" ")}
+        >
           {/* WHERE SECTION */}
           <SegmentSection
             label="Where"
@@ -116,7 +118,8 @@ export default function HomePageSearchWithDates({
             displayValue={location}
             placeholder="Search destinations"
             onClear={() => setLocation("")}
-            segW={segW}>
+            segW={segW}
+          >
             <div className="p-2 py-3 min-w-[280px]">
               {["Sydney", "Canberra"].map((city) => (
                 <motion.div
@@ -126,7 +129,8 @@ export default function HomePageSearchWithDates({
                   onClick={() => {
                     setLocation(city);
                     setActiveTab("when");
-                  }}>
+                  }}
+                >
                   <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#f5f4f8] group-hover:bg-[#ede8ff] transition-colors">
                     <MapPin size={18} className="text-[#6c47ff]" />
                   </div>
@@ -156,7 +160,8 @@ export default function HomePageSearchWithDates({
             onClear={() => setDate(undefined)}
             segW={segW}
             hasValue={!!date?.from}
-            panelAlign="right">
+            panelAlign="right"
+          >
             <div className="flex flex-row overflow-hidden pl-4">
               <div className="w-[190px] border-r border-black/5 p-4 flex flex-col gap-5 ">
                 <div className="flex flex-col mt-7 gap-2  px-1"></div>
@@ -170,7 +175,8 @@ export default function HomePageSearchWithDates({
                     key={btn.id}
                     onClick={() => handleQuickSelect(btn.id as any)}
                     className={`w-full text-left items-start  px-4 py-2.5 rounded-xl text-[12px] font-semibold text-[#5a5872] hover:bg-[#6c47ff]/10 
-                    hover:text-[#6c47ff] transition-all duration-200 border border-slate-300 cursor-pointer active:scale-[0.96] h-25 flex flex-col`}>
+                    hover:text-[#6c47ff] transition-all duration-200 border border-slate-300 cursor-pointer active:scale-[0.96] h-25 flex flex-col`}
+                  >
                     <span className="text-[18px] font-bold text-black">
                       {" "}
                       {btn.label}
@@ -226,7 +232,8 @@ export default function HomePageSearchWithDates({
             placeholder="Add category"
             onClear={() => setWhat("")}
             segW={segW}
-            panelAlign="right">
+            panelAlign="right"
+          >
             <div className="p-2 py-3 min-w-[240px]">
               {[
                 { id: "events", icon: CalendarIcon },
@@ -240,7 +247,8 @@ export default function HomePageSearchWithDates({
                   onClick={() => {
                     setWhat(item.id);
                     setActiveTab(null);
-                  }}>
+                  }}
+                >
                   <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#f5f4f8] group-hover:bg-[#ede8ff] transition-colors">
                     <item.icon size={18} className="text-[#6c47ff]" />
                   </div>
@@ -255,7 +263,8 @@ export default function HomePageSearchWithDates({
           {/* SEARCH BUTTON */}
           <button
             onClick={handleSearch}
-            className="flex ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-w-[48px] min-h-[48px] justify-center overflow-hidden shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none">
+            className="flex ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-w-[48px] min-h-[48px] justify-center overflow-hidden shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all cursor-pointer border-none"
+          >
             <span className="flex items-center justify-center px-3.5">
               <Search size={16} strokeWidth={3} />
             </span>
@@ -265,7 +274,8 @@ export default function HomePageSearchWithDates({
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: "auto" }}
                   exit={{ opacity: 0, width: 0 }}
-                  className="pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden block">
+                  className="pr-5 font-bold text-[13px] whitespace-nowrap overflow-hidden block"
+                >
                   Search
                 </motion.span>
               )}
@@ -318,7 +328,8 @@ function SegmentSection({
           isActive
             ? "esw-active bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
             : "hover:bg-[#eeecf5]",
-        ].join(" ")}>
+        ].join(" ")}
+      >
         <AnimatePresence>
           {ripple && (
             <motion.span
@@ -341,7 +352,8 @@ function SegmentSection({
               ? "text-[#0f0e17] font-medium"
               : "font-light italic text-[#9896aa]",
           ].join(" ")}
-          style={!hasValue ? { fontFamily: "'Fraunces', serif" } : undefined}>
+          style={!hasValue ? { fontFamily: "'Fraunces', serif" } : undefined}
+        >
           {hasValue ? displayValue : placeholder}
         </span>
         {hasValue && (
@@ -350,7 +362,8 @@ function SegmentSection({
               e.stopPropagation();
               onClear();
             }}
-            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer">
+            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer"
+          >
             <X size={10} strokeWidth={3} />
           </button>
         )}
@@ -366,7 +379,8 @@ function SegmentSection({
             initial={{ opacity: 0, y: 12, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}>
+            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}
+          >
             {children}
           </motion.div>
         )}

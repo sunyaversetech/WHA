@@ -21,7 +21,7 @@ export default function DealsPageClient() {
   const cityLabel = searchParams.get("city") ?? "Australia";
 
   return (
-    <div className="flex flex-col min-h-screen pt-20 md:pt-40">
+    <div className="flex flex-col min-h-screen pt-[148px] md:pt-[88px]">
 
       {/* ── Toolbar ── */}
       <div className="sticky top-[76px] md:top-[156px] z-40 bg-white border-b border-border px-4 md:px-6 py-3 flex items-center justify-between gap-3">

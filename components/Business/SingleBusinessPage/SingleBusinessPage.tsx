@@ -1,21 +1,25 @@
 "use client";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Tag,
-  ChevronLeft,
-  BadgeCheck,
-  Dot,
-  Star,
-  Heart,
-  Share,
-  Loader2,
-  MapPin,
-} from "lucide-react";
+
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import {
+  ChevronLeft,
+  BadgeCheck,
+  Star,
+  Heart,
+  Share2,
+  MapPin,
+  Loader2,
+  Clock,
+  User,
+  Info,
+  Check,
+  ChevronRight,
+} from "lucide-react";
 import { useGetSingleBusiness } from "@/services/business.service";
 import BusinessReviewSection from "@/components/Business/Comment";
-import Map from "./Map";
+import MapComponent from "./Map";
 import { useGetReview } from "@/services/review.service";
 import {
   useCreateFavroite,
@@ -24,13 +28,9 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { cn } from "@/lib/utils";
 import Loading from "@/app/businesses/loading";
 import BusinessHours from "./Hours";
 import { useAuthModal } from "@/components/Auth/DialogLogin/use-auth-model";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EventCard from "@/components/cards/event-card";
 import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
 import DealCard from "@/components/cards/deal-card";
@@ -38,64 +38,148 @@ import EventDrawer from "./EventDrawer";
 import DealDrawer from "./DealDrawer";
 import ServiceBookingList from "./Bookings/Bookings";
 
+/* ─────────────────── design tokens ─────────────────── */
+const T = {
+  navy: "#0f2748",
+  navyDark: "#051e3a",
+  blue: "#3771db",
+  gray: "#64748b",
+  lightGray: "#94a3b8",
+  border: "#e9eef2",
+  bg: "#f8fafc",
+  white: "#fff",
+};
+
+/* ─────────────────── tiny helpers ─────────────────── */
+function Divider({ my = 32 }: { my?: number }) {
+  return (
+    <div
+      style={{
+        height: 1,
+        background: T.border,
+        margin: `${my}px 0`,
+      }}
+    />
+  );
+}
+
+function SecTitle({
+  children,
+  action,
+}: {
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 20,
+      }}
+    >
+      <h2
+        style={{
+          fontSize: 20,
+          fontWeight: 800,
+          color: T.navy,
+          margin: 0,
+        }}
+      >
+        {children}
+      </h2>
+      {action}
+    </div>
+  );
+}
+
+function StarRow({
+  rating,
+  size = 14,
+}: {
+  rating: number;
+  size?: number;
+}) {
+  return (
+    <div style={{ display: "flex", gap: 2 }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          size={size}
+          fill={i <= Math.round(rating) ? "#f5b301" : T.border}
+          color={i <= Math.round(rating) ? "#f5b301" : T.border}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN COMPONENT
+═══════════════════════════════════════════════════════════ */
 export default function BusinessPage() {
   const { data, isLoading } = useGetSingleBusiness();
   const { mutate, isPending } = useCreateFavroite();
   const { onOpen } = useAuthModal();
+  const router = useRouter();
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+
+  const businessId = data?.data?._id;
   const slug = data?.data?.business_name
     ?.toLowerCase()
     .replace(/[^a-z0-9]/g, "");
+
   const { data: reviews } = useGetReview(slug ?? "");
-  const queryClient = useQueryClient();
-  const router = useRouter();
-  const { data: session } = useSession();
-  const businessId = data?.data?._id;
+  const { data: userFavorites } = useGetUserFavroite();
 
-  const business = {
-    business_name: "The Coffee Hub",
-    business_category: "Cafe & Restaurant",
-    email: "contact@coffeehub.com",
-    city_name: "Sydney",
-    community_name: "Surry Hills",
-    location: "-33.8832, 151.2100",
-    image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24",
-    verified: true,
-    abn_number: "12 345 678 910",
-  };
+  const [portfolioExpanded, setPortfolioExpanded] = useState(false);
 
-  const averageRating =
+  const isBusinessFavorite = userFavorites?.data?.business?.some(
+    (item) => (item._id ?? "").toString() === businessId?.toString(),
+  );
+
+  const avgRating =
     reviews?.data && reviews.data.length > 0
-      ? Math.round(
-          reviews.data.reduce((acc, review) => acc + review.rating, 0) /
-            reviews.data.length,
-        )
-      : 0;
+      ? reviews.data.reduce((acc, r) => acc + r.rating, 0) /
+        reviews.data.length
+      : null;
+
+  const totalReviews = reviews?.data?.length ?? 0;
+
+  /* Extract unique team members from services */
+  const teamMembers = useMemo(() => {
+    const map = new Map<string, any>();
+    data?.data?.services?.forEach((s: any) => {
+      s.assigned_employees?.forEach((emp: any) => {
+        if (emp?._id) map.set(emp._id, emp);
+      });
+    });
+    return Array.from(map.values());
+  }, [data?.data?.services]);
+
+  const activeServices = useMemo(
+    () => (data?.data?.services ?? []).filter((s: any) => s.is_active),
+    [data?.data?.services],
+  );
 
   const handleShare = async () => {
-    const shareData = {
-      title: data?.data?.business_name || "Check out this business",
-      text: `Take a look at ${data?.data?.business_name} on our platform!`,
-      url: window.location.href,
-    };
-
     try {
       if (navigator.share) {
-        await navigator.share(shareData);
+        await navigator.share({
+          title: data?.data?.business_name ?? "Business",
+          url: window.location.href,
+        });
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert("Link copied to clipboard!");
+        toast.success("Link copied");
       }
-    } catch (err) {
-      console.error("Error sharing:", err);
-    }
+    } catch {}
   };
 
-  const handleAddRemoveFavorite = () => {
-    if (!session) {
-      onOpen();
-      router.push("/auth");
-      return;
-    }
+  const handleFav = () => {
+    if (!session) { onOpen(); return; }
     mutate(
       { item_id: businessId, item_type: "User" },
       {
@@ -104,328 +188,1010 @@ export default function BusinessPage() {
           toast.success(msg.message);
           queryClient.invalidateQueries({ queryKey: ["favroite"] });
         },
-        onError: () => {
-          toast.error("Failed to add to favorites");
-        },
+        onError: () => toast.error("Failed to update favourites"),
       },
     );
   };
 
-  const { data: userFavorites } = useGetUserFavroite();
-
-  const isBusinessFavorite = userFavorites?.data?.business?.some(
-    (item) => (item._id ?? "").toString() === businessId?.toString(),
-  );
-
   if (isLoading) return <Loading />;
 
-  return (
-    <div className="container-modern mx-auto p-6 md:mt-20 z-1">
-      <div className="flex flex-col md:flex-col">
-        <div className="order-2 md:order-1 mt-4 md:mt-0 mb-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
-                {data?.data.business_name}
-              </h1>
-              {business.verified ? (
-                <BadgeCheck className="text-green h-5 w-5 sm:h-6 sm:w-6 fill-blue-500 text-white" />
-              ) : (
-                <Button variant={"outline"}>not verified</Button>
-              )}
-            </div>
+  const biz = data?.data;
+  const name        = biz?.business_name ?? "Business";
+  const category    = biz?.business_category ?? "";
+  const city        = biz?.city === "other" ? (biz?.city_name ?? "") : (biz?.city ?? "");
+  const address     = biz?.location ?? "";
+  const heroImg     = biz?.image || "/placeholder.svg";
+  const events      = biz?.event ?? [];
+  const deals       = biz?.deal ?? [];
+  const hasGeo      = !!(biz?.latitude && biz?.longitude);
 
-            <div className="hidden flex items-center gap-2 md:flex md:items-center md:gap-2">
-              <button
-                onClick={handleAddRemoveFavorite}
-                className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition">
-                {isPending ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
-                ) : (
-                  <Heart
-                    className={cn(
-                      "h-5 w-5 sm:h-6 sm:w-6 text-primary transition-all",
-                      isBusinessFavorite
-                        ? "text-red-500 scale-110"
-                        : "text-neutral-600 hover:text-neutral-900",
-                    )}
-                    fill={isBusinessFavorite ? "red" : "none"}
-                  />
-                )}
-              </button>
+  const ratingNum   = avgRating ? Number(avgRating.toFixed(1)) : null;
 
-              <button
-                onClick={handleShare}
-                className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition-all active:scale-90"
-                title="Share business">
-                <Share className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-              </button>
-            </div>
-          </div>
+  /* ── shared icon action buttons ── */
+  const ActionBtn = ({
+    onClick,
+    children,
+    ghost = false,
+  }: {
+    onClick: () => void;
+    children: React.ReactNode;
+    ghost?: boolean;
+  }) => (
+    <button
+      onClick={onClick}
+      style={{
+        width: 38,
+        height: 38,
+        borderRadius: "50%",
+        background: ghost ? "rgba(255,255,255,0.9)" : T.bg,
+        border: ghost ? "none" : `1px solid ${T.border}`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        flexShrink: 0,
+      }}
+    >
+      {children}
+    </button>
+  );
 
-          <div className="mt-3 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2 text-sm text-muted-foreground flex-wrap">
-            <div className="flex items-center gap-1 sm:gap-2">
-              <span className="font-medium text-foreground">
-                {averageRating.toFixed(1)}
-              </span>
-              <div className="flex gap-1">
-                {[...Array(5)].map((_, index) => (
-                  <Star
-                    key={index}
-                    className={`h-4 w-4 ${
-                      index < averageRating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300"
-                    }`}
-                  />
-                ))}
-              </div>
-              <span>
-                (
-                {reviews?.data && reviews?.data.length > 0
-                  ? reviews?.data.length
-                  : "No Review Yet"}
-                )
-              </span>
-            </div>
+  /* ── primary CTA button ── */
+  const BookNowBtn = ({ full = false }: { full?: boolean }) => (
+    <button
+      onClick={() => router.push(`/bookings?business_id=${businessId}`)}
+      style={{
+        background: T.navyDark,
+        color: T.white,
+        border: "none",
+        borderRadius: 10,
+        padding: "12px 28px",
+        fontSize: 14,
+        fontWeight: 700,
+        cursor: "pointer",
+        width: full ? "100%" : undefined,
+        whiteSpace: "nowrap",
+      }}
+    >
+      Book now
+    </button>
+  );
 
-            <Dot className="hidden md:block h-4 w-4" />
+  /* ── inline rating summary ── */
+  const RatingSummary = () => (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+      {ratingNum ? (
+        <>
+          <StarRow rating={ratingNum} />
+          <span style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
+            {ratingNum.toFixed(1)}
+          </span>
+          <span style={{ fontSize: 14, color: T.gray }}>
+            ({totalReviews} review{totalReviews !== 1 ? "s" : ""})
+          </span>
+        </>
+      ) : (
+        <>
+          <StarRow rating={0} />
+          <span style={{ fontSize: 13, color: T.lightGray }}>No reviews yet</span>
+        </>
+      )}
+      {category && (
+        <>
+          <span style={{ color: T.lightGray }}>·</span>
+          <span style={{ fontSize: 14, color: T.gray, textTransform: "capitalize" }}>
+            {category}
+          </span>
+        </>
+      )}
+    </div>
+  );
 
-            <div className="capitalize">
-              {data?.data.city === "other"
-                ? data?.data.city_name
-                : data?.data.city}
-            </div>
-          </div>
-        </div>
-
-        <div className="order-1 md:order-2">
-          <div className="relative h-80 md:h-[70vh] w-full max-sm:w-screen max-sm:-ml-6 max-sm:-mt-6 md:rounded-xl overflow-hidden">
-            <Image
-              fill
-              src={data?.data?.image || "/placeholder.svg"}
-              alt={data?.data?.business_name || "Bussiness Image"}
-              className="w-full h-full object-cover"
-            />
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-10 md:rounded-2xl"></div>
-
-            <div className="absolute inset-0 z-50 flex items-start justify-between p-3 md:hidden">
-              <Button
-                variant={"ghost"}
-                className="p-0 transition-all hover:scale-105 active:scale-95"
-                onClick={() => router.back()}>
-                <ChevronLeft
-                  className="h-9 w-9 cursor-pointer rounded-full border  p-1.5 
-                         text-primary bg-white transition-all hover:scale-105 active:scale-95"
-                />{" "}
-              </Button>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleAddRemoveFavorite}
-                  className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95">
-                  {isPending ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
-                  ) : (
-                    <Heart
-                      className={cn(
-                        "h-5 w-5 md:h-6 md:w-6 text-primary transition-all",
-                        isBusinessFavorite
-                          ? "text-red-500 scale-110"
-                          : "text-neutral-600 hover:text-neutral-900",
-                      )}
-                      fill={isBusinessFavorite ? "red" : "none"}
-                    />
-                  )}
-                </button>
-
-                <button
-                  className="flex items-center justify-center p-2 border rounded-full bg-white transition-all hover:scale-105 active:scale-95"
-                  onClick={handleShare}>
-                  <Share className="h-5 w-5 text-primary" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+  /* ── Team member circle ── */
+  const TeamCircle = ({ emp }: { emp: any }) => (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 8,
+        flexShrink: 0,
+        width: 80,
+      }}
+    >
+      <div
+        style={{
+          width: 68,
+          height: 68,
+          borderRadius: "50%",
+          background: T.bg,
+          border: `2px solid ${T.border}`,
+          overflow: "hidden",
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {emp.employee_photo ? (
+          <Image
+            fill
+            src={emp.employee_photo}
+            alt={emp.full_name}
+            style={{ objectFit: "cover" }}
+            sizes="68px"
+          />
+        ) : (
+          <User size={28} color={T.lightGray} />
+        )}
       </div>
+      <span
+        style={{
+          fontSize: 12,
+          fontWeight: 600,
+          color: T.navy,
+          textAlign: "center",
+          lineHeight: 1.3,
+          wordBreak: "break-word",
+          maxWidth: 76,
+        }}
+      >
+        {emp.full_name?.split(" ")[0] ?? "Staff"}
+      </span>
+    </div>
+  );
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4 md:mt-8">
-        <div className="lg:col-span-2">
-          <Tabs defaultValue="services" className="w-full">
-            <TabsList className="w-full border-none! p-0">
-              <TabsTrigger
-                value="services"
-                className="data-[state=active]:bg-priamry!  data-[state=active]:shadow-none! data-[state=active]:text-white!  
-                data-[state=active]:border-b-blue-950/80 rounded-full border-2 p-2 md:py-5 text-base md:text-xl font-bold text-primary!">
-                Services
-              </TabsTrigger>
-              <TabsTrigger
-                value="event"
-                className="data-[state=active]:bg-priamry! data-[state=active]:shadow-none! data-[state=active]:text-white!  
-                data-[state=active]:border-b-blue-950/80 rounded-full border-2 p-2 md:py-5 text-base md:text-xl font-bold text-primary!">
-                Event
-              </TabsTrigger>
-              <TabsTrigger
-                value="deal"
-                className="data-[state=active]:bg-primary! data-[state=active]:shadow-none! data-[state=active]:text-white!  
-                data-[state=active]:border-b-blue-950/80 rounded-full border-2 p-2 md:py-5 text-base md:text-xl font-bold text-primary!">
-                Deals
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="services" className="w-full mt-6">
-              <ServiceBookingList services={data?.data?.services ?? []} />
-            </TabsContent>
-            <TabsContent value="event" className="mt-2">
-              <div
-                className={`grid grid-cols-1 md:${data?.data?.event && data?.data?.event?.length < 2 ? "grid-cols-1" : "grid-cols-2"} gap-2`}>
-                {data?.data.event && data?.data.event.length > 0 ? (
-                  data?.data.event.slice(0, 2).map((item: EventFormValues) => {
-                    return <EventCard key={item._id} event={item} />;
-                  })
-                ) : (
-                  <p className="text-center">
-                    There is no Event Form This Business
-                  </p>
-                )}
-              </div>
-              <div
-                className={`${data?.data.event && data?.data.event?.length < 3 ? "hidden" : "flex"} w-full m-auto mt-2 justify-center`}>
-                <EventDrawer
-                  event={data?.data.event}
-                  user={data?.data.business_name}
-                />
-              </div>
-            </TabsContent>
-            <TabsContent value="deal" className="mt-2">
-              <div
-                className={`grid grid-cols-1 md:${data?.data?.deal && data?.data?.deal?.length < 2 ? "grid-cols-1" : "grid-cols-2"} gap-2`}>
-                {data?.data?.deal && data?.data?.deal?.length > 0 ? (
-                  data?.data?.deal
-                    .splice(0, 2)
-                    .map((item) => <DealCard key={item._id} deal={item} />)
-                ) : (
-                  <p className="text-center">
-                    There is no Deal Form This Business
-                  </p>
-                )}
-              </div>
-              <div
-                className={`${data?.data.deal && data?.data.deal?.length < 3 ? "hidden" : "flex"} w-full m-auto mt-2 justify-center`}>
-                <DealDrawer
-                  deal={data?.data.deal ?? []}
-                  user={data?.data.business_name ?? ""}
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
+  /* ═══════════════ LEFT MAIN CONTENT sections ═══════════════ */
+  const MainContent = () => (
+    <div>
+      {/* SERVICES */}
+      <section>
+        <SecTitle>
+          Services
+          {activeServices.length > 0 && (
+            <span style={{ fontSize: 13, color: T.gray, fontWeight: 500 }}>
+              {activeServices.length} available
+            </span>
+          )}
+        </SecTitle>
+        <ServiceBookingList services={biz?.services ?? []} />
+      </section>
 
-          <BusinessReviewSection reviews={reviews?.data || []} />
-
-          <div className="md:card-lg md:p-4 md:p-6 pb-4 md:pb-0">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
-              About
-            </h2>
-          </div>
-
-          <div className="md:card-lg md:p-4 md:p-6 pb-4 md:pb-0">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
-              Location
-            </h2>
-            {data?.data?.latitude && data?.data?.longitude ? (
-              <Map
-                latitude={data.data.latitude}
-                longitude={data.data.longitude}
-                business={data?.data ?? ""}
-              />
-            ) : (
-              <div className="h-[200px] flex items-center justify-center bg-slate-50 rounded-xl border border-dashed">
-                No Map Location available
+      {/* EVENTS */}
+      {events.length > 0 && (
+        <>
+          <Divider />
+          <section>
+            <SecTitle>Events</SecTitle>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: 16,
+              }}
+            >
+              {events.slice(0, 2).map((item: EventFormValues) => (
+                <EventCard key={item._id} event={item} />
+              ))}
+            </div>
+            {events.length > 2 && (
+              <div style={{ marginTop: 14, textAlign: "center" }}>
+                <EventDrawer event={events} user={name} />
               </div>
             )}
+          </section>
+        </>
+      )}
 
-            <div className="mt-4">
-              <span className="text-sm">{data?.data.location}</span>
+      {/* DEALS */}
+      {deals.length > 0 && (
+        <>
+          <Divider />
+          <section>
+            <SecTitle>Deals</SecTitle>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: 16,
+              }}
+            >
+              {deals.slice(0, 2).map((item: any) => (
+                <DealCard key={item._id} deal={item} />
+              ))}
+            </div>
+            {deals.length > 2 && (
+              <div style={{ marginTop: 14, textAlign: "center" }}>
+                <DealDrawer deal={deals} user={name} />
+              </div>
+            )}
+          </section>
+        </>
+      )}
+
+      {/* TEAM */}
+      {teamMembers.length > 0 && (
+        <>
+          <Divider />
+          <section>
+            <SecTitle
+              action={
+                <span style={{ fontSize: 14, color: T.blue, fontWeight: 600, cursor: "pointer" }}>
+                  See all
+                </span>
+              }
+            >
+              Team
+            </SecTitle>
+            <div
+              style={{
+                display: "flex",
+                gap: 16,
+                overflowX: "auto",
+                paddingBottom: 8,
+                scrollbarWidth: "none",
+              }}
+            >
+              {teamMembers.map((emp: any) => (
+                <TeamCircle key={emp._id} emp={emp} />
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* REVIEWS */}
+      <Divider />
+      <section>
+        {ratingNum && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              marginBottom: 24,
+              padding: "20px 24px",
+              background: T.bg,
+              borderRadius: 16,
+              border: `1px solid ${T.border}`,
+            }}
+          >
+            <div style={{ textAlign: "center" }}>
+              <div
+                style={{
+                  fontSize: 48,
+                  fontWeight: 900,
+                  color: T.navy,
+                  lineHeight: 1,
+                }}
+              >
+                {ratingNum.toFixed(1)}
+              </div>
+              <div style={{ fontSize: 12, color: T.gray, marginTop: 4 }}>
+                out of 5
+              </div>
+            </div>
+            <div>
+              <StarRow rating={ratingNum} size={24} />
+              <div style={{ fontSize: 14, color: T.gray, marginTop: 6 }}>
+                Based on {totalReviews} review{totalReviews !== 1 ? "s" : ""}
+              </div>
+            </div>
+          </div>
+        )}
+        <BusinessReviewSection reviews={reviews?.data || []} />
+      </section>
+
+      {/* PORTFOLIO */}
+      <Divider />
+      <section>
+        <SecTitle
+          action={
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Info size={15} color={T.lightGray} />
+            </div>
+          }
+        >
+          Portfolio
+        </SecTitle>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 4,
+            borderRadius: 16,
+            overflow: "hidden",
+          }}
+        >
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                position: "relative",
+                aspectRatio: "1",
+                background: T.bg,
+                overflow: "hidden",
+              }}
+            >
+              <Image
+                fill
+                src={heroImg}
+                alt="Portfolio"
+                style={{
+                  objectFit: "cover",
+                  filter: i > 0 ? `brightness(${1 - i * 0.04})` : undefined,
+                }}
+                sizes="(max-width: 768px) 33vw, 200px"
+              />
+              {i === 8 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "rgba(2,12,26,0.55)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setPortfolioExpanded(true)}
+                >
+                  <span
+                    style={{
+                      color: T.white,
+                      fontSize: 22,
+                      fontWeight: 800,
+                      letterSpacing: "-0.5px",
+                    }}
+                  >
+                    +62
+                  </span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* OPENING TIMES + ADDITIONAL INFO */}
+      <Divider />
+      <section>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 40,
+          }}
+          className="max-sm:grid-cols-1"
+        >
+          {/* Opening times */}
+          <div>
+            <SecTitle>Opening times</SecTitle>
+            <BusinessHours hours={biz?.hours} open />
+          </div>
+
+          {/* Additional information */}
+          <div>
+            <SecTitle>Additional information</SecTitle>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[
+                "Accepts online bookings",
+                "Instant confirmation",
+                "Accepts card payments",
+                biz?.verified ? "Verified business" : null,
+                biz?.abn_number ? `ABN: ${biz.abn_number}` : null,
+              ]
+                .filter(Boolean)
+                .map((item) => (
+                  <div
+                    key={item as string}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      fontSize: 14,
+                      color: T.navy,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: "50%",
+                        background: "#e8f5e9",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Check size={11} color="#2e7d32" strokeWidth={3} />
+                    </div>
+                    {item}
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* LOCATION */}
+      <Divider />
+      <section style={{ paddingBottom: 40 }}>
+        <SecTitle>Location</SecTitle>
+        {hasGeo ? (
+          <div style={{ borderRadius: 16, overflow: "hidden", height: 280 }}>
+            <MapComponent
+              latitude={biz.latitude}
+              longitude={biz.longitude}
+              business={biz}
+            />
+          </div>
+        ) : (
+          <div
+            style={{
+              height: 200,
+              borderRadius: 16,
+              background: T.bg,
+              border: `1px dashed ${T.border}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: T.lightGray,
+              fontSize: 14,
+            }}
+          >
+            No location available
+          </div>
+        )}
+        {address && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 8,
+              marginTop: 14,
+            }}
+          >
+            <MapPin size={15} color={T.gray} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div style={{ fontSize: 14, color: T.gray }}>
+              {address}
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                  data?.data.location || "",
-                )}`}
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-primary text-sm pl-1">
-                Get Directions
+                style={{
+                  display: "block",
+                  color: T.blue,
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  marginTop: 4,
+                  fontSize: 14,
+                }}
+              >
+                Get directions
               </a>
             </div>
           </div>
+        )}
+      </section>
+    </div>
+  );
 
-          <div className="md:card-lg md:p-4 md:p-6 pb-4 md:pb-0">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
-              Operating Hours
-            </h2>
-            <BusinessHours hours={data?.data?.hours} open={true} />
+  /* ═══════════════ STICKY SIDEBAR (desktop) ═══════════════ */
+  const Sidebar = () => (
+    <div
+      style={{
+        position: "sticky",
+        top: 96,
+        border: `1px solid ${T.border}`,
+        borderRadius: 20,
+        overflow: "hidden",
+        background: T.white,
+        boxShadow: "0 4px 32px rgba(2,12,26,0.08)",
+      }}
+    >
+      {/* Identity */}
+      <div style={{ padding: "24px 24px 0" }}>
+        <h3
+          style={{
+            fontSize: 17,
+            fontWeight: 800,
+            color: T.navy,
+            lineHeight: 1.25,
+            marginBottom: 4,
+          }}
+        >
+          {name}
+        </h3>
+        {category && (
+          <p
+            style={{
+              fontSize: 13,
+              color: T.gray,
+              textTransform: "capitalize",
+              marginBottom: 10,
+            }}
+          >
+            {category}
+          </p>
+        )}
+        {ratingNum && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              marginBottom: 16,
+            }}
+          >
+            <StarRow rating={ratingNum} size={13} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>
+              {ratingNum.toFixed(1)}
+            </span>
+            <span style={{ fontSize: 13, color: T.lightGray }}>
+              ({totalReviews})
+            </span>
+          </div>
+        )}
+        <BookNowBtn full />
+      </div>
+
+      <div style={{ height: 1, background: T.border, margin: "20px 24px" }} />
+
+      {/* Hours */}
+      <div style={{ padding: "0 24px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 7,
+            marginBottom: 12,
+          }}
+        >
+          <Clock size={14} color={T.gray} />
+          <span style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
+            Opening hours
+          </span>
+        </div>
+        <BusinessHours hours={biz?.hours} />
+      </div>
+
+      <div style={{ height: 1, background: T.border, margin: "20px 24px" }} />
+
+      {/* Address */}
+      {address && (
+        <div style={{ padding: "0 24px 20px" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+            <MapPin size={14} color={T.gray} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <p style={{ fontSize: 13, color: T.gray, lineHeight: 1.5 }}>
+                {address}
+              </p>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: 13,
+                  color: T.blue,
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  display: "inline-block",
+                  marginTop: 4,
+                }}
+              >
+                Get directions
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mini map */}
+      {hasGeo && (
+        <div
+          style={{
+            height: 180,
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <MapComponent
+            latitude={biz.latitude}
+            longitude={biz.longitude}
+            business={biz}
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  /* ══════════════════════════════════════════════════════════
+     RENDER
+  ══════════════════════════════════════════════════════════ */
+  return (
+    <div style={{ minHeight: "100vh", background: T.white }}>
+
+      {/* ══════════ MOBILE LAYOUT ══════════ */}
+      <div className="md:hidden">
+        {/* Full-bleed hero */}
+        <div style={{ position: "relative", height: 300 }}>
+          <Image
+            fill
+            src={heroImg}
+            alt={name}
+            style={{ objectFit: "cover" }}
+            priority
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(to top, rgba(2,12,26,0.5) 0%, transparent 60%)",
+            }}
+          />
+          {/* Overlay controls */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              padding: "48px 16px 16px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <ActionBtn onClick={() => router.back()} ghost>
+              <ChevronLeft size={20} color={T.navy} />
+            </ActionBtn>
+            <div style={{ display: "flex", gap: 8 }}>
+              <ActionBtn onClick={handleShare} ghost>
+                <Share2 size={17} color={T.navy} />
+              </ActionBtn>
+              <ActionBtn onClick={handleFav} ghost>
+                {isPending ? (
+                  <Loader2 size={16} className="animate-spin" color={T.navy} />
+                ) : (
+                  <Heart
+                    size={17}
+                    color={isBusinessFavorite ? "#e11d48" : T.navy}
+                    fill={isBusinessFavorite ? "#e11d48" : "none"}
+                    strokeWidth={2}
+                  />
+                )}
+              </ActionBtn>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-6 sticky top-32 self-start">
-          <Card className="bg-slate-50 border-none">
-            <CardContent className="pt-6 space-y-4">
-              <h3 className="text-xl capitalize">
-                {data?.data.business_name} | {data?.data.business_category}
-              </h3>
-              <div className="flex items-center gap-1 sm:gap-2">
-                <span className="font-medium text-foreground">
-                  {averageRating.toFixed(1)}
-                </span>
-                <div className="flex gap-1">
-                  {[...Array(5)].map((_, index) => (
-                    <Star
-                      key={index}
-                      className={`h-4 w-4 ${
-                        index < averageRating
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300"
-                      }`}
-                    />
-                  ))}
+        {/* Mobile business info */}
+        <div
+          style={{
+            padding: "20px 16px 8px",
+            borderBottom: `1px solid ${T.border}`,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  flexWrap: "wrap",
+                }}
+              >
+                <h1
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 800,
+                    color: T.navy,
+                    lineHeight: 1.2,
+                    margin: 0,
+                  }}
+                >
+                  {name}
+                </h1>
+                {biz?.verified && (
+                  <BadgeCheck size={20} fill={T.blue} color={T.white} />
+                )}
+              </div>
+              <div style={{ marginTop: 6 }}>
+                <RatingSummary />
+              </div>
+              {(city || address) && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    marginTop: 6,
+                    fontSize: 13,
+                    color: T.gray,
+                  }}
+                >
+                  <MapPin size={13} color={T.gray} />
+                  <span style={{ textTransform: "capitalize" }}>
+                    {city || address}
+                  </span>
                 </div>
-                <span>
-                  (
-                  {reviews?.data && reviews?.data.length > 0
-                    ? reviews?.data.length
-                    : "No Review Yet"}
-                  )
-                </span>
-              </div>
-              <Button
-                className="wha-btn-primary w-full"
-                onClick={() =>
-                  router.push(`/bookings?business_id=${businessId}`)
-                }>
-                Book Now
-              </Button>
-              <Separator />
-              <h3 className="font-bold mb-2">Business Operating Hours</h3>
+              )}
+            </div>
+          </div>
 
-              <BusinessHours hours={data?.data?.hours} />
-              <div className="flex items-start gap-2">
-                <MapPin className="h-9 w-9 text-primary" />
-                <span>
-                  {data?.data?.location || "Venue TBA"}{" "}
-                  <div>
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        data?.data.location || "",
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-bold text-primary text-sm">
-                      Get Directions
-                    </a>
-                  </div>
-                </span>
+          {/* Mobile Book Now */}
+          <div style={{ marginTop: 16, marginBottom: 4 }}>
+            <BookNowBtn full />
+          </div>
+        </div>
+
+        {/* Mobile sections */}
+        <div style={{ padding: "24px 16px 80px" }}>
+          <MainContent />
+        </div>
+      </div>
+
+      {/* ══════════ DESKTOP LAYOUT ══════════ */}
+      <div className="hidden md:block">
+        <div style={{ height: 80 }} />
+
+        {/* ── HERO IMAGE GRID ── */}
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "0 32px",
+          }}
+        >
+          {/* Top action row */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 10,
+              marginBottom: 14,
+            }}
+          >
+            <button
+              onClick={handleShare}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                background: "transparent",
+                border: `1px solid ${T.border}`,
+                borderRadius: 8,
+                padding: "7px 14px",
+                fontSize: 13,
+                fontWeight: 600,
+                color: T.navy,
+                cursor: "pointer",
+              }}
+            >
+              <Share2 size={14} />
+              Share
+            </button>
+            <button
+              onClick={handleFav}
+              disabled={isPending}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                background: "transparent",
+                border: `1px solid ${T.border}`,
+                borderRadius: 8,
+                padding: "7px 14px",
+                fontSize: 13,
+                fontWeight: 600,
+                color: isBusinessFavorite ? "#e11d48" : T.navy,
+                cursor: "pointer",
+              }}
+            >
+              {isPending ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Heart
+                  size={14}
+                  fill={isBusinessFavorite ? "#e11d48" : "none"}
+                  color={isBusinessFavorite ? "#e11d48" : T.navy}
+                />
+              )}
+              {isBusinessFavorite ? "Saved" : "Save"}
+            </button>
+          </div>
+
+          {/* Image grid */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.55fr 1fr",
+              gridTemplateRows: "220px 220px",
+              gap: 8,
+              borderRadius: 20,
+              overflow: "hidden",
+              height: 448,
+            }}
+          >
+            {/* Large main image spans both rows */}
+            <div style={{ position: "relative", gridRow: "1 / 3" }}>
+              <Image
+                fill
+                src={heroImg}
+                alt={name}
+                style={{ objectFit: "cover" }}
+                priority
+                sizes="(max-width: 1200px) 60vw, 720px"
+              />
+            </div>
+            {/* Top-right small image */}
+            <div style={{ position: "relative" }}>
+              <Image
+                fill
+                src={heroImg}
+                alt={name}
+                style={{ objectFit: "cover", filter: "brightness(0.92)" }}
+                sizes="320px"
+              />
+            </div>
+            {/* Bottom-right small image + "See all" */}
+            <div style={{ position: "relative" }}>
+              <Image
+                fill
+                src={heroImg}
+                alt={name}
+                style={{ objectFit: "cover", filter: "brightness(0.82)" }}
+                sizes="320px"
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "rgba(2,12,26,0.18)",
+                  display: "flex",
+                  alignItems: "flex-end",
+                  justifyContent: "flex-end",
+                  padding: 14,
+                }}
+              >
+                <button
+                  style={{
+                    background: "rgba(255,255,255,0.95)",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "7px 16px",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: T.navy,
+                    cursor: "pointer",
+                  }}
+                >
+                  See all photos
+                </button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+        </div>
+
+        {/* ── BUSINESS INFO BAR ── */}
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "24px 32px 0",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 24,
+            }}
+          >
+            {/* Left: name + rating + location */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <h1
+                  style={{
+                    fontSize: 28,
+                    fontWeight: 900,
+                    color: T.navy,
+                    lineHeight: 1.15,
+                    margin: 0,
+                  }}
+                >
+                  {name}
+                </h1>
+                {biz?.verified && (
+                  <BadgeCheck size={26} fill={T.blue} color={T.white} />
+                )}
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <RatingSummary />
+              </div>
+              {(city || address) && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    marginTop: 7,
+                    fontSize: 13,
+                    color: T.gray,
+                  }}
+                >
+                  <MapPin size={13} color={T.gray} />
+                  <span style={{ textTransform: "capitalize" }}>{city}</span>
+                  {city && address && (
+                    <span style={{ color: T.border }}>·</span>
+                  )}
+                  <span>{address}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Right: service count + book button */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: 10,
+                flexShrink: 0,
+              }}
+            >
+              {activeServices.length > 0 && (
+                <span style={{ fontSize: 13, color: T.gray, fontWeight: 500 }}>
+                  {activeServices.length} services available
+                </span>
+              )}
+              <BookNowBtn />
+            </div>
+          </div>
+
+          {/* Thin divider */}
+          <div
+            style={{ height: 1, background: T.border, marginTop: 24 }}
+          />
+        </div>
+
+        {/* ── 2-COLUMN CONTENT ── */}
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "36px 32px 80px",
+            display: "grid",
+            gridTemplateColumns: "1fr 360px",
+            gap: 56,
+            alignItems: "start",
+          }}
+        >
+          {/* LEFT MAIN */}
+          <MainContent />
+
+          {/* RIGHT SIDEBAR */}
+          <Sidebar />
         </div>
       </div>
     </div>

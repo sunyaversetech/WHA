@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function DealNotFoundPage() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-white flex items-center justify-center p-6">
       <div className="max-w-md w-full text-center space-y-6 bg-white p-10 rounded-2xl shadow-sm border border-gray-100">
         <div className="relative mx-auto w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center">
           <SearchX className="h-12 w-12 text-blue-500" />

@@ -39,7 +39,7 @@ function isPromise<T>(value: any): value is Promise<T> {
 
 function DealDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 gap-4">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 gap-4">
       <Skeleton className="h-80 w-full max-w-2xl rounded-2xl" />
       <Skeleton className="h-32 w-full max-w-2xl rounded-2xl" />
       <Skeleton className="h-24 w-full max-w-2xl rounded-2xl" />
@@ -165,13 +165,14 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
   const isClaimed = redemptionResult?.success && !isVerified;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm ">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
           <Link
             href="/deals"
             className="flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition active:scale-95"
-            aria-label="Back to deals">
+            aria-label="Back to deals"
+          >
             <ArrowLeft className="h-4 w-4 text-gray-600" />
           </Link>
           <h1 className="text-sm font-semibold text-gray-700 truncate">
@@ -297,7 +298,8 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                 <Button
                   onClick={() => router.push("/dashboard/tickets")}
                   variant={"outline"}
-                  className="text-sm p-2 w-40 font-bold  text-green-600 max-w-xs">
+                  className="text-sm p-2 w-40 font-bold  text-green-600 max-w-xs"
+                >
                   Ticket
                 </Button>
               </div>
@@ -328,7 +330,8 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
                   onClick={handleRedeemClick}
                   variant={"outline"}
                   disabled={isPending || isPendingMultiple}
-                  className="w-full">
+                  className="w-full"
+                >
                   {isPending || isPendingMultiple ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" /> Claiming…
@@ -409,7 +412,8 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
           {deal.data.user && (
             <Link
               href={`/businesses/${slug}`}
-              className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-blue-50 hover:border-blue-100 transition group mb-6">
+              className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-blue-50 hover:border-blue-100 transition group mb-6"
+            >
               <div className="relative w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden border border-gray-200 bg-white">
                 <Image
                   fill

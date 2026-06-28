@@ -42,6 +42,8 @@ export type EventType = {
   latitude: number;
   isSponsor: boolean;
   longitude: number;
+  geo?: { type: string; coordinates: [number, number] };
+  distance?: number; // metres from user when geo query is active
   ticket_link: string | null;
   ticket_price: string | null;
 };
@@ -102,11 +104,14 @@ export const useGetAllEvents = () => {
   const community = param.get("community") || "";
   const from = param.get("from") || "";
   const to = param.get("to") || "";
+  const lat = param.get("lat") || "";
+  const lng = param.get("lng") || "";
+  const radius = param.get("radius") || "";
 
   return useFetcher<ApiResponseType<EventFormValues[]>>(
-    ["allEvents", category, search, city, community, from, to],
+    ["allEvents", category, search, city, community, from, to, lat, lng, radius],
     null,
-    `/api/event/getallevent?category=${category}&search=${search}&city=${city}&community=${community}&from=${from}&to=${to}`,
+    `/api/event/getallevent?category=${category}&search=${search}&city=${city}&community=${community}&from=${from}&to=${to}&lat=${lat}&lng=${lng}&radius=${radius}`,
   );
 };
 

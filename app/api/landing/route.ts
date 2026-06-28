@@ -27,9 +27,8 @@ export async function GET(request: NextRequest) {
     }
 
     const business = await User.find(query)
-      .sort({
-        createdAt: -1,
-      })
+      .sort({ createdAt: -1 })
+      .limit(20)
       .lean();
 
     const businessIds = business.map((b) =>
@@ -42,18 +41,18 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .lean();
 
+    const reviewsBySlug = new Map<string, typeof reviews>();
+    for (const review of reviews) {
+      const slug = review.business_id as string;
+      if (!reviewsBySlug.has(slug)) reviewsBySlug.set(slug, []);
+      reviewsBySlug.get(slug)!.push(review);
+    }
+
     const businessesWithReviews = business.map((business: any) => {
-      const currentBusinessSlug = business.business_name
+      const slug = business.business_name
         ?.toLowerCase()
         .replace(/[^a-z0-9]/g, "");
-      return {
-        ...business,
-        reviews: reviews.filter((review) => {
-          // const reviewBusinessIdStr = review.business_id?.toString();
-
-          return review.business_id === currentBusinessSlug;
-        }),
-      };
+      return { ...business, reviews: reviewsBySlug.get(slug) ?? [] };
     });
     // const businessesWithReviews = business.map((business) => {
     //   const businessIdStr = business._id?.toString();

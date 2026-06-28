@@ -134,6 +134,16 @@ const EventCard = memo(function EventCard({ event }: { event: EventFormValues })
               <Calendar className="h-3.5 w-3.5 flex-shrink-0 text-secondary" />
               <span className="text-xs">{dateDisplay}</span>
             </div>
+            {typeof (event as any).distance === "number" && (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-secondary" />
+                <span className="text-xs">
+                  {(event as any).distance < 1000
+                    ? `${Math.round((event as any).distance)} m away`
+                    : `${((event as any).distance / 1000).toFixed(1)} km away`}
+                </span>
+              </div>
+            )}
           </div>
 
           {event.price_category === "paid" ? (

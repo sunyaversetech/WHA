@@ -25,6 +25,8 @@ export type UserBusinessType = {
   image: string;
   longitude?: number;
   latitude?: number;
+  geo?: { type: string; coordinates: [number, number] };
+  distance?: number; // metres from user when geo query is active
   isblocked: boolean;
   isSponsor: boolean;
   business_name?: string;
@@ -44,10 +46,13 @@ export const useGetBusiness = () => {
   const search = param.get("search") || "";
   const city = param.get("city") || "";
   const community = param.get("community") || "";
+  const lat = param.get("lat") || "";
+  const lng = param.get("lng") || "";
+  const radius = param.get("radius") || "";
   return useFetcher<ApiResponseType<UserBusinessType[]>>(
-    ["getbusinesses", category, search, city, community],
+    ["getbusinesses", category, search, city, community, lat, lng, radius],
     null,
-    `/api/business?category=${category}&search=${search}&city=${city}&community=${community}`,
+    `/api/business?category=${category}&search=${search}&city=${city}&community=${community}&lat=${lat}&lng=${lng}&radius=${radius}`,
   );
 };
 

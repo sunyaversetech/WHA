@@ -27,7 +27,7 @@ export default function BookingsContainer() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] pb-20 pt-24">
+    <main className="min-h-screen bg-white pb-20 pt-24">
       <div className="max-w-4xl mx-auto px-4">
         
         {/* Tab Controls */}

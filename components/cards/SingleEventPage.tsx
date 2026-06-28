@@ -89,7 +89,8 @@ export default function EventDetailPage() {
               <button
                 onClick={handleShare}
                 className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition-all active:scale-90"
-                title="Share Event">
+                title="Share Event"
+              >
                 <Share className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </button>
             </div>
@@ -138,7 +139,8 @@ export default function EventDetailPage() {
 
                 <button
                   className="flex items-center justify-center p-2 border rounded-full bg-white transition-all hover:scale-105 active:scale-95"
-                  onClick={handleShare}>
+                  onClick={handleShare}
+                >
                   <Share className="h-4 w-4 text-primary" />
                 </button>
               </div>
@@ -227,19 +229,22 @@ export default function EventDetailPage() {
                   width: "100%",
                   borderRadius: "8px",
                   overflow: "hidden",
-                }}>
+                }}
+              >
                 <MapContainer
                   center={[event.data.latitude, event.data.longitude]}
                   zoom={13}
                   scrollWheelZoom={false}
-                  style={{ height: "100%", width: "100%" }}>
+                  style={{ height: "100%", width: "100%" }}
+                >
                   <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
                   <Marker
                     position={[event.data.latitude, event.data.longitude]}
-                    icon={DefaultIcon}>
+                    icon={DefaultIcon}
+                  >
                     <Popup>
                       <div>
                         <h3 className="font-bold text-lg">
@@ -251,14 +256,16 @@ export default function EventDetailPage() {
                         <div className="flex space-x-2 mt-2">
                           <Link
                             href={`/businesses/${event.data.user._id}`}
-                            className="bg-primary !text-base px-3 py-1 rounded text-sm font-medium hover:bg-primary/80">
+                            className="bg-primary !text-base px-3 py-1 rounded text-sm font-medium hover:bg-primary/80"
+                          >
                             View Details
                           </Link>
                           <a
                             href={`https://www.google.com/maps?q=${event.data.latitude},${event.data.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-secondary !text-base px-3 py-1 rounded text-sm font-medium hover:bg-secondary/80 flex items-center">
+                            className="bg-secondary !text-base px-3 py-1 rounded text-sm font-medium hover:bg-secondary/80 flex items-center"
+                          >
                             Get Directions
                             <ExternalLink className="h-3 w-3 ml-1" />
                           </a>
@@ -282,7 +289,8 @@ export default function EventDetailPage() {
                   <Link
                     href={event.data?.ticket_link}
                     target="_blank"
-                    className="w-full">
+                    className="w-full"
+                  >
                     <Ticket className="h-4 w-4" />
                     <span>Get Tickets</span>
                   </Link>
@@ -318,7 +326,8 @@ export default function EventDetailPage() {
                     </div>
                     <a
                       href={`mailto:${event?.data?.user.email}`}
-                      className="text-gray-700 hover:text-blue-600 transition-colors">
+                      className="text-gray-700 hover:text-blue-600 transition-colors"
+                    >
                       {event?.data?.user.email}
                     </a>
                   </div>

@@ -81,11 +81,13 @@ const SuperAdminSidebar = () => {
                   border-r 
                    flex-col 
                   font-sans text-sm 
-                  transition-all duration-300">
+                  transition-all duration-300"
+    >
       <div className="flex-1 overflow-y-auto p-2 md:p-4">
         <Link
           href={buildPath("/")}
-          className="flex items-center justify-center ">
+          className="flex items-center justify-center "
+        >
           <Image
             src="/wha/logo2.png"
             alt="Whats Happening Australia Logo"
@@ -145,7 +147,8 @@ const SuperAdminSidebar = () => {
                 item.active
                   ? "bg-slate-100 text-black"
                   : "hover:bg-gray-600 hover:text-white"
-              }`}>
+              }`}
+                  >
                     {/* ICON */}
                     <item.icon size={22} strokeWidth={1.5} />
 

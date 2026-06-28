@@ -13,7 +13,8 @@ export function CategoryHero() {
             <Button
               key={cat}
               variant="ghost"
-              className="rounded-full border hover:bg-red-50 hover:text-red-600">
+              className="rounded-full border hover:bg-red-50 hover:text-red-600"
+            >
               {cat}
             </Button>
           ))}

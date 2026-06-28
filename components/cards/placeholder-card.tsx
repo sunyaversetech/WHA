@@ -1,48 +1,48 @@
-import React from 'react';
-import { Search, Filter } from 'lucide-react';
+import React from "react";
+import { Search, Filter } from "lucide-react";
 
 interface PlaceholderCardProps {
-  type: 'events' | 'deals' | 'businesses';
+  type: "events" | "deals" | "businesses";
   className?: string;
 }
 
 export default function PlaceholderCard({
   type,
-  className = '',
+  className = "",
 }: PlaceholderCardProps) {
   const getTypeInfo = () => {
     switch (type) {
-      case 'events':
+      case "events":
         return {
-          title: 'No Events Found',
-          message: 'No events found. Try adjusting your filters.',
+          title: "No Events Found",
+          message: "No events found. Try adjusting your filters.",
           icon: <Search className="h-8 w-8 text-neutral" />,
-          bgColor: 'bg-primary/5',
-          borderColor: 'border-primary/20',
+          bgColor: "bg-primary/5",
+          borderColor: "border-primary/20",
         };
-      case 'deals':
+      case "deals":
         return {
-          title: 'No Deals Found',
-          message: 'No deals found. Try adjusting your filters.',
+          title: "No Deals Found",
+          message: "No deals found. Try adjusting your filters.",
           icon: <Filter className="h-8 w-8 text-neutral" />,
-          bgColor: 'bg-secondary/5',
-          borderColor: 'border-secondary/20',
+          bgColor: "bg-secondary/5",
+          borderColor: "border-secondary/20",
         };
-      case 'businesses':
+      case "businesses":
         return {
-          title: 'No Businesses Found',
-          message: 'No businesses found. Try adjusting your filters.',
+          title: "No Businesses Found",
+          message: "No businesses found. Try adjusting your filters.",
           icon: <Search className="h-8 w-8 text-neutral" />,
-          bgColor: 'bg-neutral/5',
-          borderColor: 'border-neutral/20',
+          bgColor: "bg-neutral/5",
+          borderColor: "border-neutral/20",
         };
       default:
         return {
-          title: 'No Items Found',
-          message: 'No items found. Try adjusting your filters.',
+          title: "No Items Found",
+          message: "No items found. Try adjusting your filters.",
           icon: <Search className="h-8 w-8 text-neutral" />,
-          bgColor: 'bg-neutral/5',
-          borderColor: 'border-neutral/20',
+          bgColor: "bg-neutral/5",
+          borderColor: "border-neutral/20",
         };
     }
   };

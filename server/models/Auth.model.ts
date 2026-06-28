@@ -15,6 +15,17 @@ const UserSchema = new Schema(
     city: { type: String },
     longitude: { type: Number },
     latitude: { type: Number },
+    geo: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number],
+        default: undefined,
+      },
+    },
     city_name: { type: String },
     location: { type: String },
     community: { type: String },
@@ -56,6 +67,20 @@ const UserSchema = new Schema(
   },
   { timestamps: true },
 );
+
+// 2dsphere index enables $geoNear aggregation for location-based queries.
+UserSchema.index({ geo: "2dsphere" });
+
+// Populate GeoJSON field whenever lat/lng are present on save.
+// GeoJSON coordinates are [longitude, latitude] (note the order).
+UserSchema.pre("save", async function () {
+  if (this.latitude != null && this.longitude != null) {
+    this.geo = {
+      type: "Point",
+      coordinates: [this.longitude, this.latitude],
+    };
+  }
+});
 
 const User = models.User || model("User", UserSchema);
 

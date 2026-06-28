@@ -36,7 +36,8 @@ const FeaturedCard = memo(function FeaturedCard({ item }: any) {
         item.category === "business"
           ? () => router.push(`/businesses/${slug}`)
           : () => router.push(`/events/${eventslug}`)
-      }>
+      }
+    >
       <div className="relative w-full h-56 md:h-60 rounded-xl overflow-hidden group">
         <Image
           width={500}

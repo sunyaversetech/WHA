@@ -27,10 +27,11 @@ export function useFetcher<T>(
       ...(Array.isArray(baseKey) ? baseKey : [baseKey]),
       ...(queryKey?.map((key) => searchParams.get(key)) || []),
     ],
-    queryFn: async () =>
-      Get({
-        url: `${url}?${query.toString()}`,
-      }),
+    queryFn: async () => {
+      const qs = query.toString();
+      const sep = url.includes("?") ? "&" : "?";
+      return Get({ url: qs ? `${url}${sep}${qs}` : url });
+    },
     enabled,
   });
 }

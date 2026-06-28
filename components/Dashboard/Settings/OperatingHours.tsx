@@ -122,12 +122,14 @@ export function BusinessHoursForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 max-w-2xl p-6">
+        className="space-y-6 max-w-2xl p-6"
+      >
         <div className="space-y-6 flex items-center ">
           <Button
             className="h-5 w-5 mt-7 mr-2"
             variant="ghost"
-            onClick={() => router.back()}>
+            onClick={() => router.back()}
+          >
             <ChevronLeft className="h-8 w-8 cursor-pointer rounded-full p-1 -ml-2 text-[#ODODOD] transition-all hover:scale-105 active:scale-95" />
           </Button>
           <h2 className="text-xl font-bold">Operating Hours</h2>
@@ -219,7 +221,8 @@ export function BusinessHoursForm() {
           <Button
             disabled={!form.formState.isDirty}
             type="submit"
-            className="bg-blue-950 rounded-md hover:bg-blue-400">
+            className="bg-blue-950 rounded-md hover:bg-blue-400"
+          >
             Submit
           </Button>
         </div>

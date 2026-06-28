@@ -46,12 +46,14 @@ export default function TopCarouselSection() {
             align: "start",
             loop: true,
           }}
-          className="w-full">
+          className="w-full"
+        >
           <CarouselContent className="-ml-4">
             {FEATURED_BUSINESSES.map((business) => (
               <CarouselItem
                 key={business.id}
-                className="pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                className="pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+              >
                 <BusinessCard business={business} />
               </CarouselItem>
             ))}

@@ -100,7 +100,8 @@ export default function CategoryTabs({
         scrollbarWidth: "none",
         msOverflowStyle: "none",
         WebkitOverflowScrolling: "touch",
-      }}>
+      }}
+    >
       {categories.map((category) => {
         const Icon = category.icon;
         const isActive = activeCategory === category.id;
@@ -113,7 +114,8 @@ export default function CategoryTabs({
               isActive
                 ? getActiveColor()
                 : "bg-gray-100/50 border border-gray-200 text-gray-600 hover:text-gray-800 hover:bg-white/90"
-            }`}>
+            }`}
+          >
             <div className={`rounded-lg mb-1 md:mb-2`}>
               <Icon
                 className={`transition-colors duration-200 h-4 w-4 md:h-5 md:w-5  ${
@@ -128,7 +130,8 @@ export default function CategoryTabs({
                 isActive
                   ? "text-white"
                   : "text-gray-600 group-hover:text-gray-800"
-              }`}>
+              }`}
+            >
               {category.name}
             </span>
           </button>

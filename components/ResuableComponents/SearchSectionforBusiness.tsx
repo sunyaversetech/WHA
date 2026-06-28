@@ -1,426 +1,549 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, X, MapPin, Clock, Navigation } from "lucide-react";
 import {
-  Search,
-  X,
-  MapPin,
-  ChevronRight,
-  Store,
-  Car,
-  Scissors,
-  Coffee,
-  Eraser,
-  Briefcase,
-  Zap,
-  Truck,
-  Calendar,
-  ShoppingBasket,
-  Paintbrush,
-  Camera,
-  Pipette,
-  Move,
-  Utensils,
-  Sparkles,
-  ShoppingBag,
-  Users,
-  Plane,
-  MoreHorizontal,
-} from "lucide-react";
-import { useGetALLBusiness } from "@/services/business.service";
+  SERVICE_CATEGORIES,
+  AU_CITIES,
+  searchServices,
+  type ServiceItem,
+} from "@/lib/data/services-catalog";
 
-type SearchState = "where" | "cat" | "search" | null;
+type ActiveSeg = "what" | "where" | "when" | null;
 
-const FontImport = () => (
-  <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@1,9..144,300&display=swap');
-    .esw-root, .esw-root * { font-family: 'DM Sans', sans-serif; }
-    .esw-placeholder::placeholder {
-      font-family: 'Fraunces', serif;
-      font-style: italic;
-      font-weight: 300;
-      color: #9896aa;
-    }
-    .esw-seg:hover .esw-clear-show { opacity: 0.6; }
-    .esw-seg.esw-active .esw-clear-show { opacity: 0.6; }
-  `}</style>
-);
+const MON_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const MON_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const WEEKDAYS  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const TIME_SLOTS = [
+  { key: "any",       label: "Any time",   sub: ""           },
+  { key: "morning",   label: "Morning",    sub: "9am – 12pm" },
+  { key: "afternoon", label: "Afternoon",  sub: "12pm – 5pm" },
+  { key: "evening",   label: "Evening",    sub: "5pm – 12am" },
+];
 
-export const CATEGORY_ICONS: Record<string, any> = {
-  all: Store,
-  automotive: Car,
-  barber: Scissors,
-  cafe: Coffee,
-  cleaning: Eraser,
-  consultancy: Briefcase,
-  "driving school": Car,
-  electrician: Zap,
-  "event-organizer": Calendar,
-  "food truck": Truck,
-  grocery: ShoppingBasket,
-  painter: Paintbrush,
-  photography: Camera,
-  plumber: Pipette,
-  pujari: Users,
-  event: Calendar,
-  removalists: Move,
-  cafes: Coffee,
-  restaurant: Utensils,
-  "saloon and makeup": Sparkles,
-  shop: ShoppingBag,
-  "social club": Users,
-  "travel and tours": Plane,
-  others: MoreHorizontal,
-};
+const TODAY = { y: 2026, m: 5, d: 25 }; // June 25 2026
 
-export default function BusinessSearchWithDates({
-  sticky,
-}: {
-  sticky?: boolean;
-}) {
-  const [activeTab, setActiveTab] = useState<SearchState>(null);
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const { data } = useGetALLBusiness();
-  const [location, setLocation] = useState(searchParams.get("city") || "");
-  const [inputValue, setInputValue] = useState(
-    searchParams.get("search") || "",
-  );
-  const [activeCategory, setActiveCategory] = useState(
-    searchParams.get("category") || "all",
-  );
-  const [categories, setCategories] = useState<string[]>([]);
-  const discoveredCategories = useRef<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (data?.data) {
-      data.data.forEach((item: any) => {
-        if (item.business_category)
-          discoveredCategories.current.add(item.business_category);
-      });
-      setCategories(Array.from(discoveredCategories.current));
-    }
-  }, [data?.data]);
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setActiveTab(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  const CATEGORIES = useMemo(() => {
-    const base = [{ name: "All", value: "all", icon: Store }];
-    const dynamic = categories.map((cat) => ({
-      name: cat,
-      value: cat,
-      icon: CATEGORY_ICONS[cat.toLowerCase()] || Store,
-    }));
-    return [...base, ...dynamic];
-  }, [categories]);
-
-  const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (inputValue) params.set("search", inputValue);
-    if (activeCategory !== "all") params.set("category", activeCategory);
-    if (location) params.set("city", location);
-    router.push(`/businesses?${params.toString()}`);
-    setActiveTab(null);
-  };
-
-  const isExpanded = activeTab !== null;
-  const segW = sticky ? "w-[130px]" : "w-[180px]";
-
-  return (
-    <>
-      <FontImport />
-      <div
-        className="esw-root flex w-full md:w-fit items-center justify-center m-auto px-4 md:px-0"
-        ref={containerRef}
-      >
-        <div
-          className={[
-            "relative flex flex-col md:flex-row items-stretch md:items-center rounded-[2rem] md:rounded-full p-1.5 transition-all duration-300 w-full",
-            isExpanded
-              ? "bg-[#f5f4f8] shadow-[0_8px_32px_rgba(15,14,23,0.10)] border border-transparent"
-              : "bg-white shadow-[0_2px_8px_rgba(15,14,23,0.07)] border border-black/[0.07]",
-          ].join(" ")}
-        >
-          <div
-            onClick={() => setActiveTab("search")}
-            className={[
-              "relative flex flex-col justify-center rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer transition-all duration-200",
-              sticky ? "md:min-w-[130px]" : "md:min-w-[180px]",
-              activeTab === "search"
-                ? "bg-white shadow-md scale-[1.02] z-10"
-                : "hover:bg-[#eeecf5]",
-            ].join(" ")}
-          >
-            <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none select-none">
-              Search Business
-            </span>
-            <div className="flex items-center gap-1.5">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Name, service..."
-                className="esw-placeholder flex-1 min-w-0 bg-transparent border-none outline-none ring-0 text-[13px] font-medium text-[#0f0e17] p-0 focus:ring-0 focus:outline-none"
-              />
-              <AnimatePresence>
-                {inputValue && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.5 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInputValue("");
-                    }}
-                    className="flex items-center justify-center w-5 h-5 shrink-0 rounded-full opacity-50 hover:opacity-100 hover:bg-black/10 transition-all border-none bg-transparent cursor-pointer"
-                  >
-                    <X size={11} strokeWidth={3} />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          <Divider hide={activeTab === "where" || activeTab === "search"} />
-
-          <SegmentSection
-            label="Where"
-            isActive={activeTab === "where"}
-            onClick={() => setActiveTab(activeTab === "where" ? null : "where")}
-            displayValue={location}
-            placeholder="Select location"
-            onClear={() => setLocation("")}
-            segW={segW}
-          >
-            <div className="p-2 py-3 w-full md:w-auto">
-              {[
-                { city: "sydney", country: "Australia", emoji: "🌉" },
-                { city: "canberra", country: "Australia", emoji: "🏛️" },
-              ].map(({ city, country, emoji }) => (
-                <motion.div
-                  key={city}
-                  whileHover={{ x: 2 }}
-                  className="group flex items-center gap-3.5 rounded-2xl px-3.5 py-3 cursor-pointer hover:bg-[#f5f4f8] transition-colors duration-150 min-w-full md:min-w-[280px]"
-                  onClick={() => {
-                    setLocation(city);
-                    setActiveTab("cat");
-                  }}
-                >
-                  <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#f5f4f8] shrink-0 group-hover:bg-[#ede8ff] transition-colors duration-150">
-                    <span className="text-[18px] leading-none">{emoji}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#0f0e17] capitalize leading-tight">
-                      {city}
-                    </p>
-                    <p className="text-xs text-[#9896aa] leading-tight mt-0.5">
-                      {country}
-                    </p>
-                  </div>
-                  <ChevronRight
-                    size={14}
-                    className="text-[#9896aa] group-hover:translate-x-0.5 transition-all"
-                  />
-                </motion.div>
-              ))}
-            </div>
-          </SegmentSection>
-
-          <Divider hide={activeTab === "cat" || activeTab === "where"} />
-
-          <SegmentSection
-            label="Category"
-            isActive={activeTab === "cat"}
-            onClick={() => setActiveTab(activeTab === "cat" ? null : "cat")}
-            displayValue={activeCategory === "all" ? "" : activeCategory}
-            placeholder="All Categories"
-            onClear={() => setActiveCategory("all")}
-            segW={segW}
-            panelAlign="right"
-          >
-            <div className="p-4 grid grid-cols-2 xs:grid-cols-3 gap-2 w-full md:w-[340px] max-h-[60vh] md:max-h-[400px] overflow-y-auto">
-              {CATEGORIES.map((cat) => {
-                const Icon = cat.icon;
-                const isActive = activeCategory === cat.value;
-                return (
-                  <button
-                    key={cat.value}
-                    onClick={() => {
-                      setActiveCategory(cat.value);
-                      setActiveTab(null);
-                    }}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all border shrink-0 group ${
-                      isActive
-                        ? "bg-[#051e3a] border-[#051e3a] text-white shadow-lg"
-                        : "bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Icon
-                      className={`h-5 w-5 mb-1.5 transition-colors ${isActive ? "text-white" : "text-slate-500 group-hover:text-[#6c47ff]"}`}
-                    />
-                    <span className="text-[10px] uppercase font-bold text-center leading-tight">
-                      {cat.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </SegmentSection>
-
-          <button
-            onClick={handleSearch}
-            className="flex mt-2 md:mt-0 md:ml-2 items-center rounded-full bg-[#051e3a] text-white shrink-0 min-h-[56px] md:min-h-[48px] justify-center shadow-[0_4px_16px_rgba(5,30,58,0.35)] hover:bg-[#0b3463] transition-all w-full md:w-auto md:px-2"
-          >
-            <Search size={18} className="md:mx-2" />
-
-            <span className="md:hidden font-bold text-[15px] ml-2">
-              Search Businesses
-            </span>
-
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="hidden md:block pr-4 font-bold text-[13px] whitespace-nowrap"
-                >
-                  Search
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
-        </div>
-      </div>
-    </>
-  );
+function buildCalendar(viewY: number, viewM: number): (number | null)[][] {
+  const first   = new Date(viewY, viewM, 1);
+  const startDow = (first.getDay() + 6) % 7; // Mon=0
+  const dim      = new Date(viewY, viewM + 1, 0).getDate();
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < startDow; i++) cells.push(null);
+  for (let d = 1; d <= dim; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  const weeks: (number | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
 }
 
-// --- REUSED HELPERS FROM YOUR REFERENCE ---
+const SLIDE = {
+  initial:    { opacity: 0, y: 10 },
+  animate:    { opacity: 1, y: 0  },
+  exit:       { opacity: 0, y: 6  },
+  transition: { type: "spring" as const, stiffness: 320, damping: 24 },
+};
 
-function SegmentSection({
-  label,
-  isActive,
+/* ── shared inline tokens ── */
+const ROW: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 14,
+  padding: "12px 16px", borderRadius: 14, cursor: "pointer",
+};
+const TILE: React.CSSProperties = {
+  width: 42, height: 42, borderRadius: 13, background: "#eaf0fb",
+  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+};
+const TILE_DARK: React.CSSProperties = { ...TILE, background: "#051e3a" };
+const ROW_TEXT: React.CSSProperties = { display: "flex", flexDirection: "column", lineHeight: 1.3, flex: 1 };
+const ROW_TITLE: React.CSSProperties = { fontSize: 15, fontWeight: 600, color: "#1e293b" };
+const ROW_SUB:   React.CSSProperties = { fontSize: 13, color: "#7c899c" };
+
+function HoverRow({
   onClick,
-  displayValue,
-  placeholder,
-  onClear,
   children,
-  segW,
-  panelAlign = "left",
-}: any) {
-  const [ripple, setRipple] = useState<{
-    x: number;
-    y: number;
-    id: number;
-  } | null>(null);
-
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setRipple({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-      id: Date.now(),
-    });
-    onClick();
-  };
-
-  const hasValue = !!displayValue;
-
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  const [hov, setHov] = useState(false);
   return (
-    <div className="relative">
-      <div
-        onClick={handleClick}
-        className={[
-          "esw-seg relative flex flex-col justify-center max-sm:w-full rounded-full px-6 py-2.5 min-h-[60px] cursor-pointer select-none overflow-hidden transition-all duration-200",
-          segW,
-          isActive
-            ? "esw-active bg-white shadow-[0_8px_32px_rgba(15,14,23,0.10)] scale-[1.02] z-10"
-            : "hover:bg-[#eeecf5]",
-        ].join(" ")}
-      >
-        <AnimatePresence>
-          {ripple && (
-            <motion.span
-              key={ripple.id}
-              className="absolute w-16 h-16 -ml-8 -mt-8 rounded-full bg-[#6c47ff]/[0.15] pointer-events-none"
-              style={{ left: ripple.x, top: ripple.y }}
-              initial={{ scale: 0, opacity: 0.6 }}
-              animate={{ scale: 5, opacity: 0 }}
-              onAnimationComplete={() => setRipple(null)}
-            />
-          )}
-        </AnimatePresence>
-        <span className="text-[10px] font-bold tracking-[0.08em] uppercase text-[#0f0e17] mb-1 leading-none">
-          {label}
-        </span>
-        <span
-          className={[
-            "text-[13px] truncate max-w-[140px] leading-snug",
-            hasValue
-              ? "text-[#0f0e17] font-medium"
-              : "font-light italic text-[#9896aa]",
-          ].join(" ")}
-          style={!hasValue ? { fontFamily: "'Fraunces', serif" } : undefined}
-        >
-          {hasValue ? displayValue : placeholder}
-        </span>
-        {hasValue && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClear();
-            }}
-            className="esw-clear-show absolute top-1/2 -translate-y-1/2 right-2 flex items-center justify-center w-[18px] h-[18px] rounded-full opacity-0 hover:!opacity-100 hover:bg-black/10 transition-all z-20 border-none bg-transparent cursor-pointer"
-          >
-            <X size={10} strokeWidth={3} />
-          </button>
-        )}
-      </div>
-      <AnimatePresence>
-        {isActive && (
-          <motion.div
-            className={[
-              "absolute top-[calc(100%+18px)] z-50 bg-white rounded-[2rem] overflow-hidden",
-              "shadow-[0_20px_60px_rgba(15,14,23,0.13),0_0_0_1.5px_rgba(15,14,23,0.06)]",
-              panelAlign === "right" ? "right-0" : "left-1/2 -translate-x-1/2",
-            ].join(" ")}
-            initial={{ opacity: 0, y: 12, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.22, ease: [0.34, 1.1, 0.64, 1] }}
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{ ...ROW, background: hov ? "#f4f7fb" : "transparent" }}
+    >
+      {children}
     </div>
   );
 }
 
-function Divider({ hide }: { hide: boolean }) {
+export default function BusinessSearchWithDates() {
+  const router      = useRouter();
+  const searchParams = useSearchParams();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const pillRef      = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [anchor, setAnchor]     = useState({ top: 0, left: 0, width: 0, right: 0 });
+
+  const [active, setActive]             = useState<ActiveSeg>(null);
+  const [service, setService]           = useState(searchParams.get("service") || searchParams.get("search") || "");
+  const [serviceQuery, setServiceQuery] = useState(service);
+  const [location, setLocation]         = useState(() => {
+    const lat = searchParams.get("lat");
+    const lng = searchParams.get("lng");
+    if (lat && lng) return "Current location";
+    return searchParams.get("city") || "";
+  });
+  const [geoCoords, setGeoCoords]       = useState<{ lat: number; lng: number } | null>(() => {
+    const lat = searchParams.get("lat");
+    const lng = searchParams.get("lng");
+    if (lat && lng) return { lat: Number(lat), lng: Number(lng) };
+    return null;
+  });
+  const [locLoading, setLocLoading]     = useState(false);
+  const [selDay, setSelDay]             = useState<{ y: number; m: number; d: number } | null>(null);
+  const [timeSlot, setTimeSlot]         = useState("any");
+  const [viewY, setViewY]               = useState(TODAY.y);
+  const [viewM, setViewM]               = useState(TODAY.m);
+  const [whatTab, setWhatTab]           = useState<"all" | "services">("all");
+
+  const suggestions = useMemo(() => searchServices(serviceQuery), [serviceQuery]);
+  const weeks       = useMemo(() => buildCalendar(viewY, viewM), [viewY, viewM]);
+
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!active) return;
+
+    const updateAnchor = () => {
+      const el = pillRef.current ?? containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setAnchor({
+        top: rect.bottom + 16,
+        left: rect.left,
+        width: rect.width,
+        right: window.innerWidth - rect.right,
+      });
+    };
+
+    updateAnchor();
+    window.addEventListener("resize", updateAnchor);
+    window.addEventListener("scroll", updateAnchor, true);
+    return () => {
+      window.removeEventListener("resize", updateAnchor);
+      window.removeEventListener("scroll", updateAnchor, true);
+    };
+  }, [active]);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (containerRef.current?.contains(target)) return;
+      const inDropdown = (e.target as Element).closest?.("[data-search-dropdown]");
+      if (inDropdown) return;
+      setActive(null);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  const toggle = (seg: ActiveSeg) => setActive(prev => (prev === seg ? null : seg));
+
+  const requestGeoLocation = () => {
+    if (!navigator.geolocation) return;
+    setLocLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeoCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocation("Current location");
+        setLocLoading(false);
+        setActive("when");
+      },
+      () => setLocLoading(false),
+      { timeout: 8000 },
+    );
+  };
+
+  const whenLabel = () => {
+    if (!selDay) return TIME_SLOTS.find(s => s.key === timeSlot)?.label || "Any time";
+    const dayStr  = `${selDay.d} ${MON_SHORT[selDay.m]}`;
+    const slotStr = timeSlot !== "any" ? `, ${TIME_SLOTS.find(s => s.key === timeSlot)?.label}` : "";
+    return dayStr + slotStr;
+  };
+
+  const handleSearch = useCallback(() => {
+    const params = new URLSearchParams();
+    if (service) params.set("service", service);
+    if (geoCoords) {
+      params.set("lat", String(geoCoords.lat));
+      params.set("lng", String(geoCoords.lng));
+    } else if (location) {
+      params.set("city", location);
+    }
+    if (selDay) params.set("date", `${selDay.y}-${String(selDay.m + 1).padStart(2, "0")}-${String(selDay.d).padStart(2, "0")}`);
+    if (timeSlot !== "any") params.set("time", timeSlot);
+    router.push(`/businesses?${params.toString()}`);
+    setActive(null);
+  }, [service, location, geoCoords, selDay, timeSlot, router]);
+
+  const selectService = (item: ServiceItem) => {
+    setService(item.name);
+    setServiceQuery(item.name);
+    setActive("where");
+  };
+
+  const selectCity = (city: string) => {
+    setGeoCoords(null);
+    setLocation(city);
+    setActive("when");
+  };
+
+  const prevMonth = () => {
+    if (viewM === 0) { setViewY(y => y - 1); setViewM(11); }
+    else setViewM(m => m - 1);
+  };
+  const nextMonth = () => {
+    if (viewM === 11) { setViewY(y => y + 1); setViewM(0); }
+    else setViewM(m => m + 1);
+  };
+
   return (
-    <div
-      className={[
-        "w-px h-7 bg-black/10 mx-0.5 shrink-0 rounded-full transition-opacity duration-200",
-        hide ? "opacity-0" : "opacity-100",
-      ].join(" ")}
-    />
+    <div ref={containerRef} className="w-full flex items-center justify-center px-4 md:px-0">
+      <div
+        ref={pillRef}
+        style={{ position: "relative", width: "100%", maxWidth: 880, zIndex: active ? 100 : "auto" }}
+      >
+
+        {/* ── Pill ── */}
+        <div style={{
+          display: "flex", alignItems: "center",
+          background: "#f1f4f8", border: "1px solid #e6ebf2",
+          borderRadius: 9999, padding: "5px 5px 5px 6px",
+          boxShadow: "0 6px 28px rgba(2,12,26,0.05)",
+        }}>
+
+          {/* WHAT */}
+          <div style={{ position: "relative", flex: 1.35 }}>
+            {active === "what" && (
+              <div style={{ position: "absolute", inset: 0, background: "#fff", borderRadius: 9999, boxShadow: "0 2px 14px rgba(2,12,26,0.10)", zIndex: 0 }} />
+            )}
+            <div
+              style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 13, padding: "13px 20px", borderRadius: 9999, cursor: "text" }}
+              onClick={() => setActive("what")}
+            >
+              <Search size={20} color="#64748b" style={{ flexShrink: 0 }} />
+              <input
+                type="text"
+                value={serviceQuery}
+                onChange={e => { setServiceQuery(e.target.value); setService(e.target.value); }}
+                onFocus={() => setActive("what")}
+                onKeyDown={e => e.key === "Enter" && handleSearch()}
+                onClick={e => { e.stopPropagation(); setActive("what"); }}
+                placeholder="All services"
+                style={{ border: "none", outline: "none", background: "transparent", fontSize: 16, fontWeight: 600, color: "#1e293b", width: "100%", padding: 0 }}
+              />
+              {serviceQuery && (
+                <button onClick={e => { e.stopPropagation(); setService(""); setServiceQuery(""); }} style={{ border: "none", background: "rgba(0,0,0,0.08)", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                  <X size={10} strokeWidth={3} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 26, background: "#dde3ec", flexShrink: 0 }} />
+
+          {/* WHERE */}
+          <div style={{ position: "relative", flex: 1.1 }}>
+            {active === "where" && (
+              <div style={{ position: "absolute", inset: 0, background: "#fff", borderRadius: 9999, boxShadow: "0 2px 14px rgba(2,12,26,0.10)", zIndex: 0 }} />
+            )}
+            <div
+              style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 13, padding: "13px 20px", borderRadius: 9999, cursor: "pointer" }}
+              onClick={() => toggle("where")}
+            >
+              <MapPin size={20} color="#64748b" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 16, fontWeight: 600, color: location ? "#1e293b" : "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>
+                {location || "Map area"}
+              </span>
+              {location && (
+                <button onClick={e => { e.stopPropagation(); setLocation(""); }} style={{ border: "none", background: "rgba(0,0,0,0.08)", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                  <X size={10} strokeWidth={3} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 26, background: "#dde3ec", flexShrink: 0 }} />
+
+          {/* WHEN */}
+          <div style={{ position: "relative", flex: 1 }}>
+            {active === "when" && (
+              <div style={{ position: "absolute", inset: 0, background: "#fff", borderRadius: 9999, boxShadow: "0 2px 14px rgba(2,12,26,0.10)", zIndex: 0 }} />
+            )}
+            <div
+              style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 13, padding: "13px 20px", borderRadius: 9999, cursor: "pointer" }}
+              onClick={() => toggle("when")}
+            >
+              <Clock size={20} color="#64748b" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", whiteSpace: "nowrap" }}>
+                {whenLabel()}
+              </span>
+            </div>
+          </div>
+
+          {/* Search button */}
+          <button
+            onClick={handleSearch}
+            aria-label="Search services"
+            style={{ display: "flex", alignItems: "center", gap: 8, background: "#051e3a", color: "#fff", border: "none", borderRadius: 9999, padding: "14px 26px", fontSize: 15, fontWeight: 700, cursor: "pointer", marginLeft: 6, flexShrink: 0 }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#0a2d5a")}
+            onMouseLeave={e => (e.currentTarget.style.background = "#051e3a")}
+          >
+            <Search size={18} strokeWidth={2.2} />
+            Search
+          </button>
+        </div>
+
+        {mounted && active && createPortal(
+          <div
+            onClick={() => setActive(null)}
+            style={{ position: "fixed", inset: 0, background: "rgba(8,18,35,0.14)", zIndex: 110 }}
+          />,
+          document.body,
+        )}
+
+        {/* ── WHAT PANEL ── */}
+        {mounted && active === "what" && createPortal(
+          <AnimatePresence>
+            <motion.div
+              {...SLIDE}
+              data-search-dropdown
+              style={{
+                position: "fixed",
+                top: anchor.top,
+                left: anchor.left,
+                width: Math.min(476, anchor.width),
+                background: "#fff",
+                border: "1px solid #eef1f5",
+                borderRadius: 26,
+                boxShadow: "0 28px 64px rgba(2,12,26,0.16)",
+                padding: "22px 10px 14px",
+                zIndex: 120,
+                maxHeight: 560,
+                overflowY: "auto",
+              }}
+            >
+              {/* Tabs */}
+              <div style={{ display: "flex", gap: 9, padding: "0 14px 18px", flexWrap: "wrap" }}>
+                {(["all", "services"] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setWhatTab(tab)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid", borderColor: whatTab === tab ? "#051e3a" : "#e6ebf2", borderRadius: 9999, padding: "9px 16px", fontSize: 14, fontWeight: 600, cursor: "pointer", background: whatTab === tab ? "#051e3a" : "#fff", color: whatTab === tab ? "#fff" : "#334155" }}
+                  >
+                    {tab === "all" ? "All" : "Services"}
+                  </button>
+                ))}
+              </div>
+
+              {suggestions.length > 0 ? (
+                /* Autocomplete */
+                <div style={{ padding: "0 6px" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.02em", color: "#0f2748", padding: "0 12px 6px" }}>Suggestions</div>
+                  {suggestions.map(s => (
+                    <HoverRow key={s.slug} onClick={() => selectService(s)}>
+                      <span style={{ ...TILE, fontSize: 20 }}>{s.emoji}</span>
+                      <div style={ROW_TEXT}><span style={ROW_TITLE}>{s.name}</span></div>
+                    </HoverRow>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {/* Recents */}
+                  <div style={{ padding: "0 6px", marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 6px" }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.02em", color: "#0f2748" }}>Recents</span>
+                    </div>
+                    <HoverRow onClick={() => { setService(""); setServiceQuery(""); setActive("where"); }}>
+                      <span style={{ ...TILE, background: "#f1f4f9" }}><Clock size={19} color="#64748b" /></span>
+                      <div style={ROW_TEXT}>
+                        <span style={ROW_TITLE}>All services</span>
+                        <span style={ROW_SUB}>Any time</span>
+                      </div>
+                    </HoverRow>
+                  </div>
+
+                  {/* Services */}
+                  <div style={{ padding: "0 6px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.02em", color: "#0f2748", padding: "8px 12px 6px" }}>Services</div>
+                    {SERVICE_CATEGORIES.flatMap(cat =>
+                      cat.services.slice(0, 2).map(s => (
+                        <HoverRow key={s.slug} onClick={() => selectService(s)}>
+                          <span style={{ ...TILE, fontSize: 20 }}>{s.emoji}</span>
+                          <div style={ROW_TEXT}><span style={ROW_TITLE}>{s.name}</span></div>
+                        </HoverRow>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </AnimatePresence>,
+          document.body,
+        )}
+
+        {/* ── WHERE PANEL ── */}
+        {mounted && active === "where" && createPortal(
+          <AnimatePresence>
+            <motion.div
+              {...SLIDE}
+              data-search-dropdown
+              style={{
+                position: "fixed",
+                top: anchor.top,
+                left: anchor.left + anchor.width * 0.32,
+                width: Math.min(432, anchor.width),
+                background: "#fff",
+                border: "1px solid #eef1f5",
+                borderRadius: 26,
+                boxShadow: "0 28px 64px rgba(2,12,26,0.16)",
+                padding: "14px 10px",
+                zIndex: 120,
+              }}
+            >
+              <HoverRow onClick={requestGeoLocation}>
+                <span style={TILE_DARK}>
+                  {locLoading
+                    ? <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round"><circle cx={12} cy={12} r={9} strokeOpacity={0.25} /><path d="M12 3a9 9 0 0 1 9 9" style={{ animation: "spin 0.8s linear infinite", transformOrigin: "center" }} /></svg>
+                    : <Navigation size={20} color="#fff" />}
+                </span>
+                <div style={ROW_TEXT}>
+                  <span style={ROW_TITLE}>Current location</span>
+                  <span style={ROW_SUB}>{locLoading ? "Getting your location…" : "Use my GPS location"}</span>
+                </div>
+              </HoverRow>
+              {AU_CITIES.map(({ city, emoji }) => (
+                <HoverRow key={city} onClick={() => selectCity(city)}>
+                  <span style={{ ...TILE, fontSize: 20 }}>{emoji}</span>
+                  <div style={ROW_TEXT}>
+                    <span style={ROW_TITLE}>{city}</span>
+                    <span style={ROW_SUB}>Australia</span>
+                  </div>
+                  {location === city && (
+                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#3771db" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12.5l4.5 4.5L19 7" />
+                    </svg>
+                  )}
+                </HoverRow>
+              ))}
+            </motion.div>
+          </AnimatePresence>,
+          document.body,
+        )}
+
+        {/* ── WHEN PANEL ── */}
+        {mounted && active === "when" && createPortal(
+          <AnimatePresence>
+            <motion.div
+              {...SLIDE}
+              data-search-dropdown
+              style={{
+                position: "fixed",
+                top: anchor.top,
+                right: Math.max(16, anchor.right - 4),
+                width: Math.min(660, anchor.width + 80),
+                background: "#fff",
+                border: "1px solid #eef1f5",
+                borderRadius: 26,
+                boxShadow: "0 28px 64px rgba(2,12,26,0.16)",
+                padding: "22px 24px 20px",
+                zIndex: 120,
+              }}
+            >
+              <div style={{ display: "flex", gap: 24 }}>
+                {/* Quick picks */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, width: 184, flexShrink: 0, paddingTop: 4 }}>
+                  {[{ label: "Today", sub: `Thu ${TODAY.d} Jun`, d: TODAY.d }, { label: "Tomorrow", sub: "Fri 26 Jun", d: TODAY.d + 1 }].map(q => {
+                    const isSel = selDay?.y === TODAY.y && selDay?.m === TODAY.m && selDay?.d === q.d;
+                    return (
+                      <div
+                        key={q.label}
+                        onClick={() => { setSelDay({ y: TODAY.y, m: TODAY.m, d: q.d }); setViewY(TODAY.y); setViewM(TODAY.m); }}
+                        style={{ display: "flex", flexDirection: "column", gap: 2, border: `1px solid ${isSel ? "#3771db" : "#e6ebf2"}`, borderRadius: 16, padding: "14px 16px", cursor: "pointer", background: isSel ? "rgba(55,113,219,0.06)" : "#fff", boxShadow: isSel ? "inset 0 0 0 1px #3771db" : "none" }}
+                      >
+                        <span style={{ fontSize: 16, fontWeight: 700, color: "#0f2748" }}>{q.label}</span>
+                        <span style={{ fontSize: 13, color: "#7c899c" }}>{q.sub}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Calendar */}
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                    <button onClick={prevMonth} style={{ width: 34, height: 34, borderRadius: "50%", border: "1px solid #e6ebf2", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#0f2748" }}>
+                      <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+                    </button>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: "#0f2748" }}>{MON_NAMES[viewM]} {viewY}</span>
+                    <button onClick={nextMonth} style={{ width: 34, height: 34, borderRadius: "50%", border: "1px solid #e6ebf2", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#0f2748" }}>
+                      <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+                    </button>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2, marginBottom: 4 }}>
+                    {WEEKDAYS.map(wd => (
+                      <div key={wd} style={{ height: 30, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600, color: "#94a3b8" }}>{wd}</div>
+                    ))}
+                  </div>
+                  {weeks.map((week, wi) => (
+                    <div key={wi} style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2 }}>
+                      {week.map((d, di) => {
+                        if (d === null) return <div key={di} />;
+                        const isPast  = viewY < TODAY.y || (viewY === TODAY.y && viewM < TODAY.m) || (viewY === TODAY.y && viewM === TODAY.m && d < TODAY.d);
+                        const isSel   = selDay?.y === viewY && selDay?.m === viewM && selDay?.d === d;
+                        const isToday = viewY === TODAY.y && viewM === TODAY.m && d === TODAY.d;
+                        return (
+                          <div
+                            key={di}
+                            onClick={isPast ? undefined : () => setSelDay({ y: viewY, m: viewM, d })}
+                            style={{ height: 42, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 600, borderRadius: 9999, cursor: isPast ? "default" : "pointer", color: isPast ? "#cbd5e1" : isSel ? "#fff" : "#1e293b", background: isSel ? "#051e3a" : "transparent", boxShadow: !isSel && isToday ? "inset 0 0 0 1.6px #c7d2e3" : "none" }}
+                          >
+                            {d}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Time slots */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, borderTop: "1px solid #eef1f5", marginTop: 18, paddingTop: 18, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#0f2748", marginRight: 4 }}>Time</span>
+                {TIME_SLOTS.map(sl => {
+                  const isAct = timeSlot === sl.key;
+                  return (
+                    <button
+                      key={sl.key}
+                      onClick={() => setTimeSlot(sl.key)}
+                      style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1, border: `1px solid ${isAct ? "#3771db" : "#e6ebf2"}`, borderRadius: 14, padding: "9px 16px", fontSize: 14, cursor: "pointer", fontWeight: 700, background: isAct ? "rgba(55,113,219,0.07)" : "#fff", color: isAct ? "#3771db" : "#0f2748" }}
+                    >
+                      <span>{sl.label}</span>
+                      {sl.sub && <span style={{ fontSize: 12, fontWeight: 500, color: isAct ? "#3771db" : "#7c899c" }}>{sl.sub}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </AnimatePresence>,
+          document.body,
+        )}
+      </div>
+    </div>
   );
 }

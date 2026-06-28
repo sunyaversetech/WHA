@@ -98,7 +98,7 @@ const ProfilePage = () => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="min-h-screen bg-gray-50/50 p-4">
+        className="min-h-screen bg-white p-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-2 mb-6">
             <Button

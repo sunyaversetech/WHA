@@ -57,7 +57,8 @@ export default function LocalBusinessSection() {
           </div>
           <Link
             href="/businesses"
-            className="text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-1">
+            className="text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-1"
+          >
             View all <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
@@ -67,7 +68,8 @@ export default function LocalBusinessSection() {
             {BUSINESSES.map((business) => (
               <CarouselItem
                 key={business.id}
-                className="pl-4 md:basis-1/2 lg:basis-1/3">
+                className="pl-4 md:basis-1/2 lg:basis-1/3"
+              >
                 <Card className="relative overflow-hidden border-none group cursor-pointer">
                   <div className="relative aspect-[16/9] w-full">
                     <Image
@@ -122,22 +124,26 @@ export default function LocalBusinessSection() {
           <div className="flex items-center gap-10 md:gap-16">
             <Link
               href="mailto:info@whaustralia.com"
-              className="text-red-600 hover:scale-110 transition-transform">
+              className="text-red-600 hover:scale-110 transition-transform"
+            >
               <Mail className="h-6 w-6" />
             </Link>
             <Link
               href="#"
-              className="text-red-600 hover:scale-110 transition-transform">
+              className="text-red-600 hover:scale-110 transition-transform"
+            >
               <Instagram className="h-6 w-6" />
             </Link>
             <Link
               href="#"
-              className="text-red-600 hover:scale-110 transition-transform">
+              className="text-red-600 hover:scale-110 transition-transform"
+            >
               <Facebook className="h-6 w-6" />
             </Link>
             <Link
               href="#"
-              className="text-red-600 hover:scale-110 transition-transform">
+              className="text-red-600 hover:scale-110 transition-transform"
+            >
               <Music2 className="h-6 w-6" />
             </Link>
           </div>

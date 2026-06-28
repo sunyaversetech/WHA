@@ -20,9 +20,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
 const COMMUNITIES = [
-  { name: "All",       value: "All",        icon: Globe },
+  { name: "All", value: "All", icon: Globe },
   { name: "Australian", value: "Australian", icon: MapPin },
-  { name: "Nepali",    value: "Nepali",     icon: MapPin },
+  { name: "Nepali", value: "Nepali", icon: MapPin },
 ];
 
 interface FilterPanelProps {
@@ -30,7 +30,10 @@ interface FilterPanelProps {
   categoriesContent: React.ReactNode;
 }
 
-export default function FilterPanel({ title, categoriesContent }: FilterPanelProps) {
+export default function FilterPanel({
+  title,
+  categoriesContent,
+}: FilterPanelProps) {
   const [currentCommunity, setCurrentCommunity] = useState("All");
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -54,14 +57,16 @@ export default function FilterPanel({ title, categoriesContent }: FilterPanelPro
           value="categories"
           className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary
                      data-[state=active]:text-primary data-[state=active]:shadow-none
-                     py-3 font-semibold text-sm bg-transparent">
+                     py-3 font-semibold text-sm bg-transparent"
+        >
           Categories
         </TabsTrigger>
         <TabsTrigger
           value="communities"
           className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary
                      data-[state=active]:text-primary data-[state=active]:shadow-none
-                     py-3 font-semibold text-sm bg-transparent">
+                     py-3 font-semibold text-sm bg-transparent"
+        >
           Community
         </TabsTrigger>
       </TabsList>
@@ -80,14 +85,17 @@ export default function FilterPanel({ title, categoriesContent }: FilterPanelPro
                 key={com.value}
                 variant="outline"
                 onClick={() => {
-                  updateQuery({ community: com.value === "All" ? null : com.value });
+                  updateQuery({
+                    community: com.value === "All" ? null : com.value,
+                  });
                   setCurrentCommunity(com.value);
                 }}
                 className={`flex items-center gap-2 h-10 px-4 rounded-full border font-semibold text-sm transition-all ${
                   isActive
                     ? "bg-primary text-primary-foreground border-primary"
                     : "bg-white text-muted-foreground border-border hover:border-primary hover:text-primary"
-                }`}>
+                }`}
+              >
                 <Icon className="h-3.5 w-3.5" />
                 {com.name}
               </Button>
@@ -103,13 +111,19 @@ export default function FilterPanel({ title, categoriesContent }: FilterPanelPro
       {/* Mobile: Drawer */}
       <Drawer>
         <DrawerTrigger asChild className="flex md:hidden">
-          <Button variant="outline" size="sm" className="rounded-full font-semibold">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full font-semibold"
+          >
             <SlidersVertical className="h-3.5 w-3.5 mr-1.5" />
             Filters
           </Button>
         </DrawerTrigger>
         <DrawerContent className="max-w-4xl w-full min-h-[50vh] p-5">
-          <DrawerTitle className="text-base font-bold mb-4">{title}</DrawerTitle>
+          <DrawerTitle className="text-base font-bold mb-4">
+            {title}
+          </DrawerTitle>
           <FilterContent />
         </DrawerContent>
       </Drawer>
@@ -117,13 +131,19 @@ export default function FilterPanel({ title, categoriesContent }: FilterPanelPro
       {/* Desktop: Dialog */}
       <Dialog>
         <DialogTrigger asChild className="hidden md:flex">
-          <Button variant="outline" size="sm" className="rounded-full font-semibold">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full font-semibold"
+          >
             <SlidersVertical className="h-3.5 w-3.5 mr-1.5" />
             Filters
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-2xl w-full p-6">
-          <DialogTitle className="text-base font-bold mb-4">{title}</DialogTitle>
+          <DialogTitle className="text-base font-bold mb-4">
+            {title}
+          </DialogTitle>
           <FilterContent />
         </DialogContent>
       </Dialog>

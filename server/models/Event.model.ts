@@ -22,6 +22,17 @@ const EventSchema = new Schema({
   image: { type: String },
   latitude: { type: Number },
   longitude: { type: Number },
+  geo: {
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point",
+    },
+    coordinates: {
+      type: [Number],
+      default: undefined,
+    },
+  },
   ticket_link: { type: String },
   ticket_price: { type: Number },
   startTime: { type: String },
@@ -30,6 +41,20 @@ const EventSchema = new Schema({
   community_name: { type: String },
   isSponsor: { type: Boolean, default: false },
   slug: { type: String },
+});
+
+// 2dsphere index enables $geoNear aggregation for location-based queries.
+EventSchema.index({ geo: "2dsphere" });
+
+// Populate GeoJSON field whenever lat/lng are present on save.
+// GeoJSON coordinates are [longitude, latitude] (note the order).
+EventSchema.pre("save", async function () {
+  if (this.latitude != null && this.longitude != null) {
+    this.geo = {
+      type: "Point",
+      coordinates: [this.longitude, this.latitude],
+    };
+  }
 });
 
 export const Event = models.Event || model("Event", EventSchema);

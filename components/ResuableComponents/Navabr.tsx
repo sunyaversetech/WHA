@@ -12,21 +12,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 import { LogoutDialog } from "../ui/LogoutDialog";
 
-import EventSearchWithDates from "./SearchSectionForEvents";
 import BusinessSearchWithDates from "./SearchSectionforBusiness";
-import DealsSearchWithDates from "./SearchSectionForDeals";
-import MobileEventSearchWithDates from "./MobileViewSearch/SearchSectionForEvents";
 import MobileBusinessSearchWithDates from "./MobileViewSearch/SearchSectionforBusiness";
-import MobileDealsSearchWithDates from "./MobileViewSearch/SearchSectionForDeals";
-
-const navItems = [
-  { id: "event",    label: "Events",     href: "/events",     img: "/navbar/calendar.png",           activeImg: "/navbar/calendar.gif" },
-  { id: "deals",    label: "Deals",      href: "/deals",      img: "/navbar/agreement.png",          activeImg: "/navbar/agreement.gif" },
-  { id: "business", label: "Businesses", href: "/businesses", img: "/navbar/corporate-culture.png",  activeImg: "/navbar/corporate-culture.gif" },
-];
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -34,19 +24,6 @@ export default function Navbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCity = searchParams.get("city");
-
-  const getActiveTab = () => {
-    if (pathname.startsWith("/events"))     return "event";
-    if (pathname.startsWith("/deals"))      return "deals";
-    if (pathname.startsWith("/businesses")) return "business";
-    return "";
-  };
-
-  const [activeTab, setActiveTab] = useState(getActiveTab);
-
-  useEffect(() => {
-    setActiveTab(getActiveTab());
-  }, [pathname]);
 
   useEffect(() => {
     const savedCity = localStorage.getItem("preferredCity");
@@ -57,175 +34,262 @@ export default function Navbar() {
     }
   }, [currentCity, pathname, router, searchParams]);
 
-  const buildPath = (href: string) => {
-    if (!currentCity) return href;
-    return `${href}?city=${currentCity}`;
-  };
+  const buildPath = (href: string) =>
+    currentCity ? `${href}?city=${currentCity}` : href;
+
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const path = pathname.split("?")[0];
-  const isEventsPage   = path === "/events";
-  const isDealsPage    = path === "/deals";
-  const isBusinessPage = path === "/businesses";
-  const isDashboard    = path.startsWith("/dashboard");
-  const showMobileSearch = isEventsPage || isDealsPage || isBusinessPage;
+  const isHomePage = path === "/";
+  const isDashboard = path.startsWith("/dashboard");
+  const isBusinessesPage = path === "/businesses";
+  const showMobileSearch = [
+    "/events",
+    "/deals",
+    "/bookings",
+    "/favorites",
+  ].includes(path);
 
-  return (
-    <>
-      {/* ── Mobile top bar ── */}
-      <div className="md:hidden fixed top-0 left-0 w-full z-50 bg-white shadow-sm">
-        {/* Logo row – always shown on mobile */}
-        {!showMobileSearch && (
-          <div className="flex items-center justify-between px-4 py-3">
-            <Link href={buildPath("/")} aria-label="Home">
-              <Image
-                src="/wha/logo.png"
-                alt="What's Happening Australia"
-                width={90}
-                height={24}
-                className="object-contain h-auto"
-                priority
+  /* ── User dropdown (shared) ── */
+  const UserDropdown = ({ pillStyle }: { pillStyle?: boolean }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        {pillStyle ? (
+          /* Fresha-style bordered pill: avatar + chevron */
+          <button
+            aria-label="Account menu"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              border: "1px solid #e6ebf2",
+              background: "#fff",
+              borderRadius: 9999,
+              padding: "5px 10px 5px 5px",
+              cursor: "pointer",
+              outline: "none",
+            }}
+          >
+            <Avatar className="h-9 w-9 border-2 border-border">
+              <AvatarImage
+                className="object-cover"
+                src={session?.user?.image ?? ""}
               />
-            </Link>
-            <div className="flex items-center gap-2">
-              {session ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label="Account menu">
-                      <Avatar className="h-9 w-9 border-2 border-border">
-                        <AvatarImage className="object-cover" src={session?.user?.image ?? ""} />
-                        <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
-                          {session?.user?.name?.charAt(0) || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-64 p-3 rounded-2xl shadow-xl">
-                    <p className="font-semibold text-sm">{session.user?.name}</p>
-                    <p className="text-xs text-muted-foreground mb-2 truncate">{session.user?.email}</p>
-                    <div className="border-t border-border my-2" />
-                    <Link href={buildPath("/dashboard")} className="block px-2 py-2 rounded-lg text-sm hover:bg-muted transition-colors">
-                      Dashboard
-                    </Link>
-                    <LogoutDialog />
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Link href={buildPath("/auth")}>
-                  <Button size="sm" className="rounded-full px-4 text-xs font-semibold">Login</Button>
-                </Link>
-              )}
-            </div>
-          </div>
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                {session?.user?.name?.charAt(0)?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <ChevronDown size={18} color="#64748b" strokeWidth={2.2} />
+          </button>
+        ) : (
+          /* Compact: just avatar */
+          <button
+            aria-label="Account menu"
+            className="rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            <Avatar className="h-9 w-9 border-2 border-border">
+              <AvatarImage
+                className="object-cover"
+                src={session?.user?.image ?? ""}
+              />
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                {session?.user?.name?.charAt(0)?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+          </button>
         )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-64 p-3 rounded-2xl bg-white shadow-xl border border-border"
+      >
+        <p className="font-semibold text-sm">{session?.user?.name}</p>
+        <p className="text-xs text-muted-foreground mb-2 truncate">
+          {session?.user?.email}
+        </p>
+        <div className="border-t border-border my-2" />
+        <Link
+          href={buildPath("/dashboard")}
+          className="block px-2 py-2 rounded-lg text-sm hover:bg-muted transition-colors"
+        >
+          Dashboard
+        </Link>
+        <LogoutDialog />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
-        {/* Search row – shown on listing pages */}
-        {showMobileSearch && (
-          <>
-            {isEventsPage   && <MobileEventSearchWithDates />}
-            {isDealsPage    && <MobileDealsSearchWithDates />}
-            {isBusinessPage && <MobileBusinessSearchWithDates />}
-          </>
-        )}
+  /* ── Auth section (logged-in or login button) ── */
+  const AuthSection = ({
+    size = "default",
+    pillAvatar = false,
+  }: {
+    size?: "sm" | "default";
+    pillAvatar?: boolean;
+  }) =>
+    session ? (
+      <UserDropdown pillStyle={pillAvatar} />
+    ) : (
+      <Link href={buildPath("/auth")}>
+        <Button size={size} className="rounded-full px-5 font-semibold">
+          Login
+        </Button>
+      </Link>
+    );
+
+  const solidStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.95)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    boxShadow: "0 1px 0 #e6ebf2, 0 2px 12px rgba(2,12,26,0.06)",
+  };
+  const clearStyle: React.CSSProperties = {
+    background: "transparent",
+    backdropFilter: "none",
+    WebkitBackdropFilter: "none",
+    boxShadow: "none",
+  };
+  const navStyle: React.CSSProperties = {
+    ...(scrolled ? solidStyle : clearStyle),
+    transition:
+      "background 0.25s ease, box-shadow 0.25s ease, backdrop-filter 0.25s ease",
+  };
+
+  /* ════════════════════════════════════
+     MOBILE
+  ════════════════════════════════════ */
+  const MobileNav = () => (
+    <div className="md:hidden fixed top-0 left-0 w-full z-50" style={navStyle}>
+      {/* Logo + auth row — always shown */}
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{
+          borderBottom: scrolled
+            ? "1px solid rgba(230,235,242,0.8)"
+            : "1px solid transparent",
+        }}
+      >
+        <Link href={buildPath("/")} aria-label="Home">
+          <Image
+            src="/wha/logo.png"
+            alt="What's Happening Australia"
+            width={60}
+            height={24}
+            className="object-contain h-auto"
+            priority
+          />
+        </Link>
+        {session && <AuthSection size="sm" />}
       </div>
 
-      {/* ── Desktop nav ── */}
-      {!isDashboard && (
-        <nav className="hidden md:block fixed top-0 left-0 z-50 w-full bg-white/95 backdrop-blur-md shadow-sm">
-          <div className="flex items-center justify-between px-6 py-3 border-b border-border/50">
-            {/* Logo */}
-            <Link
-              href={buildPath("/")}
-              onClick={() => setActiveTab("")}
-              aria-label="Home"
-              className="flex items-center flex-shrink-0">
-              <Image
-                src="/wha/logo.png"
-                alt="What's Happening Australia"
-                width={100}
-                height={26}
-                className="object-contain w-24 h-auto"
-                priority
-              />
-            </Link>
+      {/* Search row — only on pages where it makes sense */}
+      {/* {showMobileSearch && (
+        <div className="px-4 py-3">
+          <MobileBusinessSearchWithDates />
+        </div>
+      )} */}
+    </div>
+  );
 
-            {/* Nav links */}
-            <nav aria-label="Primary navigation" className="flex items-center gap-8 text-sm font-semibold">
-              {navItems.map((item) => {
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      router.push(buildPath(item.href));
-                    }}
-                    aria-current={isActive ? "page" : undefined}
-                    className={`relative flex items-center gap-2 pb-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm ${
-                      isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
-                    }`}>
-                    <Image
-                      src={isActive ? item.activeImg : item.img}
-                      className="h-6 w-6"
-                      width={24}
-                      height={24}
-                      alt=""
-                      aria-hidden="true"
-                    />
-                    <span>{item.label}</span>
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeNavTab"
-                        className="absolute -bottom-1 left-0 right-0 h-[2px] bg-primary rounded-full"
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
+  /* ════════════════════════════════════
+     DESKTOP — HOMEPAGE VARIANT
+  ════════════════════════════════════ */
+  const DesktopHomeNav = () => (
+    <nav
+      className="hidden md:block fixed top-0 left-0 z-50 w-full"
+      style={navStyle}
+    >
+      <div
+        style={{ maxWidth: 1280, margin: "0 auto" }}
+        className="flex items-center justify-between px-6 md:px-14 py-4"
+      >
+        {/* Logo */}
+        <Link href={buildPath("/")} aria-label="Home" className="flex-shrink-0">
+          <Image
+            src="/wha/logo.png"
+            alt="What's Happening Australia"
+            width={108}
+            height={28}
+            className="object-contain h-auto"
+            priority
+          />
+        </Link>
 
-            {/* Auth */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              {session ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label="Account menu">
-                      <Avatar className="h-9 w-9 border-2 border-border">
-                        <AvatarImage className="object-cover" src={session?.user?.image ?? ""} />
-                        <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
-                          {session?.user?.name?.charAt(0) || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-64 p-3 rounded-2xl bg-white shadow-xl border border-border">
-                    <p className="font-semibold text-sm">{session.user?.name}</p>
-                    <p className="text-xs text-muted-foreground mb-2 truncate">{session.user?.email}</p>
-                    <div className="border-t border-border my-2" />
-                    <Link href={buildPath("/dashboard")} className="block px-2 py-2 rounded-lg text-sm hover:bg-muted transition-colors">
-                      Dashboard
-                    </Link>
-                    <LogoutDialog />
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Link href={buildPath("/auth")}>
-                  <Button className="rounded-full px-5 font-semibold">Login</Button>
-                </Link>
-              )}
-            </div>
-          </div>
+        {/* Right side: List your business + auth */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push("/auth")}
+            style={{
+              border: "1px solid #d8dfe9",
+              background: scrolled
+                ? "rgba(255,255,255,0.9)"
+                : "rgba(255,255,255,0.6)",
+              color: "#0f2748",
+              fontWeight: 600,
+              fontSize: 15,
+              padding: "11px 20px",
+              borderRadius: 9999,
+              cursor: "pointer",
+              transition: "background 0.25s ease",
+            }}
+          >
+            List your business
+          </button>
 
-          {/* Contextual search bar */}
-          {(isEventsPage || isDealsPage || isBusinessPage) && (
-            <div className="w-full bg-white px-6 py-2 border-b border-border/50">
-              {isEventsPage   && <EventSearchWithDates />}
-              {isDealsPage    && <DealsSearchWithDates />}
-              {isBusinessPage && <BusinessSearchWithDates />}
-            </div>
-          )}
-        </nav>
-      )}
+          <AuthSection pillAvatar />
+        </div>
+      </div>
+    </nav>
+  );
+
+  /* ════════════════════════════════════
+     DESKTOP — INNER PAGES VARIANT
+  ════════════════════════════════════ */
+  const DesktopInnerNav = () => (
+    <nav
+      className="hidden md:block fixed top-0 left-0 z-50 w-full"
+      style={navStyle}
+    >
+      <div className="flex items-center gap-6 px-6 py-3">
+        {/* Logo */}
+        <Link href={buildPath("/")} aria-label="Home" className="flex-shrink-0">
+          <Image
+            src="/wha/logo.png"
+            alt="What's Happening Australia"
+            width={104}
+            height={28}
+            className="object-contain h-auto"
+            priority
+          />
+        </Link>
+
+        {/* Search bar fills available space */}
+        <div className="flex-1 min-w-0 max-w-3xl mx-auto">
+          <BusinessSearchWithDates />
+        </div>
+
+        {/* Auth */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <AuthSection />
+        </div>
+      </div>
+    </nav>
+  );
+
+  /* ════════════════════════════════════
+     RENDER
+  ════════════════════════════════════ */
+  return (
+    <>
+      {!isBusinessesPage && <MobileNav />}
+      {!isDashboard && (isHomePage ? <DesktopHomeNav /> : <DesktopInnerNav />)}
     </>
   );
 }

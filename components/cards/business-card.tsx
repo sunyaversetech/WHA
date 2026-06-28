@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Loader2, MapPin, Star } from "lucide-react";
+import { Heart, Loader2, Star, BadgeCheck } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
@@ -12,47 +12,46 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  restaurant:   "Restaurant",
-  cafe:         "Café",
-  "food-truck": "Food Truck",
-  grocery:      "Grocery",
-  salon:        "Salon",
-  consultancy:  "Consultancy",
-};
-
 export default function BusinessCard({ business }: { business: any }) {
-  const { onOpen }         = useAuthModal();
+  const { onOpen } = useAuthModal();
   const { mutate, isPending } = useCreateFavroite();
-  const { data: session }  = useSession();
-  const queryClient        = useQueryClient();
-  const router             = useRouter();
-  const businessId         = business?._id;
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const businessId = business?._id;
 
   const { data: userFavorites } = useGetUserFavroite();
-  const isBusinessFavorite = userFavorites?.data?.business?.some(
-    (item) => (item._id ?? "").toString() === businessId?.toString(),
+  const isFav = userFavorites?.data?.business?.some(
+    (item: any) => (item._id ?? "").toString() === businessId?.toString(),
   );
 
   const avgRating =
     business?.reviews?.length > 0
-      ? business.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) /
-        business.reviews.length
+      ? (
+          business.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) /
+          business.reviews.length
+        ).toFixed(1)
       : null;
   const totalReviews = business?.reviews?.length ?? 0;
 
-  const slug = business.business_name?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
-  const categoryLabel =
-    CATEGORY_LABELS[business.business_category] ??
-    business.business_category ??
-    "Business";
+  const displayName = business.business_name ?? business.name ?? "Business";
+  const slug = displayName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const category = business.business_category ?? "";
+  const city = business.city_name ?? business.city ?? "";
+  const hasDeal = (business.deal?.length ?? 0) > 0;
+  const isVerified = business.verified ?? business.isSponsor ?? false;
 
-  const handleFavourite = () => {
-    if (!session) { onOpen(); return; }
+  const handleFav = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!session) {
+      onOpen();
+      return;
+    }
     mutate(
       { item_id: businessId, item_type: "User" },
       {
-        onSuccess: (msg) => {
+        onSuccess: (msg: any) => {
           router.refresh();
           toast.success(msg.message);
           queryClient.invalidateQueries({ queryKey: ["favroite"] });
@@ -68,74 +67,187 @@ export default function BusinessCard({ business }: { business: any }) {
       onClick={() => router.push(`/businesses/${slug}`)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && router.push(`/businesses/${slug}`)}>
-
-      {/* Image */}
-      <div className="relative w-full h-52 rounded-xl overflow-hidden">
+      onKeyDown={(e) => e.key === "Enter" && router.push(`/businesses/${slug}`)}
+    >
+      {/* ── Image ── */}
+      <div
+        style={{
+          aspectRatio: "16/11",
+          borderRadius: 18,
+          position: "relative",
+          overflow: "hidden",
+          background: "#e9eef2",
+        }}
+      >
         <Image
           fill
           src={business.image || "/placeholder.svg"}
-          alt={business.business_name}
+          alt={displayName}
           className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          sizes="(max-width: 768px) 100vw, 400px"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(to top, rgba(2,12,26,0.2) 0%, transparent 55%)",
+          }}
+        />
 
-        {/* Category badge */}
-        <span className="absolute top-3 left-3 inline-flex items-center px-2.5 py-1
-                         bg-white text-primary text-xs font-semibold rounded-full shadow-sm">
-          {categoryLabel}
-        </span>
+        {/* Deal badge */}
+        {hasDeal && (
+          <span
+            style={{
+              position: "absolute",
+              top: 12,
+              left: 12,
+              background: "#3771db",
+              color: "#fff",
+              fontSize: 11,
+              fontWeight: 700,
+              padding: "4px 10px",
+              borderRadius: 9999,
+              letterSpacing: "0.04em",
+            }}
+          >
+            Deal
+          </span>
+        )}
 
-        {/* Favourite button */}
+        {/* Favourite */}
         <button
           disabled={isPending}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            handleFavourite();
+          onClick={handleFav}
+          aria-label={isFav ? "Remove from favourites" : "Add to favourites"}
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.92)",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
           }}
-          aria-label={isBusinessFavorite ? "Remove from favourites" : "Add to favourites"}
-          className="absolute top-3 right-3 p-2 bg-black/20 backdrop-blur-md border border-white/30
-                     rounded-full transition-all duration-150 hover:bg-black/40 disabled:opacity-60
-                     focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none">
+        >
           {isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin text-white" />
+            <Loader2 size={16} className="animate-spin" color="#0f2748" />
           ) : (
             <Heart
-              className={`h-4 w-4 transition-colors duration-150 ${
-                isBusinessFavorite ? "text-red-400 fill-red-400" : "text-white"
-              }`}
+              size={16}
+              color={isFav ? "#e11d48" : "#0f2748"}
+              fill={isFav ? "#e11d48" : "none"}
+              strokeWidth={2}
             />
           )}
         </button>
       </div>
 
-      {/* Info */}
-      <div className="pt-3 space-y-1">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="text-primary font-bold text-sm md:text-base line-clamp-1 leading-snug">
-              {business.business_name}
-            </h3>
-            {business.city && (
-              <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                <MapPin className="h-3 w-3 flex-shrink-0" />
-                <span className="capitalize">{business.city}</span>
-              </p>
+      {/* ── Info ── */}
+      <div style={{ marginTop: 12 }}>
+        {/* Name + Rating */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              minWidth: 0,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: "#0f172a",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {displayName}
+            </span>
+
+            {isVerified && (
+              <BadgeCheck
+                size={18}
+                style={{ color: "#3771db", flexShrink: 0 }}
+              />
             )}
           </div>
 
-          {/* Rating */}
-          <div className="flex items-center gap-1 px-2 py-1 rounded-full border border-amber-200 bg-amber-50 flex-shrink-0">
-            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-            <span className="text-xs font-bold text-gray-800">
-              {avgRating !== null ? avgRating.toFixed(1) : "—"}
-            </span>
-            {totalReviews > 0 && (
-              <span className="text-xs text-muted-foreground">({totalReviews})</span>
-            )}
-          </div>
+          {avgRating && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                fontSize: 16,
+                fontWeight: 700,
+                color: "#0f172a",
+                flexShrink: 0,
+              }}
+            >
+              <Star size={16} fill="#f5b301" color="#f5b301" />
+              {avgRating}
+            </div>
+          )}
+        </div>
+
+        {/* Distance • City */}
+        <div
+          style={{
+            marginTop: 6,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 15,
+            color: "#6b7280",
+          }}
+        >
+          {typeof business.distance === "number" && (
+            <>
+              <span>
+                {business.distance < 1000
+                  ? `${Math.round(business.distance)} m`
+                  : `${(business.distance / 1000).toFixed(1)} km`}
+              </span>
+              <span>•</span>
+            </>
+          )}
+
+          {city && <span>{city}</span>}
+        </div>
+
+        {/* Category • Reviews */}
+        <div
+          style={{
+            marginTop: 4,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            flexWrap: "wrap",
+            fontSize: 15,
+            color: "#6b7280",
+          }}
+        >
+          {category && <span className="capitalize">{category}</span>}
+
+          {category && totalReviews > 0 && <span>•</span>}
+
+          {totalReviews > 0 && <span>{totalReviews} reviews</span>}
         </div>
       </div>
     </article>

@@ -4,11 +4,43 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { ExternalLink, Maximize2, Minimize2 } from "lucide-react";
+import { ExternalLink, Maximize2, Minimize2, Navigation } from "lucide-react";
 import Link from "next/link";
-import { UserLocationButton } from "../Business/business-map";
 
 const WIDE_VIEW: [number, number] = [-34.57, 150.17];
+
+function UserLocationButton() {
+  const map = useMap();
+  return (
+    <button
+      onClick={() => {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition((pos) => {
+          map.flyTo([pos.coords.latitude, pos.coords.longitude], 14, { duration: 1 });
+        });
+      }}
+      style={{
+        position: "absolute",
+        bottom: 80,
+        right: 12,
+        zIndex: 1000,
+        width: 40,
+        height: 40,
+        borderRadius: "50%",
+        background: "#fff",
+        border: "1px solid #e2e8ee",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        boxShadow: "0 2px 8px rgba(2,12,26,0.12)",
+      }}
+      aria-label="Go to my location"
+    >
+      <Navigation size={17} color="#0f2748" />
+    </button>
+  );
+}
 const WIDE_ZOOM = 7;
 
 if (typeof window !== "undefined") {

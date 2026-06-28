@@ -6,7 +6,7 @@ import { UpcomingEvents } from "./UpcomingEvents";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#F8F9FA]">
+    <main className="min-h-screen bg-white">
       <div className="space-y-0">
         <CategoryHero />
 

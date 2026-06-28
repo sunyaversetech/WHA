@@ -30,7 +30,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "What's Happening Australia",
-  description: "Discover events, local businesses, deals, and community news across Australia.",
+  description:
+    "Discover events, local businesses, deals, and community news across Australia.",
 };
 
 export default function RootLayout({
