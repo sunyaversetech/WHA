@@ -115,6 +115,158 @@ function StarRow({
   );
 }
 
+function ActionBtn({
+  onClick,
+  children,
+  ghost = false,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+  ghost?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: 38,
+        height: 38,
+        borderRadius: "50%",
+        background: ghost ? "rgba(255,255,255,0.9)" : T.bg,
+        border: ghost ? "none" : `1px solid ${T.border}`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        flexShrink: 0,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function BookNowBtn({
+  full = false,
+  onClick,
+}: {
+  full?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: T.navyDark,
+        color: T.white,
+        border: "none",
+        borderRadius: 10,
+        padding: "12px 28px",
+        fontSize: 14,
+        fontWeight: 700,
+        cursor: "pointer",
+        width: full ? "100%" : undefined,
+        whiteSpace: "nowrap",
+      }}
+    >
+      Book now
+    </button>
+  );
+}
+
+function RatingSummary({
+  ratingNum,
+  totalReviews,
+  category,
+}: {
+  ratingNum: number | null;
+  totalReviews: number;
+  category: string;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+      {ratingNum ? (
+        <>
+          <StarRow rating={ratingNum} />
+          <span style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
+            {ratingNum.toFixed(1)}
+          </span>
+          <span style={{ fontSize: 14, color: T.gray }}>
+            ({totalReviews} review{totalReviews !== 1 ? "s" : ""})
+          </span>
+        </>
+      ) : (
+        <>
+          <StarRow rating={0} />
+          <span style={{ fontSize: 13, color: T.lightGray }}>No reviews yet</span>
+        </>
+      )}
+      {category && (
+        <>
+          <span style={{ color: T.lightGray }}>·</span>
+          <span style={{ fontSize: 14, color: T.gray, textTransform: "capitalize" }}>
+            {category}
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
+function TeamCircle({ emp }: { emp: any }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 8,
+        flexShrink: 0,
+        width: 80,
+      }}
+    >
+      <div
+        style={{
+          width: 68,
+          height: 68,
+          borderRadius: "50%",
+          background: T.bg,
+          border: `2px solid ${T.border}`,
+          overflow: "hidden",
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {emp.employee_photo ? (
+          <Image
+            fill
+            src={emp.employee_photo}
+            alt={emp.full_name}
+            style={{ objectFit: "cover" }}
+            sizes="68px"
+          />
+        ) : (
+          <User size={28} color={T.lightGray} />
+        )}
+      </div>
+      <span
+        style={{
+          fontSize: 12,
+          fontWeight: 600,
+          color: T.navy,
+          textAlign: "center",
+          lineHeight: 1.3,
+          wordBreak: "break-word",
+          maxWidth: 76,
+        }}
+      >
+        {emp.full_name?.split(" ")[0] ?? "Staff"}
+      </span>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════
    MAIN COMPONENT
 ═══════════════════════════════════════════════════════════ */
@@ -206,140 +358,6 @@ export default function BusinessPage() {
   const hasGeo      = !!(biz?.latitude && biz?.longitude);
 
   const ratingNum   = avgRating ? Number(avgRating.toFixed(1)) : null;
-
-  /* ── shared icon action buttons ── */
-  const ActionBtn = ({
-    onClick,
-    children,
-    ghost = false,
-  }: {
-    onClick: () => void;
-    children: React.ReactNode;
-    ghost?: boolean;
-  }) => (
-    <button
-      onClick={onClick}
-      style={{
-        width: 38,
-        height: 38,
-        borderRadius: "50%",
-        background: ghost ? "rgba(255,255,255,0.9)" : T.bg,
-        border: ghost ? "none" : `1px solid ${T.border}`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        flexShrink: 0,
-      }}
-    >
-      {children}
-    </button>
-  );
-
-  /* ── primary CTA button ── */
-  const BookNowBtn = ({ full = false }: { full?: boolean }) => (
-    <button
-      onClick={() => router.push(`/bookings?business_id=${businessId}`)}
-      style={{
-        background: T.navyDark,
-        color: T.white,
-        border: "none",
-        borderRadius: 10,
-        padding: "12px 28px",
-        fontSize: 14,
-        fontWeight: 700,
-        cursor: "pointer",
-        width: full ? "100%" : undefined,
-        whiteSpace: "nowrap",
-      }}
-    >
-      Book now
-    </button>
-  );
-
-  /* ── inline rating summary ── */
-  const RatingSummary = () => (
-    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-      {ratingNum ? (
-        <>
-          <StarRow rating={ratingNum} />
-          <span style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
-            {ratingNum.toFixed(1)}
-          </span>
-          <span style={{ fontSize: 14, color: T.gray }}>
-            ({totalReviews} review{totalReviews !== 1 ? "s" : ""})
-          </span>
-        </>
-      ) : (
-        <>
-          <StarRow rating={0} />
-          <span style={{ fontSize: 13, color: T.lightGray }}>No reviews yet</span>
-        </>
-      )}
-      {category && (
-        <>
-          <span style={{ color: T.lightGray }}>·</span>
-          <span style={{ fontSize: 14, color: T.gray, textTransform: "capitalize" }}>
-            {category}
-          </span>
-        </>
-      )}
-    </div>
-  );
-
-  /* ── Team member circle ── */
-  const TeamCircle = ({ emp }: { emp: any }) => (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 8,
-        flexShrink: 0,
-        width: 80,
-      }}
-    >
-      <div
-        style={{
-          width: 68,
-          height: 68,
-          borderRadius: "50%",
-          background: T.bg,
-          border: `2px solid ${T.border}`,
-          overflow: "hidden",
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {emp.employee_photo ? (
-          <Image
-            fill
-            src={emp.employee_photo}
-            alt={emp.full_name}
-            style={{ objectFit: "cover" }}
-            sizes="68px"
-          />
-        ) : (
-          <User size={28} color={T.lightGray} />
-        )}
-      </div>
-      <span
-        style={{
-          fontSize: 12,
-          fontWeight: 600,
-          color: T.navy,
-          textAlign: "center",
-          lineHeight: 1.3,
-          wordBreak: "break-word",
-          maxWidth: 76,
-        }}
-      >
-        {emp.full_name?.split(" ")[0] ?? "Staff"}
-      </span>
-    </div>
-  );
 
   /* ═══════════════ LEFT MAIN CONTENT sections ═══════════════ */
   const MainContent = () => (
@@ -734,7 +752,7 @@ export default function BusinessPage() {
             </span>
           </div>
         )}
-        <BookNowBtn full />
+        <BookNowBtn full onClick={() => router.push(`/bookings?business_id=${businessId}`)} />
       </div>
 
       <div style={{ height: 1, background: T.border, margin: "20px 24px" }} />
@@ -908,7 +926,7 @@ export default function BusinessPage() {
                 )}
               </div>
               <div style={{ marginTop: 6 }}>
-                <RatingSummary />
+                <RatingSummary ratingNum={ratingNum} totalReviews={totalReviews} category={category} />
               </div>
               {(city || address) && (
                 <div
@@ -932,13 +950,13 @@ export default function BusinessPage() {
 
           {/* Mobile Book Now */}
           <div style={{ marginTop: 16, marginBottom: 4 }}>
-            <BookNowBtn full />
+            <BookNowBtn full onClick={() => router.push(`/bookings?business_id=${businessId}`)} />
           </div>
         </div>
 
         {/* Mobile sections */}
         <div style={{ padding: "24px 16px 80px" }}>
-          <MainContent />
+          {MainContent()}
         </div>
       </div>
 
@@ -1127,7 +1145,7 @@ export default function BusinessPage() {
                 )}
               </div>
               <div style={{ marginTop: 8 }}>
-                <RatingSummary />
+                <RatingSummary ratingNum={ratingNum} totalReviews={totalReviews} category={category} />
               </div>
               {(city || address) && (
                 <div
@@ -1165,7 +1183,7 @@ export default function BusinessPage() {
                   {activeServices.length} services available
                 </span>
               )}
-              <BookNowBtn />
+              <BookNowBtn onClick={() => router.push(`/bookings?business_id=${businessId}`)} />
             </div>
           </div>
 
@@ -1188,10 +1206,10 @@ export default function BusinessPage() {
           }}
         >
           {/* LEFT MAIN */}
-          <MainContent />
+          {MainContent()}
 
           {/* RIGHT SIDEBAR */}
-          <Sidebar />
+          {Sidebar()}
         </div>
       </div>
     </div>

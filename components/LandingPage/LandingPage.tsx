@@ -297,7 +297,7 @@ export default function LandingPage() {
               margin: "0 0 18px",
             }}
           >
-            What's Happening Australia
+            What&apos;s Happening Australia
           </h1>
           <p
             style={{

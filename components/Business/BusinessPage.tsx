@@ -1066,18 +1066,18 @@ export default function BusinessesClientPage() {
               }}
             >
               <div style={{ minWidth: 0 }}>
-                <Toolbar />
-                <CardGrid cols={2} />
+                {Toolbar()}
+                {CardGrid({ cols: 2 })}
               </div>
               <div style={{ position: "sticky", top: 96 }}>
-                <MapBox height="calc(100vh - 168px)" />
+                {MapBox({ height: "calc(100vh - 168px)" })}
               </div>
             </div>
           ) : (
             /* No map: 3-col card grid */
             <>
-              <Toolbar />
-              <CardGrid cols={3} />
+              {Toolbar()}
+              {CardGrid({ cols: 3 })}
             </>
           )}
         </div>
@@ -1112,7 +1112,7 @@ export default function BusinessesClientPage() {
               >
                 {countText}
               </div>
-              <CardGrid cols={1} />
+              {CardGrid({ cols: 1 })}
             </div>
           )}
 
@@ -1141,7 +1141,7 @@ export default function BusinessesClientPage() {
                 {MobileSearchHeader()}
               </div>
               <div style={{ flex: 1, position: "relative" }}>
-                <MapBox height="100%" radius={0} />
+                {MapBox({ height: "100%", radius: 0 })}
               </div>
             </div>
           )}

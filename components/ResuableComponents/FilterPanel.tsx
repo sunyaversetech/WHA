@@ -124,7 +124,7 @@ export default function FilterPanel({
           <DrawerTitle className="text-base font-bold mb-4">
             {title}
           </DrawerTitle>
-          <FilterContent />
+          {FilterContent()}
         </DrawerContent>
       </Drawer>
 
@@ -144,7 +144,7 @@ export default function FilterPanel({
           <DialogTitle className="text-base font-bold mb-4">
             {title}
           </DialogTitle>
-          <FilterContent />
+          {FilterContent()}
         </DialogContent>
       </Dialog>
     </>

@@ -288,8 +288,8 @@ export default function Navbar() {
   ════════════════════════════════════ */
   return (
     <>
-      {!isBusinessesPage && <MobileNav />}
-      {!isDashboard && (isHomePage ? <DesktopHomeNav /> : <DesktopInnerNav />)}
+      {!isBusinessesPage && MobileNav()}
+      {!isDashboard && (isHomePage ? DesktopHomeNav() : DesktopInnerNav())}
     </>
   );
 }
