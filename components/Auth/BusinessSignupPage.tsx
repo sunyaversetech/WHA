@@ -32,6 +32,7 @@ import {
   ChefHat,
   Pin,
   BookType,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -145,7 +146,7 @@ export type SingUPFormSchema = z.infer<typeof signupSchema>;
 
 const STEPS = [
   { id: 1, title: "Business Info", icon: Briefcase },
-  { id: 2, title: "Business Type", icon: BookType },
+  { id: 2, title: "Operating Hours", icon: Clock },
   { id: 3, title: "Category", icon: ChartBarStacked },
   { id: 4, title: "Business Location", icon: Pin },
   { id: 5, title: "Personal Info", icon: User },
@@ -166,6 +167,7 @@ export default function BusinessSignup() {
       business_name: "",
       phone_number: "",
       business_category: "",
+      business_type: "",
       community: "",
       city: "",
       location: "",
@@ -175,6 +177,7 @@ export default function BusinessSignup() {
       schedule: DEFAULT_SCHEDULE,
       category: "business",
       accpetalltermsandcondition: false,
+      is24_7: false,
     },
   });
 
@@ -186,12 +189,18 @@ export default function BusinessSignup() {
   const nextStep = async () => {
     const fields =
       step === 1
-        ? ["business_name", "image"]
+        ? ["business_name", "image", "business_type"]
         : step === 2
-          ? ["business_category"]
+          ? ["schedule"]
           : step === 3
-            ? ["city", "location"]
-            : ["community"];
+            ? ["business_category"]
+            : step === 4
+              ? ["location", "city"]
+              : step === 5
+                ? ["name", "phone_number", "community"]
+                : step === 6
+                  ? ["email", "password", "confirmPassword"]
+                  : [""];
 
     const isValid = await form.trigger(fields as any);
     if (isValid) setStep((s) => s + 1);
@@ -201,8 +210,12 @@ export default function BusinessSignup() {
     const formData = new FormData();
 
     Object.entries(values).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        formData.append(key, value as string | Blob);
+      if (value !== undefined && value !== null && !value.schedule) {
+        if (typeof key === "string" && key.includes("schedule")) {
+          formData.append("schedule", JSON.stringify(values.schedule));
+        } else {
+          formData.append(key, value as string | Blob);
+        }
       }
     });
 
@@ -218,6 +231,8 @@ export default function BusinessSignup() {
       },
     });
   };
+
+  console.log(form.formState.errors);
 
   return (
     <div className="w-full justify-center items-center max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 backdrop-blur-md rounded-2xl">
@@ -662,7 +677,6 @@ export default function BusinessSignup() {
             </div>
           )}
 
-          {/* Step 5: Security */}
           {step === 6 && (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
               <FormField
@@ -769,6 +783,7 @@ export default function BusinessSignup() {
                   </FormItem>
                 )}
               />
+              <FormMessage />
             </div>
           )}
 
@@ -783,7 +798,7 @@ export default function BusinessSignup() {
               </Button>
             )}
 
-            {step < 5 ? (
+            {step < 6 ? (
               <Button
                 type="button"
                 className="flex-1 h-12 sm:h-15 text-base sm:text-xl"
