@@ -24,7 +24,7 @@ import {
   useGetSingleDashboardBusiness,
   useUpadteABN,
 } from "@/services/business.service";
-import Loading from "@/app/businesses/loading";
+import Loading from "@/app/search/loading";
 
 export const abnFormSchema = z.object({
   abn_number: z
@@ -79,8 +79,7 @@ export function ABNUpdateForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 max-w-md p-6 border rounded-lg bg-card"
-      >
+        className="space-y-4 max-w-md p-6 border rounded-lg bg-card">
         <div className="space-y-1">
           <h3 className="text-lg font-medium">Business Identification</h3>
           <p className="text-sm text-muted-foreground">
@@ -110,8 +109,7 @@ export function ABNUpdateForm() {
         <Button
           type="submit"
           className="w-full bg-blue-950 hover:bg-blue-900"
-          disabled={isUpdating || !form.formState.isDirty}
-        >
+          disabled={isUpdating || !form.formState.isDirty}>
           {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Update ABN
         </Button>

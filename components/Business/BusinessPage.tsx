@@ -63,6 +63,8 @@ function ToolBtn({
 /* ══════════════════════════════════════
    FILTERS MODAL
 ═══════════════════════════════════════ */
+type SortKey = "best" | "nearest" | "top";
+
 function FiltersModal({
   open,
   onClose,
@@ -74,8 +76,33 @@ function FiltersModal({
   listType: ListType;
   onListTypeChange: (type: ListType) => void;
 }) {
+  const [sortBy, setSortBy] = useState<SortKey>("best");
+  const [maxPrice, setMaxPrice] = useState(1400);
+  const [verified, setVerified] = useState(false);
+
   if (!open) return null;
 
+  const SORT_BASE: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 11,
+    border: "1.5px solid #e6ebf2",
+    borderRadius: 16,
+    padding: "20px 12px",
+    cursor: "pointer",
+    background: "#fff",
+    color: "#0f2748",
+    fontWeight: 700,
+    fontSize: 14,
+    width: "100%",
+  };
+  const SORT_SEL: React.CSSProperties = {
+    ...SORT_BASE,
+    borderColor: "#3771db",
+    background: "rgba(55,113,219,0.07)",
+    color: "#3771db",
+  };
   const TAB_BASE: React.CSSProperties = {
     border: "none",
     background: "transparent",
@@ -149,8 +176,8 @@ function FiltersModal({
           </button>
         </div>
 
-        {/* Body — only toggle + category */}
-        <div style={{ padding: "4px 32px 24px", overflowY: "auto", flex: 1 }}>
+        {/* Body */}
+        <div style={{ padding: "4px 32px 10px", overflowY: "auto", flex: 1 }}>
           {/* Services / Events toggle */}
           <div
             style={{
@@ -174,7 +201,7 @@ function FiltersModal({
           </div>
 
           {/* Category filter */}
-          <div>
+          <div style={{ marginBottom: 28 }}>
             <div
               style={{
                 fontSize: 16,
@@ -186,6 +213,131 @@ function FiltersModal({
             </div>
             {listType === "services" ? <BusinessHeader /> : <EventHeader />}
           </div>
+
+          {/* Services-only filters */}
+          {listType === "services" && (
+            <>
+              {/* Sort by */}
+              <div
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "#0f2748",
+                  marginBottom: 12,
+                }}>
+                Sort by
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3,1fr)",
+                  gap: 12,
+                  marginBottom: 28,
+                }}>
+                <button
+                  onClick={() => setSortBy("best")}
+                  style={sortBy === "best" ? SORT_SEL : SORT_BASE}>
+                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                    <circle cx={12} cy={12} r={9} />
+                    <circle cx={12} cy={12} r={4.5} />
+                  </svg>
+                  Best match
+                </button>
+                <button
+                  onClick={() => setSortBy("nearest")}
+                  style={sortBy === "nearest" ? SORT_SEL : SORT_BASE}>
+                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                    <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" />
+                    <circle cx={12} cy={10} r={2.5} />
+                  </svg>
+                  Nearest
+                </button>
+                <button
+                  onClick={() => setSortBy("top")}
+                  style={sortBy === "top" ? SORT_SEL : SORT_BASE}>
+                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                    <path d="M12 3.5l2.6 5.6 6 .5-4.5 4 1.3 5.9L12 16.9 6.6 19.5l1.3-5.9-4.5-4 6-.5z" />
+                  </svg>
+                  Top rated
+                </button>
+              </div>
+
+              {/* Max price */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 12,
+                }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: "#0f2748" }}>
+                  Max price
+                </span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: "#0f2748" }}>
+                  A${maxPrice}{maxPrice >= 1400 ? "+" : ""}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={50}
+                max={1400}
+                step={50}
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(+e.target.value)}
+                style={{
+                  width: "100%",
+                  accentColor: "#051e3a",
+                  height: 5,
+                  cursor: "pointer",
+                  marginBottom: 28,
+                }}
+              />
+
+              {/* Verified pros */}
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#0f2748", marginBottom: 16 }}>
+                Only show
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, paddingBottom: 6 }}>
+                <div
+                  style={{
+                    width: 40, height: 40, borderRadius: 11,
+                    background: "#eaf0fb", display: "flex",
+                    alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                  <svg width={20} height={20} viewBox="0 0 24 24">
+                    <path d="M12 2l2.4 1.8 3-.2.9 2.9 2.5 1.6-1 2.9 1 2.9-2.5 1.6-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.2 14l1-2.9-1-2.9 2.5-1.6.9-2.9 3 .2L12 2Z" fill="#3771db" />
+                    <path d="M8.5 12l2.4 2.4 4.6-4.8" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#0f2748" }}>Verified pros</div>
+                  <div style={{ fontSize: 13, color: "#7c899c" }}>These venues accept WHA gift cards</div>
+                </div>
+                <div
+                  onClick={() => setVerified((v) => !v)}
+                  role="switch"
+                  aria-checked={verified}
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === " " && setVerified((v) => !v)}
+                  style={{
+                    width: 46, height: 27, borderRadius: 9999,
+                    background: verified ? "#051e3a" : "#d4dbe5",
+                    padding: 3, display: "flex", cursor: "pointer",
+                    transition: "background .15s", flexShrink: 0,
+                  }}>
+                  <div
+                    style={{
+                      width: 21, height: 21, borderRadius: "50%",
+                      background: "#fff",
+                      transform: verified ? "translateX(19px)" : "translateX(0)",
+                      transition: "transform .15s",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.18)",
+                    }}
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Footer */}
@@ -198,7 +350,12 @@ function FiltersModal({
             gap: 12,
           }}>
           <button
-            onClick={() => onListTypeChange("services")}
+            onClick={() => {
+              setSortBy("best");
+              setMaxPrice(1400);
+              setVerified(false);
+              onListTypeChange("services");
+            }}
             style={{
               border: "1px solid #d8dfe9",
               background: "#fff",

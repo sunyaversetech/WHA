@@ -9,6 +9,37 @@ function escapeRegex(text: string) {
   return text.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
 }
 
+// Strip location phrases so "kayak near me" / "haircut in sydney" → ["kayak"] / ["haircut"]
+const AU_CITY_NAMES = [
+  "sydney", "melbourne", "brisbane", "perth", "adelaide",
+  "canberra", "hobart", "darwin", "goldcoast", "gold coast",
+  "newcastle", "wollongong", "geelong", "townsville", "cairns",
+];
+const STOP_WORDS = new Set(["a", "an", "the", "and", "or", "for", "to", "at", "of", "in", "on", "is", "are", "me", "my", "i", "near", "around", "close", "by", "area", "local", "best", "top", "good"]);
+
+function extractKeywords(raw: string): string[] {
+  let q = raw
+    .replace(/\bnear\s+me\b/gi, " ")
+    .replace(/\bin\s+my\s+area\b/gi, " ")
+    .replace(/\baround\s+me\b/gi, " ")
+    .replace(/\bclose\s+to\s+me\b/gi, " ")
+    .replace(/\bnearby\b/gi, " ")
+    .replace(/\bnear\s+\w+/gi, " ")
+    .replace(/\bin\s+\w+/gi, " ")
+    .replace(/\baround\s+\w+/gi, " ")
+    .replace(/\bclose\s+to\s+\w+/gi, " ")
+    .replace(/\b(australia|au)\b/gi, " ");
+
+  for (const city of AU_CITY_NAMES) {
+    q = q.replace(new RegExp(`\\b${escapeRegex(city)}\\b`, "gi"), " ");
+  }
+
+  return q
+    .split(/\s+/)
+    .map((t) => t.toLowerCase().replace(/[^a-z0-9]/g, ""))
+    .filter((t) => t.length >= 2 && !STOP_WORDS.has(t));
+}
+
 const RESULT_LIMIT = 200;
 
 export async function GET(request: NextRequest) {
@@ -73,14 +104,21 @@ export async function GET(request: NextRequest) {
     // ── Service filter ───────────────────────────────────────────────────────
     // Find businesses that actually offer the searched service name/category.
     if (service) {
-      const safe = escapeRegex(service);
-      const matchingServices = await Service.find({
-        $or: [
-          { name: { $regex: safe, $options: "i" } },
-          { category: { $regex: safe, $options: "i" } },
+      // Extract meaningful keywords, stripping "near me", "in sydney", etc.
+      const keywords = extractKeywords(service);
+      // Fall back to the raw string if cleaning wiped everything
+      const terms = keywords.length > 0 ? keywords : [service.trim()];
+
+      const orClauses = terms.flatMap((tok) => {
+        const safe = escapeRegex(tok);
+        return [
+          { name:        { $regex: safe, $options: "i" } },
+          { category:    { $regex: safe, $options: "i" } },
           { description: { $regex: safe, $options: "i" } },
-        ],
-      }).lean();
+        ];
+      });
+
+      const matchingServices = await Service.find({ $or: orClauses }).lean();
 
       const uniqueIds = [
         ...new Set(
