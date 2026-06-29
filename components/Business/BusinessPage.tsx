@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import BusinessCard from "@/components/cards/business-card";
@@ -54,8 +54,7 @@ function ToolBtn({
         ...BTN_TOOLBAR,
         background: hov ? "#f4f7fb" : "#fff",
         transition: "background .15s",
-      }}
-    >
+      }}>
       {children}
     </button>
   );
@@ -64,52 +63,19 @@ function ToolBtn({
 /* ══════════════════════════════════════
    FILTERS MODAL
 ═══════════════════════════════════════ */
-type SortKey = "best" | "nearest" | "top";
-
-const RADIUS_OPTIONS = [5, 10, 25, 50, 100];
-
 function FiltersModal({
   open,
   onClose,
   listType,
   onListTypeChange,
-  radius,
-  onRadiusChange,
 }: {
   open: boolean;
   onClose: () => void;
   listType: ListType;
   onListTypeChange: (type: ListType) => void;
-  radius: number;
-  onRadiusChange: (r: number) => void;
 }) {
-  const [sortBy, setSortBy] = useState<SortKey>("best");
-  const [maxPrice, setMaxPrice] = useState(1400);
-  const [verified, setVerified] = useState(false);
-
   if (!open) return null;
 
-  const SORT_BASE: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 11,
-    border: "1.5px solid #e6ebf2",
-    borderRadius: 16,
-    padding: "20px 12px",
-    cursor: "pointer",
-    background: "#fff",
-    color: "#0f2748",
-    fontWeight: 700,
-    fontSize: 14,
-    width: "100%",
-  };
-  const SORT_SEL: React.CSSProperties = {
-    ...SORT_BASE,
-    borderColor: "#3771db",
-    background: "rgba(55,113,219,0.07)",
-    color: "#3771db",
-  };
   const TAB_BASE: React.CSSProperties = {
     border: "none",
     background: "transparent",
@@ -141,8 +107,7 @@ function FiltersModal({
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
-      }}
-    >
+      }}>
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
@@ -155,8 +120,7 @@ function FiltersModal({
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-        }}
-      >
+        }}>
         {/* Header */}
         <div
           style={{
@@ -164,8 +128,7 @@ function FiltersModal({
             alignItems: "center",
             justifyContent: "space-between",
             padding: "26px 32px 16px",
-          }}
-        >
+          }}>
           <span style={{ fontSize: 22, fontWeight: 800, color: "#0f2748" }}>
             Filters
           </span>
@@ -181,14 +144,13 @@ function FiltersModal({
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
-            }}
-          >
+            }}>
             <X size={18} color="#0f2748" strokeWidth={2.2} />
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: "4px 32px 10px", overflowY: "auto", flex: 1 }}>
+        {/* Body — only toggle + category */}
+        <div style={{ padding: "4px 32px 24px", overflowY: "auto", flex: 1 }}>
           {/* Services / Events toggle */}
           <div
             style={{
@@ -198,258 +160,31 @@ function FiltersModal({
               borderRadius: 14,
               padding: 4,
               marginBottom: 28,
-            }}
-          >
+            }}>
             <button
               onClick={() => onListTypeChange("services")}
-              style={listType === "services" ? TAB_ACT : TAB_BASE}
-            >
+              style={listType === "services" ? TAB_ACT : TAB_BASE}>
               Services
             </button>
             <button
               onClick={() => onListTypeChange("events")}
-              style={listType === "events" ? TAB_ACT : TAB_BASE}
-            >
+              style={listType === "events" ? TAB_ACT : TAB_BASE}>
               Events
             </button>
           </div>
 
           {/* Category filter */}
-          <div style={{ marginBottom: 28 }}>
+          <div>
             <div
               style={{
                 fontSize: 16,
                 fontWeight: 700,
                 color: "#0f2748",
                 marginBottom: 12,
-              }}
-            >
+              }}>
               Category
             </div>
             {listType === "services" ? <BusinessHeader /> : <EventHeader />}
-          </div>
-
-          {/* Sort by */}
-          <div
-            style={{
-              fontSize: 16,
-              fontWeight: 700,
-              color: "#0f2748",
-              marginBottom: 12,
-            }}
-          >
-            Sort by
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3,1fr)",
-              gap: 12,
-              marginBottom: 28,
-            }}
-          >
-            <button
-              onClick={() => setSortBy("best")}
-              style={sortBy === "best" ? SORT_SEL : SORT_BASE}
-            >
-              <svg
-                width={22}
-                height={22}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-              >
-                <circle cx={12} cy={12} r={9} />
-                <circle cx={12} cy={12} r={4.5} />
-              </svg>
-              Best match
-            </button>
-            <button
-              onClick={() => setSortBy("nearest")}
-              style={sortBy === "nearest" ? SORT_SEL : SORT_BASE}
-            >
-              <svg
-                width={22}
-                height={22}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-              >
-                <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" />
-                <circle cx={12} cy={10} r={2.5} />
-              </svg>
-              Nearest
-            </button>
-            <button
-              onClick={() => setSortBy("top")}
-              style={sortBy === "top" ? SORT_SEL : SORT_BASE}
-            >
-              <svg
-                width={22}
-                height={22}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-              >
-                <path d="M12 3.5l2.6 5.6 6 .5-4.5 4 1.3 5.9L12 16.9 6.6 19.5l1.3-5.9-4.5-4 6-.5z" />
-              </svg>
-              Top rated
-            </button>
-          </div>
-
-          {/* Max price */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 12,
-            }}
-          >
-            <span style={{ fontSize: 16, fontWeight: 700, color: "#0f2748" }}>
-              Max price
-            </span>
-            <span style={{ fontSize: 15, fontWeight: 700, color: "#0f2748" }}>
-              A${maxPrice}
-              {maxPrice >= 1400 ? "+" : ""}
-            </span>
-          </div>
-          <input
-            type="range"
-            min={50}
-            max={1400}
-            step={50}
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(+e.target.value)}
-            style={{
-              width: "100%",
-              accentColor: "#051e3a",
-              height: 5,
-              cursor: "pointer",
-              marginBottom: 28,
-            }}
-          />
-
-          {/* Only show */}
-          <div
-            style={{
-              fontSize: 16,
-              fontWeight: 700,
-              color: "#0f2748",
-              marginBottom: 16,
-            }}
-          >
-            Only show
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-              paddingBottom: 6,
-            }}
-          >
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 11,
-                background: "#eaf0fb",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <svg width={20} height={20} viewBox="0 0 24 24">
-                <path
-                  d="M12 2l2.4 1.8 3-.2.9 2.9 2.5 1.6-1 2.9 1 2.9-2.5 1.6-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.2 14l1-2.9-1-2.9 2.5-1.6.9-2.9 3 .2L12 2Z"
-                  fill="#3771db"
-                />
-                <path
-                  d="M8.5 12l2.4 2.4 4.6-4.8"
-                  fill="none"
-                  stroke="#fff"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#0f2748" }}>
-                Verified pros
-              </div>
-              <div style={{ fontSize: 13, color: "#7c899c" }}>
-                These venues accept WHA gift cards
-              </div>
-            </div>
-            <div
-              onClick={() => setVerified((v) => !v)}
-              role="switch"
-              aria-checked={verified}
-              tabIndex={0}
-              onKeyDown={(e) => e.key === " " && setVerified((v) => !v)}
-              style={{
-                width: 46,
-                height: 27,
-                borderRadius: 9999,
-                background: verified ? "#051e3a" : "#d4dbe5",
-                padding: 3,
-                display: "flex",
-                cursor: "pointer",
-                transition: "background .15s",
-                flexShrink: 0,
-              }}
-            >
-              <div
-                style={{
-                  width: 21,
-                  height: 21,
-                  borderRadius: "50%",
-                  background: "#fff",
-                  transform: verified ? "translateX(19px)" : "translateX(0)",
-                  transition: "transform .15s",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.18)",
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Radius */}
-        <div style={{ padding: "0 32px 20px" }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#0f2748", marginBottom: 12 }}>
-            Search radius
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {RADIUS_OPTIONS.map((r) => {
-              const active = radius === r;
-              return (
-                <button
-                  key={r}
-                  onClick={() => onRadiusChange(r)}
-                  style={{
-                    border: `1.5px solid ${active ? "#3771db" : "#e6ebf2"}`,
-                    borderRadius: 9999,
-                    padding: "9px 18px",
-                    fontSize: 14,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    background: active ? "rgba(55,113,219,0.07)" : "#fff",
-                    color: active ? "#3771db" : "#0f2748",
-                  }}
-                >
-                  {r} km
-                </button>
-              );
-            })}
           </div>
         </div>
 
@@ -461,15 +196,9 @@ function FiltersModal({
             display: "grid",
             gridTemplateColumns: "1fr 1.6fr",
             gap: 12,
-          }}
-        >
+          }}>
           <button
-            onClick={() => {
-              setSortBy("best");
-              setMaxPrice(1400);
-              setVerified(false);
-              onListTypeChange("services");
-            }}
+            onClick={() => onListTypeChange("services")}
             style={{
               border: "1px solid #d8dfe9",
               background: "#fff",
@@ -479,8 +208,7 @@ function FiltersModal({
               padding: 14,
               borderRadius: 13,
               cursor: "pointer",
-            }}
-          >
+            }}>
             Clear all
           </button>
           <button
@@ -494,8 +222,7 @@ function FiltersModal({
               padding: 14,
               borderRadius: 13,
               cursor: "pointer",
-            }}
-          >
+            }}>
             Apply
           </button>
         </div>
@@ -504,7 +231,12 @@ function FiltersModal({
   );
 }
 
-function haversineMetres(lat1: number, lng1: number, lat2: number, lng2: number): number {
+function haversineMetres(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+): number {
   const R = 6371000;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLng = (lng2 - lng1) * (Math.PI / 180);
@@ -528,46 +260,73 @@ export default function BusinessesClientPage() {
   const router = useRouter();
 
   const [showMap, setShowMap] = useState(true);
-  const [listType, setListType] = useState<ListType>("services");
+  const [listType, setListType] = useState<ListType>(() =>
+    searchParams.get("tab") === "events" ? "events" : "services",
+  );
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [radiusKm, setRadiusKm] = useState(() => {
-    const r = searchParams.get("radius");
-    return r ? Math.max(1, Number(r)) : 25;
-  });
 
-  const handleRadiusChange = (r: number) => {
-    setRadiusKm(r);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("radius", String(r));
-    router.push(`/businesses?${params.toString()}`, { scroll: false });
-  };
+  const boundsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleBoundsChange = useCallback(
+    (bounds: { swLat: number; swLng: number; neLat: number; neLng: number }) => {
+      if (boundsTimerRef.current) clearTimeout(boundsTimerRef.current);
+      boundsTimerRef.current = setTimeout(() => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("swLat", String(bounds.swLat));
+        params.set("swLng", String(bounds.swLng));
+        params.set("neLat", String(bounds.neLat));
+        params.set("neLng", String(bounds.neLng));
+        router.replace(`/search?${params.toString()}`, { scroll: false });
+      }, 600);
+    },
+    [searchParams, router],
+  );
 
-  const businesses = apiResponse?.data || [];
-  const events = eventsResponse?.data ?? [];
+  const businesses = useMemo(() => apiResponse?.data || [], [apiResponse]);
+  const events = useMemo(() => eventsResponse?.data ?? [], [eventsResponse]);
   const isServices = listType === "services";
   const data = isServices ? businesses : events;
 
-  const userLat = searchParams.get("lat") ? Number(searchParams.get("lat")) : null;
-  const userLng = searchParams.get("lng") ? Number(searchParams.get("lng")) : null;
+  const userLat = searchParams.get("lat")
+    ? Number(searchParams.get("lat"))
+    : null;
+  const userLng = searchParams.get("lng")
+    ? Number(searchParams.get("lng"))
+    : null;
 
   const enrichedBusinesses = useMemo(() => {
     const withDistance = businesses.map((b: any) => {
       if (typeof b.distance === "number") return b;
       if (userLat !== null && userLng !== null && b.latitude && b.longitude) {
-        return { ...b, distance: haversineMetres(userLat, userLng, Number(b.latitude), Number(b.longitude)) };
+        return {
+          ...b,
+          distance: haversineMetres(
+            userLat,
+            userLng,
+            Number(b.latitude),
+            Number(b.longitude),
+          ),
+        };
       }
       return b;
     });
+    const sorted =
+      userLat !== null && userLng !== null
+        ? [...withDistance].sort((a: any, b: any) => {
+            const da = typeof a.distance === "number" ? a.distance : Infinity;
+            const db = typeof b.distance === "number" ? b.distance : Infinity;
+            return da - db;
+          })
+        : withDistance;
+    // Cap at 1000 km when geo coords are present
     if (userLat !== null && userLng !== null) {
-      return [...withDistance].sort((a: any, b: any) => {
-        const da = typeof a.distance === "number" ? a.distance : Infinity;
-        const db = typeof b.distance === "number" ? b.distance : Infinity;
-        return da - db;
-      });
+      return sorted.filter(
+        (b: any) =>
+          typeof b.distance !== "number" || b.distance <= 1000 * 1000,
+      );
     }
-    return withDistance;
+    return sorted;
   }, [businesses, userLat, userLng]);
   const isLoading = isServices ? isLoadingBusinesses : isLoadingEvents;
   const service =
@@ -608,8 +367,7 @@ export default function BusinessesClientPage() {
           gap: 12,
           padding: "12px 16px",
           borderBottom: "1px solid #e6ebf2",
-        }}
-      >
+        }}>
         <button
           onClick={() => router.back()}
           style={{
@@ -623,15 +381,13 @@ export default function BusinessesClientPage() {
             justifyContent: "center",
             cursor: "pointer",
             flexShrink: 0,
-          }}
-        >
+          }}>
           <ChevronLeft size={20} color="#0f2748" />
         </button>
 
         <div
           onClick={() => setSearchOpen(true)}
-          style={{ flex: 1, minWidth: 0, cursor: "pointer" }}
-        >
+          style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
           <div
             style={{
               fontSize: 16,
@@ -640,8 +396,7 @@ export default function BusinessesClientPage() {
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-            }}
-          >
+            }}>
             {service || "All services and events"}
           </div>
           <div style={{ fontSize: 13, color: "#64748b", marginTop: 1 }}>
@@ -663,8 +418,7 @@ export default function BusinessesClientPage() {
             cursor: "pointer",
             flexShrink: 0,
             boxShadow: "0 2px 8px rgba(2,12,26,0.08)",
-          }}
-        >
+          }}>
           {mobileMapOpen ? (
             /* List icon */
             <svg
@@ -674,8 +428,7 @@ export default function BusinessesClientPage() {
               fill="none"
               stroke="#0f2748"
               strokeWidth={2}
-              strokeLinecap="round"
-            >
+              strokeLinecap="round">
               <line x1={3} y1={6} x2={21} y2={6} />
               <line x1={3} y1={12} x2={21} y2={12} />
               <line x1={3} y1={18} x2={21} y2={18} />
@@ -690,8 +443,7 @@ export default function BusinessesClientPage() {
               stroke="#0f2748"
               strokeWidth={2}
               strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+              strokeLinejoin="round">
               <path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z" />
               <line x1={9} y1={4} x2={9} y2={17} />
               <line x1={15} y1={6.5} x2={15} y2={19.5} />
@@ -709,8 +461,7 @@ export default function BusinessesClientPage() {
           overflowX: "auto",
           scrollbarWidth: "none" as const,
         }}
-        className="[&::-webkit-scrollbar]:hidden"
-      >
+        className="[&::-webkit-scrollbar]:hidden">
         {/* Filter icon button */}
         <button
           onClick={() => setFiltersOpen(true)}
@@ -725,8 +476,7 @@ export default function BusinessesClientPage() {
             justifyContent: "center",
             cursor: "pointer",
             flexShrink: 0,
-          }}
-        >
+          }}>
           <svg
             width={16}
             height={16}
@@ -734,8 +484,7 @@ export default function BusinessesClientPage() {
             fill="none"
             stroke="#0f2748"
             strokeWidth={2}
-            strokeLinecap="round"
-          >
+            strokeLinecap="round">
             <line x1={4} y1={7} x2={20} y2={7} />
             <line x1={4} y1={17} x2={20} y2={17} />
             <circle cx={9} cy={7} r={2.4} fill="#fff" />
@@ -762,8 +511,7 @@ export default function BusinessesClientPage() {
             cursor: "pointer",
             whiteSpace: "nowrap",
             flexShrink: 0,
-          }}
-        >
+          }}>
           {listType === "services" ? "Services" : "Events"}
           <svg
             width={12}
@@ -773,8 +521,7 @@ export default function BusinessesClientPage() {
             stroke="currentColor"
             strokeWidth={2.5}
             strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+            strokeLinejoin="round">
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
@@ -791,8 +538,7 @@ export default function BusinessesClientPage() {
         gap: 10,
         marginBottom: 22,
         flexWrap: "wrap",
-      }}
-    >
+      }}>
       {/* Services / Events pill */}
       <div
         style={{
@@ -802,18 +548,15 @@ export default function BusinessesClientPage() {
           borderRadius: 9999,
           padding: 4,
           flexShrink: 0,
-        }}
-      >
+        }}>
         <button
           onClick={() => setListType("services")}
-          style={listType === "services" ? SEG_ACT : SEG_BASE}
-        >
+          style={listType === "services" ? SEG_ACT : SEG_BASE}>
           Services
         </button>
         <button
           onClick={() => setListType("events")}
-          style={listType === "events" ? SEG_ACT : SEG_BASE}
-        >
+          style={listType === "events" ? SEG_ACT : SEG_BASE}>
           Events
         </button>
       </div>
@@ -827,8 +570,7 @@ export default function BusinessesClientPage() {
           color: "#64748b",
           fontWeight: 500,
           whiteSpace: "nowrap",
-        }}
-      >
+        }}>
         {countText}
       </span>
 
@@ -841,8 +583,7 @@ export default function BusinessesClientPage() {
           fill="none"
           stroke="currentColor"
           strokeWidth={2}
-          strokeLinecap="round"
-        >
+          strokeLinecap="round">
           <line x1={4} y1={7} x2={20} y2={7} />
           <line x1={4} y1={17} x2={20} y2={17} />
           <circle cx={9} cy={7} r={2.4} fill="#fff" />
@@ -862,8 +603,7 @@ export default function BusinessesClientPage() {
             stroke="currentColor"
             strokeWidth={2}
             strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+            strokeLinejoin="round">
             <path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z" />
             <line x1={9} y1={4} x2={9} y2={17} />
             <line x1={15} y1={6.5} x2={15} y2={19.5} />
@@ -883,8 +623,7 @@ export default function BusinessesClientPage() {
             stroke="currentColor"
             strokeWidth={2}
             strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+            strokeLinejoin="round">
             <path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z" />
             <line x1={9} y1={4} x2={9} y2={17} />
             <line x1={15} y1={6.5} x2={15} y2={19.5} />
@@ -904,8 +643,7 @@ export default function BusinessesClientPage() {
             display: "grid",
             gridTemplateColumns: `repeat(${cols}, 1fr)`,
             gap: cols === 2 ? "30px 24px" : "34px 26px",
-          }}
-        >
+          }}>
           {Array.from({ length: cols === 1 ? 4 : cols === 2 ? 4 : 6 }).map(
             (_, i) => (
               <div key={i}>
@@ -946,8 +684,7 @@ export default function BusinessesClientPage() {
             justifyContent: "center",
             padding: "80px 24px",
             textAlign: "center",
-          }}
-        >
+          }}>
           <div
             style={{
               width: 60,
@@ -958,8 +695,7 @@ export default function BusinessesClientPage() {
               alignItems: "center",
               justifyContent: "center",
               marginBottom: 14,
-            }}
-          >
+            }}>
             <Search size={26} color="#94a3b8" />
           </div>
           <div
@@ -968,8 +704,7 @@ export default function BusinessesClientPage() {
               fontWeight: 700,
               color: "#0f2748",
               marginBottom: 6,
-            }}
-          >
+            }}>
             {service
               ? `No results for "${service}"`
               : isServices
@@ -991,8 +726,7 @@ export default function BusinessesClientPage() {
           display: "grid",
           gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gap: cols === 2 ? "30px 24px" : cols === 1 ? "20px" : "34px 26px",
-        }}
-      >
+        }}>
         {isServices
           ? enrichedBusinesses.map((b: any) => (
               <BusinessCard key={b._id} business={b} />
@@ -1020,8 +754,7 @@ export default function BusinessesClientPage() {
         height,
         background: "#e9eef0",
         border: "1px solid #e2e8ee",
-      }}
-    >
+      }}>
       {isServices ? (
         <BusinessMap
           businesses={enrichedBusinesses}
@@ -1031,6 +764,7 @@ export default function BusinessesClientPage() {
           onToggleExpand={() => {}}
           userLat={userLat ?? undefined}
           userLng={userLng ?? undefined}
+          onBoundsChange={handleBoundsChange}
         />
       ) : (
         <EventMap
@@ -1051,8 +785,7 @@ export default function BusinessesClientPage() {
 
       <main
         style={{ maxWidth: 1680, margin: "0 auto", padding: "20px 16px 56px" }}
-        className="md:px-10"
-      >
+        className="md:px-10">
         {/* ════════════ DESKTOP ════════════ */}
         <div className="hidden md:block">
           {showMap ? (
@@ -1063,8 +796,7 @@ export default function BusinessesClientPage() {
                 gridTemplateColumns: "minmax(0, 1.04fr) 0.96fr",
                 gap: 26,
                 alignItems: "start",
-              }}
-            >
+              }}>
               <div style={{ minWidth: 0 }}>
                 {Toolbar()}
                 {CardGrid({ cols: 2 })}
@@ -1093,8 +825,7 @@ export default function BusinessesClientPage() {
                 zIndex: 40,
                 background: "#fff",
                 borderBottom: "1px solid #f1f4f8",
-              }}
-            >
+              }}>
               {MobileSearchHeader()}
             </div>
           )}
@@ -1108,8 +839,7 @@ export default function BusinessesClientPage() {
                   color: "#64748b",
                   fontWeight: 500,
                   marginBottom: 12,
-                }}
-              >
+                }}>
                 {countText}
               </div>
               {CardGrid({ cols: 1 })}
@@ -1129,15 +859,13 @@ export default function BusinessesClientPage() {
                 display: "flex",
                 flexDirection: "column",
                 background: "#e9eef0",
-              }}
-            >
+              }}>
               <div
                 style={{
                   background: "#fff",
                   borderBottom: "1px solid #f1f4f8",
                   flexShrink: 0,
-                }}
-              >
+                }}>
                 {MobileSearchHeader()}
               </div>
               <div style={{ flex: 1, position: "relative" }}>
@@ -1162,8 +890,6 @@ export default function BusinessesClientPage() {
         onClose={() => setFiltersOpen(false)}
         listType={listType}
         onListTypeChange={setListType}
-        radius={radiusKm}
-        onRadiusChange={handleRadiusChange}
       />
     </div>
   );

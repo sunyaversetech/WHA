@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Smartphone } from "lucide-react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import BusinessCard from "@/components/cards/business-card";
 import EventCard from "@/components/cards/event-card";
@@ -162,15 +163,19 @@ function Stars({ n = 5, size = 18 }: { n?: number; size?: number }) {
   );
 }
 
-/* Section heading row with chevron nav (visual only) */
+/* Section heading row with chevron nav */
 function SectionHeading({
   title,
   onPrev,
   onNext,
+  canPrev = true,
+  canNext = true,
 }: {
   title: string;
   onPrev: () => void;
   onNext: () => void;
+  canPrev?: boolean;
+  canNext?: boolean;
 }) {
   return (
     <div
@@ -192,12 +197,22 @@ function SectionHeading({
       </h2>
       <div style={{ display: "flex", gap: 10 }}>
         {[
-          { dir: "prev", path: "M15 6l-6 6 6 6", onClick: onPrev },
-          { dir: "next", path: "M9 6l6 6-6 6", onClick: onNext },
-        ].map(({ dir, path, onClick }) => (
+          {
+            dir: "prev",
+            path: "M15 6l-6 6 6 6",
+            onClick: onPrev,
+            enabled: canPrev,
+          },
+          {
+            dir: "next",
+            path: "M9 6l6 6-6 6",
+            onClick: onNext,
+            enabled: canNext,
+          },
+        ].map(({ dir, path, onClick, enabled }) => (
           <button
             key={dir}
-            onClick={onClick}
+            onClick={enabled ? onClick : undefined}
             style={{
               width: 42,
               height: 42,
@@ -207,8 +222,10 @@ function SectionHeading({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              cursor: "pointer",
-              color: "#0f2748",
+              cursor: enabled ? "pointer" : "default",
+              color: enabled ? "#0f2748" : "#c8d0db",
+              opacity: enabled ? 1 : 0.5,
+              transition: "opacity 0.15s",
             }}>
             <svg
               width={18}
@@ -228,33 +245,51 @@ function SectionHeading({
   );
 }
 
-/* 4-col responsive card grid */
-function CardGrid({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="wha-cards"
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
-        gap: 26,
-      }}>
-      {children}
-    </div>
-  );
-}
-
 export default function LandingPage() {
   const { data, isLoading } = useGetLandingPageData();
   const param = useSearchParams();
   const router = useRouter();
   const city = param.get("city") || "";
   const businesses = useFilteredBusinesses(data?.data.business || []);
-  const events = data?.data.upcomingevents || [];
+  const events = useMemo(() => data?.data.upcomingevents ?? [], [data]);
   const cityLabel = city || "Australia";
+
+  const bizScrollRef = useRef<HTMLDivElement>(null);
+  const eventsScrollRef = useRef<HTMLDivElement>(null);
+  const [bizCan, setBizCan] = useState({ prev: false, next: false });
+  const [eventsCan, setEventsCan] = useState({ prev: false, next: false });
+
+  const syncCan = useCallback(
+    (
+      el: HTMLDivElement,
+      setter: (s: { prev: boolean; next: boolean }) => void,
+    ) => {
+      setter({
+        prev: el.scrollLeft > 2,
+        next: el.scrollLeft < el.scrollWidth - el.clientWidth - 2,
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const biz = bizScrollRef.current;
+    const ev = eventsScrollRef.current;
+    if (biz) syncCan(biz, setBizCan);
+    if (ev) syncCan(ev, setEventsCan);
+  }, [businesses, events, syncCan]);
 
   if (isLoading) return <LandingPageSkeleton />;
 
-  const slice = (arr: any[], from: number, to: number) => arr.slice(from, to);
+  const scrollSection = (
+    ref: React.RefObject<HTMLDivElement | null>,
+    dir: 1 | -1,
+  ) => {
+    const c = ref.current;
+    if (!c) return;
+    const cardW = (c.clientWidth - 3 * 26) / 4;
+    c.scrollBy({ left: dir * (cardW + 26), behavior: "smooth" });
+  };
 
   const goCity = (c: string) =>
     router.push(`/businesses?city=${encodeURIComponent(c)}`);
@@ -392,44 +427,41 @@ export default function LandingPage() {
           <section style={{ marginBottom: 54 }}>
             <SectionHeading
               title={`Businesses in ${cityLabel}`}
-              onPrev={() => {}}
-              onNext={() => {}}
+              onPrev={() => scrollSection(bizScrollRef, -1)}
+              onNext={() => scrollSection(bizScrollRef, 1)}
+              canPrev={bizCan.prev}
+              canNext={bizCan.next}
             />
             <div className="hidden md:block">
-              <CardGrid>
-                {slice(businesses, 0, 4).map((b: any) => (
-                  <BusinessCard key={b._id} business={b} />
+              <div
+                ref={bizScrollRef}
+                onScroll={() =>
+                  bizScrollRef.current &&
+                  syncCan(bizScrollRef.current, setBizCan)
+                }
+                className="[&::-webkit-scrollbar]:hidden"
+                style={{
+                  display: "flex",
+                  gap: 26,
+                  overflowX: "auto",
+                  scrollbarWidth: "none",
+                  scrollSnapType: "x mandatory",
+                }}>
+                {businesses.map((b: any) => (
+                  <div
+                    key={b._id}
+                    style={{
+                      flex: "0 0 calc((100% - 78px) / 4)",
+                      scrollSnapAlign: "start",
+                    }}>
+                    <BusinessCard business={b} />
+                  </div>
                 ))}
-              </CardGrid>
+              </div>
             </div>
             <div className="md:hidden">
               <CardSlider viewAllHref="/businesses">
-                {slice(businesses, 0, 6).map((b: any) => (
-                  <BusinessCard key={b._id} business={b} />
-                ))}
-              </CardSlider>
-            </div>
-          </section>
-        )}
-
-        {/* More businesses (Trending) */}
-        {businesses.length > 4 && (
-          <section style={{ marginBottom: 54 }}>
-            <SectionHeading
-              title="Trending"
-              onPrev={() => {}}
-              onNext={() => {}}
-            />
-            <div className="hidden md:block">
-              <CardGrid>
-                {slice(businesses, 4, 8).map((b: any) => (
-                  <BusinessCard key={b._id} business={b} />
-                ))}
-              </CardGrid>
-            </div>
-            <div className="md:hidden">
-              <CardSlider viewAllHref="/businesses">
-                {slice(businesses, 4, 10).map((b: any) => (
+                {businesses.map((b: any) => (
                   <BusinessCard key={b._id} business={b} />
                 ))}
               </CardSlider>
@@ -442,19 +474,41 @@ export default function LandingPage() {
           <section style={{ marginBottom: 54 }}>
             <SectionHeading
               title={`Upcoming Events in ${cityLabel}`}
-              onPrev={() => {}}
-              onNext={() => {}}
+              onPrev={() => scrollSection(eventsScrollRef, -1)}
+              onNext={() => scrollSection(eventsScrollRef, 1)}
+              canPrev={eventsCan.prev}
+              canNext={eventsCan.next}
             />
             <div className="hidden md:block">
-              <CardGrid>
-                {slice(events, 0, 4).map((e: any) => (
-                  <EventCard key={e.id} event={e} />
+              <div
+                ref={eventsScrollRef}
+                onScroll={() =>
+                  eventsScrollRef.current &&
+                  syncCan(eventsScrollRef.current, setEventsCan)
+                }
+                className="[&::-webkit-scrollbar]:hidden"
+                style={{
+                  display: "flex",
+                  gap: 26,
+                  overflowX: "auto",
+                  scrollbarWidth: "none",
+                  scrollSnapType: "x mandatory",
+                }}>
+                {events.map((e: any) => (
+                  <div
+                    key={e.id}
+                    style={{
+                      flex: "0 0 calc((100% - 78px) / 4)",
+                      scrollSnapAlign: "start",
+                    }}>
+                    <EventCard event={e} />
+                  </div>
                 ))}
-              </CardGrid>
+              </div>
             </div>
             <div className="md:hidden">
               <CardSlider viewAllHref="/events">
-                {slice(events, 0, 6).map((e: any) => (
+                {events.map((e: any) => (
                   <EventCard key={e.id} event={e} />
                 ))}
               </CardSlider>

@@ -42,17 +42,22 @@ export type UserBusinessType = {
 };
 export const useGetBusiness = () => {
   const param = useSearchParams();
-  const category = param.get("category") || "";
-  const search = param.get("search") || "";
-  const city = param.get("city") || "";
+  const category  = param.get("category")  || "";
+  const search    = param.get("search")    || "";
+  const service   = param.get("service")   || "";
+  const city      = param.get("city")      || "";
   const community = param.get("community") || "";
-  const lat = param.get("lat") || "";
-  const lng = param.get("lng") || "";
-  const radius = param.get("radius") || "";
+  const lat       = param.get("lat")       || "";
+  const lng       = param.get("lng")       || "";
+  const radius    = param.get("radius")    || "";
+  const swLat     = param.get("swLat")     || "";
+  const swLng     = param.get("swLng")     || "";
+  const neLat     = param.get("neLat")     || "";
+  const neLng     = param.get("neLng")     || "";
   return useFetcher<ApiResponseType<UserBusinessType[]>>(
-    ["getbusinesses", category, search, city, community, lat, lng, radius],
+    ["getbusinesses", category, search, service, city, community, lat, lng, swLat, swLng, neLat, neLng],
     null,
-    `/api/business?category=${category}&search=${search}&city=${city}&community=${community}&lat=${lat}&lng=${lng}&radius=${radius}`,
+    `/api/business?category=${category}&search=${search}&service=${service}&city=${city}&community=${community}&lat=${lat}&lng=${lng}&radius=${radius}&swLat=${swLat}&swLng=${swLng}&neLat=${neLat}&neLng=${neLng}`,
   );
 };
 

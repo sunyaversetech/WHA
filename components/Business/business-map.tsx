@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { X, Star } from "lucide-react";
@@ -57,13 +57,11 @@ function makeUserIcon(): L.DivIcon {
   });
 }
 
-/* ── Auto-fit bounds to businesses + user ── */
+/* ── Fly to city/user on initial load only (does not react to business list) ── */
 function BoundsUpdater({
-  businesses,
   userLocation,
   city,
 }: {
-  businesses: any[];
   userLocation: [number, number] | null;
   city: string;
 }) {
@@ -76,38 +74,41 @@ function BoundsUpdater({
   }, [map]);
 
   useEffect(() => {
-    if (!map) return;
-
-    const pts: [number, number][] = [];
-    if (userLocation) pts.push(userLocation);
-    businesses.forEach((b) => {
-      if (b.latitude && b.longitude)
-        pts.push([Number(b.latitude), Number(b.longitude)]);
-    });
-
     const timer = setTimeout(() => {
       try {
-        if (pts.length === 0) {
-          const centre = city ? CITY_COORDS[city.toLowerCase().trim()] : null;
-          map.flyTo(centre ?? AU_CENTRE, centre ? 12 : AU_ZOOM, { duration: 1 });
+        if (userLocation) {
+          map.flyTo(userLocation, 14, { duration: 1 });
           return;
         }
-        if (pts.length === 1) {
-          map.flyTo(pts[0], 14, { duration: 1 });
-          return;
-        }
-        map.fitBounds(L.latLngBounds(pts), {
-          padding: [50, 50],
-          maxZoom: 15,
-          animate: true,
-          duration: 1,
-        } as any);
+        const centre = city ? CITY_COORDS[city.toLowerCase().trim()] : null;
+        map.flyTo(centre ?? AU_CENTRE, centre ? 12 : AU_ZOOM, { duration: 1 });
       } catch (_) {}
     }, 500);
-
     return () => clearTimeout(timer);
-  }, [businesses, userLocation, city, map]);
+  }, [userLocation, city, map]);
 
+  return null;
+}
+
+/* ── Fire onBoundsChange whenever the user pans or zooms ── */
+function MapBoundsWatcher({
+  onBoundsChange,
+}: {
+  onBoundsChange: (b: { swLat: number; swLng: number; neLat: number; neLng: number }) => void;
+}) {
+  const cbRef = useRef(onBoundsChange);
+  useEffect(() => { cbRef.current = onBoundsChange; });
+
+  useMapEvents({
+    moveend(e) {
+      const b = e.target.getBounds();
+      cbRef.current({ swLat: b.getSouth(), swLng: b.getWest(), neLat: b.getNorth(), neLng: b.getEast() });
+    },
+    zoomend(e) {
+      const b = e.target.getBounds();
+      cbRef.current({ swLat: b.getSouth(), swLng: b.getWest(), neLat: b.getNorth(), neLng: b.getEast() });
+    },
+  });
   return null;
 }
 
@@ -308,6 +309,7 @@ export default function BusinessMap({
   onToggleExpand,
   userLat,
   userLng,
+  onBoundsChange,
 }: {
   businesses: any[];
   currentCity: string;
@@ -316,6 +318,7 @@ export default function BusinessMap({
   onToggleExpand: () => void;
   userLat?: number;
   userLng?: number;
+  onBoundsChange?: (b: { swLat: number; swLng: number; neLat: number; neLng: number }) => void;
 }) {
   const userLocation: [number, number] | null =
     userLat != null && userLng != null ? [userLat, userLng] : null;
@@ -345,11 +348,8 @@ export default function BusinessMap({
           attribution="&copy; OpenStreetMap contributors"
         />
 
-        <BoundsUpdater
-          businesses={businesses}
-          userLocation={userLocation}
-          city={currentCity}
-        />
+        <BoundsUpdater userLocation={userLocation} city={currentCity} />
+        {onBoundsChange && <MapBoundsWatcher onBoundsChange={onBoundsChange} />}
 
         {/* User location blue dot */}
         {userLocation && (

@@ -15,7 +15,6 @@ import {
   User,
   Info,
   Check,
-  ChevronRight,
 } from "lucide-react";
 import { useGetSingleBusiness } from "@/services/business.service";
 import BusinessReviewSection from "@/components/Business/Comment";
@@ -28,7 +27,7 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import Loading from "@/app/businesses/loading";
+import Loading from "@/app/search/loading";
 import BusinessHours from "./Hours";
 import { useAuthModal } from "@/components/Auth/DialogLogin/use-auth-model";
 import EventCard from "@/components/cards/event-card";
@@ -77,16 +76,14 @@ function SecTitle({
         alignItems: "center",
         justifyContent: "space-between",
         marginBottom: 20,
-      }}
-    >
+      }}>
       <h2
         style={{
           fontSize: 20,
           fontWeight: 800,
           color: T.navy,
           margin: 0,
-        }}
-      >
+        }}>
         {children}
       </h2>
       {action}
@@ -94,13 +91,7 @@ function SecTitle({
   );
 }
 
-function StarRow({
-  rating,
-  size = 14,
-}: {
-  rating: number;
-  size?: number;
-}) {
+function StarRow({ rating, size = 14 }: { rating: number; size?: number }) {
   return (
     <div style={{ display: "flex", gap: 2 }}>
       {[1, 2, 3, 4, 5].map((i) => (
@@ -138,8 +129,7 @@ function ActionBtn({
         justifyContent: "center",
         cursor: "pointer",
         flexShrink: 0,
-      }}
-    >
+      }}>
       {children}
     </button>
   );
@@ -166,8 +156,7 @@ function BookNowBtn({
         cursor: "pointer",
         width: full ? "100%" : undefined,
         whiteSpace: "nowrap",
-      }}
-    >
+      }}>
       Book now
     </button>
   );
@@ -183,7 +172,13 @@ function RatingSummary({
   category: string;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        flexWrap: "wrap",
+      }}>
       {ratingNum ? (
         <>
           <StarRow rating={ratingNum} />
@@ -197,13 +192,20 @@ function RatingSummary({
       ) : (
         <>
           <StarRow rating={0} />
-          <span style={{ fontSize: 13, color: T.lightGray }}>No reviews yet</span>
+          <span style={{ fontSize: 13, color: T.lightGray }}>
+            No reviews yet
+          </span>
         </>
       )}
       {category && (
         <>
           <span style={{ color: T.lightGray }}>·</span>
-          <span style={{ fontSize: 14, color: T.gray, textTransform: "capitalize" }}>
+          <span
+            style={{
+              fontSize: 14,
+              color: T.gray,
+              textTransform: "capitalize",
+            }}>
             {category}
           </span>
         </>
@@ -222,8 +224,7 @@ function TeamCircle({ emp }: { emp: any }) {
         gap: 8,
         flexShrink: 0,
         width: 80,
-      }}
-    >
+      }}>
       <div
         style={{
           width: 68,
@@ -236,8 +237,7 @@ function TeamCircle({ emp }: { emp: any }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-        }}
-      >
+        }}>
         {emp.employee_photo ? (
           <Image
             fill
@@ -259,8 +259,7 @@ function TeamCircle({ emp }: { emp: any }) {
           lineHeight: 1.3,
           wordBreak: "break-word",
           maxWidth: 76,
-        }}
-      >
+        }}>
         {emp.full_name?.split(" ")[0] ?? "Staff"}
       </span>
     </div>
@@ -294,8 +293,7 @@ export default function BusinessPage() {
 
   const avgRating =
     reviews?.data && reviews.data.length > 0
-      ? reviews.data.reduce((acc, r) => acc + r.rating, 0) /
-        reviews.data.length
+      ? reviews.data.reduce((acc, r) => acc + r.rating, 0) / reviews.data.length
       : null;
 
   const totalReviews = reviews?.data?.length ?? 0;
@@ -331,7 +329,10 @@ export default function BusinessPage() {
   };
 
   const handleFav = () => {
-    if (!session) { onOpen(); return; }
+    if (!session) {
+      onOpen();
+      return;
+    }
     mutate(
       { item_id: businessId, item_type: "User" },
       {
@@ -348,16 +349,17 @@ export default function BusinessPage() {
   if (isLoading) return <Loading />;
 
   const biz = data?.data;
-  const name        = biz?.business_name ?? "Business";
-  const category    = biz?.business_category ?? "";
-  const city        = biz?.city === "other" ? (biz?.city_name ?? "") : (biz?.city ?? "");
-  const address     = biz?.location ?? "";
-  const heroImg     = biz?.image || "/placeholder.svg";
-  const events      = biz?.event ?? [];
-  const deals       = biz?.deal ?? [];
-  const hasGeo      = !!(biz?.latitude && biz?.longitude);
+  const name = biz?.business_name ?? "Business";
+  const category = biz?.business_category ?? "";
+  const city =
+    biz?.city === "other" ? (biz?.city_name ?? "") : (biz?.city ?? "");
+  const address = biz?.location ?? "";
+  const heroImg = biz?.image || "/placeholder.svg";
+  const events = biz?.event ?? [];
+  const deals = biz?.deal ?? [];
+  const hasGeo = !!(biz?.latitude && biz?.longitude);
 
-  const ratingNum   = avgRating ? Number(avgRating.toFixed(1)) : null;
+  const ratingNum = avgRating ? Number(avgRating.toFixed(1)) : null;
 
   /* ═══════════════ LEFT MAIN CONTENT sections ═══════════════ */
   const MainContent = () => (
@@ -386,8 +388,7 @@ export default function BusinessPage() {
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
                 gap: 16,
-              }}
-            >
+              }}>
               {events.slice(0, 2).map((item: EventFormValues) => (
                 <EventCard key={item._id} event={item} />
               ))}
@@ -412,8 +413,7 @@ export default function BusinessPage() {
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
                 gap: 16,
-              }}
-            >
+              }}>
               {deals.slice(0, 2).map((item: any) => (
                 <DealCard key={item._id} deal={item} />
               ))}
@@ -434,11 +434,16 @@ export default function BusinessPage() {
           <section>
             <SecTitle
               action={
-                <span style={{ fontSize: 14, color: T.blue, fontWeight: 600, cursor: "pointer" }}>
+                <span
+                  style={{
+                    fontSize: 14,
+                    color: T.blue,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}>
                   See all
                 </span>
-              }
-            >
+              }>
               Team
             </SecTitle>
             <div
@@ -448,8 +453,7 @@ export default function BusinessPage() {
                 overflowX: "auto",
                 paddingBottom: 8,
                 scrollbarWidth: "none",
-              }}
-            >
+              }}>
               {teamMembers.map((emp: any) => (
                 <TeamCircle key={emp._id} emp={emp} />
               ))}
@@ -472,8 +476,7 @@ export default function BusinessPage() {
               background: T.bg,
               borderRadius: 16,
               border: `1px solid ${T.border}`,
-            }}
-          >
+            }}>
             <div style={{ textAlign: "center" }}>
               <div
                 style={{
@@ -481,8 +484,7 @@ export default function BusinessPage() {
                   fontWeight: 900,
                   color: T.navy,
                   lineHeight: 1,
-                }}
-              >
+                }}>
                 {ratingNum.toFixed(1)}
               </div>
               <div style={{ fontSize: 12, color: T.gray, marginTop: 4 }}>
@@ -508,8 +510,7 @@ export default function BusinessPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <Info size={15} color={T.lightGray} />
             </div>
-          }
-        >
+          }>
           Portfolio
         </SecTitle>
         <div
@@ -519,8 +520,7 @@ export default function BusinessPage() {
             gap: 4,
             borderRadius: 16,
             overflow: "hidden",
-          }}
-        >
+          }}>
           {Array.from({ length: 9 }).map((_, i) => (
             <div
               key={i}
@@ -529,8 +529,7 @@ export default function BusinessPage() {
                 aspectRatio: "1",
                 background: T.bg,
                 overflow: "hidden",
-              }}
-            >
+              }}>
               <Image
                 fill
                 src={heroImg}
@@ -552,16 +551,14 @@ export default function BusinessPage() {
                     justifyContent: "center",
                     cursor: "pointer",
                   }}
-                  onClick={() => setPortfolioExpanded(true)}
-                >
+                  onClick={() => setPortfolioExpanded(true)}>
                   <span
                     style={{
                       color: T.white,
                       fontSize: 22,
                       fontWeight: 800,
                       letterSpacing: "-0.5px",
-                    }}
-                  >
+                    }}>
                     +62
                   </span>
                 </div>
@@ -580,8 +577,7 @@ export default function BusinessPage() {
             gridTemplateColumns: "1fr 1fr",
             gap: 40,
           }}
-          className="max-sm:grid-cols-1"
-        >
+          className="max-sm:grid-cols-1">
           {/* Opening times */}
           <div>
             <SecTitle>Opening times</SecTitle>
@@ -609,8 +605,7 @@ export default function BusinessPage() {
                       gap: 10,
                       fontSize: 14,
                       color: T.navy,
-                    }}
-                  >
+                    }}>
                     <div
                       style={{
                         width: 20,
@@ -621,8 +616,7 @@ export default function BusinessPage() {
                         alignItems: "center",
                         justifyContent: "center",
                         flexShrink: 0,
-                      }}
-                    >
+                      }}>
                       <Check size={11} color="#2e7d32" strokeWidth={3} />
                     </div>
                     {item}
@@ -657,8 +651,7 @@ export default function BusinessPage() {
               justifyContent: "center",
               color: T.lightGray,
               fontSize: 14,
-            }}
-          >
+            }}>
             No location available
           </div>
         )}
@@ -669,9 +662,12 @@ export default function BusinessPage() {
               alignItems: "flex-start",
               gap: 8,
               marginTop: 14,
-            }}
-          >
-            <MapPin size={15} color={T.gray} style={{ flexShrink: 0, marginTop: 2 }} />
+            }}>
+            <MapPin
+              size={15}
+              color={T.gray}
+              style={{ flexShrink: 0, marginTop: 2 }}
+            />
             <div style={{ fontSize: 14, color: T.gray }}>
               {address}
               <a
@@ -685,8 +681,7 @@ export default function BusinessPage() {
                   textDecoration: "none",
                   marginTop: 4,
                   fontSize: 14,
-                }}
-              >
+                }}>
                 Get directions
               </a>
             </div>
@@ -707,8 +702,7 @@ export default function BusinessPage() {
         overflow: "hidden",
         background: T.white,
         boxShadow: "0 4px 32px rgba(2,12,26,0.08)",
-      }}
-    >
+      }}>
       {/* Identity */}
       <div style={{ padding: "24px 24px 0" }}>
         <h3
@@ -718,8 +712,7 @@ export default function BusinessPage() {
             color: T.navy,
             lineHeight: 1.25,
             marginBottom: 4,
-          }}
-        >
+          }}>
           {name}
         </h3>
         {category && (
@@ -729,8 +722,7 @@ export default function BusinessPage() {
               color: T.gray,
               textTransform: "capitalize",
               marginBottom: 10,
-            }}
-          >
+            }}>
             {category}
           </p>
         )}
@@ -741,8 +733,7 @@ export default function BusinessPage() {
               alignItems: "center",
               gap: 6,
               marginBottom: 16,
-            }}
-          >
+            }}>
             <StarRow rating={ratingNum} size={13} />
             <span style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>
               {ratingNum.toFixed(1)}
@@ -752,7 +743,10 @@ export default function BusinessPage() {
             </span>
           </div>
         )}
-        <BookNowBtn full onClick={() => router.push(`/bookings?business_id=${businessId}`)} />
+        <BookNowBtn
+          full
+          onClick={() => router.push(`/bookings?business_id=${businessId}`)}
+        />
       </div>
 
       <div style={{ height: 1, background: T.border, margin: "20px 24px" }} />
@@ -765,8 +759,7 @@ export default function BusinessPage() {
             alignItems: "center",
             gap: 7,
             marginBottom: 12,
-          }}
-        >
+          }}>
           <Clock size={14} color={T.gray} />
           <span style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
             Opening hours
@@ -781,7 +774,11 @@ export default function BusinessPage() {
       {address && (
         <div style={{ padding: "0 24px 20px" }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-            <MapPin size={14} color={T.gray} style={{ flexShrink: 0, marginTop: 2 }} />
+            <MapPin
+              size={14}
+              color={T.gray}
+              style={{ flexShrink: 0, marginTop: 2 }}
+            />
             <div>
               <p style={{ fontSize: 13, color: T.gray, lineHeight: 1.5 }}>
                 {address}
@@ -797,8 +794,7 @@ export default function BusinessPage() {
                   textDecoration: "none",
                   display: "inline-block",
                   marginTop: 4,
-                }}
-              >
+                }}>
                 Get directions
               </a>
             </div>
@@ -813,8 +809,7 @@ export default function BusinessPage() {
             height: 180,
             position: "relative",
             overflow: "hidden",
-          }}
-        >
+          }}>
           <MapComponent
             latitude={biz.latitude}
             longitude={biz.longitude}
@@ -830,7 +825,6 @@ export default function BusinessPage() {
   ══════════════════════════════════════════════════════════ */
   return (
     <div style={{ minHeight: "100vh", background: T.white }}>
-
       {/* ══════════ MOBILE LAYOUT ══════════ */}
       <div className="md:hidden">
         {/* Full-bleed hero */}
@@ -861,8 +855,7 @@ export default function BusinessPage() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-            }}
-          >
+            }}>
             <ActionBtn onClick={() => router.back()} ghost>
               <ChevronLeft size={20} color={T.navy} />
             </ActionBtn>
@@ -891,16 +884,14 @@ export default function BusinessPage() {
           style={{
             padding: "20px 16px 8px",
             borderBottom: `1px solid ${T.border}`,
-          }}
-        >
+          }}>
           <div
             style={{
               display: "flex",
               alignItems: "flex-start",
               justifyContent: "space-between",
               gap: 12,
-            }}
-          >
+            }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 style={{
@@ -908,8 +899,7 @@ export default function BusinessPage() {
                   alignItems: "center",
                   gap: 6,
                   flexWrap: "wrap",
-                }}
-              >
+                }}>
                 <h1
                   style={{
                     fontSize: 22,
@@ -917,8 +907,7 @@ export default function BusinessPage() {
                     color: T.navy,
                     lineHeight: 1.2,
                     margin: 0,
-                  }}
-                >
+                  }}>
                   {name}
                 </h1>
                 {biz?.verified && (
@@ -926,7 +915,11 @@ export default function BusinessPage() {
                 )}
               </div>
               <div style={{ marginTop: 6 }}>
-                <RatingSummary ratingNum={ratingNum} totalReviews={totalReviews} category={category} />
+                <RatingSummary
+                  ratingNum={ratingNum}
+                  totalReviews={totalReviews}
+                  category={category}
+                />
               </div>
               {(city || address) && (
                 <div
@@ -937,8 +930,7 @@ export default function BusinessPage() {
                     marginTop: 6,
                     fontSize: 13,
                     color: T.gray,
-                  }}
-                >
+                  }}>
                   <MapPin size={13} color={T.gray} />
                   <span style={{ textTransform: "capitalize" }}>
                     {city || address}
@@ -950,14 +942,15 @@ export default function BusinessPage() {
 
           {/* Mobile Book Now */}
           <div style={{ marginTop: 16, marginBottom: 4 }}>
-            <BookNowBtn full onClick={() => router.push(`/bookings?business_id=${businessId}`)} />
+            <BookNowBtn
+              full
+              onClick={() => router.push(`/bookings?business_id=${businessId}`)}
+            />
           </div>
         </div>
 
         {/* Mobile sections */}
-        <div style={{ padding: "24px 16px 80px" }}>
-          {MainContent()}
-        </div>
+        <div style={{ padding: "24px 16px 80px" }}>{MainContent()}</div>
       </div>
 
       {/* ══════════ DESKTOP LAYOUT ══════════ */}
@@ -970,8 +963,7 @@ export default function BusinessPage() {
             maxWidth: 1200,
             margin: "0 auto",
             padding: "0 32px",
-          }}
-        >
+          }}>
           {/* Top action row */}
           <div
             style={{
@@ -980,8 +972,7 @@ export default function BusinessPage() {
               justifyContent: "flex-end",
               gap: 10,
               marginBottom: 14,
-            }}
-          >
+            }}>
             <button
               onClick={handleShare}
               style={{
@@ -996,8 +987,7 @@ export default function BusinessPage() {
                 fontWeight: 600,
                 color: T.navy,
                 cursor: "pointer",
-              }}
-            >
+              }}>
               <Share2 size={14} />
               Share
             </button>
@@ -1016,8 +1006,7 @@ export default function BusinessPage() {
                 fontWeight: 600,
                 color: isBusinessFavorite ? "#e11d48" : T.navy,
                 cursor: "pointer",
-              }}
-            >
+              }}>
               {isPending ? (
                 <Loader2 size={14} className="animate-spin" />
               ) : (
@@ -1041,8 +1030,7 @@ export default function BusinessPage() {
               borderRadius: 20,
               overflow: "hidden",
               height: 448,
-            }}
-          >
+            }}>
             {/* Large main image spans both rows */}
             <div style={{ position: "relative", gridRow: "1 / 3" }}>
               <Image
@@ -1082,8 +1070,7 @@ export default function BusinessPage() {
                   alignItems: "flex-end",
                   justifyContent: "flex-end",
                   padding: 14,
-                }}
-              >
+                }}>
                 <button
                   style={{
                     background: "rgba(255,255,255,0.95)",
@@ -1094,8 +1081,7 @@ export default function BusinessPage() {
                     fontWeight: 700,
                     color: T.navy,
                     cursor: "pointer",
-                  }}
-                >
+                  }}>
                   See all photos
                 </button>
               </div>
@@ -1109,16 +1095,14 @@ export default function BusinessPage() {
             maxWidth: 1200,
             margin: "0 auto",
             padding: "24px 32px 0",
-          }}
-        >
+          }}>
           <div
             style={{
               display: "flex",
               alignItems: "flex-start",
               justifyContent: "space-between",
               gap: 24,
-            }}
-          >
+            }}>
             {/* Left: name + rating + location */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
@@ -1127,8 +1111,7 @@ export default function BusinessPage() {
                   alignItems: "center",
                   gap: 10,
                   flexWrap: "wrap",
-                }}
-              >
+                }}>
                 <h1
                   style={{
                     fontSize: 28,
@@ -1136,8 +1119,7 @@ export default function BusinessPage() {
                     color: T.navy,
                     lineHeight: 1.15,
                     margin: 0,
-                  }}
-                >
+                  }}>
                   {name}
                 </h1>
                 {biz?.verified && (
@@ -1145,7 +1127,11 @@ export default function BusinessPage() {
                 )}
               </div>
               <div style={{ marginTop: 8 }}>
-                <RatingSummary ratingNum={ratingNum} totalReviews={totalReviews} category={category} />
+                <RatingSummary
+                  ratingNum={ratingNum}
+                  totalReviews={totalReviews}
+                  category={category}
+                />
               </div>
               {(city || address) && (
                 <div
@@ -1156,8 +1142,7 @@ export default function BusinessPage() {
                     marginTop: 7,
                     fontSize: 13,
                     color: T.gray,
-                  }}
-                >
+                  }}>
                   <MapPin size={13} color={T.gray} />
                   <span style={{ textTransform: "capitalize" }}>{city}</span>
                   {city && address && (
@@ -1176,21 +1161,22 @@ export default function BusinessPage() {
                 alignItems: "flex-end",
                 gap: 10,
                 flexShrink: 0,
-              }}
-            >
+              }}>
               {activeServices.length > 0 && (
                 <span style={{ fontSize: 13, color: T.gray, fontWeight: 500 }}>
                   {activeServices.length} services available
                 </span>
               )}
-              <BookNowBtn onClick={() => router.push(`/bookings?business_id=${businessId}`)} />
+              <BookNowBtn
+                onClick={() =>
+                  router.push(`/bookings?business_id=${businessId}`)
+                }
+              />
             </div>
           </div>
 
           {/* Thin divider */}
-          <div
-            style={{ height: 1, background: T.border, marginTop: 24 }}
-          />
+          <div style={{ height: 1, background: T.border, marginTop: 24 }} />
         </div>
 
         {/* ── 2-COLUMN CONTENT ── */}
@@ -1203,8 +1189,7 @@ export default function BusinessPage() {
             gridTemplateColumns: "1fr 360px",
             gap: 56,
             alignItems: "start",
-          }}
-        >
+          }}>
           {/* LEFT MAIN */}
           {MainContent()}
 

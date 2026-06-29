@@ -2,6 +2,7 @@ import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import { Review } from "@/server/models/Review.model";
 import { Service } from "@/server/models/Service.model";
+import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
 function escapeRegex(text: string) {
@@ -17,18 +18,25 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const rawCategory = searchParams.get("category") || "";
     const rawSearch = searchParams.get("search") || "";
+    const rawService = searchParams.get("service") || "";
     const rawCity = searchParams.get("city") || "";
     const rawCommunity = searchParams.get("community") || "";
     const rawLat = searchParams.get("lat");
     const rawLng = searchParams.get("lng");
     const rawRadius = searchParams.get("radius");
 
+    // Map viewport bounds (sent when user pans/zooms the map)
+    const rawSwLat = searchParams.get("swLat");
+    const rawSwLng = searchParams.get("swLng");
+    const rawNeLat = searchParams.get("neLat");
+    const rawNeLng = searchParams.get("neLng");
+
     const search = rawSearch.replace(/\?+$/, "").trim();
+    const service = rawService.replace(/\?+$/, "").trim();
     const category = rawCategory.replace(/\?+$/, "").trim();
     const city = rawCity.replace(/\?+$/, "").trim();
     const community = rawCommunity.replace(/\?+$/, "").trim();
 
-    // Parse and validate coordinates
     const lat = rawLat !== null ? parseFloat(rawLat) : null;
     const lng = rawLng !== null ? parseFloat(rawLng) : null;
     const useGeo =
@@ -41,7 +49,9 @@ export async function GET(request: NextRequest) {
       lng >= -180 &&
       lng <= 180;
 
-    // Base filter shared by both the geo and city paths
+    const hasBounds = !!(rawSwLat && rawSwLng && rawNeLat && rawNeLng);
+
+    // ── Base filter ──────────────────────────────────────────────────────────
     const baseFilter: any = { category: "business" };
 
     if (category && category !== "all") {
@@ -49,12 +59,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      const safeSearch = escapeRegex(search);
-      baseFilter.business_name = { $regex: safeSearch, $options: "i" };
-    }
-
-    if (city && city !== "all") {
-      baseFilter.city = { $regex: `^${escapeRegex(city)}$`, $options: "i" };
+      const safe = escapeRegex(search);
+      baseFilter.business_name = { $regex: safe, $options: "i" };
     }
 
     if (community) {
@@ -64,11 +70,72 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    // ── Service filter ───────────────────────────────────────────────────────
+    // Find businesses that actually offer the searched service name/category.
+    if (service) {
+      const safe = escapeRegex(service);
+      const matchingServices = await Service.find({
+        $or: [
+          { name: { $regex: safe, $options: "i" } },
+          { category: { $regex: safe, $options: "i" } },
+          { description: { $regex: safe, $options: "i" } },
+        ],
+      }).lean();
+
+      const uniqueIds = [
+        ...new Set(
+          matchingServices
+            .map((s: any) => s.business_id?.toString())
+            .filter(Boolean),
+        ),
+      ] as string[];
+
+      if (uniqueIds.length === 0) {
+        return NextResponse.json(
+          { data: [], message: "No businesses found for this service" },
+          { status: 200 },
+        );
+      }
+
+      const objectIds = uniqueIds
+        .map((id) => {
+          try {
+            return new mongoose.Types.ObjectId(id);
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
+
+      baseFilter._id = { $in: objectIds };
+    }
+
+    // ── Spatial filter: bounds OR city ───────────────────────────────────────
+    if (hasBounds) {
+      // Filter by visible map area using the numeric latitude/longitude fields.
+      // $toDouble handles both string and number storage in the DB.
+      const swLatF  = parseFloat(rawSwLat!);
+      const swLngF  = parseFloat(rawSwLng!);
+      const neLat_f = parseFloat(rawNeLat!);
+      const neLngF  = parseFloat(rawNeLng!);
+      baseFilter.$expr = {
+        $and: [
+          { $gte: [{ $toDouble: "$latitude"  }, swLatF  ] },
+          { $lte: [{ $toDouble: "$latitude"  }, neLat_f ] },
+          { $gte: [{ $toDouble: "$longitude" }, swLngF  ] },
+          { $lte: [{ $toDouble: "$longitude" }, neLngF  ] },
+        ],
+      };
+    } else if (city && city !== "all") {
+      // Initial city-based search (no bounds yet)
+      baseFilter.city = { $regex: `^${escapeRegex(city)}$`, $options: "i" };
+    }
+
+    // ── Execute query ────────────────────────────────────────────────────────
     let businesses: any[];
 
-    if (useGeo) {
-      // Geospatial path — sorted by distance ascending, no radius cap unless
-      // the user explicitly chose one from the filter modal.
+    if (useGeo && !hasBounds) {
+      // GPS-based: sort by distance, optional radius cap
       const geoNearStage: any = {
         near: { type: "Point", coordinates: [lng!, lat!] },
         distanceField: "distance",
@@ -86,8 +153,7 @@ export async function GET(request: NextRequest) {
       } catch {
         businesses = [];
       }
-      // Fall back to regular query if geo returns nothing (e.g. documents
-      // haven't been migrated to have the geo field yet).
+      // Fall back if geo index not yet populated
       if (businesses.length === 0) {
         businesses = await User.find(baseFilter)
           .sort({ createdAt: -1 })
@@ -95,26 +161,24 @@ export async function GET(request: NextRequest) {
           .lean();
       }
     } else {
-      // Fallback — city / text filter (original behaviour)
+      // Bounds / city / text filter
       businesses = await User.find(baseFilter)
         .sort({ createdAt: -1 })
         .limit(RESULT_LIMIT)
         .lean();
     }
 
-    // Collect keys for batch lookups
+    // ── Batch-fetch reviews + services ───────────────────────────────────────
     const businessSlugs = businesses.map((b: any) =>
       b.business_name?.toLowerCase().replace(/[^a-z0-9]/g, ""),
     );
     const businessHexIds = businesses.map((b: any) => b._id.toString());
 
-    // Fetch reviews and services in parallel
     const [reviews, services] = await Promise.all([
       Review.find({ business_id: { $in: businessSlugs } }).lean(),
       Service.find({ business_id: { $in: businessHexIds } }).lean(),
     ]);
 
-    // Build O(n) lookup maps instead of O(n²) nested filters
     const reviewsBySlug = new Map<string, typeof reviews>();
     for (const review of reviews) {
       const slug = review.business_id as string;
@@ -123,10 +187,10 @@ export async function GET(request: NextRequest) {
     }
 
     const servicesByBusinessId = new Map<string, typeof services>();
-    for (const service of services) {
-      const id = service.business_id.toString();
+    for (const svc of services) {
+      const id = svc.business_id.toString();
       if (!servicesByBusinessId.has(id)) servicesByBusinessId.set(id, []);
-      servicesByBusinessId.get(id)!.push(service);
+      servicesByBusinessId.get(id)!.push(svc);
     }
 
     const businessesWithReviews = businesses.map((business: any) => {
