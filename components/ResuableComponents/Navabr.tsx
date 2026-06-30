@@ -205,7 +205,6 @@ export default function Navbar() {
       <div
         style={{ maxWidth: 1280, margin: "0 auto" }}
         className="flex items-center justify-between px-6 md:px-14 py-4">
-        {/* Logo */}
         <Link href={buildPath("/")} aria-label="Home" className="flex-shrink-0">
           <Image
             src="/wha/logo.png"
@@ -217,7 +216,6 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* Right side: List your business + auth */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/auth")}
@@ -250,7 +248,6 @@ export default function Navbar() {
       className="hidden md:block fixed top-0 left-0 z-50 w-full"
       style={navStyle}>
       <div className="flex items-center gap-6 px-6 py-3">
-        {/* Logo */}
         <Link href={buildPath("/")} aria-label="Home" className="flex-shrink-0">
           <Image
             src="/wha/logo.png"
@@ -262,12 +259,10 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* Search bar fills available space */}
         <div className="flex-1 min-w-0 max-w-3xl mx-auto">
           {!pathname.startsWith("/auth") && <BusinessSearchWithDates />}
         </div>
 
-        {/* Auth */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <AuthSection />
         </div>

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { ChevronLeft, Eye, EyeOff, Camera } from "lucide-react";
-import { BUSINESS_CATEGORIES } from "@/lib/data/business-categories";
+import { EMPLOYEE_CATEGORIES, ITEM_CATEGORIES } from "@/lib/data/business-categories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,7 +69,6 @@ export const signupSchema = z
 
 export type SingUPFormSchema = z.infer<typeof signupSchema>;
 
-
 export default function BusinessSignup() {
   const router = useRouter();
   const { mutate, isPending } = useSingup();
@@ -91,7 +90,20 @@ export default function BusinessSignup() {
     },
   });
 
+  const businessType = useWatch({ control, name: "business_type" });
   const selectedCategory = useWatch({ control, name: "business_category" });
+
+  const categoryList =
+    businessType === "employee_based"
+      ? EMPLOYEE_CATEGORIES
+      : businessType === "item_based"
+        ? ITEM_CATEGORIES
+        : [];
+
+  // Reset category whenever the model changes
+  useEffect(() => {
+    setValue("business_category", "" as any, { shouldValidate: false });
+  }, [businessType, setValue]);
 
   const onSubmit = (values: SingUPFormSchema) => {
     const fd = new FormData();
@@ -127,15 +139,15 @@ export default function BusinessSignup() {
         {/* Form area */}
         <div className="flex flex-1 items-start justify-center py-8">
           <div className="w-full max-w-[440px]">
+            <div className="pt-6 mt-10">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="flex h-9 w-9 cursor-pointer mb-5 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition">
+                <ChevronLeft size={18} />
+              </button>
+            </div>
             <h1 className="mb-1.5 text-[28px] font-extrabold tracking-tight text-slate-900">
-              <div className="pt-6">
-                <button
-                  type="button"
-                  onClick={() => router.back()}
-                  className="flex h-9 w-9 cursor-pointer mb-5 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition">
-                  <ChevronLeft size={18} />
-                </button>
-              </div>
               WH Australia for businesses
             </h1>
             <p className="mb-8 text-sm leading-relaxed text-slate-500">
@@ -196,13 +208,14 @@ export default function BusinessSignup() {
                 )}
               </div>
 
-              {/* Category grid */}
+              {/* Category grid — shown only after model is selected */}
+              {businessType && (
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-slate-900">
                   Category
                 </Label>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                  {BUSINESS_CATEGORIES.map(({ label, value, icon: Icon }) => {
+                  {categoryList.map(({ label, value, icon: Icon }) => {
                     const active = selectedCategory === value;
                     return (
                       <button
@@ -231,6 +244,7 @@ export default function BusinessSignup() {
                   </p>
                 )}
               </div>
+              )}
 
               {/* Logo upload */}
               <div className="space-y-1.5">

@@ -23,25 +23,6 @@ export default function AuthPage() {
           padding: "0 24px",
           overflowY: "auto",
         }}>
-        {/* Back arrow */}
-        <div style={{ padding: "24px 0 0" }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: "50%",
-              border: "1px solid #e2e8f0",
-              background: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}>
-            <ChevronLeft size={20} color="#0f172a" />
-          </button>
-        </div>
-
         <div
           style={{
             flex: 1,
@@ -50,6 +31,23 @@ export default function AuthPage() {
             justifyContent: "center",
           }}>
           <div style={{ width: "100%", maxWidth: 400 }}>
+            <div style={{ padding: "24px 0 10px" }}>
+              <button
+                onClick={() => router.back()}
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: "50%",
+                  border: "1px solid #e2e8f0",
+                  background: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}>
+                <ChevronLeft size={20} color="#0f172a" />
+              </button>
+            </div>
             <h1
               style={{
                 fontSize: 28,

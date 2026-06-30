@@ -1,233 +1,340 @@
 "use client";
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
-  LucideIcon,
-  User,
-  HeartPlus,
-  Ticket,
-  BadgeDollarSign,
-  Settings,
-  TicketCheck,
+  Calendar,
+  Tag,
+  BookOpen,
+  Megaphone,
   Users,
-  HandPlatter,
-  Book,
+  Settings,
+  HelpCircle,
+  ChevronRight,
+  LucideIcon,
+  Smile,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import Image from "next/image";
-import { useSession } from "next-auth/react";
 
-export type NavItem = {
+type SubItem = { label: string; href: string };
+type NavItem = {
   icon: LucideIcon;
-  name: string;
-  link?: string;
-  hasDropdown: boolean;
-  children?: { title: string; link: string; active?: boolean }[];
-  active?: boolean;
+  label: string;
+  href?: string;
+  children?: { section?: string; items: SubItem[] }[];
 };
 
-export type NavGroup = {
-  groupLabel: string;
-  items: NavItem[];
-};
+const NAV_ITEMS: NavItem[] = [
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+  { icon: Calendar, label: "Calendar", href: "/dashboard/bookings" },
+  { icon: Tag, label: "Deals", href: "/dashboard/deals" },
+  { icon: Smile, label: "Clients", href: "/dashboard/employees" },
+  {
+    icon: BookOpen,
+    label: "Catalog",
+    children: [
+      {
+        section: "Services",
+        items: [{ label: "Service menu", href: "/dashboard/services" }],
+      },
+      {
+        section: "Inventory",
+        items: [{ label: "Products", href: "/dashboard/inventory" }],
+      },
+    ],
+  },
+  { icon: Megaphone, label: "Marketing", href: "/dashboard/events" },
+  {
+    icon: Users,
+    label: "Team",
+    children: [
+      {
+        items: [
+          { label: "Team members", href: "/dashboard/employees" },
+          { label: "Scheduled shifts", href: "/dashboard/employees" },
+        ],
+      },
+    ],
+  },
+  { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+];
 
-const Sidebar = () => {
+export default function Sidebar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const searchParams = useSearchParams();
-  const currentCity = searchParams.get("city");
-  const buildPath = (href: string) => {
-    if (!currentCity) return href;
-    return `${href}?city=${currentCity}`;
+  useSession(); // keeps auth state alive for protected routes
+  const [flyout, setFlyout] = useState<string | null>(null);
+
+  const isActive = (item: NavItem) => {
+    if (item.href) {
+      return item.href === "/dashboard"
+        ? pathname === "/dashboard"
+        : pathname.startsWith(item.href);
+    }
+    return item.children?.some((g) =>
+      g.items.some((s) => pathname.startsWith(s.href)),
+    ) ?? false;
   };
 
-  const menuData: NavGroup[] = [
-    {
-      groupLabel: "General",
-      items: [
-        {
-          name: "dashboard",
-          icon: LayoutDashboard,
-          link: buildPath("/dashboard"),
-          hasDropdown: false,
-          active: pathname === "/dashboard",
-        },
-        // {
-        //   name: "booking",
-        //   icon: Calendar,
-        //   link: buildPath("/dashboard/bookings"),
-        //   hasDropdown: false,
-        //   active: pathname === "/dashboard/bookings",
-        // },
-        {
-          name: "deals",
-          icon: BadgeDollarSign,
-          link: buildPath("/dashboard/deals"),
-          hasDropdown: false,
-          active: pathname.startsWith("/dashboard/deals"),
-        },
-        {
-          name: "events",
-          icon: Ticket,
-          link: "/dashboard/events",
-          hasDropdown: false,
-          active: pathname.startsWith("/dashboard/events"),
-        },
-        {
-          name: "tickets",
-          icon: TicketCheck,
-          link: "/dashboard/tickets",
-          hasDropdown: false,
-          active: pathname.startsWith("/dashboard/tickets"),
-        },
-      ],
-    },
-    // {
-    //   groupLabel: "Inventory",
-    //   items: [
-    //     {
-    //       name: "inventory",
-    //       icon: CirclePile,
-    //       link: buildPath("/dashboard/inventory"),
-    //       hasDropdown: false,
-    //       active: pathname.startsWith("/dashboard/inventory"),
-    //     },
-    //   ],
-    // },
-    {
-      groupLabel: "Bookings",
-      items:
-        session?.user?.business_type === "" ||
-        session?.user?.business_type === null ||
-        session?.user?.business_type === undefined
-          ? [
-              {
-                name: "Services",
-                icon: HandPlatter,
-                link: buildPath("/dashboard/services"),
-                hasDropdown: false,
-                active: pathname.startsWith("/dashboard/services"),
-              },
-            ] // Fix: Return an empty array instead of ""
-          : [
-              {
-                name: "Services",
-                icon: HandPlatter,
-                link: buildPath("/dashboard/services"),
-                hasDropdown: false,
-                active: pathname.startsWith("/dashboard/services"),
-              },
-              {
-                name: "Employee",
-                icon: Users,
-                link: buildPath("/dashboard/employees"),
-                hasDropdown: false,
-                active: pathname.startsWith("/dashboard/employee"),
-              },
-              {
-                name: "Booking Lists",
-                icon: Book,
-                link: buildPath("/dashboard/bookings"),
-                hasDropdown: false,
-                active: pathname.startsWith("/dashboard/bookings"),
-              },
-            ],
-    },
-    {
-      groupLabel: "Profile",
-      items: [
-        {
-          name: "profile",
-          icon: User,
-          link: buildPath("/dashboard/profile"),
-          hasDropdown: false,
-          active: pathname.startsWith("/dashboard/profile"),
-        },
-        {
-          name: "Favorites",
-          icon: HeartPlus,
-          link: buildPath("/dashboard/favorite"),
-          hasDropdown: false,
-          active: pathname.startsWith("/dashboard/favorite"),
-        },
-        {
-          name: "Settings",
-          icon: Settings,
-          link: buildPath("/dashboard/settings"),
-          hasDropdown: false,
-          active: pathname.startsWith("/dashboard/settings"),
-        },
-      ],
-    },
-  ];
-
   return (
-    <div
-      className="h-screen hidden md:flex
-      fixed top-0 left-0  
-                  w-20 md:w-56
-                  shrink-0
-                  bg-primary 
-                  text-white 
-                  border-r 
-                   flex-col 
-                  font-sans text-sm 
-                  transition-all duration-300">
-      <div className="flex-1 overflow-y-auto p-2 md:p-4">
-        <Link
-          href={buildPath("/")}
-          className="flex items-center justify-center ">
-          <Image
-            src="/wha/logo2.png"
-            alt="Whats Happening Australia Logo"
-            width={100}
-            height={20}
-            className="object-contain"
-            priority
-          />
-        </Link>
-        {menuData.map((group, idx) => (
-          <div key={idx} className="mb-6">
-            {/* Optional Group Label (Desktop Only) */}
-            <div className="hidden md:block text-xs uppercase text-gray-400 mb-2 px-2">
-              {group.groupLabel}
-            </div>
-
-            <div className="space-y-1">
-              {group.items.map((item) => (
-                <div key={item.link}>
-                  <Link
-                    href={item.link || "#"}
-                    title={item.name}
-                    className={`flex flex-col md:flex-row
-                    items-center 
-                    justify-center md:justify-start
-                    gap-1 md:gap-3
-                    p-2 md:p-3
-                    rounded-md
-                    transition-all duration-200
-                    w-full
-                    ${
-                      item.active
-                        ? "bg-slate-100 text-black"
-                        : "hover:bg-gray-600 hover:text-white"
-                    }`}>
-                    {/* ICON */}
-                    <item.icon size={22} strokeWidth={1.5} />
-
-                    {/* TEXT */}
-                    <span className="text-[10px] md:text-sm capitalize font-medium">
-                      {item.name}
-                    </span>
-                  </Link>
-                </div>
-              ))}
-            </div>
+    <>
+      {/* Sidebar */}
+      <div
+        className="fixed top-0 left-0 h-screen z-40 flex flex-col"
+        style={{
+          width: 60,
+          background: "#0d0f1a",
+          borderRight: "1px solid rgba(255,255,255,0.06)",
+        }}>
+        {/* Logo */}
+        <div
+          style={{
+            height: 60,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            flexShrink: 0,
+          }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: "linear-gradient(135deg,#7c3aed,#4f46e5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 800,
+              fontSize: 14,
+              color: "#fff",
+              letterSpacing: "-0.5px",
+            }}>
+            W
           </div>
-        ))}
-      </div>
-    </div>
-  );
-};
+        </div>
 
-export default Sidebar;
+        {/* Nav items */}
+        <nav style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item);
+            const open = flyout === item.label;
+            return (
+              <div key={item.label} style={{ position: "relative" }}>
+                {item.href ? (
+                  <Link
+                    href={item.href}
+                    title={item.label}
+                    onClick={() => setFlyout(null)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 60,
+                      height: 52,
+                      color: active ? "#fff" : "rgba(255,255,255,0.45)",
+                      position: "relative",
+                      transition: "color .15s",
+                    }}>
+                    {active && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 8,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          width: 44,
+                          height: 38,
+                          borderRadius: 10,
+                          background: "rgba(124,58,237,0.25)",
+                        }}
+                      />
+                    )}
+                    <item.icon
+                      size={20}
+                      strokeWidth={active ? 2 : 1.6}
+                      style={{ position: "relative", zIndex: 1 }}
+                    />
+                  </Link>
+                ) : (
+                  <button
+                    title={item.label}
+                    onClick={() =>
+                      setFlyout((prev) =>
+                        prev === item.label ? null : item.label,
+                      )
+                    }
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 60,
+                      height: 52,
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color:
+                        active || open
+                          ? "#fff"
+                          : "rgba(255,255,255,0.45)",
+                      position: "relative",
+                      transition: "color .15s",
+                    }}>
+                    {(active || open) && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 8,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          width: 44,
+                          height: 38,
+                          borderRadius: 10,
+                          background: open
+                            ? "rgba(124,58,237,0.35)"
+                            : "rgba(124,58,237,0.25)",
+                        }}
+                      />
+                    )}
+                    <item.icon
+                      size={20}
+                      strokeWidth={active || open ? 2 : 1.6}
+                      style={{ position: "relative", zIndex: 1 }}
+                    />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* Help */}
+        <div
+          style={{
+            padding: "8px 0 12px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            display: "flex",
+            justifyContent: "center",
+          }}>
+          <button
+            title="Help"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 44,
+              height: 44,
+              borderRadius: 10,
+              border: "none",
+              background: "none",
+              color: "rgba(255,255,255,0.35)",
+              cursor: "pointer",
+            }}>
+            <HelpCircle size={19} strokeWidth={1.6} />
+          </button>
+        </div>
+      </div>
+
+      {/* Flyout panel */}
+      {flyout && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setFlyout(null)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 38,
+            }}
+          />
+          {/* Panel */}
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 60,
+              height: "100vh",
+              width: 220,
+              background: "#111827",
+              borderRight: "1px solid rgba(255,255,255,0.08)",
+              zIndex: 39,
+              paddingTop: 24,
+              overflowY: "auto",
+            }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0 16px 16px",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              }}>
+              <span
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: "#fff",
+                }}>
+                {flyout}
+              </span>
+              <button
+                onClick={() => setFlyout(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "rgba(255,255,255,0.4)",
+                  cursor: "pointer",
+                  padding: 0,
+                }}>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+            {NAV_ITEMS.find((i) => i.label === flyout)?.children?.map(
+              (group, gi) => (
+                <div key={gi} style={{ padding: "12px 0" }}>
+                  {group.section && (
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "rgba(255,255,255,0.3)",
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        padding: "0 16px 6px",
+                      }}>
+                      {group.section}
+                    </div>
+                  )}
+                  {group.items.map((sub) => (
+                    <Link
+                      key={sub.href + sub.label}
+                      href={sub.href}
+                      onClick={() => setFlyout(null)}
+                      style={{
+                        display: "block",
+                        padding: "10px 16px",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: pathname.startsWith(sub.href)
+                          ? "#a78bfa"
+                          : "rgba(255,255,255,0.7)",
+                        textDecoration: "none",
+                        borderRadius: 8,
+                        margin: "0 8px",
+                        background: pathname.startsWith(sub.href)
+                          ? "rgba(124,58,237,0.15)"
+                          : "transparent",
+                        transition: "background .15s, color .15s",
+                      }}>
+                      {sub.label}
+                    </Link>
+                  ))}
+                </div>
+              ),
+            )}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
