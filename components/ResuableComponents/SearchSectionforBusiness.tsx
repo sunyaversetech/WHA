@@ -12,12 +12,8 @@ import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, MapPin, Clock, Navigation } from "lucide-react";
-import {
-  SERVICE_CATEGORIES,
-  AU_CITIES,
-  searchServices,
-  type ServiceItem,
-} from "@/lib/data/services-catalog";
+import { AU_CITIES } from "@/lib/data/services-catalog";
+import { BUSINESS_CATEGORIES } from "@/lib/data/business-categories";
 
 type ActiveSeg = "what" | "where" | "when" | null;
 
@@ -143,7 +139,6 @@ export default function BusinessSearchWithDates() {
   const [service, setService] = useState(
     searchParams.get("service") || searchParams.get("search") || "",
   );
-  const [serviceQuery, setServiceQuery] = useState(service);
   const [location, setLocation] = useState(() => {
     const lat = searchParams.get("lat");
     const lng = searchParams.get("lng");
@@ -168,12 +163,8 @@ export default function BusinessSearchWithDates() {
   const [timeSlot, setTimeSlot] = useState("any");
   const [viewY, setViewY] = useState(TODAY.y);
   const [viewM, setViewM] = useState(TODAY.m);
-  const [whatTab, setWhatTab] = useState<"Event" | "services">("Event");
+  const [whatTab, setWhatTab] = useState<"Event" | "services">("services");
 
-  const suggestions = useMemo(
-    () => searchServices(serviceQuery),
-    [serviceQuery],
-  );
   const weeks = useMemo(() => buildCalendar(viewY, viewM), [viewY, viewM]);
 
   useEffect(() => {
@@ -267,12 +258,6 @@ export default function BusinessSearchWithDates() {
     setActive(null);
   }, [service, location, geoCoords, selDay, timeSlot, router, whatTab]);
 
-  const selectService = (item: ServiceItem) => {
-    setService(item.name);
-    setServiceQuery(item.name);
-    setActive("where");
-  };
-
   const selectCity = (city: string) => {
     setGeoCoords(null);
     setLocation(city);
@@ -342,37 +327,23 @@ export default function BusinessSearchWithDates() {
               }}
               onClick={() => setActive("what")}>
               <Search size={20} color="#64748b" style={{ flexShrink: 0 }} />
-              <input
-                type="text"
-                value={serviceQuery}
-                onChange={(e) => {
-                  setServiceQuery(e.target.value);
-                  setService(e.target.value);
-                }}
-                onFocus={() => setActive("what")}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActive("what");
-                }}
-                placeholder="All services"
+              <span
                 style={{
-                  border: "none",
-                  outline: "none",
-                  background: "transparent",
                   fontSize: 16,
                   fontWeight: 600,
-                  color: "#1e293b",
-                  width: "100%",
-                  padding: 0,
-                }}
-              />
-              {serviceQuery && (
+                  color: service ? "#1e293b" : "#94a3b8",
+                  flex: 1,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}>
+                {service || "All services"}
+              </span>
+              {service && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setService("");
-                    setServiceQuery("");
                   }}
                   style={{
                     border: "none",
@@ -610,94 +581,44 @@ export default function BusinessSearchWithDates() {
                   ))}
                 </div>
 
-                {suggestions.length > 0 ? (
-                  /* Autocomplete */
-                  <div style={{ padding: "0 6px" }}>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 700,
-                        letterSpacing: "0.02em",
-                        color: "#0f2748",
-                        padding: "0 12px 6px",
-                      }}>
-                      Suggestions
+                {/* All services */}
+                <div style={{ padding: "0 6px", marginBottom: 8 }}>
+                  <HoverRow onClick={() => { setService(""); setActive("where"); }}>
+                    <span style={{ ...TILE, background: "#f1f4f9" }}>
+                      <Clock size={19} color="#64748b" />
+                    </span>
+                    <div style={ROW_TEXT}>
+                      <span style={ROW_TITLE}>All services</span>
+                      <span style={ROW_SUB}>Browse everything</span>
                     </div>
-                    {suggestions.map((s) => (
-                      <HoverRow key={s.slug} onClick={() => selectService(s)}>
-                        <span style={{ ...TILE, fontSize: 20 }}>{s.emoji}</span>
-                        <div style={ROW_TEXT}>
-                          <span style={ROW_TITLE}>{s.name}</span>
-                        </div>
-                      </HoverRow>
-                    ))}
-                  </div>
-                ) : (
-                  <>
-                    {/* Recents */}
-                    <div style={{ padding: "0 6px", marginBottom: 8 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "0 12px 6px",
-                        }}>
-                        <span
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 700,
-                            letterSpacing: "0.02em",
-                            color: "#0f2748",
-                          }}>
-                          Recents
-                        </span>
-                      </div>
-                      <HoverRow
-                        onClick={() => {
-                          setService("");
-                          setServiceQuery("");
-                          setActive("where");
-                        }}>
-                        <span style={{ ...TILE, background: "#f1f4f9" }}>
-                          <Clock size={19} color="#64748b" />
-                        </span>
-                        <div style={ROW_TEXT}>
-                          <span style={ROW_TITLE}>All services</span>
-                          <span style={ROW_SUB}>Any time</span>
-                        </div>
-                      </HoverRow>
-                    </div>
+                  </HoverRow>
+                </div>
 
-                    {/* Services */}
-                    <div style={{ padding: "0 6px" }}>
-                      <div
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 700,
-                          letterSpacing: "0.02em",
-                          color: "#0f2748",
-                          padding: "8px 12px 6px",
-                        }}>
-                        Services
+                {/* Categories */}
+                <div style={{ padding: "0 6px" }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      letterSpacing: "0.02em",
+                      color: "#0f2748",
+                      padding: "8px 12px 6px",
+                    }}>
+                    Categories
+                  </div>
+                  {BUSINESS_CATEGORIES.map(({ label, value, icon: Icon }) => (
+                    <HoverRow
+                      key={value}
+                      onClick={() => { setService(label); setActive("where"); }}>
+                      <span style={TILE}>
+                        <Icon size={19} color="#334155" />
+                      </span>
+                      <div style={ROW_TEXT}>
+                        <span style={ROW_TITLE}>{label}</span>
                       </div>
-                      {SERVICE_CATEGORIES.flatMap((cat) =>
-                        cat.services.slice(0, 2).map((s) => (
-                          <HoverRow
-                            key={s.slug}
-                            onClick={() => selectService(s)}>
-                            <span style={{ ...TILE, fontSize: 20 }}>
-                              {s.emoji}
-                            </span>
-                            <div style={ROW_TEXT}>
-                              <span style={ROW_TITLE}>{s.name}</span>
-                            </div>
-                          </HoverRow>
-                        )),
-                      )}
-                    </div>
-                  </>
-                )}
+                    </HoverRow>
+                  ))}
+                </div>
               </motion.div>
             </AnimatePresence>,
             document.body,

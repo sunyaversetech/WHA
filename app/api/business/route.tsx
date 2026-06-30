@@ -11,11 +11,49 @@ function escapeRegex(text: string) {
 
 // Strip location phrases so "kayak near me" / "haircut in sydney" → ["kayak"] / ["haircut"]
 const AU_CITY_NAMES = [
-  "sydney", "melbourne", "brisbane", "perth", "adelaide",
-  "canberra", "hobart", "darwin", "goldcoast", "gold coast",
-  "newcastle", "wollongong", "geelong", "townsville", "cairns",
+  "sydney",
+  "melbourne",
+  "brisbane",
+  "perth",
+  "adelaide",
+  "canberra",
+  "hobart",
+  "darwin",
+  "goldcoast",
+  "gold coast",
+  "newcastle",
+  "wollongong",
+  "geelong",
+  "townsville",
+  "cairns",
 ];
-const STOP_WORDS = new Set(["a", "an", "the", "and", "or", "for", "to", "at", "of", "in", "on", "is", "are", "me", "my", "i", "near", "around", "close", "by", "area", "local", "best", "top", "good"]);
+const STOP_WORDS = new Set([
+  "a",
+  "an",
+  "the",
+  "and",
+  "or",
+  "for",
+  "to",
+  "at",
+  "of",
+  "in",
+  "on",
+  "is",
+  "are",
+  "me",
+  "my",
+  "i",
+  "near",
+  "around",
+  "close",
+  "by",
+  "area",
+  "local",
+  "best",
+  "top",
+  "good",
+]);
 
 function extractKeywords(raw: string): string[] {
   let q = raw
@@ -101,67 +139,101 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // ── Service filter ───────────────────────────────────────────────────────
-    // Find businesses that actually offer the searched service name/category.
+    // ── Category / service filter ────────────────────────────────────────────
+    // The search bar sends the selected category label (e.g. "Automotive").
+    // Map it to the stored business_category value and filter directly.
+    // Falls back to a Service-model keyword search for anything unrecognised.
+    const CATEGORY_MAP: Record<string, string> = {
+      automotive: "automotive",
+      cleaning: "cleaning",
+      electrician: "electrician",
+      restaurant: "restaurant",
+      consultancy: "consultancy",
+      travel: "travel and tours",
+      "travel and tours": "travel and tours",
+      wedding: "wedding",
+      painter: "painter",
+      grocery: "grocery",
+      "event organizer": "event-organizer",
+      "event-organizer": "event-organizer",
+      removalists: "removalists",
+      "saloon / barber": "barber",
+      barber: "barber",
+      plumber: "plumber",
+      "driving school": "driving school",
+      "food truck": "food truck",
+      catering: "catering",
+      "health & wellness": "health",
+      health: "health",
+      "retail shop": "retails",
+      retails: "retails",
+      "social club": "social club",
+      others: "others",
+    };
+
     if (service) {
-      // Extract meaningful keywords, stripping "near me", "in sydney", etc.
-      const keywords = extractKeywords(service);
-      // Fall back to the raw string if cleaning wiped everything
-      const terms = keywords.length > 0 ? keywords : [service.trim()];
+      const catValue = CATEGORY_MAP[service.toLowerCase().trim()];
+      if (catValue) {
+        // Direct category match — filter by business_category field
+        baseFilter.business_category = catValue;
+      } else {
+        // Fallback: keyword search through the Service model
+        const keywords = extractKeywords(service);
+        const terms = keywords.length > 0 ? keywords : [service.trim()];
 
-      const orClauses = terms.flatMap((tok) => {
-        const safe = escapeRegex(tok);
-        return [
-          { name:        { $regex: safe, $options: "i" } },
-          { category:    { $regex: safe, $options: "i" } },
-          { description: { $regex: safe, $options: "i" } },
-        ];
-      });
+        const orClauses = terms.flatMap((tok) => {
+          const safe = escapeRegex(tok);
+          return [
+            { name: { $regex: safe, $options: "i" } },
+            { category: { $regex: safe, $options: "i" } },
+            { description: { $regex: safe, $options: "i" } },
+          ];
+        });
 
-      const matchingServices = await Service.find({ $or: orClauses }).lean();
+        const matchingServices = await Service.find({ $or: orClauses }).lean();
+        const uniqueIds = [
+          ...new Set(
+            matchingServices
+              .map((s: any) => s.business_id?.toString())
+              .filter(Boolean),
+          ),
+        ] as string[];
 
-      const uniqueIds = [
-        ...new Set(
-          matchingServices
-            .map((s: any) => s.business_id?.toString())
-            .filter(Boolean),
-        ),
-      ] as string[];
+        if (uniqueIds.length === 0) {
+          return NextResponse.json(
+            { data: [], message: "No businesses found for this service" },
+            { status: 200 },
+          );
+        }
 
-      if (uniqueIds.length === 0) {
-        return NextResponse.json(
-          { data: [], message: "No businesses found for this service" },
-          { status: 200 },
-        );
+        const objectIds = uniqueIds
+          .map((id) => {
+            try {
+              return new mongoose.Types.ObjectId(id);
+            } catch {
+              return null;
+            }
+          })
+          .filter(Boolean);
+
+        baseFilter._id = { $in: objectIds };
       }
-
-      const objectIds = uniqueIds
-        .map((id) => {
-          try {
-            return new mongoose.Types.ObjectId(id);
-          } catch {
-            return null;
-          }
-        })
-        .filter(Boolean);
-
-      baseFilter._id = { $in: objectIds };
     }
 
     // ── Spatial filter: bounds OR city ───────────────────────────────────────
     if (hasBounds) {
       // Filter by visible map area using the numeric latitude/longitude fields.
       // $toDouble handles both string and number storage in the DB.
-      const swLatF  = parseFloat(rawSwLat!);
-      const swLngF  = parseFloat(rawSwLng!);
+      const swLatF = parseFloat(rawSwLat!);
+      const swLngF = parseFloat(rawSwLng!);
       const neLat_f = parseFloat(rawNeLat!);
-      const neLngF  = parseFloat(rawNeLng!);
+      const neLngF = parseFloat(rawNeLng!);
       baseFilter.$expr = {
         $and: [
-          { $gte: [{ $toDouble: "$latitude"  }, swLatF  ] },
-          { $lte: [{ $toDouble: "$latitude"  }, neLat_f ] },
-          { $gte: [{ $toDouble: "$longitude" }, swLngF  ] },
-          { $lte: [{ $toDouble: "$longitude" }, neLngF  ] },
+          { $gte: [{ $toDouble: "$latitude" }, swLatF] },
+          { $lte: [{ $toDouble: "$latitude" }, neLat_f] },
+          { $gte: [{ $toDouble: "$longitude" }, swLngF] },
+          { $lte: [{ $toDouble: "$longitude" }, neLngF] },
         ],
       };
     } else if (city && city !== "all") {
