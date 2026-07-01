@@ -1,11 +1,12 @@
 "use client";
-import { usePathname, useRouter } from "next/navigation";
-import React from "react";
+import { usePathname } from "next/navigation";
 import Navbar from "./Navabr";
 import DashboardNavbar from "@/components/Dashboard/DashboardNavbar";
 
 const NavbarProvider = () => {
   const pathname = usePathname();
+  if (pathname.startsWith("/auth")) return null;
+
   return (
     <>
       {pathname.startsWith("/dashboard") ||

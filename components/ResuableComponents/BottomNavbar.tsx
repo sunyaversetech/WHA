@@ -25,6 +25,8 @@ export default function BottomNav() {
 
   const links = NAV_LINKS(!!session);
 
+  if (pathname.startsWith("/auth")) return null;
+
   return (
     <nav
       aria-label="Mobile navigation"

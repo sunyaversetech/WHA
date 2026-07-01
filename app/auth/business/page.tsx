@@ -1,3 +1,5 @@
-import BusinessSignup from "@/components/Auth/BusinessSignupPage";
+import { redirect } from "next/navigation";
 
-export default BusinessSignup;
+export default function BusinessAuthPage() {
+  redirect("/auth/business/login");
+}

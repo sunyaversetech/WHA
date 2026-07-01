@@ -1,7 +1,5 @@
-import SignupPage from "@/components/Auth/Signup";
+import { redirect } from "next/navigation";
 
-const page = () => {
-  return <SignupPage />;
-};
-
-export default page;
+export default function UserAuthPage() {
+  redirect("/auth/user/login");
+}

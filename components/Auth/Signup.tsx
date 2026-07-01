@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useSingup } from "@/services/Auth/auth.service";
 import { useState } from "react";
-import { ChevronLeft, Eye, EyeOff } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff, MoveLeft } from "lucide-react";
 import Image from "next/image";
 
 const signupSchema = z
@@ -114,21 +114,21 @@ export default function SignupPage() {
             justifyContent: "center",
           }}>
           <div style={{ width: "100%", maxWidth: 400 }}>
-            <div style={{ padding: "10px 0 10px" }}>
+            <div style={{ marginBottom: 24 }}>
               <button
-                onClick={() => router.back()}
+                onClick={() => router.push("/auth/user/login")}
+                className="absolute top-10 left-10"
                 style={{
                   width: 38,
                   height: 38,
                   borderRadius: "50%",
-                  border: "1px solid #e2e8f0",
                   background: "#fff",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
                 }}>
-                <ChevronLeft size={20} color="#0f172a" />
+                <MoveLeft size={20} color="#0f172a" />
               </button>
             </div>
             <h1
@@ -357,7 +357,7 @@ export default function SignupPage() {
             Already have an account?{" "}
           </span>
           <a
-            href="/auth?tab=login"
+            href="/auth/user/login"
             style={{
               fontSize: 14,
               color: "#3b82f6",
@@ -368,8 +368,6 @@ export default function SignupPage() {
           </a>
         </div>
       </div>
-
-      {/* ── Right image panel ── */}
       <div
         className="hidden md:block"
         style={{
@@ -377,6 +375,7 @@ export default function SignupPage() {
           flexShrink: 0,
           position: "sticky",
           top: 0,
+          right: 0,
           height: "100vh",
         }}>
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
