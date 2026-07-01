@@ -20,9 +20,9 @@ export type UserBusinessType = {
   employees: EmployeeType[];
   hours?: BusinessHoursData;
   location: string;
-  community: string;
-  community_name: string;
+  community: string[];
   image: string;
+  venue_images?: string[];
   longitude?: number;
   latitude?: number;
   geo?: { type: string; coordinates: [number, number] };
@@ -31,8 +31,11 @@ export type UserBusinessType = {
   isSponsor: boolean;
   business_name?: string;
   business_category?: string;
+  business_type?: "employee_based" | "item_based";
   abn_number?: string;
   verified: boolean;
+  is24_7?: boolean;
+  schedule?: Record<string, { open: boolean; slots: { from: string; to: string }[] }> | null;
   event: EventFormValues[];
   deal: DealsGetValues[];
 

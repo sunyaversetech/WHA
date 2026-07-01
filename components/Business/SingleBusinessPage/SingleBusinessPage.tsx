@@ -13,7 +13,6 @@ import {
   Loader2,
   Clock,
   User,
-  Info,
   Check,
 } from "lucide-react";
 import { useGetSingleBusiness } from "@/services/business.service";
@@ -214,6 +213,98 @@ function RatingSummary({
   );
 }
 
+/* ─────────────────── new schedule display ─────────────────── */
+const DAY_MAP: Record<string, string> = {
+  mon: "Monday",
+  tue: "Tuesday",
+  wed: "Wednesday",
+  thu: "Thursday",
+  fri: "Friday",
+  sat: "Saturday",
+  sun: "Sunday",
+};
+const DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+function NewScheduleDisplay({
+  schedule,
+  is24_7,
+}: {
+  schedule: Record<string, any> | null;
+  is24_7: boolean;
+}) {
+  const todayKey = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][
+    new Date().getDay()
+  ];
+
+  if (is24_7) {
+    return (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          color: "#16a34a",
+          fontWeight: 600,
+          fontSize: 14,
+        }}>
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: "#22c55e",
+            display: "inline-block",
+          }}
+        />
+        Open 24 / 7
+      </span>
+    );
+  }
+
+  if (!schedule) {
+    return (
+      <p style={{ fontSize: 14, color: T.lightGray }}>Hours not available</p>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {DAY_ORDER.map((key) => {
+        const day = schedule[key] ?? { open: false, slots: [] };
+        const isToday = key === todayKey;
+        const slot = day.slots?.[0];
+        return (
+          <div
+            key={key}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: 13,
+              fontWeight: isToday ? 700 : 400,
+              color: isToday ? T.navy : T.gray,
+            }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: day.open ? "#22c55e" : T.border,
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ width: 90 }}>{DAY_MAP[key]}</span>
+            </div>
+            <span style={{ textAlign: "right" }}>
+              {day.open && slot ? `${slot.from} – ${slot.to}` : "Closed"}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function TeamCircle({ emp }: { emp: any }) {
   return (
     <div
@@ -359,11 +450,61 @@ export default function BusinessPage() {
   const deals = biz?.deal ?? [];
   const hasGeo = !!(biz?.latitude && biz?.longitude);
 
+  const community: string[] = biz?.community ?? [];
+  const venueImages: string[] = biz?.venue_images ?? [];
+  const is24_7: boolean = biz?.is24_7 ?? false;
+  const newSchedule = biz?.schedule ?? null;
+  const businessType: string | null = biz?.business_type ?? null;
+  const allImages = venueImages.length > 0 ? venueImages : [heroImg];
+
   const ratingNum = avgRating ? Number(avgRating.toFixed(1)) : null;
 
   /* ═══════════════ LEFT MAIN CONTENT sections ═══════════════ */
   const MainContent = () => (
     <div>
+      {/* COMMUNITY */}
+      {community.length > 0 && (
+        <>
+          <section style={{ marginBottom: 28 }}>
+            <SecTitle>Community</SecTitle>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {typeof community === "object" ? (
+                community.map((c) => (
+                  <span
+                    key={c}
+                    style={{
+                      padding: "6px 14px",
+                      borderRadius: 9999,
+                      background: "#eff6ff",
+                      color: T.navy,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      border: `1px solid #dbeafe`,
+                    }}>
+                    {c}
+                  </span>
+                ))
+              ) : (
+                <span
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: 9999,
+                    background: "#eff6ff",
+                    color: T.navy,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    border: `1px solid #dbeafe`,
+                  }}>
+                  {community}
+                </span>
+              )}
+            </div>
+          </section>
+          <Divider my={0} />
+          <div style={{ height: 28 }} />
+        </>
+      )}
+
       {/* SERVICES */}
       <section>
         <SecTitle>
@@ -502,16 +643,11 @@ export default function BusinessPage() {
         <BusinessReviewSection reviews={reviews?.data || []} />
       </section>
 
-      {/* PORTFOLIO */}
+      {/* VENUE PHOTOS / PORTFOLIO */}
       <Divider />
       <section>
-        <SecTitle
-          action={
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Info size={15} color={T.lightGray} />
-            </div>
-          }>
-          Portfolio
+        <SecTitle>
+          {venueImages.length > 0 ? "Venue Photos" : "Portfolio"}
         </SecTitle>
         <div
           style={{
@@ -521,50 +657,95 @@ export default function BusinessPage() {
             borderRadius: 16,
             overflow: "hidden",
           }}>
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div
-              key={i}
-              style={{
-                position: "relative",
-                aspectRatio: "1",
-                background: T.bg,
-                overflow: "hidden",
-              }}>
-              <Image
-                fill
-                src={heroImg}
-                alt="Portfolio"
-                style={{
-                  objectFit: "cover",
-                  filter: i > 0 ? `brightness(${1 - i * 0.04})` : undefined,
-                }}
-                sizes="(max-width: 768px) 33vw, 200px"
-              />
-              {i === 8 && (
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "rgba(2,12,26,0.55)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => setPortfolioExpanded(true)}>
-                  <span
+          {venueImages.length > 0
+            ? venueImages
+                .slice(0, portfolioExpanded ? venueImages.length : 9)
+                .map((src, i) => (
+                  <div
+                    key={i}
                     style={{
-                      color: T.white,
-                      fontSize: 22,
-                      fontWeight: 800,
-                      letterSpacing: "-0.5px",
+                      position: "relative",
+                      aspectRatio: "1",
+                      background: T.bg,
+                      overflow: "hidden",
                     }}>
-                    +62
-                  </span>
+                    <Image
+                      fill
+                      src={src}
+                      alt="Venue"
+                      style={{ objectFit: "cover" }}
+                      sizes="(max-width: 768px) 33vw, 200px"
+                    />
+                    {!portfolioExpanded &&
+                      i === 8 &&
+                      venueImages.length > 9 && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            background: "rgba(2,12,26,0.55)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                          }}
+                          onClick={() => setPortfolioExpanded(true)}>
+                          <span
+                            style={{
+                              color: T.white,
+                              fontSize: 22,
+                              fontWeight: 800,
+                            }}>
+                            +{venueImages.length - 9}
+                          </span>
+                        </div>
+                      )}
+                  </div>
+                ))
+            : Array.from({ length: 9 }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    position: "relative",
+                    aspectRatio: "1",
+                    background: T.bg,
+                    overflow: "hidden",
+                  }}>
+                  <Image
+                    fill
+                    src={heroImg}
+                    alt="Portfolio"
+                    style={{
+                      objectFit: "cover",
+                      filter: i > 0 ? `brightness(${1 - i * 0.04})` : undefined,
+                    }}
+                    sizes="(max-width: 768px) 33vw, 200px"
+                  />
+                  {i === 8 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        background: "rgba(2,12,26,0.55)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => setPortfolioExpanded(true)}>
+                      <span
+                        style={{
+                          color: T.white,
+                          fontSize: 22,
+                          fontWeight: 800,
+                          letterSpacing: "-0.5px",
+                        }}>
+                        +62
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+              ))}
         </div>
       </section>
 
@@ -581,7 +762,11 @@ export default function BusinessPage() {
           {/* Opening times */}
           <div>
             <SecTitle>Opening times</SecTitle>
-            <BusinessHours hours={biz?.hours} open />
+            {biz?.hours ? (
+              <BusinessHours hours={biz.hours} open />
+            ) : (
+              <NewScheduleDisplay schedule={newSchedule} is24_7={is24_7} />
+            )}
           </div>
 
           {/* Additional information */}
@@ -765,7 +950,11 @@ export default function BusinessPage() {
             Opening hours
           </span>
         </div>
-        <BusinessHours hours={biz?.hours} />
+        {biz?.hours ? (
+          <BusinessHours hours={biz.hours} />
+        ) : (
+          <NewScheduleDisplay schedule={newSchedule} is24_7={is24_7} />
+        )}
       </div>
 
       <div style={{ height: 1, background: T.border, margin: "20px 24px" }} />
@@ -1035,7 +1224,7 @@ export default function BusinessPage() {
             <div style={{ position: "relative", gridRow: "1 / 3" }}>
               <Image
                 fill
-                src={heroImg}
+                src={allImages[0]}
                 alt={name}
                 style={{ objectFit: "cover" }}
                 priority
@@ -1046,7 +1235,7 @@ export default function BusinessPage() {
             <div style={{ position: "relative" }}>
               <Image
                 fill
-                src={heroImg}
+                src={allImages[1] ?? allImages[0]}
                 alt={name}
                 style={{ objectFit: "cover", filter: "brightness(0.92)" }}
                 sizes="320px"
@@ -1056,7 +1245,7 @@ export default function BusinessPage() {
             <div style={{ position: "relative" }}>
               <Image
                 fill
-                src={heroImg}
+                src={allImages[2] ?? allImages[0]}
                 alt={name}
                 style={{ objectFit: "cover", filter: "brightness(0.82)" }}
                 sizes="320px"
@@ -1133,6 +1322,24 @@ export default function BusinessPage() {
                   category={category}
                 />
               </div>
+              {businessType && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    marginTop: 8,
+                    padding: "3px 10px",
+                    borderRadius: 9999,
+                    background: "#eff6ff",
+                    color: "#1d4ed8",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}>
+                  {businessType === "item_based"
+                    ? "Item Booking"
+                    : "Service Booking"}
+                </span>
+              )}
               {(city || address) && (
                 <div
                   style={{

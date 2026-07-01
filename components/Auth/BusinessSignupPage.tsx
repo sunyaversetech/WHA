@@ -38,6 +38,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { FormMessage } from "../ui/form";
 
 // ─── Dynamic map import (SSR-safe) ────────────────────────────────────────────
 
@@ -128,12 +129,15 @@ export const signupSchema = z
   .object({
     _id: z.string().optional(),
     business_name: z.string().min(2, "Business name is required"),
-    phone_number: z.string().optional(),
+    phone_number: z
+      .string()
+      .min(10, "Valid phone number required")
+      .max(10, "Valid phone number required"),
     business_type: z.enum(["employee_based", "item_based"], {
       error: "Please select a booking system",
     }),
     business_category: z.string().min(1, "Please select a category"),
-    city: z.string().min(1, "Please select a city"),
+    city: z.string().optional(),
     location: z
       .string()
       .min(1, "Please select your business address from the dropdown"),
@@ -158,7 +162,7 @@ export const signupSchema = z
 export type SingUPFormSchema = z.infer<typeof signupSchema>;
 
 const STEP_FIELDS: Record<number, (keyof SingUPFormSchema)[]> = {
-  2: ["business_name"],
+  2: ["business_name", "phone_number"],
   3: ["business_type"],
   4: ["business_category"],
   5: ["city", "location"],
@@ -379,7 +383,9 @@ export default function BusinessSignupPage() {
     fd.append("business_name", data.business_name);
     fd.append("business_type", data.business_type);
     fd.append("business_category", data.business_category);
-    fd.append("city", data.city);
+    if (data.city) {
+      fd.append("city", data.city);
+    }
     fd.append("email", data.email);
     fd.append("password", data.password);
     fd.append("category", "business");
@@ -642,6 +648,7 @@ function StepEssentials({ register, errors }: any) {
       </Field>
       <Field
         label="Business phone number"
+        error={errors.phone_number?.message}
         hint="The contact number provided for clients to call if there is a problem">
         <div className="flex gap-2.5">
           <div className="border border-slate-200 rounded-md w-24 shrink-0 flex items-center justify-center text-sm text-slate-500 font-semibold bg-slate-50">
@@ -1047,7 +1054,7 @@ function StepLocation({
       )}
 
       {/* City */}
-      <Field label="City" error={errors.city?.message}>
+      {/* <Field label="City" error={errors.city?.message}>
         <Controller
           name="city"
           control={control}
@@ -1066,7 +1073,7 @@ function StepLocation({
             </Select>
           )}
         />
-      </Field>
+      </Field> */}
     </div>
   );
 }
