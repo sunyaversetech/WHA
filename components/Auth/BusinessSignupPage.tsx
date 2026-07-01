@@ -19,6 +19,7 @@ import {
   Upload,
   Users,
   Package,
+  MoveLeft,
 } from "lucide-react";
 import {
   EMPLOYEE_CATEGORIES,
@@ -544,9 +545,27 @@ function StepIntro({
   onContinue: () => void;
   onClose: () => void;
 }) {
+  const router = useRouter();
   return (
     <div className="min-h-screen flex">
       {/* Left: marketing */}
+      <div style={{ marginBottom: 24 }}>
+        <button
+          onClick={() => router.back()}
+          className="absolute top-10 left-4 sm:left-10"
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: "50%",
+            background: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}>
+          <MoveLeft size={20} color="#0f172a" />
+        </button>
+      </div>
       <div className="flex-1 flex flex-col justify-center px-8 md:px-16 lg:px-24 py-16 bg-slate-50">
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 leading-tight max-w-xl tracking-tight">
           Get published on the{" "}
@@ -557,7 +576,6 @@ function StepIntro({
           Get started <ArrowRight size={15} />
         </Button>
       </div>
-
       {/* Right: step list */}
       <div className="hidden md:flex w-[clamp(320px,42%,520px)] shrink-0 flex-col px-10 lg:px-16 py-16 border-l border-slate-100">
         <div className="flex justify-end gap-3 mb-16">

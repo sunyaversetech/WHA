@@ -19,9 +19,8 @@ export default function AuthShell({
 
   return (
     <div
-      className="justify-between w-full"
+      className="justify-between w-full mt-15 sm:mt-0 sm:min-h-[100vh]"
       style={{
-        minHeight: "100vh",
         background: "#fff",
         display: "flex",
         alignItems: "center",
@@ -33,7 +32,7 @@ export default function AuthShell({
         <div style={{ marginBottom: 24 }}>
           <button
             onClick={() => router.push(backHref)}
-            className="absolute top-10 left-10"
+            className="absolute top-10 left-4 sm:left-10"
             style={{
               width: 38,
               height: 38,

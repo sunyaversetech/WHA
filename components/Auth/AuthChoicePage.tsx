@@ -10,24 +10,23 @@ export default function AuthChoicePage() {
 
   return (
     <div
-      className="justify-between h-screen w-full overflow-hidden"
+      className="justify-between h-screen w-full overflow-hidden mt-10 sm:mt-0 md:items-center"
       style={{
         background: "#fff",
         display: "flex",
-
-        alignItems: "center",
         justifyContent: "space-between",
         padding: "48px 24px",
       }}>
       <Button
         variant={"ghost"}
-        className="cursor-pointer absolute top-10 left-10 "
+        className="cursor-pointer absolute top-10 left-2 sm:left-10 "
         onClick={() => router.back()}>
         <MoveLeft className="cursor-pointer" />
       </Button>
-      <div className="m-auto">
+      <div className="md:m-auto">
         {/* Brand */}
         <div
+          onClick={() => router.push("/")}
           style={{
             marginBottom: 48,
             textAlign: "center",
