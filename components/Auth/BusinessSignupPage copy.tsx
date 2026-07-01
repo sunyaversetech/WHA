@@ -235,7 +235,7 @@ export default function BusinessSignupCopy() {
   console.log(form.formState.errors);
 
   return (
-    <div className="w-full justify-center items-center max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 backdrop-blur-md rounded-2xl">
+    <div className="w-full justify-center    items-center max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 backdrop-blur-md rounded-2xl">
       <Button
         variant="ghost"
         size="icon"

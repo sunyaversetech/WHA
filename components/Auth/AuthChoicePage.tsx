@@ -10,7 +10,7 @@ export default function AuthChoicePage() {
 
   return (
     <div
-      className="justify-between h-screen w-full overflow-hidden mt-10 sm:mt-0 md:items-center"
+      className="justify-between md:h-[80vh] sm:h-screen w-full overflow-hidden mt-10 sm:mt-0 md:items-center"
       style={{
         background: "#fff",
         display: "flex",

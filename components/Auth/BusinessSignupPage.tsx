@@ -424,7 +424,7 @@ export default function BusinessSignupPage() {
         : [];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="h-[70vh] sm:min-h-screen  bg-white">
       {/* Progress bar */}
       {step > 1 && (
         <div className="fixed top-0 left-0 right-0 h-0.75 z-50 bg-slate-100">
