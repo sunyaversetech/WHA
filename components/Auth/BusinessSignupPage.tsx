@@ -125,6 +125,7 @@ const TOTAL_STEPS = 9;
 
 export const signupSchema = z
   .object({
+    _id: z.string().optional(),
     business_name: z.string().min(2, "Business name is required"),
     phone_number: z.string().optional(),
     business_type: z.enum(["employee_based", "item_based"], {
@@ -323,12 +324,7 @@ export default function BusinessSignupPage() {
       return { ...p, [key]: { open: slots.length > 0, slots } };
     });
 
-  const updateSlot = (
-    key: string,
-    i: number,
-    f: "from" | "to",
-    v: string,
-  ) =>
+  const updateSlot = (key: string, i: number, f: "from" | "to", v: string) =>
     setSchedule((p) => {
       const slots = [...p[key].slots];
       slots[i] = { ...slots[i], [f]: v };
@@ -508,10 +504,7 @@ export default function BusinessSignupPage() {
                 />
               )}
               {step === 7 && (
-                <StepCommunity
-                  community={community}
-                  toggle={toggleCommunity}
-                />
+                <StepCommunity community={community} toggle={toggleCommunity} />
               )}
               {step === 8 && (
                 <StepImages
@@ -783,17 +776,11 @@ function StepCategory({ control, categoryList, businessType, errors }: any) {
                   )}>
                   {active && (
                     <div className="absolute top-2 right-2 w-4.5 h-4.5 rounded-full bg-primary flex items-center justify-center">
-                      <Check
-                        size={10}
-                        className="text-white"
-                        strokeWidth={3}
-                      />
+                      <Check size={10} className="text-white" strokeWidth={3} />
                     </div>
                   )}
                   <div
-                    className={cn(
-                      active ? "text-primary" : "text-slate-500",
-                    )}>
+                    className={cn(active ? "text-primary" : "text-slate-500")}>
                     <Icon size={26} strokeWidth={1.5} />
                   </div>
                   <span
@@ -1273,7 +1260,9 @@ function StepCommunity({
           );
         })}
       </div>
-      <p className="text-sm text-slate-400 mt-4">{community.length}/3 selected</p>
+      <p className="text-sm text-slate-400 mt-4">
+        {community.length}/3 selected
+      </p>
     </div>
   );
 }
@@ -1398,11 +1387,7 @@ function StepImages({
               key={i}
               className="relative aspect-4/3 rounded-xl overflow-hidden border border-slate-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={src}
-                alt=""
-                className="w-full h-full object-cover"
-              />
+              <img src={src} alt="" className="w-full h-full object-cover" />
               <button
                 type="button"
                 onClick={() => onRemove(i)}

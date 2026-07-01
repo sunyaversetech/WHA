@@ -7,6 +7,7 @@ import { DealsGetValues } from "./deal.service";
 import { SingUPFormSchema } from "@/components/Auth/BusinessSignupPage";
 
 type FavoriteType = {
+  _id: string;
   events: EventFormValues[];
   services: any;
   deals: DealsGetValues[];
