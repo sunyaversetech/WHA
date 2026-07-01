@@ -31,7 +31,9 @@ export default function VenueImagesSettings() {
   useEffect(() => {
     const biz = bizData?.data;
     if (!biz) return;
-    setExistingUrls(biz.venue_images ?? []);
+    setTimeout(() => {
+      setExistingUrls(biz.venue_images ?? []);
+    }, 0);
   }, [bizData]);
 
   const totalCount = existingUrls.length + newFiles.length;
@@ -125,7 +127,9 @@ export default function VenueImagesSettings() {
             className="w-full py-12 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center gap-3 text-gray-400 hover:border-[#051e3a] hover:text-[#051e3a] transition-colors">
             <Upload size={32} />
             <div className="text-center">
-              <p className="text-sm font-semibold">Click to upload venue photos</p>
+              <p className="text-sm font-semibold">
+                Click to upload venue photos
+              </p>
               <p className="text-xs mt-1">
                 PNG, JPG, WebP — up to {MAX_SIZE_MB} MB each
               </p>

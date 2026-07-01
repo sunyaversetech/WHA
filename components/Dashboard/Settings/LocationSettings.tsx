@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Loader2, MapPin, Search, X } from "lucide-react";
@@ -13,15 +13,10 @@ import { Label } from "@/components/ui/label";
 import { useGetSingleDashboardBusiness } from "@/services/business.service";
 import Loading from "@/app/search/loading";
 
-const LocationMap = dynamic(
-  () => import("@/components/Auth/LocationMap"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-80 rounded-xl bg-gray-100 animate-pulse" />
-    ),
-  },
-);
+const LocationMap = dynamic(() => import("@/components/Auth/LocationMap"), {
+  ssr: false,
+  loading: () => <div className="h-80 rounded-xl bg-gray-100 animate-pulse" />,
+});
 
 interface NominatimResult {
   place_id: number;
@@ -30,33 +25,50 @@ interface NominatimResult {
   lon: string;
 }
 
+type LocationState = {
+  address: string;
+  lat: number | null;
+  lng: number | null;
+};
+
 export default function LocationSettings() {
   const { data: session } = useSession();
   const { data: bizData, isLoading } = useGetSingleDashboardBusiness(
     session?.user?.id || "",
   );
 
-  const [query, setQuery] = useState("");
+  /* Derive server state without an effect */
+  const serverState = useMemo<LocationState>(() => {
+    const biz = bizData?.data;
+    if (!biz) return { address: "", lat: null, lng: null };
+    return {
+      address: biz.location ?? "",
+      lat: biz.latitude ?? null,
+      lng: biz.longitude ?? null,
+    };
+  }, [bizData]);
+
+  /* Local edits — null until user touches anything */
+  const [localEdits, setLocalEdits] = useState<LocationState | null>(null);
+
+  /* Search-input text is always locally controlled (not part of saved state) */
+  const [query, setQuery] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  const [address, setAddress] = useState("");
-  const [lat, setLat] = useState<number | null>(null);
-  const [lng, setLng] = useState<number | null>(null);
-  const [isDirty, setIsDirty] = useState(false);
-
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const biz = bizData?.data;
-    if (!biz) return;
-    setAddress(biz.location ?? "");
-    setQuery(biz.location ?? "");
-    setLat(biz.latitude ?? null);
-    setLng(biz.longitude ?? null);
-  }, [bizData]);
+  /* Active location = local edits if any, otherwise server state */
+  const active = localEdits ?? serverState;
+  const { address, lat, lng } = active;
 
+  /* Query defaults to the server address until user types */
+  const displayQuery = query ?? serverState.address;
+
+  const patch = (next: Partial<LocationState>) =>
+    setLocalEdits((prev) => ({ ...(prev ?? serverState), ...next }));
+
+  /* ── Nominatim search ─────────────────────────────────────────────────── */
   const fetchSuggestions = (val: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (val.length < 3) {
@@ -80,18 +92,18 @@ export default function LocationSettings() {
   };
 
   const onSelect = (item: NominatimResult) => {
+    const next: LocationState = {
+      address: item.display_name,
+      lat: Number(item.lat),
+      lng: Number(item.lon),
+    };
+    setLocalEdits(next);
     setQuery(item.display_name);
-    setAddress(item.display_name);
-    setLat(Number(item.lat));
-    setLng(Number(item.lon));
     setSuggestions([]);
-    setIsDirty(true);
   };
 
   const onDragEnd = async (newLat: number, newLng: number) => {
-    setLat(newLat);
-    setLng(newLng);
-    setIsDirty(true);
+    patch({ lat: newLat, lng: newLng });
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${newLat}&lon=${newLng}`,
@@ -99,12 +111,13 @@ export default function LocationSettings() {
       );
       const data = await res.json();
       if (data.display_name) {
-        setAddress(data.display_name);
+        patch({ lat: newLat, lng: newLng, address: data.display_name });
         setQuery(data.display_name);
       }
     } catch {}
   };
 
+  /* ── Save ─────────────────────────────────────────────────────────────── */
   const onSave = async () => {
     if (!address || lat === null || lng === null) {
       toast.error("Please select a location from the dropdown first");
@@ -119,7 +132,8 @@ export default function LocationSettings() {
       });
       if (!res.ok) throw new Error((await res.json()).message);
       toast.success("Location updated successfully");
-      setIsDirty(false);
+      setLocalEdits(null);
+      setQuery(null);
     } catch (err: any) {
       toast.error(err.message || "Failed to update location");
     } finally {
@@ -129,6 +143,9 @@ export default function LocationSettings() {
 
   if (isLoading) return <Loading />;
 
+  const isDirty = localEdits !== null;
+
+  /* ── Render ───────────────────────────────────────────────────────────── */
   return (
     <div className="space-y-6">
       {/* ── Address Search ── */}
@@ -154,7 +171,7 @@ export default function LocationSettings() {
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
             />
             <Input
-              value={query}
+              value={displayQuery}
               onChange={(e) => {
                 setQuery(e.target.value);
                 fetchSuggestions(e.target.value);
@@ -167,7 +184,7 @@ export default function LocationSettings() {
                 size={14}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin"
               />
-            ) : query ? (
+            ) : displayQuery ? (
               <button
                 type="button"
                 onClick={() => {
@@ -189,10 +206,7 @@ export default function LocationSettings() {
                   type="button"
                   onClick={() => onSelect(item)}
                   className="w-full flex items-start gap-2.5 px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
-                  <MapPin
-                    size={14}
-                    className="text-gray-400 mt-0.5 shrink-0"
-                  />
+                  <MapPin size={14} className="text-gray-400 mt-0.5 shrink-0" />
                   <span className="text-gray-700">{item.display_name}</span>
                 </button>
               ))}
