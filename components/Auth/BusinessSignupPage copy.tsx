@@ -53,7 +53,7 @@ import { cn } from "@/lib/utils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { LocationFormField } from "@/components/ui/LocationFormFiled";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DEFAULT_SCHEDULE } from "../Dashboard/Settings/OperatingHours";
+const DEFAULT_SCHEDULE: any[] = [];
 import { Switch } from "../ui/switch";
 import {
   Select,

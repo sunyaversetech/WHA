@@ -20,7 +20,7 @@ export default function AuthChoicePage() {
       <Button
         variant={"ghost"}
         className="cursor-pointer absolute top-10 left-2 sm:left-10 "
-        onClick={() => router.back()}>
+        onClick={() => router.push("/")}>
         <MoveLeft className="cursor-pointer" />
       </Button>
       <div className="md:m-auto">
