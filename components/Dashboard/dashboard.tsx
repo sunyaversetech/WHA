@@ -164,7 +164,13 @@ function CardHeader({
         marginBottom: 16,
       }}>
       <div>
-        <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", margin: 0 }}>
+        <p
+          style={{
+            fontSize: 15,
+            fontWeight: 700,
+            color: "#111827",
+            margin: 0,
+          }}>
           {title}
         </p>
         {subtitle && (
@@ -260,7 +266,8 @@ export default function Dashboard() {
 
     return (
       <div style={{ maxWidth: 1100 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           {/* Recent sales */}
           <Card>
             <CardHeader
@@ -290,8 +297,7 @@ export default function Dashboard() {
             </p>
             <div style={{ display: "flex", gap: 20, marginBottom: 20 }}>
               <span style={{ fontSize: 13, color: "#6b7280" }}>
-                Appointments{" "}
-                <b style={{ color: "#111827" }}>{totalApt}</b>
+                Appointments <b style={{ color: "#111827" }}>{totalApt}</b>
               </span>
             </div>
             <LineChart data={stats} />
@@ -362,11 +368,16 @@ export default function Dashboard() {
                 sub="Make some appointments for schedule data to appear"
               />
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 {upcoming.slice(0, 6).map((b: any) => (
                   <div
                     key={b._id}
-                    style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    style={{
+                      display: "flex",
+                      gap: 12,
+                      alignItems: "flex-start",
+                    }}>
                     <div
                       style={{ width: 38, textAlign: "center", flexShrink: 0 }}>
                       <p
@@ -516,7 +527,8 @@ export default function Dashboard() {
                 sub="Check back when you have bookings scheduled"
               />
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {today.map((b: any) => (
                   <div
                     key={b._id}

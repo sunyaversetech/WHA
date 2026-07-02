@@ -52,7 +52,10 @@ const NAV_ITEMS: NavItem[] = [
       {
         items: [
           { label: "Team members", href: "/dashboard/employees" },
-          { label: "Scheduled shifts", href: "/dashboard/employees" },
+          {
+            label: "Scheduled shifts",
+            href: "/dashboard/employees/schedule-shift",
+          },
         ],
       },
     ],
@@ -71,9 +74,11 @@ export default function Sidebar() {
         ? pathname === "/dashboard"
         : pathname.startsWith(item.href);
     }
-    return item.children?.some((g) =>
-      g.items.some((s) => pathname.startsWith(s.href)),
-    ) ?? false;
+    return (
+      item.children?.some((g) =>
+        g.items.some((s) => pathname.startsWith(s.href)),
+      ) ?? false
+    );
   };
 
   return (
@@ -173,10 +178,7 @@ export default function Sidebar() {
                       background: "none",
                       border: "none",
                       cursor: "pointer",
-                      color:
-                        active || open
-                          ? "#fff"
-                          : "rgba(255,255,255,0.45)",
+                      color: active || open ? "#fff" : "rgba(255,255,255,0.45)",
                       position: "relative",
                       transition: "color .15s",
                     }}>
