@@ -28,19 +28,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { FormMessage } from "../ui/form";
-
-// ─── Dynamic map import (SSR-safe) ────────────────────────────────────────────
 
 const LocationMap = dynamic(() => import("./LocationMap"), {
   ssr: false,
@@ -556,21 +546,12 @@ function StepIntro({
     <div className="min-h-screen flex">
       {/* Left: marketing */}
       <div style={{ marginBottom: 24 }}>
-        <button
-          onClick={() => router.back()}
-          className="absolute top-10 left-4 sm:left-10"
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: "50%",
-            background: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}>
-          <MoveLeft size={20} color="#0f172a" />
-        </button>
+        <Button
+          variant={"ghost"}
+          className="cursor-pointer w-10 h-10 absolute top-10 left-2 sm:left-10 rounded-full!"
+          onClick={() => router.back()}>
+          <MoveLeft className="cursor-pointer" />
+        </Button>
       </div>
       <div className="flex-1 flex flex-col justify-center px-8 md:px-16 lg:px-24 py-16 bg-slate-50">
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 leading-tight max-w-xl tracking-tight">

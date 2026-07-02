@@ -9,6 +9,8 @@ import { useSingup } from "@/services/Auth/auth.service";
 import { useState } from "react";
 import { ChevronLeft, Eye, EyeOff, MoveLeft } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { Button } from "../ui/button";
 
 const signupSchema = z
   .object({
@@ -93,8 +95,6 @@ export default function SignupPage() {
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#fff" }}>
-      {/* ── Left panel ── */}
-
       <div
         style={{
           flex: 1,
@@ -103,9 +103,6 @@ export default function SignupPage() {
           padding: "0 24px",
           overflowY: "auto",
         }}>
-        {/* Back arrow */}
-
-        {/* Centred form */}
         <div
           style={{
             flex: 1,
@@ -113,24 +110,14 @@ export default function SignupPage() {
             alignItems: "center",
             justifyContent: "center",
           }}>
+          <Button
+            variant={"ghost"}
+            className="cursor-pointer w-10 h-10 absolute top-10 left-2 sm:left-10 rounded-full!"
+            onClick={() => router.push("/auth/user/login")}>
+            <MoveLeft className="cursor-pointer" />
+          </Button>
           <div style={{ width: "100%", maxWidth: 400 }}>
-            <div style={{ marginBottom: 24 }}>
-              <button
-                onClick={() => router.push("/auth/user/login")}
-                className="absolute top-10 left-10"
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: "50%",
-                  background: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                }}>
-                <MoveLeft size={20} color="#0f172a" />
-              </button>
-            </div>
+            <div style={{ marginBottom: 24 }}></div>
             <h1
               style={{
                 fontSize: 28,
@@ -292,7 +279,7 @@ export default function SignupPage() {
                 <span
                   style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
                   I agree to the{" "}
-                  <a
+                  <Link
                     href="/privacy"
                     style={{
                       color: "#3b82f6",
@@ -300,9 +287,9 @@ export default function SignupPage() {
                       fontWeight: 500,
                     }}>
                     Privacy Policy
-                  </a>
+                  </Link>
                   ,{" "}
-                  <a
+                  <Link
                     href="/privacy"
                     style={{
                       color: "#3b82f6",
@@ -310,9 +297,9 @@ export default function SignupPage() {
                       fontWeight: 500,
                     }}>
                     Terms of Service
-                  </a>{" "}
+                  </Link>{" "}
                   and{" "}
-                  <a
+                  <Link
                     href="/privacy"
                     style={{
                       color: "#3b82f6",
@@ -320,7 +307,7 @@ export default function SignupPage() {
                       fontWeight: 500,
                     }}>
                     Terms of Business
-                  </a>
+                  </Link>
                 </span>
               </label>
               {errors.accpetalltermsandcondition && (
@@ -356,7 +343,7 @@ export default function SignupPage() {
           <span style={{ fontSize: 14, color: "#64748b" }}>
             Already have an account?{" "}
           </span>
-          <a
+          <Link
             href="/auth/user/login"
             style={{
               fontSize: 14,
@@ -365,7 +352,7 @@ export default function SignupPage() {
               textDecoration: "none",
             }}>
             Log in
-          </a>
+          </Link>
         </div>
       </div>
       <div

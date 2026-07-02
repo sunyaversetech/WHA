@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ChevronLeft, MoveLeft } from "lucide-react";
 import Image from "next/image";
+import { Button } from "../ui/button";
 
 export default function AuthShell({
   heading,
@@ -29,23 +30,12 @@ export default function AuthShell({
       }}>
       <div className="m-auto" style={{ width: "100%", maxWidth: 400 }}>
         {/* Back button */}
-        <div style={{ marginBottom: 24 }}>
-          <button
-            onClick={() => router.push(backHref)}
-            className="absolute top-10 left-4 sm:left-10"
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: "50%",
-              background: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}>
-            <MoveLeft size={20} color="#0f172a" />
-          </button>
-        </div>
+        <Button
+          variant={"ghost"}
+          className="cursor-pointer w-10 h-10 absolute top-10 left-2 sm:left-10 rounded-full!"
+          onClick={() => router.push(backHref)}>
+          <MoveLeft className="cursor-pointer" />
+        </Button>
 
         <h1
           style={{

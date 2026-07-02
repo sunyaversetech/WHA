@@ -19,12 +19,11 @@ export default function AuthChoicePage() {
       }}>
       <Button
         variant={"ghost"}
-        className="cursor-pointer absolute top-10 left-2 sm:left-10 "
+        className="cursor-pointer w-10 h-10 absolute top-10 left-2 sm:left-10 rounded-full!"
         onClick={() => router.push("/")}>
         <MoveLeft className="cursor-pointer" />
       </Button>
       <div className="md:m-auto">
-        {/* Brand */}
         <div
           onClick={() => router.push("/")}
           style={{

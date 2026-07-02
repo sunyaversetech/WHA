@@ -6,6 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import LoginPage from "./LoginPage";
 import SignupPage from "./Signup";
 import BusinessSignupPage from "./BusinessSignupPage";
+import { Button } from "../ui/button";
 
 export default function AuthPage({ type }: { type: "user" | "business" }) {
   const params = useSearchParams();
@@ -40,7 +41,6 @@ export default function AuthPage({ type }: { type: "user" | "business" }) {
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#fff" }}>
-      {/* Left panel */}
       <div
         className="mt-8 md:mt-0"
         style={{
@@ -58,23 +58,10 @@ export default function AuthPage({ type }: { type: "user" | "business" }) {
             justifyContent: "center",
           }}>
           <div style={{ width: "100%", maxWidth: 400 }}>
-            {/* Back button */}
             <div style={{ padding: "24px 0 10px" }}>
-              <button
-                onClick={() => router.push("/auth")}
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: "50%",
-                  border: "1px solid #e2e8f0",
-                  background: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                }}>
+              <Button onClick={() => router.push("/auth")}>
                 <ChevronLeft size={20} color="#0f172a" />
-              </button>
+              </Button>
             </div>
 
             <h1
@@ -116,7 +103,6 @@ export default function AuthPage({ type }: { type: "user" | "business" }) {
               />
             </div>
 
-            {/* Form */}
             {currentTab === "login" ? (
               <LoginPage />
             ) : isBusiness ? (
@@ -127,7 +113,6 @@ export default function AuthPage({ type }: { type: "user" | "business" }) {
           </div>
         </div>
 
-        {/* Bottom switch link */}
         <div style={{ padding: "24px 0", textAlign: "center" }}>
           <span style={{ fontSize: 14, color: "#64748b" }}>{switchLabel} </span>
           <a
@@ -143,7 +128,6 @@ export default function AuthPage({ type }: { type: "user" | "business" }) {
         </div>
       </div>
 
-      {/* Right image */}
       <div
         className="hidden md:block"
         style={{
