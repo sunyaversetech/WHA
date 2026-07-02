@@ -1188,7 +1188,7 @@ function StepHours({
                       onChange={(e) =>
                         updateSlot(selectedDay, i, "from", e.target.value)
                       }
-                      className="flex-1 border border-slate-200 rounded-lg px-3 py-3 text-sm text-slate-900 bg-white cursor-pointer focus:outline-none focus:border-primary transition-colors">
+                      className="flex-1 border border-slate-200 rounded-lg px-3 py-3 text-base md:text-sm text-slate-900 bg-white cursor-pointer focus:outline-none focus:border-primary transition-colors">
                       {TIME_OPTS.map((o) => (
                         <option key={o.value} value={o.value}>
                           {o.label}
@@ -1203,7 +1203,7 @@ function StepHours({
                       onChange={(e) =>
                         updateSlot(selectedDay, i, "to", e.target.value)
                       }
-                      className="flex-1 border border-slate-200 rounded-lg px-3 py-3 text-sm text-slate-900 bg-white cursor-pointer focus:outline-none focus:border-primary transition-colors">
+                      className="flex-1 border border-slate-200 rounded-lg px-3 py-3 text-base md:text-sm text-slate-900 bg-white cursor-pointer focus:outline-none focus:border-primary transition-colors">
                       {TIME_OPTS.map((o) => (
                         <option key={o.value} value={o.value}>
                           {o.label}
