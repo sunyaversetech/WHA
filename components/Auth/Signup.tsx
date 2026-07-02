@@ -45,13 +45,15 @@ const INPUT: React.CSSProperties = {
   width: "100%",
   border: "1.5px solid #e2e8f0",
   borderRadius: 10,
-  padding: "13px 16px",
-  fontSize: 15,
+  padding: "14px 16px",
+  fontSize: 16,
   color: "#0f172a",
   outline: "none",
+  boxShadow: "none",
   background: "#fff",
   boxSizing: "border-box",
   transition: "border-color .15s",
+  WebkitAppearance: "none",
 };
 const ERR: React.CSSProperties = { fontSize: 13, color: "#ef4444" };
 

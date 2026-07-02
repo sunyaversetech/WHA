@@ -31,6 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { INPUT } from "./LoginPage";
 
 const LocationMap = dynamic(() => import("./LocationMap"), {
   ssr: false,
@@ -625,6 +626,9 @@ function StepEssentials({ register, errors }: any) {
           {...register("business_name")}
           placeholder="E.g. Trendy Salon Sydney"
           className="h-12 text-base"
+          style={INPUT}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "#0f172a")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "#e2e8f0")}
         />
       </Field>
       <Field
@@ -640,6 +644,9 @@ function StepEssentials({ register, errors }: any) {
             type="tel"
             placeholder="4xx xxx xxx"
             className="flex-1 h-12 text-base"
+            style={INPUT}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "#0f172a")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "#e2e8f0")}
           />
         </div>
       </Field>
@@ -970,14 +977,7 @@ function StepLocation({
             }}
             onBlur={() => setTimeout(() => setShowDropdown(false), 180)}
             placeholder="e.g. 115 George Street, Sydney NSW"
-            className={cn(
-              "h-12 text-base pr-10",
-              showSearchError
-                ? "border-red-400 focus-visible:border-red-400"
-                : locationPicked
-                  ? "border-emerald-400 focus-visible:border-emerald-400"
-                  : "",
-            )}
+            style={INPUT}
           />
 
           {/* Right icon */}
@@ -1445,6 +1445,9 @@ function StepLogin({
           {...register("name")}
           placeholder="Full name"
           className="h-12 text-base"
+          style={INPUT}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "#0f172a")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "#e2e8f0")}
         />
       </Field>
 
@@ -1457,6 +1460,9 @@ function StepLogin({
           type="email"
           placeholder="your@email.com"
           className="h-12 text-base"
+          style={INPUT}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "#0f172a")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "#e2e8f0")}
         />
       </Field>
 
@@ -1467,6 +1473,9 @@ function StepLogin({
             type={showPw ? "text" : "password"}
             placeholder="Minimum 6 characters"
             className="h-12 text-base pr-12"
+            style={INPUT}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "#0f172a")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "#e2e8f0")}
           />
           <Button
             type="button"
@@ -1486,6 +1495,9 @@ function StepLogin({
             type={showCpw ? "text" : "password"}
             placeholder="Re-enter your password"
             className="h-12 text-base pr-12"
+            style={INPUT}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "#0f172a")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "#e2e8f0")}
           />
           <Button
             type="button"
