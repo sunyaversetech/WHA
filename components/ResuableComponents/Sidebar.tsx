@@ -65,7 +65,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  useSession(); // keeps auth state alive for protected routes
+  useSession();
   const [flyout, setFlyout] = useState<string | null>(null);
 
   const isActive = (item: NavItem) => {
@@ -83,7 +83,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Sidebar */}
       <div
         className="fixed top-0 left-0 h-screen z-40 flex flex-col"
         style={{
@@ -91,7 +90,6 @@ export default function Sidebar() {
           background: "#0d0f1a",
           borderRight: "1px solid rgba(255,255,255,0.06)",
         }}>
-        {/* Logo */}
         <div
           style={{
             height: 60,
@@ -119,7 +117,6 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Nav items */}
         <nav style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
           {NAV_ITEMS.map((item) => {
             const active = isActive(item);
@@ -317,15 +314,17 @@ export default function Sidebar() {
                         padding: "10px 16px",
                         fontSize: 14,
                         fontWeight: 500,
-                        color: pathname.startsWith(sub.href)
-                          ? "#a78bfa"
-                          : "rgba(255,255,255,0.7)",
+                        color:
+                          pathname === sub.href
+                            ? "#a78bfa"
+                            : "rgba(255,255,255,0.7)",
                         textDecoration: "none",
                         borderRadius: 8,
                         margin: "0 8px",
-                        background: pathname.startsWith(sub.href)
-                          ? "rgba(124,58,237,0.15)"
-                          : "transparent",
+                        background:
+                          pathname === sub.href
+                            ? "rgba(124,58,237,0.15)"
+                            : "transparent",
                         transition: "background .15s, color .15s",
                       }}>
                       {sub.label}
