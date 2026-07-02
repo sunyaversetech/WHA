@@ -1,4 +1,3 @@
-// @/schemas/employee.schema.ts
 import { z } from "zod";
 
 export const weekdayEnum = z.enum([
@@ -30,20 +29,58 @@ export const serviceOverrideSchema = z.object({
   custom_duration: z.number().min(1).optional(),
 });
 
+export const addressSchema = z.object({
+  name: z.string().min(1, "Address name is required"),
+  address: z.string().optional(),
+});
+
+export const emergencyContactSchema = z.object({
+  name: z.string().min(1, "Contact name is required"),
+  relation: z.string().optional(),
+  phone: z.string().optional(),
+});
+
 export const employeeSchema = z.object({
   _id: z.string().optional(),
+
+  // Personal info
   full_name: z.string().min(2, "Full name must be at least 2 characters."),
-  email: z
-    .string()
-    .email("Invalid email address.")
-    .optional()
-    .or(z.literal("")),
+  last_name: z.string().optional(),
+  email: z.union([z.literal(""), z.email("Invalid email address.")]).optional(),
   phone_number: z.string().optional(),
+  additional_phone_number: z.string().optional(),
+  country: z.string().optional(),
+  birthday: z.string().optional(),
+  birth_year: z.number().int().min(1900).max(new Date().getFullYear()).optional(),
+
+  // Work details
+  job_title: z.string().optional(),
+  employment_type: z
+    .enum(["full-time", "part-time", "casual", "contractor", ""])
+    .optional(),
+  employment_start_date: z.string().optional(),
+  employment_start_year: z.number().int().optional(),
+  employment_end_date: z.string().optional(),
+  employment_end_year: z.number().int().optional(),
+  employee_id: z.string().optional(),
+
+  // Calendar
+  calendar_color: z.string().optional(),
+
+  // Notes / bio
   bio: z.string().optional(),
+
+  // Addresses & emergency contacts
+  addresses: z.array(addressSchema).optional(),
+  emergency_contacts: z.array(emergencyContactSchema).optional(),
+
+  // Services & schedule
+  service_overrides: z.array(serviceOverrideSchema),
+  availability_schedule: z.array(availabilitySchema),
+
+  // Media & status
   employee_photo: z.any(),
   is_active: z.boolean(),
-  availability_schedule: z.array(availabilitySchema),
-  service_overrides: z.array(serviceOverrideSchema),
 });
 
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;

@@ -8,8 +8,12 @@ import { z, ZodError } from "zod";
 
 const create_time_off_schema = z.object({
   employee_id: z.string().min(1),
+  type: z.string().optional(),
   start_time: z.string().datetime(),
   end_time: z.string().datetime(),
+  repeat: z.boolean().optional(),
+  description: z.string().optional(),
+  approved: z.boolean().optional(),
   reason: z.string().optional(),
 });
 
@@ -82,8 +86,12 @@ export async function POST(request: Request) {
 
     const time_off = await EmployeeTimeOff.create({
       employee_id: validated.employee_id,
+      type: validated.type ?? "Annual leave",
       start_time: start,
       end_time: end,
+      repeat: validated.repeat ?? false,
+      description: validated.description,
+      approved: validated.approved ?? false,
       reason: validated.reason,
     });
 

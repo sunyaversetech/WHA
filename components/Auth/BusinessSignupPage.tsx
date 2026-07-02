@@ -998,7 +998,6 @@ function StepLocation({
             )}
           </div>
 
-          {/* Dropdown suggestions */}
           {showDropdown && suggestions.length > 0 && (
             <div className="absolute top-[calc(100%+4px)] left-0 right-0 z-50 bg-white border border-slate-200 rounded-xl shadow-xl max-h-64 overflow-y-auto">
               {suggestions.map((s, idx) => (
@@ -1018,7 +1017,6 @@ function StepLocation({
         </div>
       </Field>
 
-      {/* Map — only shown after dropdown selection */}
       {markerLat !== null && markerLng !== null && (
         <div className="relative z-0 mb-7">
           <p className="text-sm text-slate-400 mb-2 -mt-2">
@@ -1034,7 +1032,6 @@ function StepLocation({
         </div>
       )}
 
-      {/* City */}
       {/* <Field label="City" error={errors.city?.message}>
         <Controller
           name="city"
@@ -1060,7 +1057,6 @@ function StepLocation({
 }
 
 // ─── Step 6: Opening Hours ────────────────────────────────────────────────────
-
 function StepHours({
   schedule,
   selectedDay,

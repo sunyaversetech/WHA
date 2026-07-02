@@ -7,7 +7,8 @@ import mongoose from "mongoose";
 import { uploadToS3 } from "@/server/lib/function";
 
 type Props = { params: Promise<{ id: string }> };
-export async function GET(request: Request, { params }: Props) {
+
+export async function GET(_request: Request, { params }: Props) {
   try {
     await connectToDb();
     const { id } = await params;
@@ -27,10 +28,7 @@ export async function GET(request: Request, { params }: Props) {
       );
     }
 
-    return NextResponse.json(
-      { success: true, data: employee },
-      { status: 200 },
-    );
+    return NextResponse.json({ success: true, data: employee }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message },
@@ -51,8 +49,6 @@ export async function POST(request: Request, { params }: Props) {
       );
     }
 
-    const formData = await request.formData();
-
     const employee = await Employee.findById(id);
     if (!employee) {
       return NextResponse.json(
@@ -61,55 +57,68 @@ export async function POST(request: Request, { params }: Props) {
       );
     }
 
-    if (formData.has("full_name"))
-      employee.full_name = formData.get("full_name") as string;
-    if (formData.has("email")) employee.email = formData.get("email") as string;
+    const formData = await request.formData();
 
-    if (formData.has("availability_schedule")) {
+    const str = (key: string) => formData.get(key) as string;
+    const has = (key: string) => formData.has(key);
+
+    // ── Personal info ──
+    if (has("full_name")) employee.full_name = str("full_name");
+    if (has("last_name")) employee.last_name = str("last_name");
+    if (has("email")) employee.email = str("email");
+    if (has("phone_number")) employee.phone_number = str("phone_number");
+    if (has("additional_phone_number"))
+      employee.additional_phone_number = str("additional_phone_number");
+    if (has("country")) employee.country = str("country");
+    if (has("birthday")) employee.birthday = str("birthday");
+    if (has("birth_year")) employee.birth_year = Number(str("birth_year"));
+    if (has("bio")) employee.bio = str("bio");
+
+    // ── Work details ──
+    if (has("job_title")) employee.job_title = str("job_title");
+    if (has("employment_type")) employee.employment_type = str("employment_type");
+    if (has("employment_start_date"))
+      employee.employment_start_date = str("employment_start_date");
+    if (has("employment_start_year"))
+      employee.employment_start_year = Number(str("employment_start_year"));
+    if (has("employment_end_date"))
+      employee.employment_end_date = str("employment_end_date");
+    if (has("employment_end_year"))
+      employee.employment_end_year = Number(str("employment_end_year"));
+    if (has("employee_id")) employee.employee_id = str("employee_id");
+
+    // ── Calendar ──
+    if (has("calendar_color")) employee.calendar_color = str("calendar_color");
+
+    // ── Status ──
+    if (has("is_active")) employee.is_active = str("is_active") === "true";
+
+    // ── Availability ──
+    if (has("availability_schedule")) {
       employee.availability_schedule = JSON.parse(
-        (formData.get("availability_schedule") as string) || "[]",
+        str("availability_schedule") || "[]",
       );
     }
 
-    if (formData.has("bio")) employee.bio = formData.get("bio") as string;
-    if (formData.has("phone_number"))
-      employee.phone_number = formData.get("phone_number") as string;
-    if (formData.has("is_active"))
-      employee.is_active = formData.get("is_active") as string;
-
-    const employee_photo = formData.get("employee_photo") as File | null;
-    if (
-      employee_photo &&
-      employee_photo.size > 0 &&
-      employee_photo instanceof File
-    ) {
-      const buffer = Buffer.from(await employee_photo.arrayBuffer());
-      const uploadResult = await uploadToS3(
-        buffer,
-        employee_photo.name,
-        employee_photo.type,
-      );
-      employee.employee_photo = uploadResult.Location;
+    // ── Addresses & emergency contacts ──
+    if (has("addresses")) {
+      employee.addresses = JSON.parse(str("addresses") || "[]");
+    }
+    if (has("emergency_contacts")) {
+      employee.emergency_contacts = JSON.parse(str("emergency_contacts") || "[]");
     }
 
-    if (formData.has("service_overrides")) {
-      const service_overrides = JSON.parse(
-        (formData.get("service_overrides") as string) || "[]",
-      );
+    // ── Services (diff old vs new to keep Service.assigned_employees in sync) ──
+    if (has("service_overrides")) {
+      const service_overrides = JSON.parse(str("service_overrides") || "[]");
 
-      const old_services = employee.service_overrides.map((s: any) =>
+      const old_ids = employee.service_overrides.map((s: any) =>
         s.service_id.toString(),
       );
-      const new_services = service_overrides.map((s: any) =>
-        s.service_id.toString(),
-      );
+      const new_ids = service_overrides.map((s: any) => s.service_id.toString());
 
-      const to_add = new_services.filter(
-        (s: string) => !old_services.includes(s),
-      );
-      const to_remove = old_services.filter(
-        (s: string) => !new_services.includes(s),
-      );
+      const to_add = new_ids.filter((s: string) => !old_ids.includes(s));
+      const to_remove = old_ids.filter((s: string) => !new_ids.includes(s));
 
       employee.service_overrides = service_overrides;
 
@@ -127,12 +136,21 @@ export async function POST(request: Request, { params }: Props) {
       }
     }
 
+    // ── Photo ──
+    const employee_photo = formData.get("employee_photo") as File | null;
+    if (employee_photo && employee_photo.size > 0 && employee_photo instanceof File) {
+      const buffer = Buffer.from(await employee_photo.arrayBuffer());
+      const uploadResult = await uploadToS3(
+        buffer,
+        employee_photo.name,
+        employee_photo.type,
+      );
+      employee.employee_photo = uploadResult.Location;
+    }
+
     await employee.save();
 
-    return NextResponse.json(
-      { success: true, data: employee },
-      { status: 200 },
-    );
+    return NextResponse.json({ success: true, data: employee }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message },
@@ -142,7 +160,7 @@ export async function POST(request: Request, { params }: Props) {
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -164,10 +182,8 @@ export async function DELETE(
       );
     }
 
-    // Remove references in Services
-    const service_ids = employee.service_overrides.map(
-      (s: any) => s.service_id,
-    );
+    // Remove from Service.assigned_employees
+    const service_ids = employee.service_overrides.map((s: any) => s.service_id);
     if (service_ids.length > 0) {
       await Service.updateMany(
         { _id: { $in: service_ids } },
@@ -175,7 +191,7 @@ export async function DELETE(
       );
     }
 
-    // Clean up employee time-off records
+    // Remove time-off records
     await EmployeeTimeOff.deleteMany({ employee_id: id });
 
     return NextResponse.json(
