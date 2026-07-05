@@ -24,6 +24,7 @@ import {
   useGetShiftOverrides,
   useUpsertShiftOverride,
 } from "@/services/employee.service";
+import { useRouter } from "next/navigation";
 
 const DAY_KEYS = [
   "monday",
@@ -208,7 +209,7 @@ function Avatar({ emp, idx }: { emp: any; idx: number }) {
   return (
     <div
       className={cn(
-        "w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-black text-xs font-bold",
+        "w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-xs font-bold",
         AVATAR_BG[idx % AVATAR_BG.length],
       )}>
       {initials(emp.full_name)}
@@ -219,9 +220,9 @@ function Avatar({ emp, idx }: { emp: any; idx: number }) {
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const SEL =
-  "w-full bg-[#1c1c1c] border border-[#2a2a2a] text-black text-sm rounded-lg px-3 py-2.5 appearance-none outline-none focus:border-[#6B5CE7] transition-colors";
+  "w-full bg-[#061930] border border-[#0e3258] text-white text-sm rounded-lg px-3 py-2.5 appearance-none outline-none focus:border-[#6B5CE7] transition-colors";
 const BTN_GHOST =
-  "px-5 py-2 rounded-full border border-[#2a2a2a] text-black text-sm font-semibold hover:bg-[#1a1a1a] transition-colors";
+  "px-5 py-2 rounded-full border border-[#0e3258] text-white text-sm font-semibold hover:bg-[#082040] transition-colors";
 const BTN_PRIMARY =
   "px-5 py-2 rounded-full bg-white text-black text-sm font-bold hover:bg-gray-100 transition-colors";
 
@@ -276,20 +277,20 @@ function SelectField({
   className?: string;
 }) {
   return (
-    <div className="relative">
+    <div className="relative text-gray-100">
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={cn(SEL, className)}>
+        className={cn(SEL, className, "text-gray-100")}>
         {options.map((o) => (
-          <option key={o} value={o}>
+          <option key={o} value={o} className="text-gray-100">
             {o}
           </option>
         ))}
       </select>
       <ChevronDown
         size={13}
-        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-100 pointer-events-none"
       />
     </div>
   );
@@ -326,7 +327,7 @@ function ShiftContextMenu({
     <div
       ref={ref}
       style={{ position: "fixed", top: menu.y, left: menu.x, zIndex: 999 }}
-      className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-2xl py-1.5 min-w-52.5">
+      className="bg-[#082040] border border-[#0e3258] rounded-xl shadow-2xl py-1.5 min-w-52.5">
       {(
         [
           { label: "Edit this day", action: onEditDay },
@@ -340,17 +341,17 @@ function ShiftContextMenu({
             action();
             onClose();
           }}
-          className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
+          className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
           {label}
         </button>
       ))}
-      <div className="border-t border-[#2a2a2a] my-1" />
+      <div className="border-t border-[#0e3258] my-1" />
       <button
         onClick={() => {
           onDelete();
           onClose();
         }}
-        className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-[#252525] transition-colors">
+        className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-[#0d2d4e] transition-colors">
         Delete this shift
       </button>
     </div>
@@ -411,18 +412,18 @@ function EditDayDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center "
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}>
-      <div className=" border border-[#2a2a2a] rounded-2xl w-full max-w-md mx-4 p-6 shadow-2xl">
+      <div className="bg-[#051e3a] border border-[#0e3258] rounded-2xl w-full max-w-md mx-4 p-6 shadow-2xl">
         <div className="flex items-start justify-between mb-1">
-          <h2 className="text-xl font-bold text-black">
+          <h2 className="text-xl font-bold text-white">
             {firstName}&apos;s shift {fmtDayFull(dayDate)}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-black ml-3 mt-0.5 transition-colors">
+            className="text-gray-400 hover:text-white ml-3 mt-0.5 transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -474,12 +475,12 @@ function EditDayDialog({
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={addSlot}
-            className="flex items-center gap-1.5 text-sm text-black border border-[#2a2a2a] rounded-full px-3.5 py-1.5 hover:bg-[#1a1a1a] transition-colors">
+            className="flex items-center gap-1.5 text-sm text-white border border-[#0e3258] rounded-full px-3.5 py-1.5 hover:bg-[#082040] transition-colors">
             <Plus size={14} /> Add shift
           </button>
           <span className="text-sm text-gray-400">
             Total shift duration:{" "}
-            <span className="text-black font-semibold">
+            <span className="text-white font-semibold">
               {fmtHours(totalMins)}
             </span>
           </span>
@@ -489,7 +490,7 @@ function EditDayDialog({
           <button
             onClick={() => onSave([])}
             disabled={isSaving}
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-[#2a2a2a] text-red-400 hover:bg-[#1a1a1a] disabled:opacity-50 transition-colors">
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-[#0e3258] text-red-400 hover:bg-[#082040] disabled:opacity-50 transition-colors">
             <Trash2 size={15} />
           </button>
           <div className="flex gap-2">
@@ -561,19 +562,19 @@ function TimeOffDialog({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}>
-      <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl w-full max-w-lg mx-4 p-6 shadow-2xl">
+      <div className="bg-[#051e3a] border border-[#0e3258] rounded-2xl w-full max-w-lg mx-4 p-6 shadow-2xl">
         <div className="flex items-start justify-between mb-6">
-          <h2 className="text-xl font-bold text-black">Add time off</h2>
+          <h2 className="text-xl font-bold text-white">Add time off</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-black transition-colors">
+            className="text-gray-400 hover:text-white transition-colors">
             <X size={18} />
           </button>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <p className="text-sm font-semibold text-black mb-2">Team member</p>
+            <p className="text-sm font-semibold text-white mb-2">Team member</p>
             <div className="relative">
               <select
                 value={empId}
@@ -592,7 +593,7 @@ function TimeOffDialog({
             </div>
           </div>
           <div>
-            <p className="text-sm font-semibold text-black mb-2">Type</p>
+            <p className="text-sm font-semibold text-white mb-2">Type</p>
             <SelectField
               value={type}
               onChange={setType}
@@ -601,20 +602,20 @@ function TimeOffDialog({
           </div>
         </div>
 
-        <p className="text-sm font-semibold text-black mb-2">Start date</p>
-        <div className="grid grid-cols-[1fr_auto_auto] gap-2 mb-4 items-start">
+        <p className="text-sm font-semibold text-white mb-2">Start date</p>
+        <div className="grid grid-cols-1 gap-2 mb-4 items-center">
           <SelectField
             value={startDate}
             onChange={setStartDate}
             options={dateOptions}
           />
-          <div>
+          <div className="">
             <p className="text-xs text-gray-400 mb-1.5">Start time</p>
             <SelectField
               value={startTime}
               onChange={setStartTime}
               options={TIME_OPTIONS}
-              className="w-28"
+              className="w-full"
             />
           </div>
           <div>
@@ -623,7 +624,7 @@ function TimeOffDialog({
               value={endTime}
               onChange={setEndTime}
               options={TIME_OPTIONS}
-              className="w-28"
+              className="w-full"
             />
           </div>
         </div>
@@ -633,14 +634,14 @@ function TimeOffDialog({
             type="checkbox"
             checked={repeat}
             onChange={(e) => setRepeat(e.target.checked)}
-            className="w-4 h-4 accent-[#6B5CE7]"
+            className="w-4 h-4 accent-[#051e3a]"
           />
-          <span className="text-sm text-black">Repeat</span>
+          <span className="text-sm text-white">Repeat</span>
         </label>
 
         <div className="mb-4">
           <div className="flex justify-between mb-2">
-            <p className="text-sm font-semibold text-black">Description</p>
+            <p className="text-sm font-semibold text-white">Description</p>
             <span className="text-xs text-gray-500">{desc.length}/100</span>
           </div>
           <textarea
@@ -648,7 +649,7 @@ function TimeOffDialog({
             onChange={(e) => setDesc(e.target.value.slice(0, 100))}
             placeholder="Add description or note (optional)"
             rows={4}
-            className="w-full bg-[#1c1c1c] border border-[#2a2a2a] rounded-xl px-3 py-2.5 text-sm text-black placeholder-gray-600 outline-none focus:border-[#6B5CE7] transition-colors resize-none"
+            className="w-full bg-[#061930] border border-[#0e3258] rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-[#6B5CE7] transition-colors resize-none"
           />
         </div>
 
@@ -658,11 +659,11 @@ function TimeOffDialog({
               type="checkbox"
               checked={approved}
               onChange={(e) => setApproved(e.target.checked)}
-              className="w-4 h-4 accent-[#6B5CE7]"
+              className="w-4 h-4 accent-[#051e3a]"
             />
-            <span className="text-sm text-black">Approved</span>
+            <span className="text-sm text-white">Approved</span>
           </label>
-          <span className="text-sm font-bold text-black">
+          <span className="text-sm font-bold text-white">
             Time off total: {fmtHours(totalMins)}
           </span>
         </div>
@@ -760,7 +761,9 @@ function RepeatingShiftsPanel({
       DAY_KEYS.reduce((acc, key) => {
         const day = days[key];
         if (!day?.enabled) return acc;
-        return acc + day.slots.reduce((a, s) => a + slotMins(s.start, s.end), 0);
+        return (
+          acc + day.slots.reduce((a, s) => a + slotMins(s.start, s.end), 0)
+        );
       }, 0),
     [days],
   );
@@ -768,7 +771,12 @@ function RepeatingShiftsPanel({
   const toggleDay = (key: string) =>
     setDays((p) => ({ ...p, [key]: { ...p[key], enabled: !p[key].enabled } }));
 
-  const updateSlot = (key: string, si: number, field: "start" | "end", val: string) =>
+  const updateSlot = (
+    key: string,
+    si: number,
+    field: "start" | "end",
+    val: string,
+  ) =>
     setDays((p) => {
       const next = p[key].slots.map((s) => ({ ...s }));
       next[si][field] = val;
@@ -777,7 +785,8 @@ function RepeatingShiftsPanel({
           next[si].end = nextTimeOption(next[si].start);
       } else {
         if (next[si].end <= next[si].start)
-          next[si].start = TIME_OPTIONS[Math.max(0, TIME_OPTIONS.indexOf(next[si].end) - 1)];
+          next[si].start =
+            TIME_OPTIONS[Math.max(0, TIME_OPTIONS.indexOf(next[si].end) - 1)];
         if (si < next.length - 1 && next[si + 1].start < next[si].end) {
           next[si + 1].start = next[si].end;
           if (next[si + 1].end <= next[si + 1].start)
@@ -795,7 +804,10 @@ function RepeatingShiftsPanel({
         ...p,
         [key]: {
           ...p[key],
-          slots: [...slots, { start: last.end, end: nextTimeOption(last.end, 2) }],
+          slots: [
+            ...slots,
+            { start: last.end, end: nextTimeOption(last.end, 2) },
+          ],
         },
       };
     });
@@ -818,11 +830,16 @@ function RepeatingShiftsPanel({
   };
 
   const firstName = emp.full_name.split(" ")[0];
-  const scheduleLabel = scheduleType === "Every week" ? "Weekly" : scheduleType === "Every 2 weeks" ? "Bi-weekly" : "Custom";
+  const scheduleLabel =
+    scheduleType === "Every week"
+      ? "Weekly"
+      : scheduleType === "Every 2 weeks"
+        ? "Bi-weekly"
+        : "Custom";
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#111111] overflow-y-auto">
-      <div className="sticky top-0 z-10 bg-[#111111] border-b border-[#2a2a2a]">
+    <div className="fixed inset-0 z-50 bg-[#051e3a] overflow-y-auto">
+      <div className="sticky top-0 z-10 bg-[#051e3a] border-b border-[#0e3258]">
         <div className="flex items-center justify-end gap-2 px-8 py-4">
           <button onClick={onClose} disabled={isSaving} className={BTN_GHOST}>
             Close
@@ -830,7 +847,10 @@ function RepeatingShiftsPanel({
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className={cn(BTN_PRIMARY, "flex items-center gap-1.5 disabled:opacity-70")}>
+            className={cn(
+              BTN_PRIMARY,
+              "flex items-center gap-1.5 disabled:opacity-70",
+            )}>
             {isSaving && <Loader2 size={13} className="animate-spin" />}
             Save
           </button>
@@ -853,17 +873,17 @@ function RepeatingShiftsPanel({
             </p>
           </div>
 
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#2a2a2a] flex items-center justify-center shrink-0">
+          <div className="bg-[#082040] text-white border border-[#0e3258] rounded-xl p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[#0e3258] flex items-center justify-center shrink-0">
               <Building2 size={18} className="text-[#6B5CE7]" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">{emp.full_name}</p>
+              <p className="text-sm font-bold text-white ">{emp.full_name}</p>
               <p className="text-xs text-gray-400">All locations</p>
             </div>
           </div>
 
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 space-y-4">
+          <div className="bg-[#082040] border border-[#0e3258] rounded-xl p-4 space-y-4">
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
                 Schedule type
@@ -912,7 +932,7 @@ function RepeatingShiftsPanel({
                     onChange={(e) =>
                       setEndOccurrences(Math.max(1, Number(e.target.value)))
                     }
-                    className="w-20 bg-[#1c1c1c] border border-[#2a2a2a] text-white text-sm rounded-lg px-3 py-2.5 outline-none focus:border-[#6B5CE7] transition-colors"
+                    className="w-20 bg-[#061930] border border-[#0e3258] text-white text-sm rounded-lg px-3 py-2.5 outline-none focus:border-[#6B5CE7] transition-colors"
                   />
                   <span className="text-sm text-gray-400">occurrences</span>
                 </div>
@@ -920,17 +940,16 @@ function RepeatingShiftsPanel({
             </div>
           </div>
 
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 flex items-start gap-2.5">
+          <div className="bg-[#082040] border border-[#0e3258] rounded-xl p-4 flex items-start gap-2.5">
             <Info size={14} className="text-gray-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="text-xs text-gray-200 leading-relaxed">
               Team members will not be scheduled on business closed periods.
             </p>
           </div>
         </div>
 
-        {/* Right: schedule grid */}
         <div>
-          <div className="flex items-baseline gap-2 mb-6">
+          <div className="flex flex-col items-baseline gap-2 mb-6">
             <h2 className="text-lg font-bold text-white">{scheduleLabel}</h2>
             <span className="text-sm text-gray-400">
               {fmtHours(totalWeekMins)} total
@@ -948,7 +967,7 @@ function RepeatingShiftsPanel({
               return (
                 <div
                   key={key}
-                  className="grid grid-cols-[180px_1fr] gap-4 items-start py-3 border-b border-[#1e1e1e]">
+                  className="grid grid-cols-[180px_1fr] gap-4 items-start py-3 border-b border-[#082040]">
                   <div className="flex items-center gap-3 pt-1.5">
                     <button
                       onClick={() => toggleDay(key)}
@@ -956,7 +975,7 @@ function RepeatingShiftsPanel({
                         "w-5 h-5 rounded flex items-center justify-center border shrink-0 transition-colors",
                         day.enabled
                           ? "bg-[#6B5CE7] border-[#6B5CE7]"
-                          : "bg-transparent border-[#3a3a3a]",
+                          : "bg-transparent border-[#1a3a5c]",
                       )}>
                       {day.enabled && <CheckMark />}
                     </button>
@@ -965,7 +984,9 @@ function RepeatingShiftsPanel({
                         {DAY_FULL[di]}
                       </p>
                       {day.enabled && (
-                        <p className="text-xs text-gray-500">{fmtHours(dayMins)}</p>
+                        <p className="text-xs text-gray-400">
+                          {fmtHours(dayMins)}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -979,28 +1000,48 @@ function RepeatingShiftsPanel({
                           <div className="relative flex-1">
                             <select
                               value={slot.start}
-                              onChange={(e) => updateSlot(key, si, "start", e.target.value)}
+                              onChange={(e) =>
+                                updateSlot(key, si, "start", e.target.value)
+                              }
                               className={SEL}>
                               {TIME_OPTIONS.filter(
-                                (t) => (si === 0 || t >= day.slots[si - 1].end) && t < slot.end,
+                                (t) =>
+                                  (si === 0 || t >= day.slots[si - 1].end) &&
+                                  t < slot.end,
                               ).map((t) => (
-                                <option key={t} value={t}>{t}</option>
+                                <option
+                                  key={t}
+                                  value={t}
+                                  className="text-gray-100">
+                                  <p className="text-gray-100!">{t}</p>
+                                </option>
                               ))}
                             </select>
                             <ChevronDown
                               size={13}
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-100 pointer-events-none"
                             />
                           </div>
-                          <span className="text-sm text-gray-400 shrink-0">to</span>
+                          <span className="text-sm text-gray-400 shrink-0">
+                            to
+                          </span>
                           <div className="relative flex-1">
                             <select
                               value={slot.end}
-                              onChange={(e) => updateSlot(key, si, "end", e.target.value)}
+                              onChange={(e) =>
+                                updateSlot(key, si, "end", e.target.value)
+                              }
                               className={SEL}>
-                              {TIME_OPTIONS.filter((t) => t > slot.start).map((t) => (
-                                <option key={t} value={t}>{t}</option>
-                              ))}
+                              {TIME_OPTIONS.filter((t) => t > slot.start).map(
+                                (t) => (
+                                  <option
+                                    key={t}
+                                    value={t}
+                                    className="text-gray-100">
+                                    <p className="text-gray-100">{t}</p>
+                                  </option>
+                                ),
+                              )}
                             </select>
                             <ChevronDown
                               size={13}
@@ -1053,6 +1094,8 @@ function AddDropdown({
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
+  const router = useRouter();
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -1062,26 +1105,27 @@ function AddDropdown({
         <ChevronDown size={14} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 bg-[#051e3a] border border-[#2a2a2a] rounded-xl shadow-2xl py-1.5 min-w-50 z-50">
+        <div className="absolute right-0 top-full mt-2 bg-[#051e3a] border border-[#0e3258] rounded-xl shadow-2xl py-1.5 min-w-50 z-50">
           <button
             onClick={() => {
               onTimeOff();
               setOpen(false);
             }}
-            className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
+            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
             Time off
           </button>
           <button
             onClick={() => {
               onNewMember();
               setOpen(false);
+              router.push("/dashboard/employees/add");
             }}
-            className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
+            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
             New team member
           </button>
           <button
             onClick={() => setOpen(false)}
-            className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
+            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
             Business closed period
           </button>
         </div>
@@ -1138,7 +1182,11 @@ export default function ScheduleShift() {
     );
   };
 
-  const handleSaveRepeating = (emp: any, days: Record<string, DayEdit>, config: RepeatingConfig) => {
+  const handleSaveRepeating = (
+    emp: any,
+    days: Record<string, DayEdit>,
+    config: RepeatingConfig,
+  ) => {
     const schedule = DAY_KEYS.map((key) => {
       const d = days[key];
       return {
@@ -1228,12 +1276,14 @@ export default function ScheduleShift() {
   };
 
   return (
-    <div className="min-h-screen  text-black p-6 md:p-8">
+    <div className="min-h-screen  text-[#0e3258] p-6 md:p-8">
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Scheduled shifts</h1>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] text-sm font-semibold text-black hover:bg-[#1e1e1e] transition-colors">
+          <button
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] text-sm font-semibold
+           text-[#0e3258] hover:bg-[#082040] transition-colors">
             Options
             <ChevronDown size={14} />
           </button>
@@ -1252,21 +1302,21 @@ export default function ScheduleShift() {
       {/* ── Controls bar ── */}
       <div className="flex items-center justify-between mb-5">
         <button
-          className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a] text-white 
-        bg-[#051e3a] text-sm font-semibold hover:bg-[#222] transition-colors">
+          className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#0e3258] text-white 
+        bg-[#051e3a] text-sm font-semibold hover:bg-[#0d2d4e] transition-colors">
           <ArrowUpDown size={14} className="text-gray-400" />
           Custom order
         </button>
         <div className="flex items-center gap-2">
           <button
             onClick={goThisWeek}
-            className="px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#051e3a] text-sm font-semibold text-white hover:bg-[#222] transition-colors">
+            className="px-4 py-2 rounded-full border border-[#0e3258] bg-[#051e3a] text-sm font-semibold text-white hover:bg-[#0d2d4e] transition-colors">
             This week
           </button>
-          <div className="flex items-center gap-1 border border-[#2a2a2a] bg-[#051e3a] rounded-full px-2 py-1.5">
+          <div className="flex items-center gap-1 border border-[#0e3258] bg-[#051e3a] rounded-full px-2 py-1.5">
             <button
               onClick={goPrev}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#2a2a2a] transition-colors text-gray-400 hover:text-black">
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#0d2d4e] transition-colors text-gray-400 hover:text-white">
               <ChevronLeft size={15} />
             </button>
             <span className="text-sm font-semibold text-white px-2 min-w-[170px] text-center">
@@ -1274,7 +1324,7 @@ export default function ScheduleShift() {
             </span>
             <button
               onClick={goNext}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#2a2a2a] transition-colors text-gray-400 hover:text-black">
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#0d2d4e] transition-colors text-gray-400 hover:text-white">
               <ChevronRight size={15} />
             </button>
           </div>
@@ -1282,10 +1332,10 @@ export default function ScheduleShift() {
       </div>
 
       {/* ── Table ── */}
-      <div className="border border-[#2a2a2a] rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-[220px_repeat(7,1fr)] border-b border-[#2a2a2a]">
-          <div className="px-4 py-3 flex items-center gap-1.5 border-r border-[#2a2a2a]">
-            <span className="text-sm font-semibold text-black">
+      <div className="border border-[#0e3258] rounded-2xl overflow-hidden">
+        <div className="grid grid-cols-[220px_repeat(7,1fr)] border-b border-[#0e3258]">
+          <div className="px-4 py-3 flex items-center gap-1.5 border-r border-[#0e3258]">
+            <span className="text-sm font-semibold text-[#0e3258]">
               Team member
             </span>
             <button className="text-[#6B5CE7] text-sm font-semibold hover:opacity-70 transition-opacity">
@@ -1297,9 +1347,9 @@ export default function ScheduleShift() {
               key={i}
               className={cn(
                 "px-3 py-3 text-center",
-                i < 6 && "border-r border-[#2a2a2a]",
+                i < 6 && "border-r border-[#0e3258]",
               )}>
-              <p className="text-sm font-bold text-black">
+              <p className="text-sm font-bold text-[#0e3258]">
                 {DAY_SHORT[i]}, {fmtShort(day)}
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
@@ -1333,12 +1383,12 @@ export default function ScheduleShift() {
                 key={emp._id}
                 className={cn(
                   "grid grid-cols-[220px_repeat(7,1fr)]",
-                  empIdx < employees.length - 1 && "border-b border-[#2a2a2a]",
+                  empIdx < employees.length - 1 && "border-b border-[#0e3258]",
                 )}>
-                <div className="px-4 py-4 flex items-center gap-3 border-r border-[#2a2a2a]">
+                <div className="px-4 py-4 flex items-center gap-3 border-r border-[#0e3258]">
                   <Avatar emp={emp} idx={empIdx} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-black truncate">
+                    <p className="text-sm font-semibold text-[#0e3258] truncate">
                       {emp.full_name}
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">
@@ -1361,15 +1411,14 @@ export default function ScheduleShift() {
                       key={key}
                       className={cn(
                         "px-2 py-4 flex items-center justify-center",
-                        di < 6 && "border-r border-[#2a2a2a]",
+                        di < 6 && "border-r border-[#0e3258]",
                       )}>
                       {eff.is_working ? (
                         <button
                           onClick={(e) =>
                             openCtxMenu(e, emp, empIdx, key, dayDate)
                           }
-                          className="w-full bg-[#051e3a]  hover:bg-[#2435a0] transition-colors 
-                          rounded-lg px-2 py-2.5 text-center cursor-pointer space-y-0.5">
+                          className="w-full bg-[#1e3a7a] hover:bg-[#2435a0] transition-colors rounded-lg px-2 py-2.5 text-center cursor-pointer space-y-0.5">
                           {eff.shifts.map((sh: ShiftSlot, si: number) => (
                             <p
                               key={si}
@@ -1383,7 +1432,7 @@ export default function ScheduleShift() {
                           onClick={(e) =>
                             openCtxMenu(e, emp, empIdx, key, dayDate)
                           }
-                          className="w-full bg-[#1e1e1e] hover:bg-[#252525] transition-colors rounded-lg px-2 py-2.5 text-center cursor-pointer">
+                          className="w-full bg-[#082040] hover:bg-[#0d2d4e] transition-colors rounded-lg px-2 py-2.5 text-center cursor-pointer">
                           <p className="text-xs font-medium text-gray-500 leading-none">
                             Not working
                           </p>
@@ -1399,7 +1448,7 @@ export default function ScheduleShift() {
       </div>
 
       {/* ── Footer note ── */}
-      <div className="mt-4 flex items-start gap-3 bg-[#051e3a] border border-[#2a2a2a] rounded-xl px-5 py-3.5">
+      <div className="mt-4 flex items-start gap-3 bg-[#051e3a] border border-[#0e3258] rounded-xl px-5 py-3.5">
         <Info
           size={16}
           className="text-gray-500 bg-indigo-950 shrink-0 mt-0.5"
@@ -1472,7 +1521,9 @@ export default function ScheduleShift() {
         <RepeatingShiftsPanel
           emp={repeatingPanel.emp}
           onClose={() => setRepeatingPanel(null)}
-          onSave={(days, config) => handleSaveRepeating(repeatingPanel.emp, days, config)}
+          onSave={(days, config) =>
+            handleSaveRepeating(repeatingPanel.emp, days, config)
+          }
           isSaving={savingSchedule}
         />
       )}
