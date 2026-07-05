@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -16,6 +16,7 @@ import {
   LucideIcon,
   Smile,
 } from "lucide-react";
+import Image from "next/image";
 
 type SubItem = { label: string; href: string };
 type NavItem = {
@@ -65,6 +66,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   useSession();
   const [flyout, setFlyout] = useState<string | null>(null);
 
@@ -98,26 +100,23 @@ export default function Sidebar() {
             justifyContent: "center",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
             flexShrink: 0,
-          }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: "linear-gradient(135deg,#7c3aed,#4f46e5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 800,
-              fontSize: 14,
-              color: "#fff",
-              letterSpacing: "-0.5px",
-            }}>
-            W
-          </div>
+          }}
+          onClick={() => router.push("/")}>
+          <Image
+            src="/wha/logo2.png"
+            alt="Whats Happening Australia Logo"
+            width={40}
+            height={40}
+          />
         </div>
 
-        <nav style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+        <nav
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            padding: "8px 0",
+          }}>
           {NAV_ITEMS.map((item) => {
             const active = isActive(item);
             const open = flyout === item.label;

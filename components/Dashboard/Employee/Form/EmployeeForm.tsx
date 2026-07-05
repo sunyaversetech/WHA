@@ -63,14 +63,14 @@ const DAYS_OF_WEEK = [
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const INP =
-  "bg-[#1c1c1c] border-[#2a2a2a] text-white placeholder:text-gray-600 " +
-  "focus-visible:ring-0 focus-visible:border-[#444] h-11 rounded-lg text-base md:text-sm";
+  "bg-white border-gray-200 text-[#051e3a] placeholder:text-gray-400 " +
+  "focus-visible:ring-0 focus-visible:border-[#051e3a] h-11 rounded-lg text-base md:text-sm";
 
-const LBL = "text-sm font-medium text-white mb-1.5 block";
+const LBL = "text-sm font-medium text-[#051e3a] mb-1.5 block";
 
 const SEL =
-  "bg-[#1c1c1c] border border-[#2a2a2a] text-white rounded-lg px-3 h-11 " +
-  "text-base md:text-sm focus:outline-none focus:border-[#444] appearance-none";
+  "bg-white border border-gray-200 text-[#051e3a] rounded-lg px-3 h-11 " +
+  "text-base md:text-sm focus:outline-none focus:border-[#051e3a] appearance-none";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -114,12 +114,18 @@ function NavItem({
       className={cn(
         "w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-between",
         activeTab === tab
-          ? "bg-[#2a2a2a] text-white"
-          : "text-gray-400 hover:text-gray-200 hover:bg-[#222]",
+          ? "bg-[#051e3a] text-white"
+          : "text-gray-500 hover:text-[#051e3a] hover:bg-gray-100",
       )}>
       {label}
       {count !== undefined && (
-        <span className="text-xs bg-[#333] text-gray-400 rounded-full w-5 h-5 flex items-center justify-center">
+        <span
+          className={cn(
+            "text-xs rounded-full w-5 h-5 flex items-center justify-center",
+            activeTab === tab
+              ? "bg-white/20 text-white"
+              : "bg-gray-100 text-gray-500",
+          )}>
           {count}
         </span>
       )}
@@ -153,25 +159,23 @@ function AddressDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       onClick={onClose}>
       <div
-        className="bg-[#1c1c1c] rounded-2xl w-full max-w-md mx-4 p-6 shadow-2xl"
+        className="bg-white rounded-2xl w-full max-w-md mx-4 p-6 shadow-2xl border border-gray-100"
         onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-white">Add address</h3>
+          <h3 className="text-lg font-bold text-[#051e3a]">Add address</h3>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-[#2a2a2a] hover:text-white transition-colors">
+            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-[#051e3a] transition-colors">
             <X size={16} />
           </button>
         </div>
 
-        {/* Address name */}
         <div className="mb-4">
-          <label className="text-sm font-medium text-white mb-1.5 block">
+          <label className="text-sm font-medium text-[#051e3a] mb-1.5 block">
             Address name
           </label>
           <input
@@ -179,42 +183,40 @@ function AddressDialog({
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             autoFocus
-            className="w-full bg-[#111] border border-[#2a2a2a] text-white rounded-lg px-4 h-11 text-base md:text-sm focus:outline-none focus:border-[#444] placeholder:text-gray-600"
+            className="w-full bg-white border border-gray-200 text-[#051e3a] rounded-lg px-4 h-11 text-base md:text-sm focus:outline-none focus:border-[#051e3a] placeholder:text-gray-400"
           />
         </div>
 
-        {/* Address */}
         <div className="mb-8">
-          <label className="text-sm font-medium text-white mb-1.5 block">
+          <label className="text-sm font-medium text-[#051e3a] mb-1.5 block">
             Address
           </label>
           <div className="relative">
             <MapPin
               size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
             />
             <input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-              className="w-full bg-[#111] border border-[#2a2a2a] text-white rounded-lg pl-10 pr-4 h-11 text-base md:text-sm focus:outline-none focus:border-[#444] placeholder:text-gray-600"
+              className="w-full bg-white border border-gray-200 text-[#051e3a] rounded-lg pl-10 pr-4 h-11 text-base md:text-sm focus:outline-none focus:border-[#051e3a] placeholder:text-gray-400"
             />
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 rounded-full bg-[#2a2a2a] text-white text-sm font-semibold hover:bg-[#333] transition-colors">
+            className="flex-1 py-3 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors">
             Cancel
           </button>
           <button
             type="button"
             onClick={handleAdd}
             disabled={!name.trim()}
-            className="flex-1 py-3 rounded-full bg-white text-black text-sm font-bold hover:bg-gray-100 transition-colors disabled:opacity-40">
+            className="flex-1 py-3 rounded-full bg-[#051e3a] text-white text-sm font-bold hover:bg-[#082040] transition-colors disabled:opacity-40">
             Add
           </button>
         </div>
@@ -254,33 +256,31 @@ function EmergencyContactDialog({
   };
 
   const inputCls =
-    "w-full bg-[#111] border border-[#2a2a2a] text-white rounded-lg px-4 h-11 " +
-    "text-base md:text-sm focus:outline-none focus:border-[#444] placeholder:text-gray-600";
+    "w-full bg-white border border-gray-200 text-[#051e3a] rounded-lg px-4 h-11 " +
+    "text-base md:text-sm focus:outline-none focus:border-[#051e3a] placeholder:text-gray-400";
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       onClick={onClose}>
       <div
-        className="bg-[#1c1c1c] rounded-2xl w-full max-w-md mx-4 p-6 shadow-2xl"
+        className="bg-white rounded-2xl w-full max-w-md mx-4 p-6 shadow-2xl border border-gray-100"
         onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-white">
+          <h3 className="text-lg font-bold text-[#051e3a]">
             Add emergency contact
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-[#2a2a2a] hover:text-white transition-colors">
+            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-[#051e3a] transition-colors">
             <X size={16} />
           </button>
         </div>
 
-        {/* Name */}
         <div className="mb-4">
-          <label className="text-sm font-medium text-white mb-1.5 block">
-            Full name <span className="text-red-400">*</span>
+          <label className="text-sm font-medium text-[#051e3a] mb-1.5 block">
+            Full name <span className="text-red-500">*</span>
           </label>
           <input
             value={name}
@@ -291,9 +291,8 @@ function EmergencyContactDialog({
           />
         </div>
 
-        {/* Relation */}
         <div className="mb-4">
-          <label className="text-sm font-medium text-white mb-1.5 block">
+          <label className="text-sm font-medium text-[#051e3a] mb-1.5 block">
             Relationship
           </label>
           <input
@@ -304,9 +303,8 @@ function EmergencyContactDialog({
           />
         </div>
 
-        {/* Phone */}
         <div className="mb-8">
-          <label className="text-sm font-medium text-white mb-1.5 block">
+          <label className="text-sm font-medium text-[#051e3a] mb-1.5 block">
             Phone number
           </label>
           <input
@@ -319,19 +317,18 @@ function EmergencyContactDialog({
           />
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 rounded-full bg-[#2a2a2a] text-white text-sm font-semibold hover:bg-[#333] transition-colors">
+            className="flex-1 py-3 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors">
             Cancel
           </button>
           <button
             type="button"
             onClick={handleAdd}
             disabled={!name.trim()}
-            className="flex-1 py-3 rounded-full bg-white text-black text-sm font-bold hover:bg-gray-100 transition-colors disabled:opacity-40">
+            className="flex-1 py-3 rounded-full bg-[#051e3a] text-white text-sm font-bold hover:bg-[#082040] transition-colors disabled:opacity-40">
             Add
           </button>
         </div>
@@ -353,7 +350,9 @@ function ChkBox({
       onClick={onToggle}
       className={cn(
         "w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors",
-        checked ? "bg-[#6B5CE7]" : "border border-[#555] hover:border-[#777]",
+        checked
+          ? "bg-[#051e3a]"
+          : "border border-gray-300 hover:border-[#051e3a]",
       )}>
       {checked && <Check size={11} className="text-white" />}
     </button>
@@ -470,7 +469,6 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
     const fd = new FormData();
     if (data._id) fd.append("_id", data._id);
 
-    // Personal info
     fd.append("full_name", data.full_name);
     if (data.email) fd.append("email", data.email);
     fd.append("phone_number", data.phone_number || "");
@@ -478,14 +476,12 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
     fd.append("country", data.country || "");
     fd.append("bio", data.bio || "");
 
-    // Birthday — format picked Date as DD/MM
     if (birthday) {
       const dd = String(birthday.getDate()).padStart(2, "0");
       const mm = String(birthday.getMonth() + 1).padStart(2, "0");
       fd.append("birthday", `${dd}/${mm}`);
     }
 
-    // Work details
     fd.append("job_title", data.job_title || "");
     fd.append("employment_type", data.employment_type || "");
     fd.append("employee_id", data.employee_id || "");
@@ -501,14 +497,14 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
       fd.append("employment_end_date", `${dd}/${mm}`);
     }
 
-    // Calendar color & status
     fd.append("calendar_color", calendarColor);
     fd.append("is_active", String(allowBookings));
-
-    // Arrays
     fd.append("addresses", JSON.stringify(addresses));
     fd.append("emergency_contacts", JSON.stringify(emergencyContacts));
-    fd.append("availability_schedule", JSON.stringify(data.availability_schedule));
+    fd.append(
+      "availability_schedule",
+      JSON.stringify(data.availability_schedule),
+    );
     fd.append(
       "service_overrides",
       JSON.stringify(selectedServices.map((id) => ({ service_id: id }))),
@@ -527,24 +523,24 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#111111] text-white flex flex-col">
+    <div className="min-h-screen bg-white text-[#051e3a] flex flex-col">
       {/* ── Top bar ── */}
-      <div className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-[#1e1e1e] shrink-0">
-        <h1 className="text-xl md:text-2xl font-bold">
+      <div className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-gray-100 shrink-0">
+        <h1 className="text-xl md:text-2xl font-bold text-[#051e3a]">
           {initialData ? "Edit team member" : "Add team member"}
         </h1>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-5 py-2 rounded-full border border-[#333] text-sm font-semibold hover:bg-[#222] transition-colors">
+            className="px-5 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
             Close
           </button>
           <button
             type="button"
             onClick={handleSubmit(onSubmit)}
             disabled={isPending}
-            className="px-5 py-2 rounded-full bg-white text-black text-sm font-bold hover:bg-gray-100 transition-colors disabled:opacity-50 flex items-center gap-2">
+            className="px-5 py-2 rounded-full bg-[#051e3a] text-white text-sm font-bold hover:bg-[#082040] transition-colors disabled:opacity-50 flex items-center gap-2">
             {isPending && <Loader2 size={14} className="animate-spin" />}
             {initialData ? "Save" : "Add"}
           </button>
@@ -552,9 +548,10 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
       </div>
 
       <div className="flex flex-1 overflow-hidden px-4 md:px-10 py-6 md:py-8 gap-8">
+        {/* ── Sidebar ── */}
         <aside className="hidden md:block w-64 shrink-0">
-          <div className="bg-[#1a1a1a] rounded-2xl p-2 space-y-0.5">
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest px-3 py-2">
+          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-2 space-y-0.5">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest px-3 py-2">
               Personal
             </p>
             <NavItem
@@ -576,9 +573,9 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               onSelect={setActiveTab}
             />
 
-            <div className="border-t border-[#2a2a2a] mx-2 my-1.5" />
+            <div className="border-t border-gray-200 mx-2 my-1.5" />
 
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest px-3 py-2">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest px-3 py-2">
               Workspace
             </p>
             <NavItem
@@ -588,7 +585,6 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               activeTab={activeTab}
               onSelect={setActiveTab}
             />
-
             <NavItem
               label="Settings"
               tab="settings"
@@ -617,8 +613,8 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               className={cn(
                 "px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap border shrink-0 transition-colors",
                 activeTab === tab
-                  ? "bg-white text-black border-white"
-                  : "border-[#333] text-gray-400",
+                  ? "bg-[#051e3a] text-white border-[#051e3a]"
+                  : "border-gray-200 text-gray-500 hover:bg-gray-50",
               )}>
               {label}
             </button>
@@ -631,15 +627,15 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
           {activeTab === "profile" && (
             <>
               <div>
-                <h2 className="text-xl font-bold">Profile</h2>
-                <p className="text-sm text-gray-400 mt-1">
+                <h2 className="text-xl font-bold text-[#051e3a]">Profile</h2>
+                <p className="text-sm text-gray-500 mt-1">
                   Manage your team member&apos;s personal profile
                 </p>
               </div>
 
               {/* Avatar */}
               <div className="relative w-24 h-24">
-                <div className="w-24 h-24 rounded-full bg-[#2d2560] flex items-center justify-center overflow-hidden">
+                <div className="w-24 h-24 rounded-full bg-[#e8edf5] flex items-center justify-center overflow-hidden">
                   {previewUrl ? (
                     <Image
                       src={previewUrl}
@@ -649,14 +645,14 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <User size={40} className="text-[#9580d4]" />
+                    <User size={40} className="text-[#051e3a]/40" />
                   )}
                 </div>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-0.5 right-0.5 w-7 h-7 rounded-full bg-[#1c1c1c] border border-[#333] flex items-center justify-center hover:bg-[#2a2a2a] transition-colors">
-                  <Pencil size={12} className="text-gray-300" />
+                  className="absolute bottom-0.5 right-0.5 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm">
+                  <Pencil size={12} className="text-[#051e3a]" />
                 </button>
                 <input
                   ref={fileInputRef}
@@ -673,22 +669,18 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                 />
               </div>
 
-              {/* First / Last name */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Full name */}
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className={LBL}>
-                    First name <span className="text-red-400">*</span>
+                    Full Name <span className="text-red-500">*</span>
                   </label>
                   <Input {...register("full_name")} className={INP} />
                   {errors.full_name && (
-                    <p className="text-xs text-red-400 mt-1">
+                    <p className="text-xs text-red-500 mt-1">
                       {errors.full_name.message}
                     </p>
                   )}
-                </div>
-                <div>
-                  <label className={LBL}>Last name</label>
-                  <Input className={INP} />
                 </div>
               </div>
 
@@ -696,11 +688,11 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={LBL}>
-                    Email <span className="text-red-400">*</span>
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <Input {...register("email")} type="email" className={INP} />
                   {errors.email && (
-                    <p className="text-xs text-red-400 mt-1">
+                    <p className="text-xs text-red-500 mt-1">
                       {errors.email.message}
                     </p>
                   )}
@@ -776,7 +768,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                       className={cn(
                         "w-9 h-9 rounded-full transition-all",
                         calendarColor === color &&
-                          "ring-2 ring-white ring-offset-2 ring-offset-[#111]",
+                          "ring-2 ring-[#051e3a] ring-offset-2 ring-offset-white",
                       )}
                       style={{ background: color }}
                     />
@@ -788,23 +780,24 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               <div>
                 <label className={LBL}>Job title</label>
                 <Input className={INP} />
-                <p className="text-xs text-gray-500 mt-1.5">
+                <p className="text-xs text-gray-400 mt-1.5">
                   Visible to clients online
                 </p>
               </div>
 
-              <div className="border-t border-[#2a2a2a]" />
+              <div className="border-t border-gray-100" />
 
               {/* Work details */}
               <div>
-                <h2 className="text-xl font-bold">Work details</h2>
-                <p className="text-sm text-gray-400 mt-1">
+                <h2 className="text-xl font-bold text-[#051e3a]">
+                  Work details
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
                   Manage your team member&apos;s start date, and employment
                   details
                 </p>
               </div>
 
-              {/* Start date / Year */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={LBL}>Start date</label>
@@ -820,7 +813,6 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                 </div>
               </div>
 
-              {/* End date / Year */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={LBL}>End date</label>
@@ -836,7 +828,6 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                 </div>
               </div>
 
-              {/* Employment type / Team member ID */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={LBL}>Employment type</label>
@@ -851,7 +842,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                 <div>
                   <label className={LBL}>Team member ID</label>
                   <Input className={INP} />
-                  <p className="text-xs text-gray-500 mt-1.5">
+                  <p className="text-xs text-gray-400 mt-1.5">
                     An identifier used for external systems like payroll
                   </p>
                 </div>
@@ -860,10 +851,10 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               {/* Notes */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-medium text-white">
+                  <label className="text-sm font-medium text-[#051e3a]">
                     Notes
                   </label>
-                  <span className="text-xs text-gray-500">{noteLen}/1000</span>
+                  <span className="text-xs text-gray-400">{noteLen}/1000</span>
                 </div>
                 <Textarea
                   {...register("bio", {
@@ -871,7 +862,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                   })}
                   maxLength={1000}
                   placeholder="Add a private note only viewable in the team member list"
-                  className="bg-[#1c1c1c] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-0 focus-visible:border-[#444] rounded-lg min-h-30 resize-none text-sm"
+                  className="bg-white border-gray-200 text-[#051e3a] placeholder:text-gray-400 focus-visible:ring-0 focus-visible:border-[#051e3a] rounded-lg min-h-30 resize-none text-sm"
                 />
               </div>
             </>
@@ -881,23 +872,22 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
           {activeTab === "addresses" && (
             <>
               <div>
-                <h2 className="text-xl font-bold">Addresses</h2>
-                <p className="text-sm text-gray-400 mt-1">
+                <h2 className="text-xl font-bold text-[#051e3a]">Addresses</h2>
+                <p className="text-sm text-gray-500 mt-1">
                   Manage your team member&apos;s correspondence addresses.
                 </p>
               </div>
 
-              {/* Saved address cards */}
               {addresses.map((addr, i) => (
                 <div
                   key={i}
-                  className="flex items-start justify-between bg-[#1a1a1a] rounded-xl px-4 py-3.5 border border-[#2a2a2a]">
+                  className="flex items-start justify-between bg-gray-50 rounded-xl px-4 py-3.5 border border-gray-100">
                   <div>
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-semibold text-[#051e3a]">
                       {addr.name}
                     </p>
                     {addr.address && (
-                      <p className="text-sm text-gray-400 mt-0.5">
+                      <p className="text-sm text-gray-500 mt-0.5">
                         {addr.address}
                       </p>
                     )}
@@ -907,7 +897,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                     onClick={() =>
                       setAddresses((p) => p.filter((_, j) => j !== i))
                     }
-                    className="text-[#6B5CE7] text-sm font-semibold hover:opacity-70 transition-opacity shrink-0 ml-4">
+                    className="text-[#051e3a] text-sm font-semibold hover:opacity-60 transition-opacity shrink-0 ml-4">
                     Remove
                   </button>
                 </div>
@@ -916,7 +906,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               <button
                 type="button"
                 onClick={() => setShowAddressModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#333] text-sm font-semibold hover:bg-[#1e1e1e] transition-colors">
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
                 <Plus size={16} />
                 Add an address
               </button>
@@ -933,24 +923,27 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
           {activeTab === "emergency" && (
             <>
               <div>
-                <h2 className="text-xl font-bold">Emergency Contacts</h2>
-                <p className="text-sm text-gray-400 mt-1">
+                <h2 className="text-xl font-bold text-[#051e3a]">
+                  Emergency Contacts
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
                   Manage your team members&apos; emergency contacts.
                 </p>
               </div>
 
-              {/* Saved contact cards */}
               {emergencyContacts.map((c, i) => (
                 <div
                   key={i}
-                  className="flex items-start justify-between bg-[#1a1a1a] rounded-xl px-4 py-3.5 border border-[#2a2a2a]">
+                  className="flex items-start justify-between bg-gray-50 rounded-xl px-4 py-3.5 border border-gray-100">
                   <div className="space-y-0.5">
-                    <p className="text-sm font-semibold text-white">{c.name}</p>
+                    <p className="text-sm font-semibold text-[#051e3a]">
+                      {c.name}
+                    </p>
                     {c.relation && (
-                      <p className="text-xs text-gray-400">{c.relation}</p>
+                      <p className="text-xs text-gray-500">{c.relation}</p>
                     )}
                     {c.phone && (
-                      <p className="text-xs text-gray-500">{c.phone}</p>
+                      <p className="text-xs text-gray-400">{c.phone}</p>
                     )}
                   </div>
                   <button
@@ -958,7 +951,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                     onClick={() =>
                       setEmergencyContacts((p) => p.filter((_, j) => j !== i))
                     }
-                    className="text-[#6B5CE7] text-sm font-semibold hover:opacity-70 transition-opacity shrink-0 ml-4">
+                    className="text-[#051e3a] text-sm font-semibold hover:opacity-60 transition-opacity shrink-0 ml-4">
                     Remove
                   </button>
                 </div>
@@ -967,7 +960,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               <button
                 type="button"
                 onClick={() => setShowEmergencyModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#333] text-sm font-semibold hover:bg-[#1e1e1e] transition-colors">
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
                 <Plus size={16} />
                 Add an emergency contact
               </button>
@@ -984,8 +977,8 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
           {activeTab === "services" && (
             <>
               <div>
-                <h2 className="text-xl font-bold">Services</h2>
-                <p className="text-sm text-gray-400 mt-1">
+                <h2 className="text-xl font-bold text-[#051e3a]">Services</h2>
+                <p className="text-sm text-gray-500 mt-1">
                   Choose the services this team member provides
                 </p>
               </div>
@@ -993,7 +986,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               <div className="relative">
                 <Search
                   size={15}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                 />
                 <Input
                   value={serviceSearch}
@@ -1004,11 +997,10 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               </div>
 
               <div className="space-y-1">
-                {/* All services */}
                 <button
                   type="button"
                   onClick={toggleAll}
-                  className="w-full flex items-center gap-3 py-3 px-2 hover:bg-[#1a1a1a] rounded-xl transition-colors">
+                  className="w-full flex items-center gap-3 py-3 px-2 hover:bg-gray-50 rounded-xl transition-colors">
                   <ChkBox
                     checked={
                       allServices.length > 0 &&
@@ -1016,13 +1008,14 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                     }
                     onToggle={toggleAll}
                   />
-                  <span className="font-semibold text-white">All services</span>
-                  <span className="text-xs bg-[#2a2a2a] text-gray-400 rounded-full px-2 py-0.5">
+                  <span className="font-semibold text-[#051e3a]">
+                    All services
+                  </span>
+                  <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">
                     {allServices.length}
                   </span>
                 </button>
 
-                {/* By category */}
                 {Object.entries(filteredByCategory).map(([cat, svcs]) => {
                   const catIds = svcs.map((s) => s._id);
                   const catAllSel = catIds.every((id) =>
@@ -1033,15 +1026,15 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                       <button
                         type="button"
                         onClick={() => toggleCategory(catIds)}
-                        className="w-full flex items-center gap-3 py-2.5 px-2 hover:bg-[#1a1a1a] rounded-xl transition-colors mt-1">
+                        className="w-full flex items-center gap-3 py-2.5 px-2 hover:bg-gray-50 rounded-xl transition-colors mt-1">
                         <ChkBox
                           checked={catAllSel}
                           onToggle={() => toggleCategory(catIds)}
                         />
-                        <span className="font-semibold text-white capitalize">
+                        <span className="font-semibold text-[#051e3a] capitalize">
                           {cat}
                         </span>
-                        <span className="text-xs bg-[#2a2a2a] text-gray-400 rounded-full px-2 py-0.5">
+                        <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">
                           {svcs.length}
                         </span>
                       </button>
@@ -1051,23 +1044,23 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                           key={svc._id}
                           type="button"
                           onClick={() => toggleService(svc._id)}
-                          className="w-full flex items-center gap-3 py-3 pl-10 pr-2 hover:bg-[#1a1a1a] rounded-xl transition-colors">
+                          className="w-full flex items-center gap-3 py-3 pl-10 pr-2 hover:bg-gray-50 rounded-xl transition-colors">
                           <ChkBox
                             checked={selectedServices.includes(svc._id)}
                             onToggle={() => toggleService(svc._id)}
                           />
                           <div className="flex-1 text-left">
-                            <p className="text-sm font-medium text-white">
+                            <p className="text-sm font-medium text-[#051e3a]">
                               {svc.name}
                             </p>
                             {svc.base_duration > 0 && (
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-gray-400">
                                 {fmtDuration(svc.base_duration)}
                               </p>
                             )}
                           </div>
                           {svc.base_price > 0 && (
-                            <span className="text-sm text-gray-400 shrink-0">
+                            <span className="text-sm text-gray-500 shrink-0">
                               NPR {svc.base_price}
                             </span>
                           )}
@@ -1078,7 +1071,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                 })}
 
                 {allServices.length === 0 && (
-                  <p className="text-sm text-gray-500 px-2 py-4">
+                  <p className="text-sm text-gray-400 px-2 py-4">
                     No services found.
                   </p>
                 )}
@@ -1090,12 +1083,12 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
           {activeTab === "locations" && (
             <>
               <div>
-                <h2 className="text-xl font-bold">Locations</h2>
-                <p className="text-sm text-gray-400 mt-1">
+                <h2 className="text-xl font-bold text-[#051e3a]">Locations</h2>
+                <p className="text-sm text-gray-500 mt-1">
                   Choose the locations this team member works at
                 </p>
               </div>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-400">
                 No locations configured yet.
               </p>
             </>
@@ -1105,8 +1098,10 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
           {activeTab === "settings" && (
             <>
               <div>
-                <h2 className="text-xl font-bold">Appointment settings</h2>
-                <p className="text-sm text-gray-400 mt-1">
+                <h2 className="text-xl font-bold text-[#051e3a]">
+                  Appointment settings
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
                   Choose if this team member is bookable on the calendar
                 </p>
               </div>
@@ -1116,15 +1111,15 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                   id="allowBookings"
                   checked={allowBookings}
                   onCheckedChange={(v) => setAllowBookings(!!v)}
-                  className="border-[#555] data-[state=checked]:bg-[#6B5CE7] data-[state=checked]:border-[#6B5CE7] mt-0.5"
+                  className="border-gray-300 data-[state=checked]:bg-[#051e3a] data-[state=checked]:border-[#051e3a] mt-0.5"
                 />
                 <div>
                   <label
                     htmlFor="allowBookings"
-                    className="text-sm font-semibold text-white cursor-pointer">
+                    className="text-sm font-semibold text-[#051e3a] cursor-pointer">
                     Allow calendar bookings
                   </label>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     Allow this team member to receive bookings on the calendar
                   </p>
                 </div>

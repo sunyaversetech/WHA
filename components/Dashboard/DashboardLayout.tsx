@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import Sidebar from "../ResuableComponents/Sidebar";
@@ -7,10 +7,20 @@ import UserSidebar from "../ResuableComponents/User-Sidebar";
 import {
   Search,
   Bell,
-  ChevronRight,
   BarChart2,
   MessageCircle,
+  ChevronRight,
+  X,
+  Star,
+  Tag,
+  Zap,
+  CalendarDays,
+  CalendarX2,
+  UserPlus,
+  CircleDollarSign,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const PROTECTED_PATHS = [
   "/dashboard/bookings",
@@ -20,6 +30,374 @@ const PROTECTED_PATHS = [
   "/dashboard/complete-profile",
 ];
 
+// ── Types ──────────────────────────────────────────────────────────────────────
+type NotifCategory =
+  | "Appointments"
+  | "Reviews"
+  | "Tips"
+  | "Online sales"
+  | "Actions";
+
+// ── Static demo data ───────────────────────────────────────────────────────────
+const NOTIF_CATEGORIES: { label: NotifCategory; icon: React.ReactNode }[] = [
+  { label: "Appointments", icon: <CalendarDays size={18} /> },
+  { label: "Reviews", icon: <Star size={18} /> },
+  { label: "Tips", icon: <CircleDollarSign size={18} /> },
+  { label: "Online sales", icon: <Tag size={18} /> },
+  { label: "Actions", icon: <Zap size={18} /> },
+];
+
+const SAMPLE_NOTIFICATIONS = [
+  {
+    id: 1,
+    category: "Appointments" as NotifCategory,
+    title: "New appointment (DEMO)",
+    time: "5 days ago",
+    body: "12:00 Tue, Jun 30 Blow Dry for Jack booked with Wendy",
+    initials: "J",
+  },
+  {
+    id: 2,
+    category: "Appointments" as NotifCategory,
+    title: "New appointment (DEMO)",
+    time: "5 days ago",
+    body: "13:00 Tue, Jun 30 Hair Color for Jane booked with you",
+    initials: "J",
+  },
+  {
+    id: 3,
+    category: "Appointments" as NotifCategory,
+    title: "New appointment (DEMO)",
+    time: "5 days ago",
+    body: "11:00 Tue, Jun 30 Haircut for John booked with you",
+    initials: "J",
+  },
+];
+
+const SAMPLE_CLIENTS = [
+  { id: 1, name: "Jack Doe", email: "jack@example.com" },
+  { id: 2, name: "Jane Doe", email: "jane@example.com" },
+  { id: 3, name: "John Doe", email: "john@example.com" },
+];
+
+// ── Sub-components (defined outside main to satisfy React Compiler) ────────────
+
+function TopBarBtn({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+      {children}
+    </button>
+  );
+}
+
+// ── Profile Dropdown ───────────────────────────────────────────────────────────
+function ProfileDropdown({
+  name,
+  onClose,
+  profileImg,
+}: {
+  name: string;
+  onClose: () => void;
+  profileImg: string;
+}) {
+  const initials = name.slice(0, 2).toUpperCase();
+
+  return (
+    <>
+      {/* invisible backdrop */}
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+
+      <div className="absolute right-0 top-11 w-72 bg-[#1c1c1c] rounded-2xl shadow-2xl overflow-hidden z-50 border border-[#2a2a2a]">
+        {/* User info */}
+        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <div className="w-10 h-10 rounded-full bg-[#3d6b8f] flex items-center justify-center text-sm font-bold text-white shrink-0">
+            {profileImg ? (
+              <Image
+                src={profileImg}
+                alt="Profile picture"
+                className="object-cover w-9 h-9 rounded-full"
+                width={50}
+                height={50}
+              />
+            ) : (
+              `${initials}`
+            )}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white">{name}</p>
+            <p className="text-xs text-gray-400">No reviews yet</p>
+          </div>
+        </div>
+
+        {/* Verify email card */}
+        <div className="mx-3 mb-2 bg-[#2d1c0a] border border-[#4a2e0d] rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-[#361f09] transition-colors">
+          <div>
+            <p className="text-sm font-semibold text-white">
+              Verify your email address
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">Secure your account</p>
+          </div>
+          <ChevronRight size={16} className="text-gray-400 shrink-0 ml-2" />
+        </div>
+
+        {/* Top menu */}
+        <div className="py-1">
+          {["My profile", "Personal settings"].map((item) => (
+            <button
+              key={item}
+              type="button"
+              className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-[#252525] transition-colors">
+              {item}
+            </button>
+          ))}
+        </div>
+
+        <div className="h-px bg-[#2a2a2a] mx-0" />
+
+        {/* Bottom menu */}
+        <div className="py-1">
+          {["Help and support", "English (US) us"].map((item) => (
+            <button
+              key={item}
+              type="button"
+              className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-[#252525] transition-colors">
+              {item}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-[#252525] transition-colors">
+            Log out
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Search Overlay ─────────────────────────────────────────────────────────────
+function SearchOverlay({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 30);
+  }, [open]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    if (open) document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-[#0d0d0d] flex flex-col">
+      {/* Close */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-6 right-6 w-10 h-10 rounded-full border border-[#333] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#555] transition-colors">
+        <X size={18} />
+      </button>
+
+      {/* Search input area */}
+      <div className="flex-1 flex flex-col justify-start pt-24 px-8 md:px-16 max-w-6xl w-full mx-auto">
+        <div className="border-b border-[#2a2a2a] pb-3 mb-3">
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="What are you looking for?"
+            className="w-full bg-transparent text-3xl md:text-5xl font-light text-white placeholder:text-gray-600 outline-none"
+          />
+        </div>
+        <p className="text-sm text-gray-500 mb-10">
+          Search by client name, mobile, email or booking reference
+        </p>
+
+        {/* Results */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-300 mb-4">
+              Upcoming appointments
+            </h3>
+            <p className="text-sm text-gray-500">None found</p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-gray-300 mb-4">
+              Clients (recently added)
+            </h3>
+            <div className="space-y-4">
+              {SAMPLE_CLIENTS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className="flex items-center gap-3 w-full hover:opacity-75 transition-opacity text-left">
+                  <div className="w-10 h-10 rounded-full bg-[#3a4580] flex items-center justify-center text-sm font-bold text-white shrink-0">
+                    {c.name[0]}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{c.name}</p>
+                    <p className="text-xs text-gray-400">{c.email}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Notification Drawer ────────────────────────────────────────────────────────
+function NotificationDrawer({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [category, setCategory] = useState<NotifCategory>("Appointments");
+  const filtered = SAMPLE_NOTIFICATIONS.filter((n) => n.category === category);
+
+  if (!open) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
+
+      {/* Drawer panel */}
+      <div
+        className="fixed top-0 right-0 bottom-0 z-50 flex shadow-2xl"
+        style={{ width: "min(780px, 100vw)" }}>
+        {/* Left panel — scheduled shifts */}
+        <div className="hidden md:flex w-[260px] shrink-0 bg-[#111111] border-r border-[#1e1e1e] flex-col items-center justify-center px-6 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#222] flex items-center justify-center mb-4">
+            <CalendarX2 size={30} className="text-gray-500" />
+          </div>
+          <h3 className="text-base font-bold text-white mb-2">
+            No scheduled team members
+          </h3>
+          <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+            Add availability to your team by managing your scheduled shifts
+          </p>
+          <div className="flex flex-col gap-2 w-full">
+            <button
+              type="button"
+              className="w-full py-2.5 rounded-full bg-[#2a2a2a] text-sm font-semibold text-white hover:bg-[#333] transition-colors">
+              Scheduled shifts
+            </button>
+            <button
+              type="button"
+              className="w-full py-2.5 rounded-full border border-[#3a3a3a] text-sm font-semibold text-white hover:bg-[#1a1a1a] transition-colors">
+              View all team members
+            </button>
+          </div>
+        </div>
+
+        {/* Right panel — notifications */}
+        <div className="flex-1 bg-[#141414] flex flex-col overflow-hidden">
+          {/* Category header */}
+          <div className="flex items-center gap-2 px-3 py-3 border-b border-[#1e1e1e] shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-full border border-[#333] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#555] transition-colors shrink-0">
+              <X size={14} />
+            </button>
+
+            <div className="flex gap-0.5 overflow-x-auto [scrollbar-width:none]">
+              {NOTIF_CATEGORIES.map(({ label, icon }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setCategory(label)}
+                  className={cn(
+                    "flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors shrink-0",
+                    category === label
+                      ? "text-[#7b97ff] bg-[#1a2048]"
+                      : "text-gray-500 hover:text-gray-200 hover:bg-[#1e1e1e]",
+                  )}>
+                  {icon}
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Notification items */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {filtered.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center mt-10">
+                No notifications
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest px-1 mb-3">
+                  Read
+                </p>
+                {filtered.map((n) => (
+                  <div
+                    key={n.id}
+                    className="flex items-start gap-3 bg-[#1a1a1a] rounded-xl px-4 py-3.5 border border-[#222] cursor-pointer hover:bg-[#1e1e1e] transition-colors">
+                    {/* Avatar */}
+                    <div className="relative shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-[#3a4580] flex items-center justify-center text-sm font-bold text-white">
+                        {n.initials}
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-[18px] h-[18px] rounded-full bg-[#4f63d2] border-2 border-[#141414] flex items-center justify-center">
+                        <CalendarDays size={9} className="text-white" />
+                      </div>
+                    </div>
+                    {/* Text */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-white leading-snug">
+                          {n.title}
+                        </p>
+                        <span className="text-[11px] text-gray-500 shrink-0 mt-0.5">
+                          {n.time}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+                        {n.body}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Main layout ────────────────────────────────────────────────────────────────
 export default function DashboardLayoutContent({
   children,
 }: {
@@ -28,6 +406,10 @@ export default function DashboardLayoutContent({
   const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
+
+  const [showProfile, setShowProfile] = useState(false);
+  const [showNotif, setShowNotif] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     if (session?.user?.isblocked) router.push("/blocked");
@@ -38,98 +420,84 @@ export default function DashboardLayoutContent({
   }, [pathname, session, router]);
 
   const isBusiness = session?.user?.category === "business";
+  const displayName =
+    session?.user?.name ?? (session?.user as any)?.business_name ?? "User";
+  const displayImage =
+    session?.user?.image ?? (session?.user as any)?.business_image ?? null;
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f3f4f6" }}>
-      {/* Sidebar — stays dark */}
+    <div className="flex min-h-screen ">
+      {/* Sidebar */}
       <div className="hidden md:block">
         {isBusiness ? <Sidebar /> : <UserSidebar />}
       </div>
 
-      {/* Main area */}
+      {/* Content area */}
       <div className="flex flex-col flex-1 min-h-screen">
         <div className="hidden md:block" style={{ marginLeft: 60 }}>
           {isBusiness && (
             <header
-              style={{
-                height: 60,
-                background: "#ffffff",
-                borderBottom: "1px solid #e5e7eb",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "0 24px",
-                position: "sticky",
-                top: 0,
-                zIndex: 30,
-              }}>
-              <button
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  background: "linear-gradient(135deg,#7c3aed,#4f46e5)",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 9999,
-                  padding: "8px 16px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  letterSpacing: "-0.1px",
-                }}>
-                <Bell size={14} />
-                Continue setup
-                <ChevronRight size={14} />
-              </button>
+              className="h-[60px] bg-[#111111]  flex items-center justify-end px-5 sticky top-0 z-30 border-b 
+            border-[#1e1e1e]">
+              {/* Activate plan */}
 
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <IconBtn icon={<Search size={18} />} />
-                <IconBtn icon={<BarChart2 size={18} />} />
-                <div style={{ position: "relative" }}>
-                  <IconBtn icon={<Bell size={18} />} />
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: 6,
-                      right: 6,
-                      width: 16,
-                      height: 16,
-                      borderRadius: "50%",
-                      background: "#ef4444",
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: "#fff",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: "2px solid #fff",
-                    }}>
+              {/* Icon row */}
+              <div className="flex items-center gap-0.5">
+                <TopBarBtn onClick={() => setShowSearch(true)}>
+                  <Search size={18} />
+                </TopBarBtn>
+
+                <TopBarBtn onClick={() => {}}>
+                  <BarChart2 size={18} />
+                </TopBarBtn>
+
+                {/* Bell with badge */}
+                <div className="relative">
+                  <TopBarBtn onClick={() => setShowNotif(true)}>
+                    <Bell size={18} />
+                  </TopBarBtn>
+                  <span className="absolute top-1 right-1 w-[17px] h-[17px] rounded-full bg-red-500 text-[9px] font-bold text-white flex items-center justify-center border-2 border-[#111111] pointer-events-none">
                     3
                   </span>
                 </div>
-                <IconBtn icon={<MessageCircle size={18} />} />
-                <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg,#7c3aed,#4f46e5)",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "#fff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  title="Sign out">
-                  {(session?.user?.name ?? session?.user?.business_name ?? "U")
-                    .slice(0, 2)
-                    .toUpperCase()}
-                </button>
+
+                <TopBarBtn onClick={() => {}}>
+                  <MessageCircle size={18} />
+                </TopBarBtn>
+
+                {/* Avatar + profile dropdown */}
+                <div className="relative ml-1">
+                  {displayImage ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowProfile((p) => !p)}
+                      className=" rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-[11px] font-bold text-white hover:opacity-90 transition-opacity">
+                      <Image
+                        src={displayImage}
+                        alt="Profile picture"
+                        className="object-cover w-9 h-9 rounded-full"
+                        width={50}
+                        height={50}
+                      />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowProfile((p) => !p)}
+                      className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-[11px] font-bold text-white hover:opacity-90 transition-opacity">
+                      {initials}
+                    </button>
+                  )}
+
+                  {showProfile && (
+                    <ProfileDropdown
+                      name={displayName}
+                      onClose={() => setShowProfile(false)}
+                      profileImg={displayImage}
+                    />
+                  )}
+                </div>
               </div>
             </header>
           )}
@@ -139,35 +507,21 @@ export default function DashboardLayoutContent({
           </main>
         </div>
 
-        <div
-          className="md:hidden flex flex-col flex-1 bg-white"
-          style={{ padding: 20 }}>
+        <div className="md:hidden flex flex-col flex-1 bg-white p-5">
           <main>{children}</main>
         </div>
       </div>
-    </div>
-  );
-}
 
-function IconBtn({ icon }: { icon: React.ReactNode }) {
-  return (
-    <button
-      style={{
-        width: 36,
-        height: 36,
-        borderRadius: 9999,
-        border: "none",
-        background: "#f3f4f6",
-        color: "#6b7280",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        transition: "background .15s",
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "#e5e7eb")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = "#f3f4f6")}>
-      {icon}
-    </button>
+      {/* Overlays */}
+      <SearchOverlay
+        key={String(showSearch)}
+        open={showSearch}
+        onClose={() => setShowSearch(false)}
+      />
+      <NotificationDrawer
+        open={showNotif}
+        onClose={() => setShowNotif(false)}
+      />
+    </div>
   );
 }

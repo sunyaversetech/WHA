@@ -31,7 +31,7 @@ export default function DashboardNavbar() {
   const pathname = usePathname();
 
   return (
-    <nav className="h-0!  p-0! hidden md:flex fixed top-0 left-0 right-0 z-50 ml-20 md:ml-56  items-center justify-between px-6 py-3 border-b bg-white shadow-sm">
+    <nav>
       {/* <div className="flex items-center gap-4">
         <div className="hidden md:block">
           <LiveDateTime />
