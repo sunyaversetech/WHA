@@ -25,7 +25,6 @@ import { cn } from "@/lib/utils";
 import { EmployeeFormValues, employeeSchema, IEmployee } from "./schema";
 import { useCreateOrUpdateEmployee } from "@/services/employee.service";
 import { useGetServices } from "@/services/services.service";
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CALENDAR_COLORS = [
@@ -83,6 +82,14 @@ type Tab =
   | "settings";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function parseDateString(ddMM?: string, year?: number | null): Date | null {
+  if (!ddMM) return null;
+  const [dd, mm] = ddMM.split("/");
+  if (!dd || !mm) return null;
+  const y = year ?? new Date().getFullYear();
+  return new Date(y, parseInt(mm, 10) - 1, parseInt(dd, 10));
+}
 
 function fmtDuration(min: number) {
   if (!min) return "";
@@ -370,25 +377,52 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
   const { mutate, isPending } = useCreateOrUpdateEmployee();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ── UI state ──
+  // ── UI state — lazy-initialized from initialData so no useEffect needed ──
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [previewUrl, setPreviewUrl] = useState(
     initialData?.employee_photo || "",
   );
-  const [calendarColor, setCalendarColor] = useState(CALENDAR_COLORS[0]);
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [calendarColor, setCalendarColor] = useState(
+    () => initialData?.calendar_color ?? CALENDAR_COLORS[0],
+  );
+  const [selectedServices, setSelectedServices] = useState<string[]>(
+    () =>
+      initialData?.service_overrides
+        ?.map((s: any) =>
+          typeof s.service_id === "string"
+            ? s.service_id
+            : s.service_id?.toString(),
+        )
+        .filter(Boolean) ?? [],
+  );
   const [serviceSearch, setServiceSearch] = useState("");
-  const [allowBookings, setAllowBookings] = useState(true);
-  const [noteLen, setNoteLen] = useState(0);
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [allowBookings, setAllowBookings] = useState(
+    () => initialData?.is_active ?? true,
+  );
+  const [noteLen, setNoteLen] = useState(() => initialData?.bio?.length ?? 0);
+  const [addresses, setAddresses] = useState<Address[]>(
+    () => (initialData?.addresses as any) ?? [],
+  );
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [emergencyContacts, setEmergencyContacts] = useState<
     EmergencyContact[]
-  >([]);
+  >(() => (initialData?.emergency_contacts as any) ?? []);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
-  const [birthday, setBirthday] = useState<Date | null>(null);
-  const [workStartDate, setWorkStartDate] = useState<Date | null>(null);
-  const [workEndDate, setWorkEndDate] = useState<Date | null>(null);
+  const [birthday, setBirthday] = useState<Date | null>(() =>
+    parseDateString(initialData?.birthday, initialData?.birth_year ?? null),
+  );
+  const [workStartDate, setWorkStartDate] = useState<Date | null>(() =>
+    parseDateString(
+      initialData?.employment_start_date,
+      initialData?.employment_start_year ?? null,
+    ),
+  );
+  const [workEndDate, setWorkEndDate] = useState<Date | null>(() =>
+    parseDateString(
+      initialData?.employment_end_date,
+      initialData?.employment_end_year ?? null,
+    ),
+  );
 
   const { data: servicesData } = useGetServices();
   const allServices = useMemo(
@@ -440,13 +474,26 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
       ? {
           _id: initialData._id,
           full_name: initialData.full_name,
-          email: initialData.email || "",
-          phone_number: initialData.phone_number || "",
-          bio: initialData.bio || "",
-          employee_photo: initialData.employee_photo || "",
+          email: initialData.email ?? "",
+          phone_number: initialData.phone_number ?? "",
+          additional_phone_number: initialData.additional_phone_number ?? "",
+          country: initialData.country ?? "",
+          birthday: initialData.birthday ?? "",
+          birth_year: initialData.birth_year,
+          job_title: initialData.job_title ?? "",
+          employment_type: initialData.employment_type ?? "",
+          employment_start_date: initialData.employment_start_date ?? "",
+          employment_start_year: initialData.employment_start_year,
+          employment_end_date: initialData.employment_end_date ?? "",
+          employment_end_year: initialData.employment_end_year,
+          employee_id: initialData.employee_id ?? "",
+          bio: initialData.bio ?? "",
+          addresses: (initialData.addresses as any) ?? [],
+          emergency_contacts: (initialData.emergency_contacts as any) ?? [],
+          service_overrides: initialData.service_overrides ?? [],
+          availability_schedule: initialData.availability_schedule ?? [],
+          employee_photo: initialData.employee_photo ?? "",
           is_active: initialData.is_active,
-          availability_schedule: initialData.availability_schedule || [],
-          service_overrides: initialData.service_overrides || [],
         }
       : {
           full_name: "",
@@ -481,6 +528,9 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
       const mm = String(birthday.getMonth() + 1).padStart(2, "0");
       fd.append("birthday", `${dd}/${mm}`);
     }
+    if (data.birth_year && !isNaN(data.birth_year)) {
+      fd.append("birth_year", String(data.birth_year));
+    }
 
     fd.append("job_title", data.job_title || "");
     fd.append("employment_type", data.employment_type || "");
@@ -491,10 +541,16 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
       const mm = String(workStartDate.getMonth() + 1).padStart(2, "0");
       fd.append("employment_start_date", `${dd}/${mm}`);
     }
+    if (data.employment_start_year && !isNaN(data.employment_start_year)) {
+      fd.append("employment_start_year", String(data.employment_start_year));
+    }
     if (workEndDate) {
       const dd = String(workEndDate.getDate()).padStart(2, "0");
       const mm = String(workEndDate.getMonth() + 1).padStart(2, "0");
       fd.append("employment_end_date", `${dd}/${mm}`);
+    }
+    if (data.employment_end_year && !isNaN(data.employment_end_year)) {
+      fd.append("employment_end_year", String(data.employment_end_year));
     }
 
     fd.append("calendar_color", calendarColor);
@@ -723,19 +779,24 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                         <option key={c}>{c}</option>
                       ))}
                     </select>
-                    <Input className={cn(INP, "flex-1")} />
+                    <Input
+                      {...register("additional_phone_number")}
+                      className={cn(INP, "flex-1")}
+                    />
                   </div>
                 </div>
                 <div>
                   <label className={LBL}>Country</label>
-                  <select className={cn(SEL, "w-full text-gray-400")}>
+                  <select
+                    {...register("country")}
+                    className={cn(SEL, "w-full")}>
                     <option value="">Select country</option>
-                    <option>Australia</option>
-                    <option>Nepal</option>
-                    <option>India</option>
-                    <option>United States</option>
-                    <option>United Kingdom</option>
-                    <option>New Zealand</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Nepal">Nepal</option>
+                    <option value="India">India</option>
+                    <option value="United States">United States</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="New Zealand">New Zealand</option>
                   </select>
                 </div>
               </div>
@@ -752,7 +813,12 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                 </div>
                 <div>
                   <label className={LBL}>Year</label>
-                  <Input placeholder="Year" className={INP} />
+                  <Input
+                    {...register("birth_year", { valueAsNumber: true })}
+                    type="number"
+                    placeholder="e.g. 1995"
+                    className={INP}
+                  />
                 </div>
               </div>
 
@@ -779,7 +845,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               {/* Job title */}
               <div>
                 <label className={LBL}>Job title</label>
-                <Input className={INP} />
+                <Input {...register("job_title")} className={INP} />
                 <p className="text-xs text-gray-400 mt-1.5">
                   Visible to clients online
                 </p>
@@ -809,7 +875,14 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                 </div>
                 <div>
                   <label className={LBL}>Year</label>
-                  <Input placeholder="Year" className={INP} />
+                  <Input
+                    {...register("employment_start_year", {
+                      valueAsNumber: true,
+                    })}
+                    type="number"
+                    placeholder="e.g. 2022"
+                    className={INP}
+                  />
                 </div>
               </div>
 
@@ -824,24 +897,33 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                 </div>
                 <div>
                   <label className={LBL}>Year</label>
-                  <Input placeholder="Year" className={INP} />
+                  <Input
+                    {...register("employment_end_year", {
+                      valueAsNumber: true,
+                    })}
+                    type="number"
+                    placeholder="e.g. 2025"
+                    className={INP}
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={LBL}>Employment type</label>
-                  <select className={cn(SEL, "w-full text-gray-400")}>
+                  <select
+                    {...register("employment_type")}
+                    className={cn(SEL, "w-full")}>
                     <option value="">Select an option</option>
-                    <option>Full-time</option>
-                    <option>Part-time</option>
-                    <option>Casual</option>
-                    <option>Contractor</option>
+                    <option value="full-time">Full-time</option>
+                    <option value="part-time">Part-time</option>
+                    <option value="casual">Casual</option>
+                    <option value="contractor">Contractor</option>
                   </select>
                 </div>
                 <div>
                   <label className={LBL}>Team member ID</label>
-                  <Input className={INP} />
+                  <Input {...register("employee_id")} className={INP} />
                   <p className="text-xs text-gray-400 mt-1.5">
                     An identifier used for external systems like payroll
                   </p>

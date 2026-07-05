@@ -185,7 +185,6 @@ function ProfileDropdown({
   );
 }
 
-// ── Search Overlay ─────────────────────────────────────────────────────────────
 function SearchOverlay({
   open,
   onClose,
