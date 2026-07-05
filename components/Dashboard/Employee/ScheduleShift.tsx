@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Info,
   Loader2,
+  MoreVertical,
   Pencil,
   Plus,
   Trash2,
@@ -86,7 +87,7 @@ const TIME_OFF_TYPES = [
 const SCHEDULE_TYPES = ["Every week", "Every 2 weeks", "Custom"];
 const ENDS_OPTIONS = ["Never", "On a specific date", "After occurrences"];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getMonday(d: Date): Date {
   const date = new Date(d);
@@ -106,32 +107,31 @@ function addDays(d: Date, n: number): Date {
 function fmtShort(d: Date) {
   return `${MONTH_SHORT[d.getMonth()]} ${d.getDate()}`;
 }
-
-function fmtWeekRange(mon: Date): string {
+function fmtWeekRange(mon: Date) {
   const sun = addDays(mon, 6);
   return `${MONTH_SHORT[mon.getMonth()]} ${mon.getDate()} – ${MONTH_SHORT[sun.getMonth()]} ${sun.getDate()}, ${sun.getFullYear()}`;
 }
-
+function fmtWeekRangeShort(mon: Date) {
+  const sun = addDays(mon, 6);
+  return `${MONTH_SHORT[mon.getMonth()]} ${mon.getDate()} – ${MONTH_SHORT[sun.getMonth()]} ${sun.getDate()}`;
+}
 function fmtDayFull(d: Date): string {
   return `${DAY_SHORT[(d.getDay() + 6) % 7]}, ${MONTH_SHORT[d.getMonth()]} ${d.getDate()}`;
 }
-
 function fmtDateShort(d: Date): string {
   return `${MONTH_SHORT[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+function fmtISODate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dy = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dy}`;
 }
 
 function getDaySchedule(schedule: any[], dayKey: string) {
   return schedule?.find((s: any) => s.day_of_week === dayKey);
 }
 
-function fmtISODate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-// Returns effective shifts for a specific date: override wins over repeating schedule
 function getEffectiveDayData(
   emp: any,
   date: Date,
@@ -150,10 +150,7 @@ function getEffectiveDayData(
   }
   const dayKey = DAY_KEYS[(date.getDay() + 6) % 7];
   const s = getDaySchedule(emp.availability_schedule ?? [], dayKey);
-  return {
-    is_working: s?.is_working ?? false,
-    shifts: s?.shifts ?? [],
-  };
+  return { is_working: s?.is_working ?? false, shifts: s?.shifts ?? [] };
 }
 
 function slotMins(start: string, end: string): number {
@@ -205,7 +202,6 @@ function Avatar({ emp, idx }: { emp: any; idx: number }) {
       </div>
     );
   }
-
   return (
     <div
       className={cn(
@@ -246,7 +242,7 @@ type CtxMenuState = {
   dayDate: Date;
 };
 
-// ─── Checkmark SVG ───────────────────────────────────────────────────────────
+// ─── CheckMark ───────────────────────────────────────────────────────────────
 
 function CheckMark() {
   return (
@@ -263,7 +259,7 @@ function CheckMark() {
   );
 }
 
-// ─── SelectField helper ───────────────────────────────────────────────────────
+// ─── SelectField ─────────────────────────────────────────────────────────────
 
 function SelectField({
   value,
@@ -296,7 +292,7 @@ function SelectField({
   );
 }
 
-// ─── Context Menu ─────────────────────────────────────────────────────────────
+// ─── Context Menu (desktop) ───────────────────────────────────────────────────
 
 function ShiftContextMenu({
   menu,
@@ -314,7 +310,6 @@ function ShiftContextMenu({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
@@ -327,7 +322,7 @@ function ShiftContextMenu({
     <div
       ref={ref}
       style={{ position: "fixed", top: menu.y, left: menu.x, zIndex: 999 }}
-      className="bg-[#082040] border border-[#0e3258] rounded-xl shadow-2xl py-1.5 min-w-52.5">
+      className="bg-[#082040] border border-[#0e3258] rounded-xl shadow-2xl py-1.5 min-w-[210px]">
       {(
         [
           { label: "Edit this day", action: onEditDay },
@@ -358,6 +353,79 @@ function ShiftContextMenu({
   );
 }
 
+// ─── Mobile Shift Action Sheet ────────────────────────────────────────────────
+
+function MobileShiftSheet({
+  open,
+  onClose,
+  onEditDay,
+  onRepeating,
+  onTimeOff,
+  onDelete,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onEditDay: () => void;
+  onRepeating: () => void;
+  onTimeOff: () => void;
+  onDelete: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/40" onClick={onClose} />
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#051e3a] border-t border-[#0e3258] rounded-t-2xl pb-safe">
+        <div className="flex items-center justify-end px-5 py-4 border-b border-[#0e3258]">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-[#082040] flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+        {[
+          {
+            label: "Edit this day",
+            action: () => {
+              onEditDay();
+              onClose();
+            },
+          },
+          {
+            label: "Set repeating shifts",
+            action: () => {
+              onRepeating();
+              onClose();
+            },
+          },
+          {
+            label: "Add time off",
+            action: () => {
+              onTimeOff();
+              onClose();
+            },
+          },
+        ].map(({ label, action }) => (
+          <button
+            key={label}
+            onClick={action}
+            className="w-full text-left px-5 py-4 text-base font-medium text-white border-b border-[#0e3258] last:border-0 hover:bg-[#082040] transition-colors">
+            {label}
+          </button>
+        ))}
+        <button
+          onClick={() => {
+            onDelete();
+            onClose();
+          }}
+          className="w-full text-left px-5 py-4 text-base font-medium text-red-400 hover:bg-[#082040] transition-colors">
+          Delete this shift
+        </button>
+        <div className="h-6" />
+      </div>
+    </>
+  );
+}
+
 // ─── Edit Day Dialog ──────────────────────────────────────────────────────────
 
 function EditDayDialog({
@@ -378,7 +446,6 @@ function EditDayDialog({
   const [slots, setSlots] = useState<ShiftSlot[]>(() =>
     initialSlots.length > 0 ? initialSlots : [{ start: "09:00", end: "17:00" }],
   );
-
   const totalMins = slots.reduce((acc, s) => acc + slotMins(s.start, s.end), 0);
   const firstName = emp.full_name.split(" ")[0];
 
@@ -412,11 +479,11 @@ function EditDayDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}>
-      <div className="bg-[#051e3a] border border-[#0e3258] rounded-2xl w-full max-w-md mx-4 p-6 shadow-2xl">
+      <div className="bg-[#051e3a] border border-[#0e3258] rounded-2xl w-full max-w-md p-6 shadow-2xl">
         <div className="flex items-start justify-between mb-1">
           <h2 className="text-xl font-bold text-white">
             {firstName}&apos;s shift {fmtDayFull(dayDate)}
@@ -479,7 +546,7 @@ function EditDayDialog({
             <Plus size={14} /> Add shift
           </button>
           <span className="text-sm text-gray-400">
-            Total shift duration:{" "}
+            Total:{" "}
             <span className="text-white font-semibold">
               {fmtHours(totalMins)}
             </span>
@@ -553,16 +620,15 @@ function TimeOffDialog({
   const [repeat, setRepeat] = useState(false);
   const [desc, setDesc] = useState("");
   const [approved, setApproved] = useState(false);
-
   const totalMins = slotMins(startTime, endTime);
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}>
-      <div className="bg-[#051e3a] border border-[#0e3258] rounded-2xl w-full max-w-lg mx-4 p-6 shadow-2xl">
+      <div className="bg-[#051e3a] border border-[#0e3258] rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-start justify-between mb-6">
           <h2 className="text-xl font-bold text-white">Add time off</h2>
           <button
@@ -572,7 +638,7 @@ function TimeOffDialog({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <div>
             <p className="text-sm font-semibold text-white mb-2">Team member</p>
             <div className="relative">
@@ -603,29 +669,29 @@ function TimeOffDialog({
         </div>
 
         <p className="text-sm font-semibold text-white mb-2">Start date</p>
-        <div className="grid grid-cols-1 gap-2 mb-4 items-center">
+        <div className="grid grid-cols-1 gap-2 mb-4">
           <SelectField
             value={startDate}
             onChange={setStartDate}
             options={dateOptions}
           />
-          <div className="">
-            <p className="text-xs text-gray-400 mb-1.5">Start time</p>
-            <SelectField
-              value={startTime}
-              onChange={setStartTime}
-              options={TIME_OPTIONS}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 mb-1.5">End time</p>
-            <SelectField
-              value={endTime}
-              onChange={setEndTime}
-              options={TIME_OPTIONS}
-              className="w-full"
-            />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-xs text-gray-400 mb-1.5">Start time</p>
+              <SelectField
+                value={startTime}
+                onChange={setStartTime}
+                options={TIME_OPTIONS}
+              />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1.5">End time</p>
+              <SelectField
+                value={endTime}
+                onChange={setEndTime}
+                options={TIME_OPTIONS}
+              />
+            </div>
           </div>
         </div>
 
@@ -648,12 +714,12 @@ function TimeOffDialog({
             value={desc}
             onChange={(e) => setDesc(e.target.value.slice(0, 100))}
             placeholder="Add description or note (optional)"
-            rows={4}
+            rows={3}
             className="w-full bg-[#061930] border border-[#0e3258] rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-[#6B5CE7] transition-colors resize-none"
           />
         </div>
 
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-1.5">
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -715,7 +781,6 @@ function RepeatingShiftsPanel({
   isSaving?: boolean;
 }) {
   const cfg = emp.repeating_schedule_config ?? {};
-
   const dateOptions = useMemo(() => {
     const now = new Date();
     return Array.from({ length: 365 }, (_, i) => fmtDateShort(addDays(now, i)));
@@ -770,7 +835,26 @@ function RepeatingShiftsPanel({
 
   const toggleDay = (key: string) =>
     setDays((p) => ({ ...p, [key]: { ...p[key], enabled: !p[key].enabled } }));
-
+  const addSlot = (key: string) =>
+    setDays((p) => {
+      const slots = p[key].slots;
+      const last = slots[slots.length - 1];
+      return {
+        ...p,
+        [key]: {
+          ...p[key],
+          slots: [
+            ...slots,
+            { start: last.end, end: nextTimeOption(last.end, 2) },
+          ],
+        },
+      };
+    });
+  const removeSlot = (key: string, si: number) =>
+    setDays((p) => ({
+      ...p,
+      [key]: { ...p[key], slots: p[key].slots.filter((_, i) => i !== si) },
+    }));
   const updateSlot = (
     key: string,
     si: number,
@@ -796,28 +880,6 @@ function RepeatingShiftsPanel({
       return { ...p, [key]: { ...p[key], slots: next } };
     });
 
-  const addSlot = (key: string) =>
-    setDays((p) => {
-      const slots = p[key].slots;
-      const last = slots[slots.length - 1];
-      return {
-        ...p,
-        [key]: {
-          ...p[key],
-          slots: [
-            ...slots,
-            { start: last.end, end: nextTimeOption(last.end, 2) },
-          ],
-        },
-      };
-    });
-
-  const removeSlot = (key: string, si: number) =>
-    setDays((p) => ({
-      ...p,
-      [key]: { ...p[key], slots: p[key].slots.filter((_, i) => i !== si) },
-    }));
-
   const handleSave = () => {
     const config: RepeatingConfig = {
       schedule_type: scheduleType,
@@ -840,7 +902,7 @@ function RepeatingShiftsPanel({
   return (
     <div className="fixed inset-0 z-50 bg-[#051e3a] overflow-y-auto">
       <div className="sticky top-0 z-10 bg-[#051e3a] border-b border-[#0e3258]">
-        <div className="flex items-center justify-end gap-2 px-8 py-4">
+        <div className="flex items-center justify-end gap-2 px-4 md:px-8 py-4">
           <button onClick={onClose} disabled={isSaving} className={BTN_GHOST}>
             Close
           </button>
@@ -857,11 +919,11 @@ function RepeatingShiftsPanel({
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-10">
-        {/* Left sidebar */}
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-8 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 md:gap-10">
+        {/* Left config */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-2">
+            <h1 className="text-xl md:text-2xl font-bold text-white mb-2">
               Set {firstName}&apos;s repeating shifts
             </h1>
             <p className="text-sm text-gray-400 leading-relaxed">
@@ -878,7 +940,7 @@ function RepeatingShiftsPanel({
               <Building2 size={18} className="text-[#6B5CE7]" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white ">{emp.full_name}</p>
+              <p className="text-sm font-bold text-white">{emp.full_name}</p>
               <p className="text-xs text-gray-400">All locations</p>
             </div>
           </div>
@@ -948,8 +1010,9 @@ function RepeatingShiftsPanel({
           </div>
         </div>
 
+        {/* Day schedule */}
         <div>
-          <div className="flex flex-col items-baseline gap-2 mb-6">
+          <div className="flex flex-col items-baseline gap-1 mb-5">
             <h2 className="text-lg font-bold text-white">{scheduleLabel}</h2>
             <span className="text-sm text-gray-400">
               {fmtHours(totalWeekMins)} total
@@ -965,10 +1028,9 @@ function RepeatingShiftsPanel({
                 : 0;
 
               return (
-                <div
-                  key={key}
-                  className="grid grid-cols-[180px_1fr] gap-4 items-start py-3 border-b border-[#082040]">
-                  <div className="flex items-center gap-3 pt-1.5">
+                <div key={key} className="py-3 border-b border-[#082040]">
+                  {/* Day header row */}
+                  <div className="flex items-center gap-3 mb-2">
                     <button
                       onClick={() => toggleDay(key)}
                       className={cn(
@@ -991,10 +1053,11 @@ function RepeatingShiftsPanel({
                     </div>
                   </div>
 
+                  {/* Slots */}
                   {!day.enabled ? (
-                    <p className="text-sm text-gray-500 pt-1.5">Not working</p>
+                    <p className="text-sm text-gray-500 pl-8">Not working</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2 pl-8">
                       {day.slots.map((slot, si) => (
                         <div key={si} className="flex items-center gap-2">
                           <div className="relative flex-1">
@@ -1013,7 +1076,7 @@ function RepeatingShiftsPanel({
                                   key={t}
                                   value={t}
                                   className="text-gray-100">
-                                  <p className="text-gray-100!">{t}</p>
+                                  {t}
                                 </option>
                               ))}
                             </select>
@@ -1038,7 +1101,7 @@ function RepeatingShiftsPanel({
                                     key={t}
                                     value={t}
                                     className="text-gray-100">
-                                    <p className="text-gray-100">{t}</p>
+                                    {t}
                                   </option>
                                 ),
                               )}
@@ -1073,7 +1136,7 @@ function RepeatingShiftsPanel({
   );
 }
 
-// ─── Add Button Dropdown ──────────────────────────────────────────────────────
+// ─── Add Dropdown ─────────────────────────────────────────────────────────────
 
 function AddDropdown({
   onTimeOff,
@@ -1084,6 +1147,7 @@ function AddDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
@@ -1094,40 +1158,40 @@ function AddDropdown({
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  const router = useRouter();
-
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-4 py-2 rounded-full bg-white text-black text-sm font-bold hover:bg-gray-100 transition-colors">
-        Add
-        <ChevronDown size={14} />
+        className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#051e3a] text-white text-sm font-bold border border-[#0e3258] hover:bg-[#082040] transition-colors">
+        Add <ChevronDown size={14} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 bg-[#051e3a] border border-[#0e3258] rounded-xl shadow-2xl py-1.5 min-w-50 z-50">
-          <button
-            onClick={() => {
-              onTimeOff();
-              setOpen(false);
-            }}
-            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
-            Time off
-          </button>
-          <button
-            onClick={() => {
-              onNewMember();
-              setOpen(false);
-              router.push("/dashboard/employees/add");
-            }}
-            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
-            New team member
-          </button>
-          <button
-            onClick={() => setOpen(false)}
-            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
-            Business closed period
-          </button>
+        <div className="absolute right-0 top-full mt-2 bg-[#051e3a] border border-[#0e3258] rounded-xl shadow-2xl py-1.5 min-w-[200px] z-50">
+          {[
+            {
+              label: "Time off",
+              action: () => {
+                onTimeOff();
+                setOpen(false);
+              },
+            },
+            {
+              label: "New team member",
+              action: () => {
+                onNewMember();
+                setOpen(false);
+                router.push("/dashboard/employees/add");
+              },
+            },
+            { label: "Business closed period", action: () => setOpen(false) },
+          ].map(({ label, action }) => (
+            <button
+              key={label}
+              onClick={action}
+              className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
+              {label}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -1149,6 +1213,8 @@ export default function ScheduleShift() {
     useUpsertShiftOverride();
 
   const [monday, setMonday] = useState<Date>(() => getMonday(new Date()));
+  const [selectedDayIdx, setSelectedDayIdx] = useState(0); // 0–6, mobile day tab
+
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(monday, i)),
     [monday],
@@ -1207,11 +1273,8 @@ export default function ScheduleShift() {
   };
 
   const handleSaveTimeOff = (payload: any) => {
-    createTimeOff(payload, {
-      onSuccess: () => setTimeOffDialog(null),
-    });
+    createTimeOff(payload, { onSuccess: () => setTimeOffDialog(null) });
   };
-
   const handleDeleteShift = (emp: any, dayDate: Date) => {
     upsertOverride(
       {
@@ -1227,7 +1290,10 @@ export default function ScheduleShift() {
     );
   };
 
-  const goThisWeek = () => setMonday(getMonday(new Date()));
+  const goThisWeek = () => {
+    setMonday(getMonday(new Date()));
+    setSelectedDayIdx(0);
+  };
   const goPrev = () => setMonday((m) => addDays(m, -7));
   const goNext = () => setMonday((m) => addDays(m, 7));
 
@@ -1251,6 +1317,10 @@ export default function ScheduleShift() {
   );
 
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
+  const [mobileSheet, setMobileSheet] = useState<{
+    emp: any;
+    dayDate: Date;
+  } | null>(null);
   const [editDialog, setEditDialog] = useState<{
     emp: any;
     dayDate: Date;
@@ -1275,17 +1345,22 @@ export default function ScheduleShift() {
     setCtxMenu({ x: e.clientX, y: e.clientY, emp, empIdx, dayKey, dayDate });
   };
 
+  const openMobileSheet = (emp: any, dayDate: Date) =>
+    setMobileSheet({ emp, dayDate });
+
+  const selectedDayDate = weekDays[selectedDayIdx];
+  const selectedDayKey = DAY_KEYS[selectedDayIdx];
+
   return (
-    <div className="min-h-screen  text-[#0e3258] p-6 md:p-8">
+    <div className="min-h-screen text-[#0e3258]">
       {/* ── Page header ── */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Scheduled shifts</h1>
-        <div className="flex gap-3">
-          <button
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] text-sm font-semibold
-           text-[#0e3258] hover:bg-[#082040] transition-colors">
-            Options
-            <ChevronDown size={14} />
+      <div className="flex items-center justify-between mb-5 md:mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-[#051e3a]">
+          Scheduled shifts
+        </h1>
+        <div className="flex gap-2 md:gap-3">
+          <button className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
+            Options <ChevronDown size={14} />
           </button>
           <AddDropdown
             onTimeOff={() =>
@@ -1299,11 +1374,9 @@ export default function ScheduleShift() {
         </div>
       </div>
 
-      {/* ── Controls bar ── */}
-      <div className="flex items-center justify-between mb-5">
-        <button
-          className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#0e3258] text-white 
-        bg-[#051e3a] text-sm font-semibold hover:bg-[#0d2d4e] transition-colors">
+      {/* ── Desktop controls bar ── */}
+      <div className="hidden md:flex items-center justify-between mb-5">
+        <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#0e3258] bg-[#051e3a] text-sm font-semibold text-white hover:bg-[#0d2d4e] transition-colors">
           <ArrowUpDown size={14} className="text-gray-400" />
           Custom order
         </button>
@@ -1331,8 +1404,51 @@ export default function ScheduleShift() {
         </div>
       </div>
 
-      {/* ── Table ── */}
-      <div className="border border-[#0e3258] rounded-2xl overflow-hidden">
+      {/* ── Mobile controls ── */}
+      <div className="md:hidden mb-4 space-y-3">
+        {/* Week nav */}
+        <div className="flex items-center justify-between bg-[#051e3a] rounded-2xl px-3 py-2 border border-[#0e3258]">
+          <button
+            onClick={goPrev}
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-[#0d2d4e] transition-colors">
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            onClick={goThisWeek}
+            className="text-sm font-semibold text-white">
+            {fmtWeekRangeShort(monday)}
+          </button>
+          <button
+            onClick={goNext}
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-[#0d2d4e] transition-colors">
+            <ChevronRight size={16} />
+          </button>
+        </div>
+
+        {/* Day tabs */}
+        <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] pb-0.5">
+          {weekDays.map((day, i) => (
+            <button
+              key={i}
+              onClick={() => setSelectedDayIdx(i)}
+              className={cn(
+                "flex flex-col items-center justify-center min-w-[52px] px-2 py-2 rounded-xl border text-xs font-semibold transition-colors shrink-0",
+                selectedDayIdx === i
+                  ? "bg-[#051e3a] border-[#051e3a] text-white"
+                  : "bg-white border-gray-200 text-[#051e3a] hover:bg-gray-50",
+              )}>
+              <span>{DAY_SHORT[i]}</span>
+              <span className="text-[10px] font-normal mt-0.5 opacity-70">
+                {day.getDate()}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Desktop Table ── */}
+      <div className="hidden md:block border border-[#0e3258] rounded-2xl overflow-hidden bg-white/5">
+        {/* Header */}
         <div className="grid grid-cols-[220px_repeat(7,1fr)] border-b border-[#0e3258]">
           <div className="px-4 py-3 flex items-center gap-1.5 border-r border-[#0e3258]">
             <span className="text-sm font-semibold text-[#0e3258]">
@@ -1359,6 +1475,7 @@ export default function ScheduleShift() {
           ))}
         </div>
 
+        {/* Rows */}
         {employees.length === 0 ? (
           <div className="px-6 py-10 text-center text-gray-500 text-sm">
             No team members found.
@@ -1405,7 +1522,6 @@ export default function ScheduleShift() {
                 {DAY_KEYS.map((key, di) => {
                   const dayDate = weekDays[di];
                   const eff = getEffectiveDayData(emp, dayDate, overrides);
-
                   return (
                     <div
                       key={key}
@@ -1447,12 +1563,73 @@ export default function ScheduleShift() {
         )}
       </div>
 
+      {/* ── Mobile Day View ── */}
+      <div className="md:hidden">
+        {/* Day header */}
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-base font-bold text-[#051e3a]">
+              {DAY_FULL[selectedDayIdx]}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {fmtHours(colTotals[selectedDayIdx])} scheduled
+            </p>
+          </div>
+        </div>
+
+        {/* Employee cards */}
+        {employees.length === 0 ? (
+          <div className="bg-white border border-gray-200 rounded-2xl px-5 py-10 text-center text-gray-400 text-sm">
+            No team members found.
+          </div>
+        ) : (
+          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+            {employees.map((emp, empIdx) => {
+              const eff = getEffectiveDayData(emp, selectedDayDate, overrides);
+              return (
+                <div
+                  key={emp._id}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3.5",
+                    empIdx < employees.length - 1 && "border-b border-gray-100",
+                  )}>
+                  <Avatar emp={emp} idx={empIdx} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#051e3a] truncate">
+                      {emp.full_name}
+                    </p>
+                    {eff.is_working ? (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {eff.shifts.map((sh: ShiftSlot, si: number) => (
+                          <span
+                            key={si}
+                            className="inline-block text-[11px] font-semibold text-white bg-[#1e3a7a] rounded-md px-2 py-0.5">
+                            {sh.start} – {sh.end}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Not working
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openMobileSheet(emp, selectedDayDate)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#051e3a] transition-colors shrink-0">
+                    <MoreVertical size={18} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* ── Footer note ── */}
       <div className="mt-4 flex items-start gap-3 bg-[#051e3a] border border-[#0e3258] rounded-xl px-5 py-3.5">
-        <Info
-          size={16}
-          className="text-gray-500 bg-indigo-950 shrink-0 mt-0.5"
-        />
+        <Info size={16} className="text-gray-500 shrink-0 mt-0.5" />
         <p className="text-sm text-gray-400 leading-relaxed">
           The team roster shows your availability for bookings and is not linked
           to your business standard opening hours. To set your standard opening
@@ -1466,6 +1643,8 @@ export default function ScheduleShift() {
       </div>
 
       {/* ── Overlays ── */}
+
+      {/* Desktop context menu */}
       {ctxMenu && (
         <ShiftContextMenu
           menu={ctxMenu}
@@ -1483,15 +1662,45 @@ export default function ScheduleShift() {
           }}
           onRepeating={() => setRepeatingPanel({ emp: ctxMenu.emp })}
           onTimeOff={() =>
-            setTimeOffDialog({
-              emp: ctxMenu.emp,
-              dayDate: ctxMenu.dayDate,
-            })
+            setTimeOffDialog({ emp: ctxMenu.emp, dayDate: ctxMenu.dayDate })
           }
           onDelete={() => handleDeleteShift(ctxMenu.emp, ctxMenu.dayDate)}
           onClose={() => setCtxMenu(null)}
         />
       )}
+
+      {/* Mobile bottom sheet */}
+      <MobileShiftSheet
+        open={!!mobileSheet}
+        onClose={() => setMobileSheet(null)}
+        onEditDay={() => {
+          if (!mobileSheet) return;
+          const eff = getEffectiveDayData(
+            mobileSheet.emp,
+            mobileSheet.dayDate,
+            overrides,
+          );
+          setEditDialog({
+            emp: mobileSheet.emp,
+            dayDate: mobileSheet.dayDate,
+            initialSlots: eff.shifts,
+          });
+        }}
+        onRepeating={() => {
+          if (mobileSheet) setRepeatingPanel({ emp: mobileSheet.emp });
+        }}
+        onTimeOff={() => {
+          if (mobileSheet)
+            setTimeOffDialog({
+              emp: mobileSheet.emp,
+              dayDate: mobileSheet.dayDate,
+            });
+        }}
+        onDelete={() => {
+          if (mobileSheet)
+            handleDeleteShift(mobileSheet.emp, mobileSheet.dayDate);
+        }}
+      />
 
       {editDialog && (
         <EditDayDialog

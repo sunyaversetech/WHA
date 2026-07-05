@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronUp,
   MapPin,
+  MoreVertical,
   Search,
   SlidersHorizontal,
   X,
@@ -41,14 +42,14 @@ const STATUS_OPTIONS = ["All team members", "Active", "Archived"] as const;
 const TYPE_OPTIONS = ["Bookable", "Non-bookable"] as const;
 
 const AVATAR_COLORS = [
-  "bg-teal-600",
-  "bg-purple-600",
-  "bg-blue-600",
-  "bg-rose-600",
-  "bg-amber-600",
-  "bg-emerald-600",
-  "bg-pink-600",
-  "bg-indigo-600",
+  "#0e7490",
+  "#7c3aed",
+  "#1d4ed8",
+  "#be123c",
+  "#b45309",
+  "#047857",
+  "#db2777",
+  "#4338ca",
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -64,11 +65,12 @@ function initials(name: string) {
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
 function EmpAvatar({ emp, idx }: { emp: any; idx: number }) {
+  const color = emp.calendar_color ?? AVATAR_COLORS[idx % AVATAR_COLORS.length];
   if (emp.employee_photo) {
     return (
       <div
         className="w-10 h-10 rounded-full overflow-hidden shrink-0"
-        style={{ boxShadow: `0 0 0 2px ${emp.calendar_color ?? "#4DD0E1"}44` }}>
+        style={{ boxShadow: `0 0 0 2px ${color}55` }}>
         <Image
           src={emp.employee_photo}
           alt={emp.full_name}
@@ -81,11 +83,8 @@ function EmpAvatar({ emp, idx }: { emp: any; idx: number }) {
   }
   return (
     <div
-      className={cn(
-        "w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-black text-sm font-bold",
-        AVATAR_COLORS[idx % AVATAR_COLORS.length],
-      )}
-      style={{ boxShadow: `0 0 0 2px ${emp.calendar_color ?? "#4DD0E1"}44` }}>
+      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold"
+      style={{ background: color, boxShadow: `0 0 0 2px ${color}55` }}>
       {initials(emp.full_name)}
     </div>
   );
@@ -106,20 +105,69 @@ function Checkbox({
       className={cn(
         "w-[18px] h-[18px] rounded border flex items-center justify-center shrink-0 transition-colors",
         checked
-          ? "bg-[#6B5CE7] border-[#6B5CE7]"
-          : "border-[#3a3a3a] hover:border-[#555]",
+          ? "bg-[#051e3a] border-[#051e3a]"
+          : "border-gray-300 hover:border-[#051e3a]",
       )}>
-      {checked && <Check size={10} className="text-black" />}
+      {checked && <Check size={10} className="text-white" />}
     </button>
   );
 }
 
-// ─── Actions Dropdown ─────────────────────────────────────────────────────────
+// ─── Mobile Actions Bottom Sheet ──────────────────────────────────────────────
+
+function MobileActionsSheet({
+  open,
+  onClose,
+  onEdit,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onEdit: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/40" onClick={onClose} />
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl pb-safe">
+        <div className="flex items-center justify-end px-5 py-4 border-b border-gray-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+        {[
+          {
+            label: "Edit",
+            action: () => {
+              onEdit();
+              onClose();
+            },
+          },
+          { label: "View calendar", action: onClose },
+          { label: "View scheduled shifts", action: onClose },
+          { label: "Add time off", action: onClose },
+        ].map(({ label, action }) => (
+          <button
+            key={label}
+            type="button"
+            onClick={action}
+            className="w-full text-left px-5 py-4 text-base font-medium text-[#051e3a] border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+            {label}
+          </button>
+        ))}
+        <div className="h-6" />
+      </div>
+    </>
+  );
+}
+
+// ─── Desktop Actions Dropdown ─────────────────────────────────────────────────
 
 function ActionsDropdown({ emp, onEdit }: { emp: any; onEdit: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node))
@@ -133,36 +181,31 @@ function ActionsDropdown({ emp, onEdit }: { emp: any; onEdit: () => void }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-300 text-gray-800 text-sm font-medium hover:bg-gray-50 transition-colors">
+        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 text-[#051e3a] text-sm font-medium hover:bg-gray-50 transition-colors">
         Actions
         {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 z-999 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-45">
-          <button
-            onClick={() => {
-              onEdit();
-              setOpen(false);
-            }}
-            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-            Edit
-          </button>
-          <button
-            onClick={() => setOpen(false)}
-            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-            View calendar
-          </button>
-          <Link
-            href="/dashboard/employees/schedule"
-            onClick={() => setOpen(false)}
-            className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-            View scheduled shifts
-          </Link>
-          <button
-            onClick={() => setOpen(false)}
-            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-            Add time off
-          </button>
+        <div className="absolute right-0 top-full mt-1.5 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[180px]">
+          {[
+            {
+              label: "Edit",
+              action: () => {
+                onEdit();
+                setOpen(false);
+              },
+            },
+            { label: "View calendar", action: () => setOpen(false) },
+            { label: "View scheduled shifts", action: () => setOpen(false) },
+            { label: "Add time off", action: () => setOpen(false) },
+          ].map(({ label, action }) => (
+            <button
+              key={label}
+              onClick={action}
+              className="w-full text-left px-4 py-2.5 text-sm text-[#051e3a] hover:bg-gray-50 transition-colors">
+              {label}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -174,7 +217,6 @@ function ActionsDropdown({ emp, onEdit }: { emp: any; onEdit: () => void }) {
 function OptionsDropdown() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node))
@@ -188,21 +230,19 @@ function OptionsDropdown() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a] text-black text-sm font-semibold hover: transition-colors">
+        className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 text-[#051e3a] text-sm font-semibold hover:bg-gray-50 transition-colors">
         Options
         {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5  border border-[#2a2a2a] rounded-xl shadow-2xl py-1.5 z-50 min-w-[160px]">
-          <button className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
-            Export
-          </button>
-          <button className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
-            Import
-          </button>
-          <button className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
-            Archive all
-          </button>
+        <div className="absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 min-w-[160px]">
+          {["Export", "Import", "Archive all"].map((opt) => (
+            <button
+              key={opt}
+              className="w-full text-left px-4 py-2.5 text-sm text-[#051e3a] hover:bg-gray-50 transition-colors">
+              {opt}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -220,7 +260,6 @@ function SortDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node))
@@ -234,10 +273,10 @@ function SortDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a]  text-sm font-semibold text-black hover:bg-[#222] transition-colors">
+        className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 text-[#051e3a] text-sm font-semibold hover:bg-gray-50 transition-colors whitespace-nowrap">
         <svg
           viewBox="0 0 16 16"
-          className="w-3.5 h-3.5 text-gray-400"
+          className="w-3.5 h-3.5 text-[#051e3a]"
           fill="currentColor">
           <path
             d="M2 4h12M4 8h8M6 12h4"
@@ -250,7 +289,7 @@ function SortDropdown({
         {value}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5  border border-[#2a2a2a] rounded-xl shadow-2xl py-1.5 z-50 min-w-[220px]">
+        <div className="absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 min-w-[220px]">
           {SORT_OPTIONS.map((opt) => (
             <button
               key={opt}
@@ -259,8 +298,10 @@ function SortDropdown({
                 setOpen(false);
               }}
               className={cn(
-                "w-full text-left px-4 py-2.5 text-sm hover:bg-[#252525] transition-colors",
-                opt === value ? "text-[#6B5CE7]" : "text-black",
+                "w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors",
+                opt === value
+                  ? "text-[#051e3a] font-semibold"
+                  : "text-gray-600",
               )}>
               {opt}
             </button>
@@ -295,31 +336,30 @@ function FilterPanel({
   return (
     <>
       {open && (
-        <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
+        <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
       )}
       <div
         className={cn(
-          "fixed right-0 top-0 h-full w-80 z-50 bg-[#0e0e0e] border-l border-[#2a2a2a] overflow-y-auto transition-transform duration-300 ease-in-out",
+          "fixed right-0 top-0 h-full w-80 z-50 bg-white border-l border-gray-200 overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl",
           open ? "translate-x-0" : "translate-x-full",
         )}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[#2a2a2a]">
-          <h2 className="text-xl font-bold text-black">All filters</h2>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+          <h2 className="text-xl font-bold text-[#051e3a]">All filters</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-black transition-colors">
+            className="text-gray-400 hover:text-[#051e3a] transition-colors">
             <X size={18} />
           </button>
         </div>
 
         {/* Locations */}
-        <div className="border-b border-[#1e1e1e]">
+        <div className="border-b border-gray-100">
           <button
             onClick={() => setLocOpen((v) => !v)}
-            className="w-full flex items-center justify-between px-6 py-4">
+            className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-2.5">
               <MapPin size={15} className="text-gray-400" />
-              <span className="text-sm font-semibold text-black">
+              <span className="text-sm font-semibold text-[#051e3a]">
                 Locations
               </span>
             </div>
@@ -332,10 +372,10 @@ function FilterPanel({
           {locOpen && (
             <div className="px-6 pb-5 space-y-3">
               <label className="flex items-center gap-3 cursor-pointer">
-                <div className="w-[18px] h-[18px] rounded border border-[#3a3a3a] bg-[#1c1c1c] shrink-0" />
-                <span className="text-sm text-black">Select all</span>
+                <div className="w-[18px] h-[18px] rounded border border-gray-300 shrink-0" />
+                <span className="text-sm text-gray-600">Select all</span>
               </label>
-              <p className="text-xs text-gray-600 italic pl-[30px]">
+              <p className="text-xs text-gray-400 italic pl-[30px]">
                 No locations configured.
               </p>
             </div>
@@ -343,10 +383,10 @@ function FilterPanel({
         </div>
 
         {/* Type */}
-        <div className="border-b border-[#1e1e1e]">
+        <div className="border-b border-gray-100">
           <button
             onClick={() => setTypeOpen((v) => !v)}
-            className="w-full flex items-center justify-between px-6 py-4">
+            className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-2.5">
               <svg
                 className="w-4 h-4 text-gray-400"
@@ -357,7 +397,7 @@ function FilterPanel({
                 <rect x="3" y="4" width="18" height="18" rx="2" />
                 <path d="M16 2v4M8 2v4M3 10h18" />
               </svg>
-              <span className="text-sm font-semibold text-black">Type</span>
+              <span className="text-sm font-semibold text-[#051e3a]">Type</span>
             </div>
             {typeOpen ? (
               <ChevronUp size={14} className="text-gray-400" />
@@ -376,14 +416,14 @@ function FilterPanel({
                     className={cn(
                       "w-[18px] h-[18px] rounded border flex items-center justify-center shrink-0 transition-colors",
                       selectedTypes.has(type)
-                        ? "bg-[#6B5CE7] border-[#6B5CE7]"
-                        : "bg-[#1c1c1c] border-[#3a3a3a]",
+                        ? "bg-[#051e3a] border-[#051e3a]"
+                        : "bg-white border-gray-300",
                     )}>
                     {selectedTypes.has(type) && (
-                      <Check size={10} className="text-black" />
+                      <Check size={10} className="text-white" />
                     )}
                   </div>
-                  <span className="text-sm text-black">{type}</span>
+                  <span className="text-sm text-[#051e3a]">{type}</span>
                 </label>
               ))}
             </div>
@@ -394,7 +434,7 @@ function FilterPanel({
         <div>
           <button
             onClick={() => setStatusOpen((v) => !v)}
-            className="w-full flex items-center justify-between px-6 py-4">
+            className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-2.5">
               <svg
                 className="w-4 h-4 text-gray-400"
@@ -407,7 +447,9 @@ function FilterPanel({
                   strokeLinecap="round"
                 />
               </svg>
-              <span className="text-sm font-semibold text-black">Status</span>
+              <span className="text-sm font-semibold text-[#051e3a]">
+                Status
+              </span>
             </div>
             {statusOpen ? (
               <ChevronUp size={14} className="text-gray-400" />
@@ -421,10 +463,10 @@ function FilterPanel({
                 <button
                   key={s}
                   onClick={() => onStatusChange(s)}
-                  className="w-full flex items-center justify-between py-2.5 text-sm text-black hover:text-[#6B5CE7] transition-colors">
+                  className="w-full flex items-center justify-between py-2.5 text-sm text-[#051e3a] hover:text-[#051e3a]/70 transition-colors">
                   <span>{s}</span>
                   {selectedStatus === s && (
-                    <Check size={14} className="text-[#6B5CE7]" />
+                    <Check size={14} className="text-[#051e3a]" />
                   )}
                 </button>
               ))}
@@ -450,13 +492,12 @@ export function EmployeeTable() {
   const [selectedStatus, setSelectedStatus] = useState<string>("Active");
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [mobileSheetEmp, setMobileSheetEmp] = useState<any | null>(null);
 
   const allEmployees = useMemo<any[]>(() => empData?.data ?? [], [empData]);
 
   const filteredEmployees = useMemo(() => {
     let list = [...allEmployees];
-
-    // Search
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -466,38 +507,14 @@ export function EmployeeTable() {
           e.phone_number?.includes(q),
       );
     }
-
-    // Status
     if (selectedStatus === "Active")
       list = list.filter((e) => e.is_active !== false);
     else if (selectedStatus === "Archived")
       list = list.filter((e) => e.is_active === false);
-
-    // Sort
     if (sort === "Name (A-Z)")
       list.sort((a, b) => a.full_name.localeCompare(b.full_name));
     else if (sort === "Name (Z-A)")
       list.sort((a, b) => b.full_name.localeCompare(a.full_name));
-    else if (sort === "Surname (A-Z)")
-      list.sort((a, b) =>
-        (
-          a.last_name ??
-          a.full_name.split(" ").slice(-1)[0] ??
-          ""
-        ).localeCompare(
-          b.last_name ?? b.full_name.split(" ").slice(-1)[0] ?? "",
-        ),
-      );
-    else if (sort === "Surname (Z-A)")
-      list.sort((a, b) =>
-        (
-          b.last_name ??
-          b.full_name.split(" ").slice(-1)[0] ??
-          ""
-        ).localeCompare(
-          a.last_name ?? a.full_name.split(" ").slice(-1)[0] ?? "",
-        ),
-      );
     else if (sort === "Started at (oldest first)")
       list.sort(
         (a, b) =>
@@ -508,65 +525,49 @@ export function EmployeeTable() {
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
-    else if (sort === "Updated at (oldest first)")
-      list.sort(
-        (a, b) =>
-          new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime(),
-      );
-    else if (sort === "Updated at (newest first)")
-      list.sort(
-        (a, b) =>
-          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
-      );
-
     return list;
   }, [allEmployees, search, selectedStatus, sort]);
 
   const allSelected =
     filteredEmployees.length > 0 &&
     filteredEmployees.every((e) => selectedIds.has(e._id));
-
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredEmployees.map((e) => e._id)));
-    }
-  };
-
+  const toggleSelectAll = () =>
+    setSelectedIds(
+      allSelected ? new Set() : new Set(filteredEmployees.map((e) => e._id)),
+    );
   const toggleSelect = (id: string) =>
     setSelectedIds((prev) => {
       const n = new Set(prev);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
+      n.has(id) ? n.delete(id) : n.add(id);
       return n;
     });
-
   const toggleType = (type: string) =>
     setSelectedTypes((prev) => {
       const n = new Set(prev);
-      if (n.has(type)) n.delete(type);
-      else n.add(type);
+      n.has(type) ? n.delete(type) : n.add(type);
       return n;
     });
-
   const activeFilterCount =
     (selectedStatus !== "All team members" ? 1 : 0) + selectedTypes.size;
 
   return (
-    <div className="min-h-screen   p-6 md:p-8">
+    <div className="min-h-screen">
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-black">Team members</h1>
-          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#1e1e1e] border border-[#2a2a2a] text-xs font-semibold text-gray-300">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-xl md:text-2xl font-bold text-[#051e3a]">
+            Team members
+          </h1>
+          <span className="inline-flex items-center justify-center w-6 h-6 md:w-7 md:h-7 rounded-full bg-[#051e3a]/10 text-xs font-bold text-[#051e3a]">
             {allEmployees.length}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <OptionsDropdown />
+          <div className="hidden sm:block">
+            <OptionsDropdown />
+          </div>
           <Link href="/dashboard/employees/add">
-            <button className="px-5 py-2 rounded-full bg-white text-black text-sm font-bold hover:bg-gray-100 transition-colors">
+            <button className="px-4 md:px-5 py-2 rounded-full bg-[#051e3a] text-white text-sm font-bold hover:bg-[#082040] transition-colors">
               Add
             </button>
           </Link>
@@ -574,47 +575,45 @@ export function EmployeeTable() {
       </div>
 
       {/* ── Controls ── */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-2 md:gap-3 mb-5">
         {/* Search */}
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1">
           <Search
             size={14}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
           />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search team members"
-            className="w-full  border border-[#2a2a2a] text-black text-sm rounded-full pl-9 pr-4 py-2 outline-none placeholder:text-gray-500 focus:border-[#444] transition-colors"
+            className="w-full bg-white border border-gray-200 text-[#051e3a] text-sm rounded-full pl-9 pr-4 py-2 outline-none placeholder:text-gray-400 focus:border-[#051e3a] transition-colors"
           />
         </div>
 
         {/* Filters */}
         <button
           onClick={() => setFilterOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a]  text-sm font-semibold text-black hover:bg-[#222] transition-colors">
+          className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors shrink-0">
           <SlidersHorizontal size={14} className="text-gray-400" />
-          Filters
+          <span className="hidden sm:inline">Filters</span>
           {activeFilterCount > 0 && (
-            <span
-              className="w-4 h-4 rounded-full bg-[#051e3a] text-[10px] font-bold 
-            flex items-center justify-center text-white">
+            <span className="w-4 h-4 rounded-full bg-[#051e3a] text-[10px] font-bold flex items-center justify-center text-white">
               {activeFilterCount}
             </span>
           )}
         </button>
 
         {/* Sort */}
-        <div className="ml-auto">
+        <div className="hidden md:block ml-auto">
           <SortDropdown value={sort} onChange={setSort} />
         </div>
       </div>
 
-      {/* ── Table ── */}
-      <div className="border border-[#2a2a2a] rounded-2xl z-10">
+      {/* ── Desktop Table ── */}
+      <div className="hidden md:block border border-gray-200 rounded-2xl overflow-hidden bg-white">
         {/* Header row */}
-        <div className="grid grid-cols-[44px_1fr_1fr_1fr_140px] px-4 py-3 border-b border-[#2a2a2a] ">
+        <div className="grid grid-cols-[44px_1fr_1fr_1fr_160px] px-4 py-3 border-b border-gray-100 bg-gray-50/60">
           <div className="flex items-center">
             <Checkbox checked={allSelected} onChange={toggleSelectAll} />
           </div>
@@ -626,7 +625,7 @@ export function EmployeeTable() {
             Name
             <svg
               viewBox="0 0 10 14"
-              className="w-2.5 h-2.5 text-gray-500"
+              className="w-2.5 h-2.5 text-gray-400"
               fill="currentColor">
               <path d="M5 0L9.33 5H0.67L5 0Z" />
               <path d="M5 14L0.67 9H9.33L5 14Z" />
@@ -641,11 +640,11 @@ export function EmployeeTable() {
 
         {/* Rows */}
         {isLoading ? (
-          <div className="px-6 py-10 text-center text-gray-500 text-sm">
-            Loading...
+          <div className="px-6 py-12 text-center text-gray-400 text-sm">
+            Loading…
           </div>
         ) : filteredEmployees.length === 0 ? (
-          <div className="px-6 py-10 text-center text-gray-500 text-sm">
+          <div className="px-6 py-12 text-center text-gray-400 text-sm">
             {search
               ? `No team members matching "${search}"`
               : "No team members found."}
@@ -655,38 +654,29 @@ export function EmployeeTable() {
             <div
               key={emp._id}
               className={cn(
-                "grid grid-cols-[44px_1fr_1fr_1fr_140px] px-4 py-4 items-center hover:bg-[#161616] transition-colors",
+                "grid grid-cols-[44px_1fr_1fr_1fr_160px] px-4 py-4 items-center hover:bg-gray-50 transition-colors",
                 idx < filteredEmployees.length - 1 &&
-                  "border-b border-[#1e1e1e]",
+                  "border-b border-gray-100",
               )}>
-              {/* Checkbox */}
               <div className="flex items-center">
                 <Checkbox
                   checked={selectedIds.has(emp._id)}
                   onChange={() => toggleSelect(emp._id)}
                 />
               </div>
-
-              {/* Name + Avatar */}
               <div className="flex items-center gap-3 min-w-0">
                 <EmpAvatar emp={emp} idx={idx} />
-                <span className="text-sm font-semibold text-black truncate">
+                <span className="text-sm font-semibold text-[#051e3a] truncate">
                   {emp.full_name}
                 </span>
               </div>
-
-              {/* Contact */}
-              <div className="text-sm text-gray-400 space-y-0.5 min-w-0">
+              <div className="text-sm text-gray-500 space-y-0.5 min-w-0">
                 {emp.email && <p className="truncate">{emp.email}</p>}
                 {emp.phone_number && <p>{emp.phone_number}</p>}
               </div>
-
-              {/* Permission role */}
-              <span className="text-sm text-gray-400">
+              <span className="text-sm text-gray-500">
                 {emp.is_active ? "No access" : "Archived"}
               </span>
-
-              {/* Actions */}
               <div className="flex justify-end">
                 <ActionsDropdown
                   emp={emp}
@@ -699,6 +689,57 @@ export function EmployeeTable() {
           ))
         )}
       </div>
+
+      {/* ── Mobile List ── */}
+      <div className="md:hidden bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        {isLoading ? (
+          <div className="px-5 py-10 text-center text-gray-400 text-sm">
+            Loading…
+          </div>
+        ) : filteredEmployees.length === 0 ? (
+          <div className="px-5 py-10 text-center text-gray-400 text-sm">
+            {search ? `No results for "${search}"` : "No team members found."}
+          </div>
+        ) : (
+          filteredEmployees.map((emp, idx) => (
+            <div
+              key={emp._id}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3.5",
+                idx < filteredEmployees.length - 1 &&
+                  "border-b border-gray-100",
+              )}>
+              <EmpAvatar emp={emp} idx={idx} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[#051e3a] truncate">
+                  {emp.full_name}
+                </p>
+                {emp.email && (
+                  <p className="text-xs text-gray-400 truncate mt-0.5">
+                    {emp.email}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileSheetEmp(emp)}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#051e3a] transition-colors shrink-0">
+                <MoreVertical size={18} />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ── Mobile Bottom Sheet ── */}
+      <MobileActionsSheet
+        open={!!mobileSheetEmp}
+        onClose={() => setMobileSheetEmp(null)}
+        onEdit={() => {
+          if (mobileSheetEmp)
+            router.push(`/dashboard/employees/edit/${mobileSheetEmp._id}`);
+        }}
+      />
 
       {/* ── Filter Panel ── */}
       <FilterPanel

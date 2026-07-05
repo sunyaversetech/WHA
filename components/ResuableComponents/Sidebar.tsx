@@ -12,13 +12,16 @@ import {
   Users,
   Settings,
   HelpCircle,
-  ChevronRight,
+  ChevronLeft,
+  Plus,
+  MoreHorizontal,
   LucideIcon,
   Smile,
 } from "lucide-react";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
-type SubItem = { label: string; href: string };
+type SubItem = { label: string; href: string; dot?: boolean };
 type NavItem = {
   icon: LucideIcon;
   label: string;
@@ -30,7 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: Calendar, label: "Calendar", href: "/dashboard/bookings" },
   { icon: Tag, label: "Deals", href: "/dashboard/deals" },
-  { icon: Smile, label: "Clients", href: "/dashboard/employees" },
+  { icon: Smile, label: "Clients", href: "/dashboard/clients" },
   {
     icon: BookOpen,
     label: "Catalog",
@@ -53,10 +56,9 @@ const NAV_ITEMS: NavItem[] = [
       {
         items: [
           { label: "Team members", href: "/dashboard/employees" },
-          {
-            label: "Scheduled shifts",
-            href: "/dashboard/employees/schedule-shift",
-          },
+          { label: "Scheduled shifts", href: "/dashboard/employees/schedule-shift" },
+          { label: "Timesheets", href: "/dashboard/timesheets", dot: true },
+          { label: "Pay runs", href: "/dashboard/pay-runs", dot: true },
         ],
       },
     ],
@@ -83,122 +85,50 @@ export default function Sidebar() {
     );
   };
 
+  const openFlyout = flyout ? NAV_ITEMS.find((i) => i.label === flyout) : null;
+
   return (
     <>
-      <div
-        className="fixed top-0 left-0 h-screen z-40 flex flex-col"
-        style={{
-          width: 60,
-          background: "#0d0f1a",
-          borderRight: "1px solid rgba(255,255,255,0.06)",
-        }}>
-        <div
-          style={{
-            height: 60,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
-            flexShrink: 0,
-          }}
-          onClick={() => router.push("/")}>
-          <Image
-            src="/wha/logo2.png"
-            alt="Whats Happening Australia Logo"
-            width={40}
-            height={40}
-          />
+      {/* ── Icon rail ─────────────────────────────────────────────────── */}
+      <div className="fixed top-0 left-0 h-screen z-40 flex flex-col"
+        style={{ width: 48, background: "#0d0f1a", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+
+        {/* Logo */}
+        <div className="flex items-center justify-center shrink-0 cursor-pointer border-b border-white/5"
+          style={{ height: 56 }} onClick={() => router.push("/")}>
+          <Image src="/wha/logo2.png" alt="Logo" width={32} height={32} />
         </div>
 
-        <nav
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            overflowX: "hidden",
-            padding: "8px 0",
-          }}>
+        {/* Nav icons */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-1.5">
           {NAV_ITEMS.map((item) => {
             const active = isActive(item);
             const open = flyout === item.label;
+            const highlight = active || open;
+
             return (
-              <div key={item.label} style={{ position: "relative" }}>
+              <div key={item.label} className="relative">
                 {item.href ? (
-                  <Link
-                    href={item.href}
-                    title={item.label}
+                  <Link href={item.href} title={item.label}
                     onClick={() => setFlyout(null)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: 60,
-                      height: 52,
-                      color: active ? "#fff" : "rgba(255,255,255,0.45)",
-                      position: "relative",
-                      transition: "color .15s",
-                    }}>
-                    {active && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: 8,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          width: 44,
-                          height: 38,
-                          borderRadius: 10,
-                          background: "rgba(124,58,237,0.25)",
-                        }}
-                      />
+                    className="flex items-center justify-center w-full transition-colors relative"
+                    style={{ height: 48, color: highlight ? "#fff" : "rgba(255,255,255,0.4)" }}>
+                    {highlight && (
+                      <div className="absolute inset-x-1.5 inset-y-1 rounded-lg"
+                        style={{ background: "rgba(124,58,237,0.25)" }} />
                     )}
-                    <item.icon
-                      size={20}
-                      strokeWidth={active ? 2 : 1.6}
-                      style={{ position: "relative", zIndex: 1 }}
-                    />
+                    <item.icon size={18} strokeWidth={highlight ? 2 : 1.6} className="relative z-10" />
                   </Link>
                 ) : (
-                  <button
-                    title={item.label}
-                    onClick={() =>
-                      setFlyout((prev) =>
-                        prev === item.label ? null : item.label,
-                      )
-                    }
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: 60,
-                      height: 52,
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      color: active || open ? "#fff" : "rgba(255,255,255,0.45)",
-                      position: "relative",
-                      transition: "color .15s",
-                    }}>
-                    {(active || open) && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: 8,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          width: 44,
-                          height: 38,
-                          borderRadius: 10,
-                          background: open
-                            ? "rgba(124,58,237,0.35)"
-                            : "rgba(124,58,237,0.25)",
-                        }}
-                      />
+                  <button title={item.label} type="button"
+                    onClick={() => setFlyout((prev) => prev === item.label ? null : item.label)}
+                    className="flex items-center justify-center w-full transition-colors relative"
+                    style={{ height: 48, color: highlight ? "#fff" : "rgba(255,255,255,0.4)" }}>
+                    {highlight && (
+                      <div className="absolute inset-x-1.5 inset-y-1 rounded-lg"
+                        style={{ background: open ? "rgba(124,58,237,0.35)" : "rgba(124,58,237,0.25)" }} />
                     )}
-                    <item.icon
-                      size={20}
-                      strokeWidth={active || open ? 2 : 1.6}
-                      style={{ position: "relative", zIndex: 1 }}
-                    />
+                    <item.icon size={18} strokeWidth={highlight ? 2 : 1.6} className="relative z-10" />
                   </button>
                 )}
               </div>
@@ -207,134 +137,77 @@ export default function Sidebar() {
         </nav>
 
         {/* Help */}
-        <div
-          style={{
-            padding: "8px 0 12px",
-            borderTop: "1px solid rgba(255,255,255,0.06)",
-            display: "flex",
-            justifyContent: "center",
-          }}>
-          <button
-            title="Help"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 44,
-              height: 44,
-              borderRadius: 10,
-              border: "none",
-              background: "none",
-              color: "rgba(255,255,255,0.35)",
-              cursor: "pointer",
-            }}>
-            <HelpCircle size={19} strokeWidth={1.6} />
+        <div className="shrink-0 flex justify-center py-2 border-t border-white/5">
+          <button type="button" title="Help"
+            className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+            style={{ color: "rgba(255,255,255,0.3)" }}>
+            <HelpCircle size={17} strokeWidth={1.6} />
           </button>
         </div>
       </div>
 
-      {/* Flyout panel */}
+      {/* ── Flyout backdrop ───────────────────────────────────────────── */}
       {flyout && (
-        <>
-          {/* Backdrop */}
-          <div
-            onClick={() => setFlyout(null)}
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 38,
-            }}
-          />
-          {/* Panel */}
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 60,
-              height: "100vh",
-              width: 220,
-              background: "#111827",
-              borderRight: "1px solid rgba(255,255,255,0.08)",
-              zIndex: 39,
-              paddingTop: 24,
-              overflowY: "auto",
-            }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "0 16px 16px",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-              }}>
-              <span
-                style={{
-                  fontSize: 15,
-                  fontWeight: 700,
-                  color: "#fff",
-                }}>
-                {flyout}
-              </span>
-              <button
-                onClick={() => setFlyout(null)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "rgba(255,255,255,0.4)",
-                  cursor: "pointer",
-                  padding: 0,
-                }}>
-                <ChevronRight size={16} />
+        <div className="fixed inset-0 z-38" onClick={() => setFlyout(null)} />
+      )}
+
+      {/* ── Flyout panel ─────────────────────────────────────────────── */}
+      <div className={cn(
+        "fixed top-0 h-screen z-39 flex flex-col overflow-hidden transition-all duration-250 ease-in-out",
+        flyout ? "w-[200px] md:w-[220px]" : "w-0",
+      )} style={{ left: 48, background: "#111827", borderRight: "1px solid rgba(255,255,255,0.08)" }}>
+
+        {openFlyout && (
+          <>
+            {/* Flyout header */}
+            <div className="flex items-center gap-2 px-3 shrink-0 border-b border-white/6"
+              style={{ height: 56 }}>
+              <button type="button" onClick={() => setFlyout(null)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors shrink-0">
+                <ChevronLeft size={16} />
+              </button>
+              <span className="flex-1 text-sm font-bold text-white truncate">{openFlyout.label}</span>
+              <button type="button" className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors shrink-0">
+                <MoreHorizontal size={15} />
+              </button>
+              <button type="button" className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors shrink-0">
+                <Plus size={15} />
               </button>
             </div>
-            {NAV_ITEMS.find((i) => i.label === flyout)?.children?.map(
-              (group, gi) => (
-                <div key={gi} style={{ padding: "12px 0" }}>
+
+            {/* Flyout items */}
+            <nav className="flex-1 overflow-y-auto py-2">
+              {openFlyout.children?.map((group, gi) => (
+                <div key={gi} className="mb-1">
                   {group.section && (
-                    <div
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: "rgba(255,255,255,0.3)",
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                        padding: "0 16px 6px",
-                      }}>
+                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-1.5">
                       {group.section}
-                    </div>
+                    </p>
                   )}
-                  {group.items.map((sub) => (
-                    <Link
-                      key={sub.href + sub.label}
-                      href={sub.href}
-                      onClick={() => setFlyout(null)}
-                      style={{
-                        display: "block",
-                        padding: "10px 16px",
-                        fontSize: 14,
-                        fontWeight: 500,
-                        color:
-                          pathname === sub.href
-                            ? "#a78bfa"
-                            : "rgba(255,255,255,0.7)",
-                        textDecoration: "none",
-                        borderRadius: 8,
-                        margin: "0 8px",
-                        background:
-                          pathname === sub.href
-                            ? "rgba(124,58,237,0.15)"
-                            : "transparent",
-                        transition: "background .15s, color .15s",
-                      }}>
-                      {sub.label}
-                    </Link>
-                  ))}
+                  {group.items.map((sub) => {
+                    const subActive = pathname.startsWith(sub.href);
+                    return (
+                      <Link key={sub.href + sub.label} href={sub.href}
+                        onClick={() => setFlyout(null)}
+                        className={cn(
+                          "flex items-center justify-between mx-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                          subActive
+                            ? "bg-[#051e3a] text-white"
+                            : "text-white/60 hover:text-white hover:bg-white/8",
+                        )}>
+                        <span>{sub.label}</span>
+                        {sub.dot && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                        )}
+                      </Link>
+                    );
+                  })}
                 </div>
-              ),
-            )}
-          </div>
-        </>
-      )}
+              ))}
+            </nav>
+          </>
+        )}
+      </div>
     </>
   );
 }
