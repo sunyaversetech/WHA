@@ -18,7 +18,7 @@ export async function PATCH(request: Request, { params }: Props) {
     }
 
     const body = await request.json();
-    const { availability_schedule } = body;
+    const { availability_schedule, repeating_schedule_config } = body;
 
     if (!Array.isArray(availability_schedule)) {
       return NextResponse.json(
@@ -27,9 +27,12 @@ export async function PATCH(request: Request, { params }: Props) {
       );
     }
 
+    const patch: any = { availability_schedule };
+    if (repeating_schedule_config) patch.repeating_schedule_config = repeating_schedule_config;
+
     const employee = await Employee.findByIdAndUpdate(
       id,
-      { $set: { availability_schedule } },
+      { $set: patch },
       { new: true },
     );
 

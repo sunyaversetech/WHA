@@ -21,9 +21,9 @@ import {
   useGetEmployees,
   useUpdateEmployeeSchedule,
   useCreateTimeOff,
+  useGetShiftOverrides,
+  useUpsertShiftOverride,
 } from "@/services/employee.service";
-
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 const DAY_KEYS = [
   "monday",
@@ -34,6 +34,7 @@ const DAY_KEYS = [
   "saturday",
   "sunday",
 ] as const;
+
 type DayKey = (typeof DAY_KEYS)[number];
 
 const DAY_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -122,13 +123,36 @@ function getDaySchedule(schedule: any[], dayKey: string) {
   return schedule?.find((s: any) => s.day_of_week === dayKey);
 }
 
-function dayMinutes(s: any): number {
-  if (!s?.is_working || !s.shifts?.length) return 0;
-  return s.shifts.reduce(
-    (acc: number, sh: { start: string; end: string }) =>
-      acc + slotMins(sh.start ?? "", sh.end ?? ""),
-    0,
+function fmtISODate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// Returns effective shifts for a specific date: override wins over repeating schedule
+function getEffectiveDayData(
+  emp: any,
+  date: Date,
+  overrides: any[],
+): { is_working: boolean; shifts: ShiftSlot[]; overrideId?: string } {
+  const iso = fmtISODate(date);
+  const override = overrides.find(
+    (o) => o.employee_id === emp._id && o.date === iso,
   );
+  if (override) {
+    return {
+      is_working: !override.is_day_off && override.shifts?.length > 0,
+      shifts: override.shifts ?? [],
+      overrideId: override._id,
+    };
+  }
+  const dayKey = DAY_KEYS[(date.getDay() + 6) % 7];
+  const s = getDaySchedule(emp.availability_schedule ?? [], dayKey);
+  return {
+    is_working: s?.is_working ?? false,
+    shifts: s?.shifts ?? [],
+  };
 }
 
 function slotMins(start: string, end: string): number {
@@ -184,7 +208,7 @@ function Avatar({ emp, idx }: { emp: any; idx: number }) {
   return (
     <div
       className={cn(
-        "w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-xs font-bold",
+        "w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-black text-xs font-bold",
         AVATAR_BG[idx % AVATAR_BG.length],
       )}>
       {initials(emp.full_name)}
@@ -195,9 +219,9 @@ function Avatar({ emp, idx }: { emp: any; idx: number }) {
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const SEL =
-  "w-full bg-[#1c1c1c] border border-[#2a2a2a] text-white text-sm rounded-lg px-3 py-2.5 appearance-none outline-none focus:border-[#6B5CE7] transition-colors";
+  "w-full bg-[#1c1c1c] border border-[#2a2a2a] text-black text-sm rounded-lg px-3 py-2.5 appearance-none outline-none focus:border-[#6B5CE7] transition-colors";
 const BTN_GHOST =
-  "px-5 py-2 rounded-full border border-[#2a2a2a] text-white text-sm font-semibold hover:bg-[#1a1a1a] transition-colors";
+  "px-5 py-2 rounded-full border border-[#2a2a2a] text-black text-sm font-semibold hover:bg-[#1a1a1a] transition-colors";
 const BTN_PRIMARY =
   "px-5 py-2 rounded-full bg-white text-black text-sm font-bold hover:bg-gray-100 transition-colors";
 
@@ -205,6 +229,13 @@ const BTN_PRIMARY =
 
 type ShiftSlot = { start: string; end: string };
 type DayEdit = { enabled: boolean; slots: ShiftSlot[] };
+type RepeatingConfig = {
+  schedule_type: string;
+  start_date: string;
+  ends_type: string;
+  end_date?: string;
+  end_occurrences?: number;
+};
 type CtxMenuState = {
   x: number;
   y: number;
@@ -309,7 +340,7 @@ function ShiftContextMenu({
             action();
             onClose();
           }}
-          className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#252525] transition-colors">
+          className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
           {label}
         </button>
       ))}
@@ -330,24 +361,21 @@ function ShiftContextMenu({
 
 function EditDayDialog({
   emp,
-  dayKey,
   dayDate,
+  initialSlots,
   onClose,
   onSave,
   isSaving,
 }: {
   emp: any;
-  dayKey: DayKey;
   dayDate: Date;
+  initialSlots: ShiftSlot[];
   onClose: () => void;
   onSave: (slots: ShiftSlot[]) => void;
   isSaving?: boolean;
 }) {
-  const existing = getDaySchedule(emp.availability_schedule ?? [], dayKey);
   const [slots, setSlots] = useState<ShiftSlot[]>(() =>
-    existing?.is_working && existing.shifts?.length
-      ? existing.shifts.map((sh: any) => ({ start: sh.start, end: sh.end }))
-      : [{ start: "09:00", end: "17:00" }],
+    initialSlots.length > 0 ? initialSlots : [{ start: "09:00", end: "17:00" }],
   );
 
   const totalMins = slots.reduce((acc, s) => acc + slotMins(s.start, s.end), 0);
@@ -383,18 +411,18 @@ function EditDayDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center "
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}>
-      <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl w-full max-w-md mx-4 p-6 shadow-2xl">
+      <div className=" border border-[#2a2a2a] rounded-2xl w-full max-w-md mx-4 p-6 shadow-2xl">
         <div className="flex items-start justify-between mb-1">
-          <h2 className="text-xl font-bold text-white">
+          <h2 className="text-xl font-bold text-black">
             {firstName}&apos;s shift {fmtDayFull(dayDate)}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white ml-3 mt-0.5 transition-colors">
+            className="text-gray-400 hover:text-black ml-3 mt-0.5 transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -446,12 +474,12 @@ function EditDayDialog({
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={addSlot}
-            className="flex items-center gap-1.5 text-sm text-white border border-[#2a2a2a] rounded-full px-3.5 py-1.5 hover:bg-[#1a1a1a] transition-colors">
+            className="flex items-center gap-1.5 text-sm text-black border border-[#2a2a2a] rounded-full px-3.5 py-1.5 hover:bg-[#1a1a1a] transition-colors">
             <Plus size={14} /> Add shift
           </button>
           <span className="text-sm text-gray-400">
             Total shift duration:{" "}
-            <span className="text-white font-semibold">
+            <span className="text-black font-semibold">
               {fmtHours(totalMins)}
             </span>
           </span>
@@ -535,17 +563,17 @@ function TimeOffDialog({
       }}>
       <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl w-full max-w-lg mx-4 p-6 shadow-2xl">
         <div className="flex items-start justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Add time off</h2>
+          <h2 className="text-xl font-bold text-black">Add time off</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors">
+            className="text-gray-400 hover:text-black transition-colors">
             <X size={18} />
           </button>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <p className="text-sm font-semibold text-white mb-2">Team member</p>
+            <p className="text-sm font-semibold text-black mb-2">Team member</p>
             <div className="relative">
               <select
                 value={empId}
@@ -564,7 +592,7 @@ function TimeOffDialog({
             </div>
           </div>
           <div>
-            <p className="text-sm font-semibold text-white mb-2">Type</p>
+            <p className="text-sm font-semibold text-black mb-2">Type</p>
             <SelectField
               value={type}
               onChange={setType}
@@ -573,7 +601,7 @@ function TimeOffDialog({
           </div>
         </div>
 
-        <p className="text-sm font-semibold text-white mb-2">Start date</p>
+        <p className="text-sm font-semibold text-black mb-2">Start date</p>
         <div className="grid grid-cols-[1fr_auto_auto] gap-2 mb-4 items-start">
           <SelectField
             value={startDate}
@@ -607,12 +635,12 @@ function TimeOffDialog({
             onChange={(e) => setRepeat(e.target.checked)}
             className="w-4 h-4 accent-[#6B5CE7]"
           />
-          <span className="text-sm text-white">Repeat</span>
+          <span className="text-sm text-black">Repeat</span>
         </label>
 
         <div className="mb-4">
           <div className="flex justify-between mb-2">
-            <p className="text-sm font-semibold text-white">Description</p>
+            <p className="text-sm font-semibold text-black">Description</p>
             <span className="text-xs text-gray-500">{desc.length}/100</span>
           </div>
           <textarea
@@ -620,7 +648,7 @@ function TimeOffDialog({
             onChange={(e) => setDesc(e.target.value.slice(0, 100))}
             placeholder="Add description or note (optional)"
             rows={4}
-            className="w-full bg-[#1c1c1c] border border-[#2a2a2a] rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-[#6B5CE7] transition-colors resize-none"
+            className="w-full bg-[#1c1c1c] border border-[#2a2a2a] rounded-xl px-3 py-2.5 text-sm text-black placeholder-gray-600 outline-none focus:border-[#6B5CE7] transition-colors resize-none"
           />
         </div>
 
@@ -632,9 +660,9 @@ function TimeOffDialog({
               onChange={(e) => setApproved(e.target.checked)}
               className="w-4 h-4 accent-[#6B5CE7]"
             />
-            <span className="text-sm text-white">Approved</span>
+            <span className="text-sm text-black">Approved</span>
           </label>
-          <span className="text-sm font-bold text-white">
+          <span className="text-sm font-bold text-black">
             Time off total: {fmtHours(totalMins)}
           </span>
         </div>
@@ -682,17 +710,31 @@ function RepeatingShiftsPanel({
 }: {
   emp: any;
   onClose: () => void;
-  onSave: (days: Record<string, DayEdit>) => void;
+  onSave: (days: Record<string, DayEdit>, config: RepeatingConfig) => void;
   isSaving?: boolean;
 }) {
+  const cfg = emp.repeating_schedule_config ?? {};
+
   const dateOptions = useMemo(() => {
     const now = new Date();
-    return Array.from({ length: 60 }, (_, i) => fmtDateShort(addDays(now, i)));
+    return Array.from({ length: 365 }, (_, i) => fmtDateShort(addDays(now, i)));
   }, []);
 
-  const [scheduleType, setScheduleType] = useState(SCHEDULE_TYPES[0]);
-  const [startDate, setStartDate] = useState(() => dateOptions[0]);
-  const [ends, setEnds] = useState("");
+  const [scheduleType, setScheduleType] = useState<string>(
+    () => cfg.schedule_type ?? SCHEDULE_TYPES[0],
+  );
+  const [startDate, setStartDate] = useState<string>(
+    () => cfg.start_date ?? dateOptions[0],
+  );
+  const [ends, setEnds] = useState<string>(
+    () => cfg.ends_type ?? ENDS_OPTIONS[0],
+  );
+  const [endDate, setEndDate] = useState<string>(
+    () => cfg.end_date ?? dateOptions[1],
+  );
+  const [endOccurrences, setEndOccurrences] = useState<number>(
+    () => cfg.end_occurrences ?? 1,
+  );
 
   const [days, setDays] = useState<Record<string, DayEdit>>(() => {
     const schedule = emp.availability_schedule ?? [];
@@ -718,9 +760,7 @@ function RepeatingShiftsPanel({
       DAY_KEYS.reduce((acc, key) => {
         const day = days[key];
         if (!day?.enabled) return acc;
-        return (
-          acc + day.slots.reduce((a, s) => a + slotMins(s.start, s.end), 0)
-        );
+        return acc + day.slots.reduce((a, s) => a + slotMins(s.start, s.end), 0);
       }, 0),
     [days],
   );
@@ -728,12 +768,7 @@ function RepeatingShiftsPanel({
   const toggleDay = (key: string) =>
     setDays((p) => ({ ...p, [key]: { ...p[key], enabled: !p[key].enabled } }));
 
-  const updateSlot = (
-    key: string,
-    si: number,
-    field: "start" | "end",
-    val: string,
-  ) =>
+  const updateSlot = (key: string, si: number, field: "start" | "end", val: string) =>
     setDays((p) => {
       const next = p[key].slots.map((s) => ({ ...s }));
       next[si][field] = val;
@@ -742,8 +777,7 @@ function RepeatingShiftsPanel({
           next[si].end = nextTimeOption(next[si].start);
       } else {
         if (next[si].end <= next[si].start)
-          next[si].start =
-            TIME_OPTIONS[Math.max(0, TIME_OPTIONS.indexOf(next[si].end) - 1)];
+          next[si].start = TIME_OPTIONS[Math.max(0, TIME_OPTIONS.indexOf(next[si].end) - 1)];
         if (si < next.length - 1 && next[si + 1].start < next[si].end) {
           next[si + 1].start = next[si].end;
           if (next[si + 1].end <= next[si + 1].start)
@@ -761,10 +795,7 @@ function RepeatingShiftsPanel({
         ...p,
         [key]: {
           ...p[key],
-          slots: [
-            ...slots,
-            { start: last.end, end: nextTimeOption(last.end, 2) },
-          ],
+          slots: [...slots, { start: last.end, end: nextTimeOption(last.end, 2) }],
         },
       };
     });
@@ -772,13 +803,22 @@ function RepeatingShiftsPanel({
   const removeSlot = (key: string, si: number) =>
     setDays((p) => ({
       ...p,
-      [key]: {
-        ...p[key],
-        slots: p[key].slots.filter((_, i) => i !== si),
-      },
+      [key]: { ...p[key], slots: p[key].slots.filter((_, i) => i !== si) },
     }));
 
+  const handleSave = () => {
+    const config: RepeatingConfig = {
+      schedule_type: scheduleType,
+      start_date: startDate,
+      ends_type: ends,
+      ...(ends === "On a specific date" && { end_date: endDate }),
+      ...(ends === "After occurrences" && { end_occurrences: endOccurrences }),
+    };
+    onSave(days, config);
+  };
+
   const firstName = emp.full_name.split(" ")[0];
+  const scheduleLabel = scheduleType === "Every week" ? "Weekly" : scheduleType === "Every 2 weeks" ? "Bi-weekly" : "Custom";
 
   return (
     <div className="fixed inset-0 z-50 bg-[#111111] overflow-y-auto">
@@ -788,12 +828,9 @@ function RepeatingShiftsPanel({
             Close
           </button>
           <button
-            onClick={() => onSave(days)}
+            onClick={handleSave}
             disabled={isSaving}
-            className={cn(
-              BTN_PRIMARY,
-              "flex items-center gap-1.5 disabled:opacity-70",
-            )}>
+            className={cn(BTN_PRIMARY, "flex items-center gap-1.5 disabled:opacity-70")}>
             {isSaving && <Loader2 size={13} className="animate-spin" />}
             Save
           </button>
@@ -828,7 +865,7 @@ function RepeatingShiftsPanel({
 
           <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4 space-y-4">
             <div>
-              <p className="text-sm font-semibold text-white mb-2">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
                 Schedule type
               </p>
               <SelectField
@@ -838,7 +875,7 @@ function RepeatingShiftsPanel({
               />
             </div>
             <div>
-              <p className="text-sm font-semibold text-white mb-2">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
                 Start date
               </p>
               <SelectField
@@ -848,24 +885,38 @@ function RepeatingShiftsPanel({
               />
             </div>
             <div>
-              <p className="text-sm font-semibold text-white mb-2">Ends</p>
-              <div className="relative">
-                <select
-                  value={ends}
-                  onChange={(e) => setEnds(e.target.value)}
-                  className={SEL}>
-                  <option value="">Select an option</option>
-                  {ENDS_OPTIONS.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={13}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                Ends
+              </p>
+              <SelectField
+                value={ends}
+                onChange={setEnds}
+                options={ENDS_OPTIONS}
+              />
+              {ends === "On a specific date" && (
+                <div className="mt-2">
+                  <SelectField
+                    value={endDate}
+                    onChange={setEndDate}
+                    options={dateOptions.filter((d) => d !== startDate)}
+                  />
+                </div>
+              )}
+              {ends === "After occurrences" && (
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    value={endOccurrences}
+                    onChange={(e) =>
+                      setEndOccurrences(Math.max(1, Number(e.target.value)))
+                    }
+                    className="w-20 bg-[#1c1c1c] border border-[#2a2a2a] text-white text-sm rounded-lg px-3 py-2.5 outline-none focus:border-[#6B5CE7] transition-colors"
+                  />
+                  <span className="text-sm text-gray-400">occurrences</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -877,10 +928,10 @@ function RepeatingShiftsPanel({
           </div>
         </div>
 
-        {/* Right: weekly schedule */}
+        {/* Right: schedule grid */}
         <div>
           <div className="flex items-baseline gap-2 mb-6">
-            <h2 className="text-lg font-bold text-white">Weekly</h2>
+            <h2 className="text-lg font-bold text-white">{scheduleLabel}</h2>
             <span className="text-sm text-gray-400">
               {fmtHours(totalWeekMins)} total
             </span>
@@ -914,9 +965,7 @@ function RepeatingShiftsPanel({
                         {DAY_FULL[di]}
                       </p>
                       {day.enabled && (
-                        <p className="text-xs text-gray-500">
-                          {fmtHours(dayMins)}
-                        </p>
+                        <p className="text-xs text-gray-500">{fmtHours(dayMins)}</p>
                       )}
                     </div>
                   </div>
@@ -930,18 +979,12 @@ function RepeatingShiftsPanel({
                           <div className="relative flex-1">
                             <select
                               value={slot.start}
-                              onChange={(e) =>
-                                updateSlot(key, si, "start", e.target.value)
-                              }
+                              onChange={(e) => updateSlot(key, si, "start", e.target.value)}
                               className={SEL}>
                               {TIME_OPTIONS.filter(
-                                (t) =>
-                                  (si === 0 || t >= day.slots[si - 1].end) &&
-                                  t < slot.end,
+                                (t) => (si === 0 || t >= day.slots[si - 1].end) && t < slot.end,
                               ).map((t) => (
-                                <option key={t} value={t}>
-                                  {t}
-                                </option>
+                                <option key={t} value={t}>{t}</option>
                               ))}
                             </select>
                             <ChevronDown
@@ -949,23 +992,15 @@ function RepeatingShiftsPanel({
                               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                             />
                           </div>
-                          <span className="text-sm text-gray-400 shrink-0">
-                            to
-                          </span>
+                          <span className="text-sm text-gray-400 shrink-0">to</span>
                           <div className="relative flex-1">
                             <select
                               value={slot.end}
-                              onChange={(e) =>
-                                updateSlot(key, si, "end", e.target.value)
-                              }
+                              onChange={(e) => updateSlot(key, si, "end", e.target.value)}
                               className={SEL}>
-                              {TIME_OPTIONS.filter((t) => t > slot.start).map(
-                                (t) => (
-                                  <option key={t} value={t}>
-                                    {t}
-                                  </option>
-                                ),
-                              )}
+                              {TIME_OPTIONS.filter((t) => t > slot.start).map((t) => (
+                                <option key={t} value={t}>{t}</option>
+                              ))}
                             </select>
                             <ChevronDown
                               size={13}
@@ -1027,13 +1062,13 @@ function AddDropdown({
         <ChevronDown size={14} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-2xl py-1.5 min-w-50 z-50">
+        <div className="absolute right-0 top-full mt-2 bg-[#051e3a] border border-[#2a2a2a] rounded-xl shadow-2xl py-1.5 min-w-50 z-50">
           <button
             onClick={() => {
               onTimeOff();
               setOpen(false);
             }}
-            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#252525] transition-colors">
+            className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
             Time off
           </button>
           <button
@@ -1041,12 +1076,12 @@ function AddDropdown({
               onNewMember();
               setOpen(false);
             }}
-            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#252525] transition-colors">
+            className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
             New team member
           </button>
           <button
             onClick={() => setOpen(false)}
-            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#252525] transition-colors">
+            className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
             Business closed period
           </button>
         </div>
@@ -1066,32 +1101,44 @@ export default function ScheduleShift() {
     useUpdateEmployeeSchedule();
   const { mutate: createTimeOff, isPending: savingTimeOff } =
     useCreateTimeOff();
+  const { mutate: upsertOverride, isPending: savingOverride } =
+    useUpsertShiftOverride();
 
-  const handleSaveEditDay = (emp: any, dayKey: DayKey, slots: ShiftSlot[]) => {
-    const existing: any[] = emp.availability_schedule ?? [];
-    const schedule = DAY_KEYS.map((key) => {
-      const s = getDaySchedule(existing, key);
-      if (key === dayKey) {
-        return {
-          day_of_week: key,
-          is_working: slots.length > 0,
-          shifts: slots,
-        };
-      }
-      return s ?? { day_of_week: key, is_working: false, shifts: [] };
-    });
-    updateSchedule(
-      { empId: emp._id, schedule },
+  const [monday, setMonday] = useState<Date>(() => getMonday(new Date()));
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(monday, i)),
+    [monday],
+  );
+
+  const weekStartISO = fmtISODate(monday);
+  const weekEndISO = fmtISODate(addDays(monday, 6));
+  const { data: overridesData } = useGetShiftOverrides(
+    weekStartISO,
+    weekEndISO,
+  );
+  const overrides = useMemo<any[]>(
+    () => overridesData?.data ?? [],
+    [overridesData],
+  );
+
+  const handleSaveEditDay = (emp: any, dayDate: Date, slots: ShiftSlot[]) => {
+    upsertOverride(
+      {
+        employee_id: emp._id,
+        date: fmtISODate(dayDate),
+        shifts: slots,
+        is_day_off: slots.length === 0,
+      },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["employees"] });
+          queryClient.invalidateQueries({ queryKey: ["shiftOverrides"] });
           setEditDialog(null);
         },
       },
     );
   };
 
-  const handleSaveRepeating = (emp: any, days: Record<string, DayEdit>) => {
+  const handleSaveRepeating = (emp: any, days: Record<string, DayEdit>, config: RepeatingConfig) => {
     const schedule = DAY_KEYS.map((key) => {
       const d = days[key];
       return {
@@ -1101,7 +1148,7 @@ export default function ScheduleShift() {
       };
     });
     updateSchedule(
-      { empId: emp._id, schedule },
+      { empId: emp._id, schedule, config },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["employees"] });
@@ -1117,29 +1164,20 @@ export default function ScheduleShift() {
     });
   };
 
-  const handleDeleteShift = (emp: any, dayKey: DayKey) => {
-    const existing: any[] = emp.availability_schedule ?? [];
-    const schedule = DAY_KEYS.map((key) => {
-      const s = getDaySchedule(existing, key);
-      if (key === dayKey) {
-        return { day_of_week: key, is_working: false, shifts: [] };
-      }
-      return s ?? { day_of_week: key, is_working: false, shifts: [] };
-    });
-    updateSchedule(
-      { empId: emp._id, schedule },
+  const handleDeleteShift = (emp: any, dayDate: Date) => {
+    upsertOverride(
+      {
+        employee_id: emp._id,
+        date: fmtISODate(dayDate),
+        shifts: [],
+        is_day_off: true,
+      },
       {
         onSuccess: () =>
-          queryClient.invalidateQueries({ queryKey: ["employees"] }),
+          queryClient.invalidateQueries({ queryKey: ["shiftOverrides"] }),
       },
     );
   };
-
-  const [monday, setMonday] = useState<Date>(() => getMonday(new Date()));
-  const weekDays = useMemo(
-    () => Array.from({ length: 7 }, (_, i) => addDays(monday, i)),
-    [monday],
-  );
 
   const goThisWeek = () => setMonday(getMonday(new Date()));
   const goPrev = () => setMonday((m) => addDays(m, -7));
@@ -1147,22 +1185,28 @@ export default function ScheduleShift() {
 
   const colTotals = useMemo(
     () =>
-      DAY_KEYS.map((key) =>
-        employees.reduce(
-          (acc, emp) =>
+      weekDays.map((day) =>
+        employees.reduce((acc, emp) => {
+          const eff = getEffectiveDayData(emp, day, overrides);
+          return (
             acc +
-            dayMinutes(getDaySchedule(emp.availability_schedule ?? [], key)),
-          0,
-        ),
+            (eff.is_working
+              ? eff.shifts.reduce(
+                  (a: number, s: ShiftSlot) => a + slotMins(s.start, s.end),
+                  0,
+                )
+              : 0)
+          );
+        }, 0),
       ),
-    [employees],
+    [employees, weekDays, overrides],
   );
 
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
   const [editDialog, setEditDialog] = useState<{
     emp: any;
-    dayKey: DayKey;
     dayDate: Date;
+    initialSlots: ShiftSlot[];
   } | null>(null);
   const [timeOffDialog, setTimeOffDialog] = useState<{
     emp: any;
@@ -1184,12 +1228,12 @@ export default function ScheduleShift() {
   };
 
   return (
-    <div className="min-h-screen bg-[#111111] text-white p-6 md:p-8">
+    <div className="min-h-screen  text-black p-6 md:p-8">
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Scheduled shifts</h1>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] text-sm font-semibold text-white hover:bg-[#1e1e1e] transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#333] text-sm font-semibold text-black hover:bg-[#1e1e1e] transition-colors">
             Options
             <ChevronDown size={14} />
           </button>
@@ -1207,20 +1251,22 @@ export default function ScheduleShift() {
 
       {/* ── Controls bar ── */}
       <div className="flex items-center justify-between mb-5">
-        <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#1a1a1a] text-sm font-semibold text-white hover:bg-[#222] transition-colors">
+        <button
+          className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a] text-white 
+        bg-[#051e3a] text-sm font-semibold hover:bg-[#222] transition-colors">
           <ArrowUpDown size={14} className="text-gray-400" />
           Custom order
         </button>
         <div className="flex items-center gap-2">
           <button
             onClick={goThisWeek}
-            className="px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#1a1a1a] text-sm font-semibold text-white hover:bg-[#222] transition-colors">
+            className="px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#051e3a] text-sm font-semibold text-white hover:bg-[#222] transition-colors">
             This week
           </button>
-          <div className="flex items-center gap-1 border border-[#2a2a2a] bg-[#1a1a1a] rounded-full px-2 py-1.5">
+          <div className="flex items-center gap-1 border border-[#2a2a2a] bg-[#051e3a] rounded-full px-2 py-1.5">
             <button
               onClick={goPrev}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#2a2a2a] transition-colors text-gray-400 hover:text-white">
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#2a2a2a] transition-colors text-gray-400 hover:text-black">
               <ChevronLeft size={15} />
             </button>
             <span className="text-sm font-semibold text-white px-2 min-w-[170px] text-center">
@@ -1228,7 +1274,7 @@ export default function ScheduleShift() {
             </span>
             <button
               onClick={goNext}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#2a2a2a] transition-colors text-gray-400 hover:text-white">
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#2a2a2a] transition-colors text-gray-400 hover:text-black">
               <ChevronRight size={15} />
             </button>
           </div>
@@ -1239,7 +1285,7 @@ export default function ScheduleShift() {
       <div className="border border-[#2a2a2a] rounded-2xl overflow-hidden">
         <div className="grid grid-cols-[220px_repeat(7,1fr)] border-b border-[#2a2a2a]">
           <div className="px-4 py-3 flex items-center gap-1.5 border-r border-[#2a2a2a]">
-            <span className="text-sm font-semibold text-white">
+            <span className="text-sm font-semibold text-black">
               Team member
             </span>
             <button className="text-[#6B5CE7] text-sm font-semibold hover:opacity-70 transition-opacity">
@@ -1253,7 +1299,7 @@ export default function ScheduleShift() {
                 "px-3 py-3 text-center",
                 i < 6 && "border-r border-[#2a2a2a]",
               )}>
-              <p className="text-sm font-bold text-white">
+              <p className="text-sm font-bold text-black">
                 {DAY_SHORT[i]}, {fmtShort(day)}
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
@@ -1269,11 +1315,18 @@ export default function ScheduleShift() {
           </div>
         ) : (
           employees.map((emp, empIdx) => {
-            const schedule: any[] = emp.availability_schedule ?? [];
-            const weekMins = schedule.reduce(
-              (acc: number, s: any) => acc + dayMinutes(s),
-              0,
-            );
+            const weekMins = weekDays.reduce((acc, day) => {
+              const eff = getEffectiveDayData(emp, day, overrides);
+              return (
+                acc +
+                (eff.is_working
+                  ? eff.shifts.reduce(
+                      (a: number, s: ShiftSlot) => a + slotMins(s.start, s.end),
+                      0,
+                    )
+                  : 0)
+              );
+            }, 0);
 
             return (
               <div
@@ -1285,7 +1338,7 @@ export default function ScheduleShift() {
                 <div className="px-4 py-4 flex items-center gap-3 border-r border-[#2a2a2a]">
                   <Avatar emp={emp} idx={empIdx} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">
+                    <p className="text-sm font-semibold text-black truncate">
                       {emp.full_name}
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">
@@ -1300,9 +1353,8 @@ export default function ScheduleShift() {
                 </div>
 
                 {DAY_KEYS.map((key, di) => {
-                  const s = getDaySchedule(schedule, key);
-                  const working = s?.is_working && s.shifts?.length > 0;
                   const dayDate = weekDays[di];
+                  const eff = getEffectiveDayData(emp, dayDate, overrides);
 
                   return (
                     <div
@@ -1311,13 +1363,14 @@ export default function ScheduleShift() {
                         "px-2 py-4 flex items-center justify-center",
                         di < 6 && "border-r border-[#2a2a2a]",
                       )}>
-                      {working ? (
+                      {eff.is_working ? (
                         <button
                           onClick={(e) =>
                             openCtxMenu(e, emp, empIdx, key, dayDate)
                           }
-                          className="w-full bg-[#1e2a6b] hover:bg-[#2435a0] transition-colors rounded-lg px-2 py-2.5 text-center cursor-pointer space-y-0.5">
-                          {s.shifts.map((sh: any, si: number) => (
+                          className="w-full bg-[#051e3a]  hover:bg-[#2435a0] transition-colors 
+                          rounded-lg px-2 py-2.5 text-center cursor-pointer space-y-0.5">
+                          {eff.shifts.map((sh: ShiftSlot, si: number) => (
                             <p
                               key={si}
                               className="text-xs font-semibold text-white leading-tight">
@@ -1346,8 +1399,11 @@ export default function ScheduleShift() {
       </div>
 
       {/* ── Footer note ── */}
-      <div className="mt-4 flex items-start gap-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-5 py-3.5">
-        <Info size={16} className="text-gray-500 shrink-0 mt-0.5" />
+      <div className="mt-4 flex items-start gap-3 bg-[#051e3a] border border-[#2a2a2a] rounded-xl px-5 py-3.5">
+        <Info
+          size={16}
+          className="text-gray-500 bg-indigo-950 shrink-0 mt-0.5"
+        />
         <p className="text-sm text-gray-400 leading-relaxed">
           The team roster shows your availability for bookings and is not linked
           to your business standard opening hours. To set your standard opening
@@ -1364,13 +1420,18 @@ export default function ScheduleShift() {
       {ctxMenu && (
         <ShiftContextMenu
           menu={ctxMenu}
-          onEditDay={() =>
+          onEditDay={() => {
+            const eff = getEffectiveDayData(
+              ctxMenu.emp,
+              ctxMenu.dayDate,
+              overrides,
+            );
             setEditDialog({
               emp: ctxMenu.emp,
-              dayKey: ctxMenu.dayKey,
               dayDate: ctxMenu.dayDate,
-            })
-          }
+              initialSlots: eff.shifts,
+            });
+          }}
           onRepeating={() => setRepeatingPanel({ emp: ctxMenu.emp })}
           onTimeOff={() =>
             setTimeOffDialog({
@@ -1378,7 +1439,7 @@ export default function ScheduleShift() {
               dayDate: ctxMenu.dayDate,
             })
           }
-          onDelete={() => handleDeleteShift(ctxMenu.emp, ctxMenu.dayKey)}
+          onDelete={() => handleDeleteShift(ctxMenu.emp, ctxMenu.dayDate)}
           onClose={() => setCtxMenu(null)}
         />
       )}
@@ -1386,13 +1447,13 @@ export default function ScheduleShift() {
       {editDialog && (
         <EditDayDialog
           emp={editDialog.emp}
-          dayKey={editDialog.dayKey}
           dayDate={editDialog.dayDate}
+          initialSlots={editDialog.initialSlots}
           onClose={() => setEditDialog(null)}
           onSave={(slots) =>
-            handleSaveEditDay(editDialog.emp, editDialog.dayKey, slots)
+            handleSaveEditDay(editDialog.emp, editDialog.dayDate, slots)
           }
-          isSaving={savingSchedule}
+          isSaving={savingOverride}
         />
       )}
 
@@ -1411,7 +1472,7 @@ export default function ScheduleShift() {
         <RepeatingShiftsPanel
           emp={repeatingPanel.emp}
           onClose={() => setRepeatingPanel(null)}
-          onSave={(days) => handleSaveRepeating(repeatingPanel.emp, days)}
+          onSave={(days, config) => handleSaveRepeating(repeatingPanel.emp, days, config)}
           isSaving={savingSchedule}
         />
       )}

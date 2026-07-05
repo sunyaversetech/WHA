@@ -82,7 +82,7 @@ function EmpAvatar({ emp, idx }: { emp: any; idx: number }) {
   return (
     <div
       className={cn(
-        "w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold",
+        "w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-black text-sm font-bold",
         AVATAR_COLORS[idx % AVATAR_COLORS.length],
       )}
       style={{ boxShadow: `0 0 0 2px ${emp.calendar_color ?? "#4DD0E1"}44` }}>
@@ -109,7 +109,7 @@ function Checkbox({
           ? "bg-[#6B5CE7] border-[#6B5CE7]"
           : "border-[#3a3a3a] hover:border-[#555]",
       )}>
-      {checked && <Check size={10} className="text-white" />}
+      {checked && <Check size={10} className="text-black" />}
     </button>
   );
 }
@@ -133,34 +133,34 @@ function ActionsDropdown({ emp, onEdit }: { emp: any; onEdit: () => void }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#2a2a2a] text-white text-sm hover:bg-[#1e1e1e] transition-colors">
+        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-300 text-gray-800 text-sm font-medium hover:bg-gray-50 transition-colors">
         Actions
         {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-2xl py-1.5 z-50 min-w-[180px]">
+        <div className="absolute right-0 top-full mt-1.5 z-999 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-45">
           <button
             onClick={() => {
               onEdit();
               setOpen(false);
             }}
-            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#252525] transition-colors">
+            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
             Edit
           </button>
           <button
             onClick={() => setOpen(false)}
-            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#252525] transition-colors">
+            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
             View calendar
           </button>
           <Link
             href="/dashboard/employees/schedule"
             onClick={() => setOpen(false)}
-            className="block px-4 py-2.5 text-sm text-white hover:bg-[#252525] transition-colors">
+            className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
             View scheduled shifts
           </Link>
           <button
             onClick={() => setOpen(false)}
-            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#252525] transition-colors">
+            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
             Add time off
           </button>
         </div>
@@ -188,19 +188,19 @@ function OptionsDropdown() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a] text-white text-sm font-semibold hover:bg-[#1a1a1a] transition-colors">
+        className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a] text-black text-sm font-semibold hover: transition-colors">
         Options
         {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-2xl py-1.5 z-50 min-w-[160px]">
-          <button className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#252525] transition-colors">
+        <div className="absolute right-0 top-full mt-1.5  border border-[#2a2a2a] rounded-xl shadow-2xl py-1.5 z-50 min-w-[160px]">
+          <button className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
             Export
           </button>
-          <button className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#252525] transition-colors">
+          <button className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
             Import
           </button>
-          <button className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#252525] transition-colors">
+          <button className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-[#252525] transition-colors">
             Archive all
           </button>
         </div>
@@ -234,7 +234,7 @@ function SortDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#1a1a1a] text-sm font-semibold text-white hover:bg-[#222] transition-colors">
+        className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a]  text-sm font-semibold text-black hover:bg-[#222] transition-colors">
         <svg
           viewBox="0 0 16 16"
           className="w-3.5 h-3.5 text-gray-400"
@@ -250,7 +250,7 @@ function SortDropdown({
         {value}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-2xl py-1.5 z-50 min-w-[220px]">
+        <div className="absolute right-0 top-full mt-1.5  border border-[#2a2a2a] rounded-xl shadow-2xl py-1.5 z-50 min-w-[220px]">
           {SORT_OPTIONS.map((opt) => (
             <button
               key={opt}
@@ -260,7 +260,7 @@ function SortDropdown({
               }}
               className={cn(
                 "w-full text-left px-4 py-2.5 text-sm hover:bg-[#252525] transition-colors",
-                opt === value ? "text-[#6B5CE7]" : "text-white",
+                opt === value ? "text-[#6B5CE7]" : "text-black",
               )}>
               {opt}
             </button>
@@ -304,10 +304,10 @@ function FilterPanel({
         )}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[#2a2a2a]">
-          <h2 className="text-xl font-bold text-white">All filters</h2>
+          <h2 className="text-xl font-bold text-black">All filters</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors">
+            className="text-gray-400 hover:text-black transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -319,7 +319,7 @@ function FilterPanel({
             className="w-full flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-2.5">
               <MapPin size={15} className="text-gray-400" />
-              <span className="text-sm font-semibold text-white">
+              <span className="text-sm font-semibold text-black">
                 Locations
               </span>
             </div>
@@ -333,7 +333,7 @@ function FilterPanel({
             <div className="px-6 pb-5 space-y-3">
               <label className="flex items-center gap-3 cursor-pointer">
                 <div className="w-[18px] h-[18px] rounded border border-[#3a3a3a] bg-[#1c1c1c] shrink-0" />
-                <span className="text-sm text-white">Select all</span>
+                <span className="text-sm text-black">Select all</span>
               </label>
               <p className="text-xs text-gray-600 italic pl-[30px]">
                 No locations configured.
@@ -357,7 +357,7 @@ function FilterPanel({
                 <rect x="3" y="4" width="18" height="18" rx="2" />
                 <path d="M16 2v4M8 2v4M3 10h18" />
               </svg>
-              <span className="text-sm font-semibold text-white">Type</span>
+              <span className="text-sm font-semibold text-black">Type</span>
             </div>
             {typeOpen ? (
               <ChevronUp size={14} className="text-gray-400" />
@@ -380,10 +380,10 @@ function FilterPanel({
                         : "bg-[#1c1c1c] border-[#3a3a3a]",
                     )}>
                     {selectedTypes.has(type) && (
-                      <Check size={10} className="text-white" />
+                      <Check size={10} className="text-black" />
                     )}
                   </div>
-                  <span className="text-sm text-white">{type}</span>
+                  <span className="text-sm text-black">{type}</span>
                 </label>
               ))}
             </div>
@@ -407,7 +407,7 @@ function FilterPanel({
                   strokeLinecap="round"
                 />
               </svg>
-              <span className="text-sm font-semibold text-white">Status</span>
+              <span className="text-sm font-semibold text-black">Status</span>
             </div>
             {statusOpen ? (
               <ChevronUp size={14} className="text-gray-400" />
@@ -421,7 +421,7 @@ function FilterPanel({
                 <button
                   key={s}
                   onClick={() => onStatusChange(s)}
-                  className="w-full flex items-center justify-between py-2.5 text-sm text-white hover:text-[#6B5CE7] transition-colors">
+                  className="w-full flex items-center justify-between py-2.5 text-sm text-black hover:text-[#6B5CE7] transition-colors">
                   <span>{s}</span>
                   {selectedStatus === s && (
                     <Check size={14} className="text-[#6B5CE7]" />
@@ -554,11 +554,11 @@ export function EmployeeTable() {
     (selectedStatus !== "All team members" ? 1 : 0) + selectedTypes.size;
 
   return (
-    <div className="min-h-screen bg-[#111111] text-white p-6 md:p-8">
+    <div className="min-h-screen   p-6 md:p-8">
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-white">Team members</h1>
+          <h1 className="text-2xl font-bold text-black">Team members</h1>
           <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#1e1e1e] border border-[#2a2a2a] text-xs font-semibold text-gray-300">
             {allEmployees.length}
           </span>
@@ -571,17 +571,6 @@ export function EmployeeTable() {
             </button>
           </Link>
         </div>
-      </div>
-
-      {/* ── Trial banner ── */}
-      <div className="flex items-center justify-between mb-5 bg-[#3b1a0a] border border-[#6b3010] rounded-xl px-5 py-3.5">
-        <p className="text-sm text-white">
-          Activate your plan to ensure uninterrupted access after your free
-          trial ends in <strong>5 days</strong>
-        </p>
-        <button className="ml-4 px-4 py-1.5 rounded-full bg-white text-black text-sm font-bold hover:bg-gray-100 transition-colors shrink-0">
-          Activate plan
-        </button>
       </div>
 
       {/* ── Controls ── */}
@@ -597,18 +586,20 @@ export function EmployeeTable() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search team members"
-            className="w-full bg-[#1a1a1a] border border-[#2a2a2a] text-white text-sm rounded-full pl-9 pr-4 py-2 outline-none placeholder:text-gray-500 focus:border-[#444] transition-colors"
+            className="w-full  border border-[#2a2a2a] text-black text-sm rounded-full pl-9 pr-4 py-2 outline-none placeholder:text-gray-500 focus:border-[#444] transition-colors"
           />
         </div>
 
         {/* Filters */}
         <button
           onClick={() => setFilterOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#1a1a1a] text-sm font-semibold text-white hover:bg-[#222] transition-colors">
+          className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a2a]  text-sm font-semibold text-black hover:bg-[#222] transition-colors">
           <SlidersHorizontal size={14} className="text-gray-400" />
           Filters
           {activeFilterCount > 0 && (
-            <span className="w-4 h-4 rounded-full bg-[#6B5CE7] text-[10px] font-bold flex items-center justify-center text-white">
+            <span
+              className="w-4 h-4 rounded-full bg-[#051e3a] text-[10px] font-bold 
+            flex items-center justify-center text-white">
               {activeFilterCount}
             </span>
           )}
@@ -621,9 +612,9 @@ export function EmployeeTable() {
       </div>
 
       {/* ── Table ── */}
-      <div className="border border-[#2a2a2a] rounded-2xl overflow-hidden">
+      <div className="border border-[#2a2a2a] rounded-2xl z-10">
         {/* Header row */}
-        <div className="grid grid-cols-[44px_1fr_1fr_1fr_140px] px-4 py-3 border-b border-[#2a2a2a] bg-[#141414]">
+        <div className="grid grid-cols-[44px_1fr_1fr_1fr_140px] px-4 py-3 border-b border-[#2a2a2a] ">
           <div className="flex items-center">
             <Checkbox checked={allSelected} onChange={toggleSelectAll} />
           </div>
@@ -679,7 +670,7 @@ export function EmployeeTable() {
               {/* Name + Avatar */}
               <div className="flex items-center gap-3 min-w-0">
                 <EmpAvatar emp={emp} idx={idx} />
-                <span className="text-sm font-semibold text-white truncate">
+                <span className="text-sm font-semibold text-black truncate">
                   {emp.full_name}
                 </span>
               </div>

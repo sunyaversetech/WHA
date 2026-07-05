@@ -58,6 +58,15 @@ const employee_schema = new mongoose.Schema(
       },
     ],
 
+    // ── Repeating schedule config ──
+    repeating_schedule_config: {
+      schedule_type: { type: String, default: "Every week" },
+      start_date: { type: String },
+      ends_type: { type: String, default: "Never" },
+      end_date: { type: String },
+      end_occurrences: { type: Number },
+    },
+
     // ── Availability ──
     availability_schedule: [
       {
