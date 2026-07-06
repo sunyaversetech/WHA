@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -17,6 +17,14 @@ import {
 } from "lucide-react";
 import { DatePickerField } from "./DatePickerField";
 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { EmployeeFormValues, employeeSchema, IEmployee } from "./schema";
 import { useCreateOrUpdateEmployee } from "@/services/employee.service";
 import { useGetServices } from "@/services/services.service";
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CALENDAR_COLORS = [
@@ -65,7 +74,7 @@ const INP =
   "bg-white border-gray-200 text-[#051e3a] placeholder:text-gray-400 " +
   "focus-visible:ring-0 focus-visible:border-[#051e3a] h-11 rounded-lg text-base md:text-sm";
 
-const LBL = "text-sm font-medium text-[#051e3a] mb-1.5 block";
+const LBL = "text-sm font-medium text-[#051e3a]";
 
 const SEL =
   "bg-white border border-gray-200 text-[#051e3a] rounded-lg px-3 h-11 " +
@@ -99,7 +108,7 @@ function fmtDuration(min: number) {
   return m ? `${h} hr, ${m} min` : `${h} hr`;
 }
 
-// ─── Sub-components (must live outside parent to satisfy React Compiler) ──────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function NavItem({
   label,
@@ -153,7 +162,6 @@ function AddressDialog({
 }) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
-
   if (!open) return null;
 
   const handleAdd = () => {
@@ -180,7 +188,6 @@ function AddressDialog({
             <X size={16} />
           </button>
         </div>
-
         <div className="mb-4">
           <label className="text-sm font-medium text-[#051e3a] mb-1.5 block">
             Address name
@@ -193,7 +200,6 @@ function AddressDialog({
             className="w-full bg-white border border-gray-200 text-[#051e3a] rounded-lg px-4 h-11 text-base md:text-sm focus:outline-none focus:border-[#051e3a] placeholder:text-gray-400"
           />
         </div>
-
         <div className="mb-8">
           <label className="text-sm font-medium text-[#051e3a] mb-1.5 block">
             Address
@@ -211,7 +217,6 @@ function AddressDialog({
             />
           </div>
         </div>
-
         <div className="flex gap-3">
           <button
             type="button"
@@ -246,7 +251,6 @@ function EmergencyContactDialog({
   const [name, setName] = useState("");
   const [relation, setRelation] = useState("");
   const [phone, setPhone] = useState("");
-
   if (!open) return null;
 
   const handleAdd = () => {
@@ -284,7 +288,6 @@ function EmergencyContactDialog({
             <X size={16} />
           </button>
         </div>
-
         <div className="mb-4">
           <label className="text-sm font-medium text-[#051e3a] mb-1.5 block">
             Full name <span className="text-red-500">*</span>
@@ -297,7 +300,6 @@ function EmergencyContactDialog({
             className={inputCls}
           />
         </div>
-
         <div className="mb-4">
           <label className="text-sm font-medium text-[#051e3a] mb-1.5 block">
             Relationship
@@ -309,7 +311,6 @@ function EmergencyContactDialog({
             className={inputCls}
           />
         </div>
-
         <div className="mb-8">
           <label className="text-sm font-medium text-[#051e3a] mb-1.5 block">
             Phone number
@@ -323,7 +324,6 @@ function EmergencyContactDialog({
             className={inputCls}
           />
         </div>
-
         <div className="flex gap-3">
           <button
             type="button"
@@ -377,7 +377,6 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
   const { mutate, isPending } = useCreateOrUpdateEmployee();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ── UI state — lazy-initialized from initialData so no useEffect needed ──
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [previewUrl, setPreviewUrl] = useState(
     initialData?.employee_photo || "",
@@ -399,7 +398,6 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
   const [allowBookings, setAllowBookings] = useState(
     () => initialData?.is_active ?? true,
   );
-  const [noteLen, setNoteLen] = useState(() => initialData?.bio?.length ?? 0);
   const [addresses, setAddresses] = useState<Address[]>(
     () => (initialData?.addresses as any) ?? [],
   );
@@ -430,8 +428,6 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
     [servicesData],
   );
 
-  console.log("allServices", allServices, servicesData);
-
   const filteredByCategory = useMemo(() => {
     const grouped: Record<string, any[]> = {};
     const q = serviceSearch.toLowerCase();
@@ -447,7 +443,6 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
     setSelectedServices((p) =>
       p.includes(id) ? p.filter((x) => x !== id) : [...p, id],
     );
-
   const toggleCategory = (ids: string[]) => {
     const allSel = ids.every((id) => selectedServices.includes(id));
     setSelectedServices((p) =>
@@ -456,20 +451,14 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
         : [...new Set([...p, ...ids])],
     );
   };
-
   const toggleAll = () =>
     setSelectedServices((p) =>
       p.length === allServices.length ? [] : allServices.map((s) => s._id),
     );
 
-  // ── Form ──
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<EmployeeFormValues>({
-    resolver: zodResolver(employeeSchema),
+  // ── Form ──────────────────────────────────────────────────────────────────
+  const form = useForm<EmployeeFormValues>({
+    resolver: zodResolver(employeeSchema) as any,
     defaultValues: initialData
       ? {
           _id: initialData._id,
@@ -481,7 +470,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
           birthday: initialData.birthday ?? "",
           birth_year: initialData.birth_year,
           job_title: initialData.job_title ?? "",
-          employment_type: initialData.employment_type ?? "",
+          employment_type: (initialData.employment_type ?? "") as any,
           employment_start_date: initialData.employment_start_date ?? "",
           employment_start_year: initialData.employment_start_year,
           employment_end_date: initialData.employment_end_date ?? "",
@@ -512,6 +501,11 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
         },
   });
 
+  const { handleSubmit, control, setValue } = form;
+
+  // Reactive bio character count — no extra state needed
+  const bioValue = useWatch({ control, name: "bio" });
+
   async function onSubmit(data: EmployeeFormValues) {
     const fd = new FormData();
     if (data._id) fd.append("_id", data._id);
@@ -528,9 +522,8 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
       const mm = String(birthday.getMonth() + 1).padStart(2, "0");
       fd.append("birthday", `${dd}/${mm}`);
     }
-    if (data.birth_year && !isNaN(data.birth_year)) {
+    if (data.birth_year && !isNaN(data.birth_year))
       fd.append("birth_year", String(data.birth_year));
-    }
 
     fd.append("job_title", data.job_title || "");
     fd.append("employment_type", data.employment_type || "");
@@ -541,17 +534,16 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
       const mm = String(workStartDate.getMonth() + 1).padStart(2, "0");
       fd.append("employment_start_date", `${dd}/${mm}`);
     }
-    if (data.employment_start_year && !isNaN(data.employment_start_year)) {
+    if (data.employment_start_year && !isNaN(data.employment_start_year))
       fd.append("employment_start_year", String(data.employment_start_year));
-    }
+
     if (workEndDate) {
       const dd = String(workEndDate.getDate()).padStart(2, "0");
       const mm = String(workEndDate.getMonth() + 1).padStart(2, "0");
       fd.append("employment_end_date", `${dd}/${mm}`);
     }
-    if (data.employment_end_year && !isNaN(data.employment_end_year)) {
+    if (data.employment_end_year && !isNaN(data.employment_end_year))
       fd.append("employment_end_year", String(data.employment_end_year));
-    }
 
     fd.append("calendar_color", calendarColor);
     fd.append("is_active", String(allowBookings));
@@ -566,9 +558,8 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
       JSON.stringify(selectedServices.map((id) => ({ service_id: id }))),
     );
 
-    if (data.employee_photo instanceof File) {
+    if (data.employee_photo instanceof File)
       fd.append("employee_photo", data.employee_photo);
-    }
 
     mutate(fd as any, {
       onSuccess: () => router.push("/dashboard/employees"),
@@ -576,7 +567,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-white text-[#051e3a] flex flex-col">
@@ -628,9 +619,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               activeTab={activeTab}
               onSelect={setActiveTab}
             />
-
             <div className="border-t border-gray-200 mx-2 my-1.5" />
-
             <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest px-3 py-2">
               Workspace
             </p>
@@ -679,535 +668,640 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
 
         {/* ── Content ── */}
         <main className="flex-1 overflow-y-auto max-w-2xl space-y-8 pb-12 mt-12 md:mt-0">
-          {/* ══ Profile ══ */}
-          {activeTab === "profile" && (
-            <>
-              <div>
-                <h2 className="text-xl font-bold text-[#051e3a]">Profile</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Manage your team member&apos;s personal profile
-                </p>
-              </div>
-
-              {/* Avatar */}
-              <div className="relative w-24 h-24">
-                <div className="w-24 h-24 rounded-full bg-[#e8edf5] flex items-center justify-center overflow-hidden">
-                  {previewUrl ? (
-                    <Image
-                      src={previewUrl}
-                      alt="Avatar"
-                      width={96}
-                      height={96}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User size={40} className="text-[#051e3a]/40" />
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-0.5 right-0.5 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm">
-                  <Pencil size={12} className="text-[#051e3a]" />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) {
-                      setValue("employee_photo", f);
-                      setPreviewUrl(URL.createObjectURL(f));
-                    }
-                  }}
-                />
-              </div>
-
-              {/* Full name */}
-              <div className="grid grid-cols-1 gap-4">
+          <Form {...form}>
+            {/* ══ Profile ══ */}
+            {activeTab === "profile" && (
+              <>
                 <div>
-                  <label className={LBL}>
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <Input {...register("full_name")} className={INP} />
-                  {errors.full_name && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {errors.full_name.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Email / Phone */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={LBL}>
-                    Email <span className="text-red-500">*</span>
-                  </label>
-                  <Input {...register("email")} type="email" className={INP} />
-                  {errors.email && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {errors.email.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className={LBL}>Phone number</label>
-                  <div className="flex gap-2">
-                    <select className={cn(SEL, "w-24 shrink-0")}>
-                      {COUNTRY_CODES.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </select>
-                    <Input
-                      {...register("phone_number")}
-                      className={cn(INP, "flex-1")}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Additional phone / Country */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={LBL}>Additional phone number</label>
-                  <div className="flex gap-2">
-                    <select className={cn(SEL, "w-24 shrink-0")}>
-                      {COUNTRY_CODES.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </select>
-                    <Input
-                      {...register("additional_phone_number")}
-                      className={cn(INP, "flex-1")}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className={LBL}>Country</label>
-                  <select
-                    {...register("country")}
-                    className={cn(SEL, "w-full")}>
-                    <option value="">Select country</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Nepal">Nepal</option>
-                    <option value="India">India</option>
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="New Zealand">New Zealand</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Birthday / Year */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={LBL}>Birthday</label>
-                  <DatePickerField
-                    value={birthday}
-                    onChange={setBirthday}
-                    placeholder="Day and month"
-                  />
-                </div>
-                <div>
-                  <label className={LBL}>Year</label>
-                  <Input
-                    {...register("birth_year", { valueAsNumber: true })}
-                    type="number"
-                    placeholder="e.g. 1995"
-                    className={INP}
-                  />
-                </div>
-              </div>
-
-              {/* Calendar color */}
-              <div>
-                <label className={LBL}>Calendar color</label>
-                <div className="flex flex-wrap gap-2">
-                  {CALENDAR_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setCalendarColor(color)}
-                      className={cn(
-                        "w-9 h-9 rounded-full transition-all",
-                        calendarColor === color &&
-                          "ring-2 ring-[#051e3a] ring-offset-2 ring-offset-white",
-                      )}
-                      style={{ background: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Job title */}
-              <div>
-                <label className={LBL}>Job title</label>
-                <Input {...register("job_title")} className={INP} />
-                <p className="text-xs text-gray-400 mt-1.5">
-                  Visible to clients online
-                </p>
-              </div>
-
-              <div className="border-t border-gray-100" />
-
-              {/* Work details */}
-              <div>
-                <h2 className="text-xl font-bold text-[#051e3a]">
-                  Work details
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Manage your team member&apos;s start date, and employment
-                  details
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={LBL}>Start date</label>
-                  <DatePickerField
-                    value={workStartDate}
-                    onChange={setWorkStartDate}
-                    placeholder="Day and month"
-                  />
-                </div>
-                <div>
-                  <label className={LBL}>Year</label>
-                  <Input
-                    {...register("employment_start_year", {
-                      valueAsNumber: true,
-                    })}
-                    type="number"
-                    placeholder="e.g. 2022"
-                    className={INP}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={LBL}>End date</label>
-                  <DatePickerField
-                    value={workEndDate}
-                    onChange={setWorkEndDate}
-                    placeholder="Day and month"
-                  />
-                </div>
-                <div>
-                  <label className={LBL}>Year</label>
-                  <Input
-                    {...register("employment_end_year", {
-                      valueAsNumber: true,
-                    })}
-                    type="number"
-                    placeholder="e.g. 2025"
-                    className={INP}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={LBL}>Employment type</label>
-                  <select
-                    {...register("employment_type")}
-                    className={cn(SEL, "w-full")}>
-                    <option value="">Select an option</option>
-                    <option value="full-time">Full-time</option>
-                    <option value="part-time">Part-time</option>
-                    <option value="casual">Casual</option>
-                    <option value="contractor">Contractor</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={LBL}>Team member ID</label>
-                  <Input {...register("employee_id")} className={INP} />
-                  <p className="text-xs text-gray-400 mt-1.5">
-                    An identifier used for external systems like payroll
+                  <h2 className="text-xl font-bold text-[#051e3a]">Profile</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Manage your team member&apos;s personal profile
                   </p>
                 </div>
-              </div>
 
-              {/* Notes */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-medium text-[#051e3a]">
-                    Notes
-                  </label>
-                  <span className="text-xs text-gray-400">{noteLen}/1000</span>
-                </div>
-                <Textarea
-                  {...register("bio", {
-                    onChange: (e) => setNoteLen(e.target.value.length),
-                  })}
-                  maxLength={1000}
-                  placeholder="Add a private note only viewable in the team member list"
-                  className="bg-white border-gray-200 text-[#051e3a] placeholder:text-gray-400 focus-visible:ring-0 focus-visible:border-[#051e3a] rounded-lg min-h-30 resize-none text-sm"
-                />
-              </div>
-            </>
-          )}
-
-          {/* ══ Addresses ══ */}
-          {activeTab === "addresses" && (
-            <>
-              <div>
-                <h2 className="text-xl font-bold text-[#051e3a]">Addresses</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Manage your team member&apos;s correspondence addresses.
-                </p>
-              </div>
-
-              {addresses.map((addr, i) => (
-                <div
-                  key={i}
-                  className="flex items-start justify-between bg-gray-50 rounded-xl px-4 py-3.5 border border-gray-100">
-                  <div>
-                    <p className="text-sm font-semibold text-[#051e3a]">
-                      {addr.name}
-                    </p>
-                    {addr.address && (
-                      <p className="text-sm text-gray-500 mt-0.5">
-                        {addr.address}
-                      </p>
+                {/* Avatar */}
+                <div className="relative w-24 h-24">
+                  <div className="w-24 h-24 rounded-full bg-[#e8edf5] flex items-center justify-center overflow-hidden">
+                    {previewUrl ? (
+                      <Image
+                        src={previewUrl}
+                        alt="Avatar"
+                        width={96}
+                        height={96}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User size={40} className="text-[#051e3a]/40" />
                     )}
                   </div>
                   <button
                     type="button"
-                    onClick={() =>
-                      setAddresses((p) => p.filter((_, j) => j !== i))
-                    }
-                    className="text-[#051e3a] text-sm font-semibold hover:opacity-60 transition-opacity shrink-0 ml-4">
-                    Remove
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0.5 right-0.5 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm">
+                    <Pencil size={12} className="text-[#051e3a]" />
                   </button>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => setShowAddressModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
-                <Plus size={16} />
-                Add an address
-              </button>
-
-              <AddressDialog
-                open={showAddressModal}
-                onClose={() => setShowAddressModal(false)}
-                onAdd={(a) => setAddresses((p) => [...p, a])}
-              />
-            </>
-          )}
-
-          {/* ══ Emergency contacts ══ */}
-          {activeTab === "emergency" && (
-            <>
-              <div>
-                <h2 className="text-xl font-bold text-[#051e3a]">
-                  Emergency Contacts
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Manage your team members&apos; emergency contacts.
-                </p>
-              </div>
-
-              {emergencyContacts.map((c, i) => (
-                <div
-                  key={i}
-                  className="flex items-start justify-between bg-gray-50 rounded-xl px-4 py-3.5 border border-gray-100">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-semibold text-[#051e3a]">
-                      {c.name}
-                    </p>
-                    {c.relation && (
-                      <p className="text-xs text-gray-500">{c.relation}</p>
-                    )}
-                    {c.phone && (
-                      <p className="text-xs text-gray-400">{c.phone}</p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEmergencyContacts((p) => p.filter((_, j) => j !== i))
-                    }
-                    className="text-[#051e3a] text-sm font-semibold hover:opacity-60 transition-opacity shrink-0 ml-4">
-                    Remove
-                  </button>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => setShowEmergencyModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
-                <Plus size={16} />
-                Add an emergency contact
-              </button>
-
-              <EmergencyContactDialog
-                open={showEmergencyModal}
-                onClose={() => setShowEmergencyModal(false)}
-                onAdd={(c) => setEmergencyContacts((p) => [...p, c])}
-              />
-            </>
-          )}
-
-          {/* ══ Services ══ */}
-          {activeTab === "services" && (
-            <>
-              <div>
-                <h2 className="text-xl font-bold text-[#051e3a]">Services</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Choose the services this team member provides
-                </p>
-              </div>
-
-              <div className="relative">
-                <Search
-                  size={15}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-                <Input
-                  value={serviceSearch}
-                  onChange={(e) => setServiceSearch(e.target.value)}
-                  placeholder="Search services"
-                  className={cn(INP, "pl-10")}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <button
-                  type="button"
-                  onClick={toggleAll}
-                  className="w-full flex items-center gap-3 py-3 px-2 hover:bg-gray-50 rounded-xl transition-colors">
-                  <ChkBox
-                    checked={
-                      allServices.length > 0 &&
-                      selectedServices.length === allServices.length
-                    }
-                    onToggle={toggleAll}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        setValue("employee_photo", f);
+                        setPreviewUrl(URL.createObjectURL(f));
+                      }
+                    }}
                   />
-                  <span className="font-semibold text-[#051e3a]">
-                    All services
-                  </span>
-                  <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">
-                    {allServices.length}
-                  </span>
-                </button>
+                </div>
 
-                {Object.entries(filteredByCategory).map(([cat, svcs]) => {
-                  const catIds = svcs.map((s) => s._id);
-                  const catAllSel = catIds.every((id) =>
-                    selectedServices.includes(id),
-                  );
-                  return (
-                    <div key={cat}>
-                      <button
-                        type="button"
-                        onClick={() => toggleCategory(catIds)}
-                        className="w-full flex items-center gap-3 py-2.5 px-2 hover:bg-gray-50 rounded-xl transition-colors mt-1">
-                        <ChkBox
-                          checked={catAllSel}
-                          onToggle={() => toggleCategory(catIds)}
-                        />
-                        <span className="font-semibold text-[#051e3a] capitalize">
-                          {cat}
-                        </span>
-                        <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">
-                          {svcs.length}
-                        </span>
-                      </button>
+                {/* Full name */}
+                <FormField
+                  control={control}
+                  name="full_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={LBL}>
+                        Full Name <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} className={INP} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                      {svcs.map((svc) => (
-                        <button
-                          key={svc._id}
-                          type="button"
-                          onClick={() => toggleService(svc._id)}
-                          className="w-full flex items-center gap-3 py-3 pl-10 pr-2 hover:bg-gray-50 rounded-xl transition-colors">
-                          <ChkBox
-                            checked={selectedServices.includes(svc._id)}
-                            onToggle={() => toggleService(svc._id)}
-                          />
-                          <div className="flex-1 text-left">
-                            <p className="text-sm font-medium text-[#051e3a]">
-                              {svc.name}
-                            </p>
-                            {svc.base_duration > 0 && (
-                              <p className="text-xs text-gray-400">
-                                {fmtDuration(svc.base_duration)}
-                              </p>
-                            )}
+                {/* Email / Phone */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={LBL}>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="email" className={INP} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={control}
+                    name="phone_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={LBL}>Phone number</FormLabel>
+                        <FormControl>
+                          <div className="flex gap-2">
+                            <select className={cn(SEL, "w-24 shrink-0")}>
+                              {COUNTRY_CODES.map((c) => (
+                                <option key={c}>{c}</option>
+                              ))}
+                            </select>
+                            <Input {...field} className={cn(INP, "flex-1")} />
                           </div>
-                          {svc.base_price > 0 && (
-                            <span className="text-sm text-gray-500 shrink-0">
-                              NPR {svc.base_price}
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  );
-                })}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                {allServices.length === 0 && (
-                  <p className="text-sm text-gray-400 px-2 py-4">
-                    No services found.
-                  </p>
-                )}
-              </div>
-            </>
-          )}
+                {/* Additional phone / Country */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name="additional_phone_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={LBL}>
+                          Additional phone number
+                        </FormLabel>
+                        <FormControl>
+                          <div className="flex gap-2">
+                            <select className={cn(SEL, "w-24 shrink-0")}>
+                              {COUNTRY_CODES.map((c) => (
+                                <option key={c}>{c}</option>
+                              ))}
+                            </select>
+                            <Input {...field} className={cn(INP, "flex-1")} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-          {/* ══ Locations ══ */}
-          {activeTab === "locations" && (
-            <>
-              <div>
-                <h2 className="text-xl font-bold text-[#051e3a]">Locations</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Choose the locations this team member works at
-                </p>
-              </div>
-              <p className="text-sm text-gray-400">
-                No locations configured yet.
-              </p>
-            </>
-          )}
+                  <FormField
+                    control={control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={LBL}>Country</FormLabel>
+                        <FormControl>
+                          <select {...field} className={cn(SEL, "w-full")}>
+                            <option value="">Select country</option>
+                            <option value="Australia">Australia</option>
+                            <option value="Nepal">Nepal</option>
+                            <option value="India">India</option>
+                            <option value="United States">United States</option>
+                            <option value="United Kingdom">
+                              United Kingdom
+                            </option>
+                            <option value="New Zealand">New Zealand</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-          {/* ══ Settings ══ */}
-          {activeTab === "settings" && (
-            <>
-              <div>
-                <h2 className="text-xl font-bold text-[#051e3a]">
-                  Appointment settings
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Choose if this team member is bookable on the calendar
-                </p>
-              </div>
+                {/* Birthday / Birth year */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={cn(LBL, "mb-1.5 block")}>Birthday</label>
+                    <DatePickerField
+                      value={birthday}
+                      onChange={setBirthday}
+                      placeholder="Day and month"
+                    />
+                  </div>
+                  <FormField
+                    control={control}
+                    name="birth_year"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={LBL}>Birth year</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="e.g. 1995"
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value === ""
+                                  ? undefined
+                                  : parseInt(e.target.value, 10),
+                              )
+                            }
+                            className={INP}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-              <div className="flex items-start gap-3 py-1">
-                <Checkbox
-                  id="allowBookings"
-                  checked={allowBookings}
-                  onCheckedChange={(v) => setAllowBookings(!!v)}
-                  className="border-gray-300 data-[state=checked]:bg-[#051e3a] data-[state=checked]:border-[#051e3a] mt-0.5"
-                />
+                {/* Calendar color */}
                 <div>
-                  <label
-                    htmlFor="allowBookings"
-                    className="text-sm font-semibold text-[#051e3a] cursor-pointer">
-                    Allow calendar bookings
+                  <label className={cn(LBL, "mb-1.5 block")}>
+                    Calendar color
                   </label>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Allow this team member to receive bookings on the calendar
+                  <div className="flex flex-wrap gap-2">
+                    {CALENDAR_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setCalendarColor(color)}
+                        className={cn(
+                          "w-9 h-9 rounded-full transition-all",
+                          calendarColor === color &&
+                            "ring-2 ring-[#051e3a] ring-offset-2 ring-offset-white",
+                        )}
+                        style={{ background: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Job title */}
+                <FormField
+                  control={control}
+                  name="job_title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={LBL}>Job title</FormLabel>
+                      <FormControl>
+                        <Input {...field} className={INP} />
+                      </FormControl>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Visible to clients online
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="border-t border-gray-100" />
+
+                {/* Work details heading */}
+                <div>
+                  <h2 className="text-xl font-bold text-[#051e3a]">
+                    Work details
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Manage your team member&apos;s start date, and employment
+                    details
                   </p>
                 </div>
-              </div>
-            </>
-          )}
+
+                {/* Start date / year */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={cn(LBL, "mb-1.5 block")}>
+                      Start date
+                    </label>
+                    <DatePickerField
+                      value={workStartDate}
+                      onChange={setWorkStartDate}
+                      placeholder="Day and month"
+                    />
+                  </div>
+                  <FormField
+                    control={control}
+                    name="employment_start_year"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={LBL}>Start year</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="e.g. 2022"
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value === ""
+                                  ? undefined
+                                  : parseInt(e.target.value, 10),
+                              )
+                            }
+                            className={INP}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* End date / year */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={cn(LBL, "mb-1.5 block")}>End date</label>
+                    <DatePickerField
+                      value={workEndDate}
+                      onChange={setWorkEndDate}
+                      placeholder="Day and month"
+                    />
+                  </div>
+                  <FormField
+                    control={control}
+                    name="employment_end_year"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={LBL}>End year</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="e.g. 2025"
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value === ""
+                                  ? undefined
+                                  : parseInt(e.target.value, 10),
+                              )
+                            }
+                            className={INP}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Employment type / Team member ID */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name="employment_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={LBL}>Employment type</FormLabel>
+                        <FormControl>
+                          <select {...field} className={cn(SEL, "w-full")}>
+                            <option value="">Select an option</option>
+                            <option value="full-time">Full-time</option>
+                            <option value="part-time">Part-time</option>
+                            <option value="casual">Casual</option>
+                            <option value="contractor">Contractor</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={control}
+                    name="employee_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={LBL}>Team member ID</FormLabel>
+                        <FormControl>
+                          <Input {...field} className={INP} />
+                        </FormControl>
+                        <p className="text-xs text-gray-400 mt-1">
+                          An identifier used for external systems like payroll
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Notes */}
+                <FormField
+                  control={control}
+                  name="bio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                        <FormLabel className={LBL}>Notes</FormLabel>
+                        <span className="text-xs text-gray-400">
+                          {(bioValue ?? "").length}/1000
+                        </span>
+                      </div>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          maxLength={1000}
+                          placeholder="Add a private note only viewable in the team member list"
+                          className="bg-white border-gray-200 text-[#051e3a] placeholder:text-gray-400 focus-visible:ring-0 focus-visible:border-[#051e3a] rounded-lg min-h-30 resize-none text-sm"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            {/* ══ Addresses ══ */}
+            {activeTab === "addresses" && (
+              <>
+                <div>
+                  <h2 className="text-xl font-bold text-[#051e3a]">
+                    Addresses
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Manage your team member&apos;s correspondence addresses.
+                  </p>
+                </div>
+                {addresses.map((addr, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start justify-between bg-gray-50 rounded-xl px-4 py-3.5 border border-gray-100">
+                    <div>
+                      <p className="text-sm font-semibold text-[#051e3a]">
+                        {addr.name}
+                      </p>
+                      {addr.address && (
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          {addr.address}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAddresses((p) => p.filter((_, j) => j !== i))
+                      }
+                      className="text-[#051e3a] text-sm font-semibold hover:opacity-60 transition-opacity shrink-0 ml-4">
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setShowAddressModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
+                  <Plus size={16} /> Add an address
+                </button>
+                <AddressDialog
+                  open={showAddressModal}
+                  onClose={() => setShowAddressModal(false)}
+                  onAdd={(a) => setAddresses((p) => [...p, a])}
+                />
+              </>
+            )}
+
+            {/* ══ Emergency contacts ══ */}
+            {activeTab === "emergency" && (
+              <>
+                <div>
+                  <h2 className="text-xl font-bold text-[#051e3a]">
+                    Emergency Contacts
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Manage your team members&apos; emergency contacts.
+                  </p>
+                </div>
+                {emergencyContacts.map((c, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start justify-between bg-gray-50 rounded-xl px-4 py-3.5 border border-gray-100">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-semibold text-[#051e3a]">
+                        {c.name}
+                      </p>
+                      {c.relation && (
+                        <p className="text-xs text-gray-500">{c.relation}</p>
+                      )}
+                      {c.phone && (
+                        <p className="text-xs text-gray-400">{c.phone}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEmergencyContacts((p) => p.filter((_, j) => j !== i))
+                      }
+                      className="text-[#051e3a] text-sm font-semibold hover:opacity-60 transition-opacity shrink-0 ml-4">
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setShowEmergencyModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
+                  <Plus size={16} /> Add an emergency contact
+                </button>
+                <EmergencyContactDialog
+                  open={showEmergencyModal}
+                  onClose={() => setShowEmergencyModal(false)}
+                  onAdd={(c) => setEmergencyContacts((p) => [...p, c])}
+                />
+              </>
+            )}
+
+            {/* ══ Services ══ */}
+            {activeTab === "services" && (
+              <>
+                <div>
+                  <h2 className="text-xl font-bold text-[#051e3a]">Services</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Choose the services this team member provides
+                  </p>
+                </div>
+                <div className="relative">
+                  <Search
+                    size={15}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                  <Input
+                    value={serviceSearch}
+                    onChange={(e) => setServiceSearch(e.target.value)}
+                    placeholder="Search services"
+                    className={cn(INP, "pl-10")}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={toggleAll}
+                    className="w-full flex items-center gap-3 py-3 px-2 hover:bg-gray-50 rounded-xl transition-colors">
+                    <ChkBox
+                      checked={
+                        allServices.length > 0 &&
+                        selectedServices.length === allServices.length
+                      }
+                      onToggle={toggleAll}
+                    />
+                    <span className="font-semibold text-[#051e3a]">
+                      All services
+                    </span>
+                    <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">
+                      {allServices.length}
+                    </span>
+                  </button>
+                  {Object.entries(filteredByCategory).map(([cat, svcs]) => {
+                    const catIds = svcs.map((s) => s._id);
+                    const catAllSel = catIds.every((id) =>
+                      selectedServices.includes(id),
+                    );
+                    return (
+                      <div key={cat}>
+                        <button
+                          type="button"
+                          onClick={() => toggleCategory(catIds)}
+                          className="w-full flex items-center gap-3 py-2.5 px-2 hover:bg-gray-50 rounded-xl transition-colors mt-1">
+                          <ChkBox
+                            checked={catAllSel}
+                            onToggle={() => toggleCategory(catIds)}
+                          />
+                          <span className="font-semibold text-[#051e3a] capitalize">
+                            {cat}
+                          </span>
+                          <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">
+                            {svcs.length}
+                          </span>
+                        </button>
+                        {svcs.map((svc) => (
+                          <button
+                            key={svc._id}
+                            type="button"
+                            onClick={() => toggleService(svc._id)}
+                            className="w-full flex items-center gap-3 py-3 pl-10 pr-2 hover:bg-gray-50 rounded-xl transition-colors">
+                            <ChkBox
+                              checked={selectedServices.includes(svc._id)}
+                              onToggle={() => toggleService(svc._id)}
+                            />
+                            <div className="flex-1 text-left">
+                              <p className="text-sm font-medium text-[#051e3a]">
+                                {svc.name}
+                              </p>
+                              {svc.base_duration > 0 && (
+                                <p className="text-xs text-gray-400">
+                                  {fmtDuration(svc.base_duration)}
+                                </p>
+                              )}
+                            </div>
+                            {svc.base_price > 0 && (
+                              <span className="text-sm text-gray-500 shrink-0">
+                                NPR {svc.base_price}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })}
+                  {allServices.length === 0 && (
+                    <p className="text-sm text-gray-400 px-2 py-4">
+                      No services found.
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* ══ Locations ══ */}
+            {activeTab === "locations" && (
+              <>
+                <div>
+                  <h2 className="text-xl font-bold text-[#051e3a]">
+                    Locations
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Choose the locations this team member works at
+                  </p>
+                </div>
+                <p className="text-sm text-gray-400">
+                  No locations configured yet.
+                </p>
+              </>
+            )}
+
+            {/* ══ Settings ══ */}
+            {activeTab === "settings" && (
+              <>
+                <div>
+                  <h2 className="text-xl font-bold text-[#051e3a]">
+                    Appointment settings
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Choose if this team member is bookable on the calendar
+                  </p>
+                </div>
+                <div className="flex items-start gap-3 py-1">
+                  <Checkbox
+                    id="allowBookings"
+                    checked={allowBookings}
+                    onCheckedChange={(v) => setAllowBookings(!!v)}
+                    className="border-gray-300 data-[state=checked]:bg-[#051e3a] data-[state=checked]:border-[#051e3a] mt-0.5"
+                  />
+                  <div>
+                    <label
+                      htmlFor="allowBookings"
+                      className="text-sm font-semibold text-[#051e3a] cursor-pointer">
+                      Allow calendar bookings
+                    </label>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Allow this team member to receive bookings on the calendar
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </Form>
         </main>
       </div>
     </div>
