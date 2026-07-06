@@ -602,12 +602,10 @@ export default function ServicesTable() {
                           si < group.services.length - 1 &&
                             "border-b border-gray-100",
                         )}>
-                        {/* Colored accent bar */}
                         <div
                           className="w-1 shrink-0"
                           style={{ background: catColor }}
                         />
-
                         <div className="flex-1 flex items-center justify-between px-4 py-4 min-w-0">
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-[#051e3a] truncate">

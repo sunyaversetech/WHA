@@ -19,12 +19,8 @@ const UserSchema = new Schema(
       type: {
         type: String,
         enum: ["Point"],
-        default: "Point",
       },
-      coordinates: {
-        type: [Number],
-        default: undefined,
-      },
+      coordinates: [Number],
     },
     city_name: { type: String },
     location: { type: String },
@@ -81,10 +77,9 @@ UserSchema.index({ geo: "2dsphere" });
 // GeoJSON coordinates are [longitude, latitude] (note the order).
 UserSchema.pre("save", async function () {
   if (this.latitude != null && this.longitude != null) {
-    this.geo = {
-      type: "Point",
-      coordinates: [this.longitude, this.latitude],
-    };
+    this.geo = { type: "Point", coordinates: [this.longitude, this.latitude] };
+  } else {
+    this.geo = undefined as any;
   }
 });
 
