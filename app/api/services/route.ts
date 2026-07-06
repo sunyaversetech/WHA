@@ -20,6 +20,8 @@ export async function POST(request: Request) {
     const {
       name,
       category,
+      category_id,
+      price_type,
       base_price,
       base_duration,
       assigned_employees,
@@ -34,14 +36,16 @@ export async function POST(request: Request) {
     const new_service = await Service.create({
       business_id,
       name: cleanName,
-      category,
+      category: category ?? "",
+      category_id: category_id ?? null,
+      price_type: price_type ?? "Fixed",
       base_price,
       base_duration,
       assigned_employees: assigned_employees || [],
       description: description,
       inventory,
       require_employee_selection: require_employee_selection || false,
-      is_active: is_active || false,
+      is_active: is_active !== undefined ? is_active : true,
     });
 
     if (assigned_employees?.length > 0) {

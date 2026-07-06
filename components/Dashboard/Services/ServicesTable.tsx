@@ -1,168 +1,688 @@
 "use client";
 
+import { useMemo, useRef, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Edit2, Trash2, CheckCircle2, XCircle, CirclePlus } from "lucide-react";
-
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
-import { useGetServices } from "@/services/booking.service";
-import { useDeleteServices } from "@/services/services.service";
+  ChevronDown,
+  ChevronUp,
+  MoreVertical,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  X,
+  ArrowUpDown,
+  Trash2,
+  Pencil,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useGetServices, useDeleteServices } from "@/services/services.service";
+import {
+  useGetCategories,
+  useCreateCategory,
+  useDeleteCategory,
+  ICategory,
+} from "@/services/category.service";
 import { useQueryClient } from "@tanstack/react-query";
-import AssignEmployee from "../Employee/Form/AssignEmployee";
-import { DynamicBreadcrumb } from "@/components/ui/DynamicBreadCrumb";
-import Link from "next/link";
-import { useSession } from "next-auth/react";
-import BusinessType from "../Settings/BusinessType";
+import { toast } from "sonner";
+import { CATEGORY_COLORS } from "./Form/schema";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-export function ServicesTable() {
-  const router = useRouter();
-  const { data } = useGetServices();
-  const { mutate } = useDeleteServices();
-  const queryClient = useQueryClient();
-  const { data: session } = useSession();
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-  const handleDelete = async (id: string) => {
-    mutate(
-      { id },
+function fmtDuration(mins: number): string {
+  if (!mins) return "";
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m} min`;
+  return m > 0 ? `${h} hr, ${m} min` : `${h} hr`;
+}
+
+function colorHex(colorLabel: string): string {
+  return CATEGORY_COLORS.find((c) => c.label === colorLabel)?.hex ?? "#14b8a6";
+}
+
+function ColorDot({ color, size = 14 }: { color: string; size?: number }) {
+  const hex = colorHex(color);
+  return (
+    <span
+      className="inline-block rounded-full shrink-0"
+      style={{ width: size, height: size, background: hex }}
+    />
+  );
+}
+
+// ─── Add Category Dialog ──────────────────────────────────────────────────────
+
+const categorySchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+  color: z.string().min(1),
+  description: z.string().max(255).optional(),
+});
+type CategoryFormValues = z.infer<typeof categorySchema>;
+
+function AddCategoryDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { mutate: createCategory, isPending } = useCreateCategory();
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<CategoryFormValues>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: { name: "", color: "Blue", description: "" },
+  });
+  const selectedColor = useWatch({ control, name: "color" }) ?? "Blue";
+  const descValue = useWatch({ control, name: "description" }) ?? "";
+
+  const onSubmit = (data: CategoryFormValues) => {
+    createCategory(
+      { name: data.name, color: data.color, description: data.description },
       {
-        onSuccess: () => {
-          toast.success("Service deleted successfully");
-          queryClient.invalidateQueries({ queryKey: ["getservices"] });
+        onSuccess: (res: any) => {
+          if (res?.success) {
+            toast.success("Category added");
+            onClose();
+          } else toast.error(res?.error ?? "Failed to create category");
         },
-        onError: (error: any) => {
-          toast.error(
-            error.response?.data?.message || "Failed to delete service",
-          );
-        },
+        onError: () => toast.error("Failed to create category"),
       },
     );
   };
 
-  if (!session?.user?.business_type) {
-    return (
-      <>
-        <BusinessType />
-      </>
-    );
-  }
+  if (!open) return null;
 
   return (
     <>
-      <div className="flex justify-between mb-4 items-center">
-        <DynamicBreadcrumb />
-        <Link href={"/dashboard/services/add"}>
-          <Button>
-            <CirclePlus className="mr-2 h-4 w-4" /> Add Services
-          </Button>
-        </Link>
-      </div>
-      <div className="rounded-md border bg-background shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Service</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Duration & Buffer</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.data?.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="h-24 text-center text-muted-foreground">
-                  No services configuration entries discovered.
-                </TableCell>
-              </TableRow>
-            ) : (
-              data?.data?.map((service) => (
-                <TableRow key={service._id}>
-                  <TableCell className="font-medium">
-                    <div>
-                      <p className="font-semibold">{service.name}</p>
-                      {service.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-1 max-w-xs">
-                          {service.description}
-                        </p>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="default">{service.category}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm font-medium">
-                      {service.base_duration}m
-                    </span>
-                    {service.buffer_time && service.buffer_time > 0 && (
-                      <span className="text-xs text-muted-foreground ml-1">
-                        (+{service.buffer_time}m buff)
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    ${service.base_price.toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    {service.is_active ? (
-                      <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-none gap-1">
-                        <CheckCircle2 className="h-3 w-3" /> Active
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="destructive"
-                        className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-none gap-1">
-                        <XCircle className="h-3 w-3" /> Inactive
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right flex gap-5 justify-end">
-                    <AssignEmployee serviceId={service._id} />
+      <div className="fixed inset-0 z-50 bg-black/40" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none">
+        <div className="pointer-events-auto bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-200">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-[#051e3a]">Add category</h2>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-colors">
+              <X size={16} />
+            </button>
+          </div>
 
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:text-blue-500"
-                        onClick={() =>
-                          router.push(`/dashboard/services/edit/${service._id}`)
-                        }>
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-semibold text-[#051e3a] block mb-1.5">
+                  Category name
+                </label>
+                <input
+                  {...register("name")}
+                  placeholder="e.g. Hair Services"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-[#051e3a] placeholder:text-gray-400 outline-none focus:border-[#051e3a] transition-colors"
+                />
+                {errors.name && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-[#051e3a] block mb-1.5">
+                  Appointment color
+                </label>
+                <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2.5">
+                  <ColorDot color={selectedColor} />
+                  <select
+                    {...register("color")}
+                    className="flex-1 bg-transparent text-sm text-[#051e3a] outline-none appearance-none cursor-pointer">
+                    {CATEGORY_COLORS.map((c) => (
+                      <option key={c.label} value={c.label}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={12}
+                    className="text-gray-400 pointer-events-none shrink-0"
+                  />
+                </div>
+              </div>
+            </div>
 
-                      <DeleteConfirmDialog
-                        onConfirm={() => handleDelete(service._id)}
-                        text={service.name}
-                        header={
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        }
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-semibold text-[#051e3a]">
+                  Description
+                </label>
+                <span className="text-xs text-gray-400">
+                  {descValue.length}/255
+                </span>
+              </div>
+              <textarea
+                {...register("description")}
+                rows={4}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-[#051e3a] placeholder:text-gray-400 outline-none focus:border-[#051e3a] transition-colors resize-none"
+              />
+            </div>
+
+            <div className="flex gap-2 justify-end pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2 rounded-full border border-gray-200 text-[#051e3a] text-sm font-semibold hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isPending}
+                className="px-5 py-2 rounded-full bg-[#051e3a] text-white text-sm font-bold hover:bg-[#082040] disabled:opacity-60 transition-colors">
+                {isPending ? "Adding…" : "Add"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </>
+  );
+}
+
+// ─── Service 3-dot menu ───────────────────────────────────────────────────────
+
+function ServiceMenu({
+  onEdit,
+  onDelete,
+}: {
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#051e3a] transition-colors">
+        <MoreVertical size={16} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 min-w-[150px]">
+          <button
+            onClick={() => {
+              onEdit();
+              setOpen(false);
+            }}
+            className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 text-sm text-[#051e3a] hover:bg-gray-50 transition-colors">
+            <Pencil size={13} /> Edit
+          </button>
+          <button
+            onClick={() => {
+              onDelete();
+              setOpen(false);
+            }}
+            className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 text-sm text-red-500 hover:bg-gray-50 transition-colors">
+            <Trash2 size={13} /> Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Category actions dropdown ────────────────────────────────────────────────
+
+function CategoryActions({ onDelete }: { onDelete: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
+        Actions {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 min-w-[160px]">
+          <button
+            onClick={() => {
+              onDelete();
+              setOpen(false);
+            }}
+            className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 text-sm text-red-500 hover:bg-gray-50 transition-colors">
+            <Trash2 size={13} /> Delete category
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Add dropdown ─────────────────────────────────────────────────────────────
+
+function AddDropdown({
+  onCategory,
+  onSingleService,
+}: {
+  onCategory: () => void;
+  onSingleService: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#051e3a] text-white text-sm font-bold hover:bg-[#082040] transition-colors">
+        Add <ChevronDown size={14} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 min-w-[160px]">
+          {[
+            {
+              label: "Single service",
+              action: () => {
+                onSingleService();
+                setOpen(false);
+              },
+            },
+            {
+              label: "Category",
+              action: () => {
+                onCategory();
+                setOpen(false);
+              },
+            },
+          ].map(({ label, action }) => (
+            <button
+              key={label}
+              onClick={action}
+              className="w-full text-left px-4 py-2.5 text-sm text-[#051e3a] hover:bg-gray-50 transition-colors">
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export default function ServicesTable() {
+  const router = useRouter();
+  const qc = useQueryClient();
+
+  const { data: servicesData, isLoading: loadingServices } = useGetServices();
+  const { data: categoriesData, isLoading: loadingCategories } =
+    useGetCategories();
+  const { mutate: deleteService } = useDeleteServices();
+  const { mutate: deleteCategory } = useDeleteCategory();
+
+  const allServices = useMemo<any[]>(
+    () => (servicesData as any)?.data ?? [],
+    [servicesData],
+  );
+  const allCategories = useMemo<ICategory[] | null>(
+    () => categoriesData?.data ?? [],
+    [categoriesData],
+  );
+
+  const [search, setSearch] = useState("");
+  const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
+  const [addCatOpen, setAddCatOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const filteredServices = useMemo(() => {
+    let list = [...allServices];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (s) =>
+          s.name?.toLowerCase().includes(q) ||
+          s.category?.toLowerCase().includes(q),
+      );
+    }
+    if (selectedCatId) {
+      list = list.filter((s) => s.category_id === selectedCatId);
+    }
+    return list;
+  }, [allServices, search, selectedCatId]);
+
+  const grouped = useMemo<
+    { category: ICategory | null; services: any[] }[]
+  >(() => {
+    if (selectedCatId) {
+      const cat = allCategories?.find((c) => c._id === selectedCatId) ?? null;
+      return [{ category: cat, services: filteredServices }];
+    }
+    const uncategorised = filteredServices.filter(
+      (s) =>
+        !s.category_id || !allCategories?.find((c) => c._id === s.category_id),
+    );
+    const byCat = allCategories
+      ?.map((cat) => ({
+        category: cat,
+        services: filteredServices.filter((s) => s.category_id === cat._id),
+      }))
+      .filter((g) => g.services.length > 0);
+
+    const result: { category: ICategory | null; services: any[] }[] = byCat
+      ? [...byCat]
+      : [];
+    if (uncategorised.length > 0)
+      result.unshift({ category: null, services: uncategorised });
+    return result;
+  }, [filteredServices, allCategories, selectedCatId]);
+
+  const handleDeleteService = (id: string) => {
+    deleteService(
+      { id },
+      {
+        onSuccess: (res: any) => {
+          if (res?.success) {
+            toast.success("Service deleted");
+            qc.invalidateQueries({ queryKey: ["services"] });
+          } else toast.error(res?.error ?? "Failed to delete");
+        },
+        onError: () => toast.error("Failed to delete service"),
+      },
+    );
+    setDeleteConfirmId(null);
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    deleteCategory(id, {
+      onSuccess: (res: any) => {
+        if (res?.success) toast.success("Category deleted");
+        else toast.error(res?.error ?? "Failed to delete category");
+      },
+      onError: () => toast.error("Failed to delete category"),
+    });
+  };
+
+  const loading = loadingServices || loadingCategories;
+
+  return (
+    <div className="min-h-screen">
+      {/* ── Page header ── */}
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold text-[#051e3a]">
+            Service menu
+          </h1>
+          <p className="text-sm text-gray-400 mt-0.5">
+            View and manage the services offered by your business.{" "}
+            <span className="text-[#051e3a] font-medium cursor-pointer hover:underline">
+              Learn more
+            </span>
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
+            Options <ChevronDown size={13} />
+          </button>
+          <AddDropdown
+            onCategory={() => setAddCatOpen(true)}
+            onSingleService={() => router.push("/dashboard/services/add")}
+          />
+        </div>
+      </div>
+
+      {/* ── Controls ── */}
+      <div className="flex items-center gap-2 mb-6">
+        <div className="relative flex-1 max-w-xs">
+          <Search
+            size={14}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search service name"
+            className="w-full bg-white border border-gray-200 text-[#051e3a] text-sm rounded-full pl-9 pr-4 py-2 outline-none placeholder:text-gray-400 focus:border-[#051e3a] transition-colors"
+          />
+        </div>
+        <button className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
+          <SlidersHorizontal size={13} className="text-gray-400" />
+          <span className="hidden sm:inline">Filters</span>
+        </button>
+        <button className="ml-auto flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
+          <ArrowUpDown size={13} className="text-gray-400" />
+          <span className="hidden sm:inline">Manage order</span>
+        </button>
+      </div>
+
+      {/* ── Body ── */}
+      <div className="flex flex-col md:flex-row gap-5 md:gap-7 items-start">
+        {/* Categories sidebar */}
+        <div className="w-full md:w-52 shrink-0 bg-white border border-gray-200 rounded-2xl p-4">
+          <h2 className="text-base font-bold text-[#051e3a] mb-3">
+            Categories
+          </h2>
+          <div className="space-y-0.5">
+            <button
+              onClick={() => setSelectedCatId(null)}
+              className={cn(
+                "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors",
+                !selectedCatId
+                  ? "bg-[#051e3a] text-white"
+                  : "text-[#051e3a] hover:bg-gray-50",
+              )}>
+              <span>All categories</span>
+              <span
+                className={cn(
+                  "text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center",
+                  !selectedCatId
+                    ? "bg-white/20 text-white"
+                    : "bg-gray-100 text-gray-500",
+                )}>
+                {allServices.length}
+              </span>
+            </button>
+
+            {allCategories?.map((cat) => {
+              const count = allServices.filter(
+                (s) => s.category_id === cat._id,
+              ).length;
+              const active = selectedCatId === cat._id;
+              return (
+                <button
+                  key={cat._id}
+                  onClick={() => setSelectedCatId(cat._id)}
+                  className={cn(
+                    "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                    active
+                      ? "bg-[#051e3a] text-white"
+                      : "text-[#051e3a] hover:bg-gray-50",
+                  )}>
+                  <span className="truncate text-left">{cat.name}</span>
+                  <span
+                    className={cn(
+                      "text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0 ml-1",
+                      active
+                        ? "bg-white/20 text-white"
+                        : "bg-gray-100 text-gray-500",
+                    )}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => setAddCatOpen(true)}
+            className="mt-3 w-full text-left px-3 py-2 text-sm font-semibold text-[#051e3a] hover:text-[#082040] transition-colors flex items-center gap-1.5">
+            <Plus size={13} /> Add category
+          </button>
+        </div>
+
+        {/* Services list */}
+        <div className="flex-1 min-w-0 space-y-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
+              <div className="w-6 h-6 rounded-full border-2 border-[#051e3a] border-t-transparent animate-spin mr-2" />
+              Loading…
+            </div>
+          ) : grouped.length === 0 ? (
+            <div className="bg-white border border-gray-200 rounded-2xl py-16 text-center">
+              <p className="text-gray-400 text-sm">
+                {search
+                  ? `No services matching "${search}"`
+                  : "No services yet."}
+              </p>
+              <button
+                onClick={() => router.push("/dashboard/services/add")}
+                className="mt-4 px-5 py-2 rounded-full bg-[#051e3a] text-white text-sm font-bold hover:bg-[#082040] transition-colors">
+                Add service
+              </button>
+            </div>
+          ) : (
+            grouped.map((group) => {
+              const catColor = group.category
+                ? colorHex(group.category.color)
+                : "#94a3b8";
+              return (
+                <div key={group.category?._id ?? "uncategorised"}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      {group.category && (
+                        <ColorDot color={group.category.color} size={10} />
+                      )}
+                      <h2 className="text-base font-bold text-[#051e3a]">
+                        {group.category?.name ?? "Uncategorised"}
+                      </h2>
+                    </div>
+                    {group.category && (
+                      <CategoryActions
+                        onDelete={() =>
+                          handleDeleteCategory(group.category!._id)
+                        }
+                      />
+                    )}
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                    {group.services.map((svc, si) => (
+                      <div
+                        key={svc._id}
+                        className={cn(
+                          "flex items-stretch hover:bg-gray-50 transition-colors",
+                          si < group.services.length - 1 &&
+                            "border-b border-gray-100",
+                        )}>
+                        {/* Colored accent bar */}
+                        <div
+                          className="w-1 shrink-0"
+                          style={{ background: catColor }}
+                        />
+
+                        <div className="flex-1 flex items-center justify-between px-4 py-4 min-w-0">
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-[#051e3a] truncate">
+                              {svc.name}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {fmtDuration(svc.base_duration)}
+                              {svc.buffer_time > 0 &&
+                                ` · +${fmtDuration(svc.buffer_time)} buffer`}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0 ml-4">
+                            <span className="text-sm font-bold text-[#051e3a] whitespace-nowrap">
+                              {svc.price_type === "Free"
+                                ? "Free"
+                                : svc.price_type === "Custom"
+                                  ? "Custom"
+                                  : `NPR ${Number(svc.base_price ?? 0).toFixed(0)}`}
+                            </span>
+                            <ServiceMenu
+                              onEdit={() =>
+                                router.push(
+                                  `/dashboard/services/edit/${svc._id}`,
+                                )
+                              }
+                              onDelete={() => setDeleteConfirmId(svc._id)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* ── Dialogs ── */}
+      <AddCategoryDialog
+        open={addCatOpen}
+        onClose={() => setAddCatOpen(false)}
+      />
+
+      {deleteConfirmId && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/40"
+            onClick={() => setDeleteConfirmId(null)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none">
+            <div className="pointer-events-auto bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-200">
+              <h2 className="text-lg font-bold text-[#051e3a] mb-2">
+                Delete service?
+              </h2>
+              <p className="text-sm text-gray-500 mb-6">
+                This action cannot be undone.
+              </p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="px-5 py-2 rounded-full border border-gray-200 text-[#051e3a] text-sm font-semibold hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteService(deleteConfirmId)}
+                  className="px-5 py-2 rounded-full bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

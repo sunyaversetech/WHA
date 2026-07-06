@@ -10,10 +10,18 @@ const service_schema = new mongoose.Schema(
     },
     name: { type: String, required: true },
     description: { type: String },
-    category: { type: String, required: true },
+    category: { type: String, default: "" },
+    category_id: { type: String, default: null },
+
+    price_type: {
+      type: String,
+      enum: ["Fixed", "From", "Free", "Custom"],
+      default: "Fixed",
+    },
 
     base_price: { type: Number, required: true, min: 0 },
     base_duration: { type: Number, required: true },
+    require_employee_selection: { type: Boolean, default: false },
 
     business_type: {
       type: String,

@@ -690,7 +690,6 @@ export function EmployeeTable() {
         )}
       </div>
 
-      {/* ── Mobile List ── */}
       <div className="md:hidden bg-white rounded-2xl border border-gray-200 overflow-hidden">
         {isLoading ? (
           <div className="px-5 py-10 text-center text-gray-400 text-sm">
