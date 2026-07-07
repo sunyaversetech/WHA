@@ -3,9 +3,10 @@ import mongoose from "mongoose";
 const CategorySchema = new mongoose.Schema(
   {
     business_id: { type: String, required: true, index: true },
-    name:        { type: String, required: true },
-    color:       { type: String, default: "Blue" },
+    name: { type: String, required: true },
+    color: { type: String, default: "Blue" },
     description: { type: String, default: "" },
+    type: { type: String, enum: ["service", "resource"], default: "service" },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } },
 );

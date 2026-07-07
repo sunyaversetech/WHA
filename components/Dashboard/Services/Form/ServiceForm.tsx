@@ -104,7 +104,7 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
   const { data: session } = useSession();
 
   const { mutate: saveService, isPending } = useCreateOrUpdateService();
-  const { data: categoriesData } = useGetCategories();
+  const { data: categoriesData } = useGetCategories("service");
   const { data: empData } = useGetEmployees();
 
   const categories = categoriesData?.data ?? [];

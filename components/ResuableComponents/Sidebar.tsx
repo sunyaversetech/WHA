@@ -43,6 +43,10 @@ const NAV_ITEMS: NavItem[] = [
         items: [{ label: "Service menu", href: "/dashboard/services" }],
       },
       {
+        section: "Resources",
+        items: [{ label: "Resource menu", href: "/dashboard/resources" }],
+      },
+      {
         section: "Inventory",
         items: [{ label: "Products", href: "/dashboard/inventory" }],
       },
