@@ -312,6 +312,77 @@ export async function GET(request: Request) {
 
     const employee_ids = employees_to_check.map((e) => e._id);
 
+    // ─── 2b. GROUP / MULTI-BOOKING SESSION PIPELINE ───
+    if (service.allow_multiple_bookings) {
+      const max_capacity = Number(service.max_bookings_per_slot) || 1;
+
+      const day_scheds = employees_to_check
+        .map((emp: any) =>
+          emp.availability_schedule?.find(
+            (s: any) => s.day_of_week === day_name && s.is_working,
+          ),
+        )
+        .filter(Boolean) as any[];
+
+      if (day_scheds.length === 0) {
+        return NextResponse.json({ success: true, count: 0, available_slots: [] });
+      }
+
+      const shift_bounds = day_scheds.map((s) => ({
+        start: to_utc(params.date, s.shift_start, params.timezone),
+        end: to_utc(params.date, s.shift_end, params.timezone),
+      }));
+      const group_shift_start = new Date(
+        Math.min(...shift_bounds.map((b) => b.start.getTime())),
+      );
+      const group_shift_end = new Date(
+        Math.max(...shift_bounds.map((b) => b.end.getTime())),
+      );
+
+      const [group_bookings, group_locks] = await Promise.all([
+        Booking.find({
+          service_id: service._id,
+          status: { $nin: DEAD_BOOKING_STATUSES },
+          start_time: { $lt: end_of_day },
+          end_time: { $gt: start_of_day },
+        }).lean(),
+        BookingLock.find({
+          service_id: service._id,
+          start_time: { $lt: end_of_day },
+          end_time: { $gt: start_of_day },
+          expires_at: { $gt: now },
+        }).lean(),
+      ]);
+
+      let runner =
+        params.date === today
+          ? new Date(Math.max(now.getTime(), group_shift_start.getTime()))
+          : group_shift_start;
+      runner = new Date(Math.ceil(runner.getTime() / step_ms) * step_ms);
+
+      while (runner < group_shift_end) {
+        const slot_end = new Date(runner.getTime() + selected_duration * 60_000);
+        if (slot_end > group_shift_end) break;
+
+        const occupied =
+          group_bookings.filter((b) => b.start_time.getTime() === runner.getTime())
+            .length +
+          group_locks.filter((l) => l.start_time.getTime() === runner.getTime())
+            .length;
+
+        if (occupied < max_capacity) {
+          available_slots.push(runner.toISOString());
+        }
+        runner = new Date(runner.getTime() + step_ms);
+      }
+
+      return NextResponse.json({
+        success: true,
+        count: available_slots.length,
+        available_slots,
+      });
+    }
+
     // FIX A: Clean up expired locks from visibility calculations so state matches lock validation
     await BookingLock.deleteMany({ expires_at: { $lte: new Date() } });
 

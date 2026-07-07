@@ -29,6 +29,9 @@ export async function POST(request: Request) {
       require_employee_selection,
       is_active,
       inventory,
+      allow_multiple_bookings,
+      max_bookings_per_slot,
+      is_one_time_booking,
     } = body;
 
     const cleanName = name?.trim();
@@ -46,6 +49,9 @@ export async function POST(request: Request) {
       inventory,
       require_employee_selection: require_employee_selection || false,
       is_active: is_active !== undefined ? is_active : true,
+      allow_multiple_bookings: allow_multiple_bookings || false,
+      max_bookings_per_slot: max_bookings_per_slot || 1,
+      is_one_time_booking: is_one_time_booking || false,
     });
 
     if (assigned_employees?.length > 0) {

@@ -48,6 +48,13 @@ const service_schema = new mongoose.Schema(
 
     // inventory is only meaningful when business_type === "item_based"
     inventory: { type: Number, default: 0 },
+
+    // Allows more than one customer to book the same service at the same time slot
+    allow_multiple_bookings: { type: Boolean, default: false },
+    // Max number of concurrent bookings permitted per slot when allow_multiple_bookings is true
+    max_bookings_per_slot: { type: Number, default: 1, min: 1 },
+    // A one-off service (e.g. a single event) — once its slot fills up, it is auto-deactivated
+    is_one_time_booking: { type: Boolean, default: false },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },

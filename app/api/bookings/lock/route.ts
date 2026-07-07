@@ -272,6 +272,75 @@ export async function POST(request: Request) {
         );
 
         lock_id = new_lock._id.toString();
+      } else if (service.allow_multiple_bookings) {
+        // ─── FORK C: GROUP / MULTI-BOOKING SESSION ───
+        // Multiple customers can hold the same service_id + start_time slot,
+        // capped at max_bookings_per_slot, regardless of employee availability.
+        const requested_employee_id = validated_data.employee_id;
+        const assigned_ids =
+          service.assigned_employees?.map((id: any) => id.toString()) || [];
+
+        if (assigned_ids.length === 0) throw new Error("EMPLOYEE_INVALID");
+
+        if (requested_employee_id && requested_employee_id !== "any") {
+          if (!assigned_ids.includes(requested_employee_id))
+            throw new Error("EMPLOYEE_INVALID");
+        }
+        const representative_employee_id =
+          requested_employee_id && requested_employee_id !== "any"
+            ? requested_employee_id
+            : assigned_ids[0];
+
+        const max_capacity = Number(service.max_bookings_per_slot) || 1;
+
+        await BookingLock.deleteMany(
+          { service_id: service._id, expires_at: { $lte: new Date() } },
+          { session: db_session },
+        );
+
+        const [existing_bookings, existing_locks] = await Promise.all([
+          Booking.find({
+            service_id: service._id,
+            status: { $nin: ["cancelled", "no_show", "refunded"] },
+            start_time: requested_start,
+          }).session(db_session),
+          BookingLock.find({
+            service_id: service._id,
+            expires_at: { $gt: new Date() },
+            start_time: requested_start,
+          }).session(db_session),
+        ]);
+
+        const own_prior_locks = existing_locks.filter(
+          (l) => l.user_id === user_id,
+        ).length;
+        const occupied =
+          existing_bookings.length + existing_locks.length - own_prior_locks;
+
+        if (occupied >= max_capacity) throw new Error("SLOT_TAKEN");
+
+        await BookingLock.deleteMany(
+          { user_id, service_id: validated_data.service_id },
+          { session: db_session },
+        );
+
+        const [new_lock] = await BookingLock.create(
+          [
+            {
+              user_id,
+              business_id: service.business_id,
+              service_id: validated_data.service_id,
+              employee_id: null,
+              start_time: requested_start,
+              end_time: requested_end,
+              expires_at: new Date(Date.now() + 5 * 60_000),
+            },
+          ],
+          { session: db_session },
+        );
+
+        lock_id = new_lock._id.toString();
+        assigned_employee_id = representative_employee_id;
       } else {
         let candidate_ids: string[] = [];
         const requested_employee_id = validated_data.employee_id;

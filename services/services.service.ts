@@ -32,6 +32,21 @@ export const useCreateOrUpdateService = () => {
   });
 };
 
+export const useToggleServiceActive = () => {
+  return useMutation<
+    ApiResponseType<any>,
+    any,
+    { id: string; is_active: boolean }
+  >({
+    mutationKey: ["toggleServiceActive"],
+    mutationFn: (data: { id: string; is_active: boolean }) =>
+      Post<{ is_active: boolean }, ApiResponseType<any>>({
+        url: `/api/services/single/${data.id}`,
+        data: { is_active: data.is_active },
+      }),
+  });
+};
+
 export const useGetSingleService = (id: string) => {
   return useFetcher<ApiResponseType<any>>(
     ["singleservice", id],

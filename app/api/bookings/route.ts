@@ -131,7 +131,11 @@ export async function POST(request: Request) {
         service.assigned_employees?.length > 0
       ) {
         employee_id =
-          lock.employee_id?.toString() || validated_data.employee_id;
+          lock.employee_id?.toString() ||
+          validated_data.employee_id ||
+          (service.allow_multiple_bookings
+            ? service.assigned_employees[0]?.toString()
+            : null);
         if (!employee_id) throw new Error("EMPLOYEE_INVALID");
 
         const employee =
@@ -156,7 +160,28 @@ export async function POST(request: Request) {
       );
 
       // 4. CONCURRENCY CONTROLS
-      if (employee_id) {
+      if (service.allow_multiple_bookings && employee_id) {
+        // Group/session capacity logic — several customers share the same slot
+        const max_capacity = Number(service.max_bookings_per_slot) || 1;
+
+        const [slot_bookings, slot_locks] = await Promise.all([
+          Booking.find({
+            service_id: service._id,
+            status: { $nin: ["cancelled", "no_show", "refunded"] },
+            start_time: start_date,
+          }).session(db_session),
+          BookingLock.find({
+            _id: { $ne: lock._id },
+            service_id: service._id,
+            expires_at: { $gt: new Date() },
+            start_time: start_date,
+          }).session(db_session),
+        ]);
+
+        const occupied = slot_bookings.length + slot_locks.length;
+        if (occupied >= max_capacity)
+          throw new Error("SLOT_TAKEN: This slot is fully booked");
+      } else if (employee_id) {
         // Standard Employee overlap logic
         const potential_overlaps = await Booking.find({
           employee_id,
@@ -273,6 +298,27 @@ export async function POST(request: Request) {
       await BookingLock.findByIdAndDelete(validated_data.lock_id, {
         session: db_session,
       });
+
+      // 6. One-time services: once the booking limit is reached, deactivate
+      // the service so it stops showing up for future bookings.
+      if (service.is_one_time_booking) {
+        const capacity = service.allow_multiple_bookings
+          ? Number(service.max_bookings_per_slot) || 1
+          : 1;
+
+        const active_booking_count = await Booking.countDocuments({
+          service_id: service._id,
+          status: { $nin: ["cancelled", "no_show", "refunded"] },
+        }).session(db_session);
+
+        if (active_booking_count >= capacity) {
+          await Service.findByIdAndUpdate(
+            service._id,
+            { is_active: false },
+            { session: db_session },
+          );
+        }
+      }
     });
 
     logger.info({ booking_id: new_booking._id, user_id }, "Booking created");

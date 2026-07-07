@@ -15,7 +15,12 @@ import {
   Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useGetServices, useDeleteServices } from "@/services/services.service";
+import {
+  useGetServices,
+  useDeleteServices,
+  useToggleServiceActive,
+} from "@/services/services.service";
+import { Switch } from "@/components/ui/switch";
 import {
   useGetCategories,
   useCreateCategory,
@@ -347,6 +352,7 @@ export default function ServicesTable() {
     useGetCategories();
   const { mutate: deleteService } = useDeleteServices();
   const { mutate: deleteCategory } = useDeleteCategory();
+  const { mutate: toggleActive } = useToggleServiceActive();
 
   const allServices = useMemo<any[]>(
     () => (servicesData as any)?.data ?? [],
@@ -428,6 +434,21 @@ export default function ServicesTable() {
       },
       onError: () => toast.error("Failed to delete category"),
     });
+  };
+
+  const handleToggleActive = (id: string, next_active: boolean) => {
+    toggleActive(
+      { id, is_active: next_active },
+      {
+        onSuccess: (res: any) => {
+          if (res?.success) {
+            toast.success(next_active ? "Service activated" : "Service deactivated");
+            qc.invalidateQueries({ queryKey: ["services"] });
+          } else toast.error(res?.error ?? "Failed to update service");
+        },
+        onError: () => toast.error("Failed to update service"),
+      },
+    );
   };
 
   const loading = loadingServices || loadingCategories;
@@ -625,6 +646,13 @@ export default function ServicesTable() {
                                   ? "Custom"
                                   : `NPR ${Number(svc.base_price ?? 0).toFixed(0)}`}
                             </span>
+                            <Switch
+                              checked={svc.is_active ?? true}
+                              onCheckedChange={(checked) =>
+                                handleToggleActive(svc._id, checked)
+                              }
+                              onClick={(e) => e.stopPropagation()}
+                            />
                             <ServiceMenu
                               onEdit={() =>
                                 router.push(

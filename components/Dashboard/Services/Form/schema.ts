@@ -50,19 +50,30 @@ export const CATEGORY_COLORS = [
   { label: "Indigo", hex: "#6366f1" },
 ] as const;
 
-export const serviceSchema = z.object({
-  _id:                        z.string().optional(),
-  name:                       z.string().min(2, "Service name must be at least 2 characters").max(255),
-  description:                z.string().optional(),
-  category_id:                z.string().optional(),
-  price_type:                 z.enum(["Fixed", "From", "Free", "Custom"]),
-  base_price:                 z.number().min(0, "Price must be 0 or more"),
-  base_duration:              z.number().min(5, "Select a duration"),
-  buffer_time:                z.number().min(0),
-  require_employee_selection: z.boolean(),
-  assigned_employees:         z.array(z.string()),
-  is_active:                  z.boolean(),
-});
+export const serviceSchema = z
+  .object({
+    _id:                        z.string().optional(),
+    name:                       z.string().min(2, "Service name must be at least 2 characters").max(255),
+    description:                z.string().optional(),
+    category_id:                z.string().optional(),
+    price_type:                 z.enum(["Fixed", "From", "Free", "Custom"]),
+    base_price:                 z.number().min(0, "Price must be 0 or more"),
+    base_duration:              z.number().min(5, "Select a duration"),
+    buffer_time:                z.number().min(0),
+    require_employee_selection: z.boolean(),
+    assigned_employees:         z.array(z.string()),
+    is_active:                  z.boolean(),
+    allow_multiple_bookings:    z.boolean(),
+    max_bookings_per_slot:      z.number().min(1, "Must allow at least 1 booking"),
+    is_one_time_booking:        z.boolean(),
+  })
+  .refine(
+    (data) => !data.allow_multiple_bookings || data.max_bookings_per_slot >= 1,
+    {
+      message: "Booking limit must be at least 1",
+      path: ["max_bookings_per_slot"],
+    },
+  );
 
 export type ServiceFormValues = z.infer<typeof serviceSchema>;
 

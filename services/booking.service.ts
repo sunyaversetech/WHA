@@ -17,6 +17,9 @@ export interface ServiceType {
   assigned_employees: EmployeeType[];
   is_active: boolean;
   buffer_time?: number;
+  allow_multiple_bookings?: boolean;
+  max_bookings_per_slot?: number;
+  is_one_time_booking?: boolean;
 }
 
 export interface EmployeeType {
