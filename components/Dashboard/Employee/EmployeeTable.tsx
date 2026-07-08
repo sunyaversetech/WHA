@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -167,48 +168,75 @@ function MobileActionsSheet({
 
 function ActionsDropdown({ emp, onEdit }: { emp: any; onEdit: () => void }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        btnRef.current &&
+        !btnRef.current.contains(e.target as Node)
+      )
         setOpen(false);
     };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
+  const toggle = () => {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 6, right: window.innerWidth - r.right });
+    }
+    setOpen((v) => !v);
+  };
+
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
-        onClick={() => setOpen((v) => !v)}
+        ref={btnRef}
+        onClick={toggle}
         className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 text-[#051e3a] text-sm font-medium hover:bg-gray-50 transition-colors">
         Actions
         {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
       </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1.5 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[180px]">
-          {[
-            {
-              label: "Edit",
-              action: () => {
-                onEdit();
-                setOpen(false);
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: "fixed",
+              top: pos.top,
+              right: pos.right,
+              zIndex: 9999,
+            }}
+            className="bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 max-w-50">
+            {[
+              {
+                label: "Edit",
+                action: () => {
+                  onEdit();
+                  setOpen(false);
+                },
               },
-            },
-            { label: "View calendar", action: () => setOpen(false) },
-            { label: "View scheduled shifts", action: () => setOpen(false) },
-            { label: "Add time off", action: () => setOpen(false) },
-          ].map(({ label, action }) => (
-            <button
-              key={label}
-              onClick={action}
-              className="w-full text-left px-4 py-2.5 text-sm text-[#051e3a] hover:bg-gray-50 transition-colors">
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+              { label: "View calendar", action: () => setOpen(false) },
+              { label: "View scheduled shifts", action: () => setOpen(false) },
+              { label: "Add time off", action: () => setOpen(false) },
+            ].map(({ label, action }) => (
+              <button
+                key={label}
+                onClick={action}
+                className="w-full text-left px-4 py-2.5 text-sm text-[#051e3a] hover:bg-gray-50 transition-colors">
+                {label}
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
 

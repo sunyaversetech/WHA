@@ -58,6 +58,12 @@ export async function POST(
     await connectToDb();
     const { id } = await params;
 
+    const session = await getServerSession(authOptions);
+    if (!session)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const business_id = (session.user as any).id;
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, error: "Invalid Service ID" },
@@ -66,32 +72,46 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { assigned_employees, ...otherFields } = body;
+    const {
+      assigned_employees,
+      name,
+      description,
+      category,
+      category_id,
+      price_type,
+      base_price,
+      base_duration,
+      buffer_time,
+      service_type,
+      require_employee_selection,
+      allow_multiple_bookings,
+      max_bookings_per_slot,
+      is_one_time_booking,
+      availability_type,
+      availability_schedule,
+      max_concurrent_bookings,
+      is_active,
+    } = body;
 
-    const service = await Service.findById(id);
-    if (!service) {
+    // Verify ownership
+    const existing = await Service.findOne({ _id: id, business_id }).select(
+      "assigned_employees",
+    );
+    if (!existing) {
       return NextResponse.json(
         { success: false, error: "Service not found" },
         { status: 404 },
       );
     }
 
-    Object.assign(service, otherFields);
-
+    // Sync employee→service_override links if the employee list changed
     if (assigned_employees !== undefined) {
-      const old_employees = service.assigned_employees.map((e: any) =>
+      const old_ids = (existing.assigned_employees as any[]).map((e) =>
         e.toString(),
       );
-      const new_employees = assigned_employees.map((e: any) => e.toString());
-
-      const to_add = new_employees.filter(
-        (e: string) => !old_employees.includes(e),
-      );
-      const to_remove = old_employees.filter(
-        (e: string) => !new_employees.includes(e),
-      );
-
-      service.assigned_employees = assigned_employees;
+      const new_ids = (assigned_employees as string[]).map((e) => e.toString());
+      const to_add = new_ids.filter((e) => !old_ids.includes(e));
+      const to_remove = old_ids.filter((e) => !new_ids.includes(e));
 
       if (to_add.length > 0) {
         await Employee.updateMany(
@@ -107,10 +127,44 @@ export async function POST(
       }
     }
 
-    await service.save();
+    const updated = await Service.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          name,
+          description,
+          category,
+          category_id,
+          price_type,
+          base_price,
+          base_duration,
+          buffer_time,
+          service_type,
+          require_employee_selection,
+          allow_multiple_bookings,
+          max_bookings_per_slot,
+          is_one_time_booking,
+          availability_type,
+          availability_schedule,
+          max_concurrent_bookings,
+          is_active,
+          ...(assigned_employees !== undefined ? { assigned_employees } : {}),
+        },
+      },
+      { new: true, runValidators: false },
+    ).populate("assigned_employees");
 
-    return NextResponse.json({ success: true, data: service }, { status: 200 });
+    return NextResponse.json({ success: true, data: updated }, { status: 200 });
   } catch (error: any) {
+    if (error.code === 11000) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "A service with this name already exists for your business.",
+        },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 },

@@ -46,8 +46,8 @@ export const employeeSchema = z.object({
   // Personal info
   full_name: z.string().min(2, "Full name must be at least 2 characters."),
   last_name: z.string().optional(),
-  email: z.union([z.literal(""), z.email("Invalid email address.")]).optional(),
-  phone_number: z.string().optional(),
+  email: z.string().email({ message: "Invalid email address." }),
+  phone_number: z.string().min(1, "Phone number is required."),
   additional_phone_number: z.string().optional(),
   country: z.string().optional(),
   birthday: z.string().optional(),

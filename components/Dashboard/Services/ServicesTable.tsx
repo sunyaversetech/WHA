@@ -442,7 +442,9 @@ export default function ServicesTable() {
       {
         onSuccess: (res: any) => {
           if (res?.success) {
-            toast.success(next_active ? "Service activated" : "Service deactivated");
+            toast.success(
+              next_active ? "Service activated" : "Service deactivated",
+            );
             qc.invalidateQueries({ queryKey: ["services"] });
           } else toast.error(res?.error ?? "Failed to update service");
         },
@@ -469,9 +471,6 @@ export default function ServicesTable() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
-            Options <ChevronDown size={13} />
-          </button>
           <AddDropdown
             onCategory={() => setAddCatOpen(true)}
             onSingleService={() => router.push("/dashboard/services/add")}
@@ -494,10 +493,7 @@ export default function ServicesTable() {
             className="w-full bg-white border border-gray-200 text-[#051e3a] text-sm rounded-full pl-9 pr-4 py-2 outline-none placeholder:text-gray-400 focus:border-[#051e3a] transition-colors"
           />
         </div>
-        <button className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
-          <SlidersHorizontal size={13} className="text-gray-400" />
-          <span className="hidden sm:inline">Filters</span>
-        </button>
+
         <button className="ml-auto flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
           <ArrowUpDown size={13} className="text-gray-400" />
           <span className="hidden sm:inline">Manage order</span>

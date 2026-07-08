@@ -56,8 +56,6 @@ const CALENDAR_COLORS = [
   "#4DD0E1",
 ];
 
-const COUNTRY_CODES = ["+977", "+61", "+1", "+44", "+91", "+64"];
-
 const DAYS_OF_WEEK = [
   "monday",
   "tuesday",
@@ -114,33 +112,39 @@ function NavItem({
   label,
   tab,
   count,
+  hasError,
   activeTab,
   onSelect,
 }: {
   label: string;
   tab: Tab;
   count?: number;
+  hasError?: boolean;
   activeTab: Tab;
   onSelect: (t: Tab) => void;
 }) {
+  const isActive = activeTab === tab;
   return (
     <button
       type="button"
       onClick={() => onSelect(tab)}
       className={cn(
         "w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-between",
-        activeTab === tab
+        isActive
           ? "bg-[#051e3a] text-white"
           : "text-gray-500 hover:text-[#051e3a] hover:bg-gray-100",
       )}>
-      {label}
+      <span className="flex items-center gap-2">
+        {label}
+        {hasError && !isActive && (
+          <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+        )}
+      </span>
       {count !== undefined && (
         <span
           className={cn(
             "text-xs rounded-full w-5 h-5 flex items-center justify-center",
-            activeTab === tab
-              ? "bg-white/20 text-white"
-              : "bg-gray-100 text-gray-500",
+            isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500",
           )}>
           {count}
         </span>
@@ -344,25 +348,17 @@ function EmergencyContactDialog({
   );
 }
 
-function ChkBox({
-  checked,
-  onToggle,
-}: {
-  checked: boolean;
-  onToggle: () => void;
-}) {
+function ChkBox({ checked }: { checked: boolean }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
+    <span
       className={cn(
         "w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors",
         checked
           ? "bg-[#051e3a]"
-          : "border border-gray-300 hover:border-[#051e3a]",
+          : "border border-gray-300 group-hover:border-[#051e3a]",
       )}>
       {checked && <Check size={11} className="text-white" />}
-    </button>
+    </span>
   );
 }
 
@@ -406,9 +402,6 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
     EmergencyContact[]
   >(() => (initialData?.emergency_contacts as any) ?? []);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
-  const [birthday, setBirthday] = useState<Date | null>(() =>
-    parseDateString(initialData?.birthday, initialData?.birth_year ?? null),
-  );
   const [workStartDate, setWorkStartDate] = useState<Date | null>(() =>
     parseDateString(
       initialData?.employment_start_date,
@@ -459,6 +452,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
   // ── Form ──────────────────────────────────────────────────────────────────
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema) as any,
+    mode: "onTouched",
     defaultValues: initialData
       ? {
           _id: initialData._id,
@@ -466,8 +460,6 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
           email: initialData.email ?? "",
           phone_number: initialData.phone_number ?? "",
           additional_phone_number: initialData.additional_phone_number ?? "",
-          country: initialData.country ?? "",
-          birthday: initialData.birthday ?? "",
           birth_year: initialData.birth_year,
           job_title: initialData.job_title ?? "",
           employment_type: (initialData.employment_type ?? "") as any,
@@ -503,6 +495,38 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
 
   const { handleSubmit, control, setValue } = form;
 
+  // Fields on each tab (for validation-on-navigate)
+  const PROFILE_FIELDS: (keyof EmployeeFormValues)[] = [
+    "full_name",
+    "email",
+    "phone_number",
+    "additional_phone_number",
+    "country",
+    "birth_year",
+    "job_title",
+    "employment_type",
+    "employment_start_year",
+    "employment_end_year",
+    "employee_id",
+    "bio",
+  ];
+
+  const { errors } = form.formState;
+  const profileHasError = !!(
+    errors.full_name ||
+    errors.email ||
+    errors.birth_year ||
+    errors.employment_start_year ||
+    errors.employment_end_year
+  );
+
+  const handleTabChange = async (tab: Tab) => {
+    if (activeTab === "profile") {
+      await form.trigger(PROFILE_FIELDS);
+    }
+    setActiveTab(tab);
+  };
+
   // Reactive bio character count — no extra state needed
   const bioValue = useWatch({ control, name: "bio" });
 
@@ -514,14 +538,8 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
     if (data.email) fd.append("email", data.email);
     fd.append("phone_number", data.phone_number || "");
     fd.append("additional_phone_number", data.additional_phone_number || "");
-    fd.append("country", data.country || "");
     fd.append("bio", data.bio || "");
 
-    if (birthday) {
-      const dd = String(birthday.getDate()).padStart(2, "0");
-      const mm = String(birthday.getMonth() + 1).padStart(2, "0");
-      fd.append("birthday", `${dd}/${mm}`);
-    }
     if (data.birth_year && !isNaN(data.birth_year))
       fd.append("birth_year", String(data.birth_year));
 
@@ -604,20 +622,21 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
             <NavItem
               label="Profile"
               tab="profile"
+              hasError={profileHasError}
               activeTab={activeTab}
-              onSelect={setActiveTab}
+              onSelect={handleTabChange}
             />
             <NavItem
               label="Addresses"
               tab="addresses"
               activeTab={activeTab}
-              onSelect={setActiveTab}
+              onSelect={handleTabChange}
             />
             <NavItem
               label="Emergency contacts"
               tab="emergency"
               activeTab={activeTab}
-              onSelect={setActiveTab}
+              onSelect={handleTabChange}
             />
             <div className="border-t border-gray-200 mx-2 my-1.5" />
             <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest px-3 py-2">
@@ -628,13 +647,13 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
               tab="services"
               count={selectedServices.length || allServices.length}
               activeTab={activeTab}
-              onSelect={setActiveTab}
+              onSelect={handleTabChange}
             />
             <NavItem
               label="Settings"
               tab="settings"
               activeTab={activeTab}
-              onSelect={setActiveTab}
+              onSelect={handleTabChange}
             />
           </div>
         </aside>
@@ -654,7 +673,7 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
             <button
               key={tab}
               type="button"
-              onClick={() => setActiveTab(tab)}
+              onClick={() => handleTabChange(tab)}
               className={cn(
                 "px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap border shrink-0 transition-colors",
                 activeTab === tab
@@ -739,7 +758,9 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className={LBL}>Email</FormLabel>
+                        <FormLabel className={LBL}>
+                          Email <span className="text-red-500">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input {...field} type="email" className={INP} />
                         </FormControl>
@@ -753,109 +774,81 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                     name="phone_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className={LBL}>Phone number</FormLabel>
-                        <FormControl>
-                          <div className="flex gap-2">
-                            <select className={cn(SEL, "w-24 shrink-0")}>
-                              {COUNTRY_CODES.map((c) => (
-                                <option key={c}>{c}</option>
-                              ))}
-                            </select>
-                            <Input {...field} className={cn(INP, "flex-1")} />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Additional phone / Country */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField
-                    control={control}
-                    name="additional_phone_number"
-                    render={({ field }) => (
-                      <FormItem>
                         <FormLabel className={LBL}>
-                          Additional phone number
+                          Phone number <span className="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
-                          <div className="flex gap-2">
-                            <select className={cn(SEL, "w-24 shrink-0")}>
-                              {COUNTRY_CODES.map((c) => (
-                                <option key={c}>{c}</option>
-                              ))}
-                            </select>
-                            <Input {...field} className={cn(INP, "flex-1")} />
+                          <div className="flex h-11 rounded-lg border border-gray-200 overflow-hidden focus-within:border-[#051e3a] transition-colors">
+                            <span className="flex items-center px-3 text-sm font-medium text-[#051e3a] bg-gray-50 border-r border-gray-200 shrink-0">
+                              +61
+                            </span>
+                            <input
+                              {...field}
+                              type="tel"
+                              placeholder="4xx xxx xxx"
+                              className="flex-1 px-3 text-sm text-[#051e3a] placeholder:text-gray-400 outline-none bg-white"
+                            />
                           </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={control}
-                    name="country"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className={LBL}>Country</FormLabel>
-                        <FormControl>
-                          <select {...field} className={cn(SEL, "w-full")}>
-                            <option value="">Select country</option>
-                            <option value="Australia">Australia</option>
-                            <option value="Nepal">Nepal</option>
-                            <option value="India">India</option>
-                            <option value="United States">United States</option>
-                            <option value="United Kingdom">
-                              United Kingdom
-                            </option>
-                            <option value="New Zealand">New Zealand</option>
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
 
-                {/* Birthday / Birth year */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className={cn(LBL, "mb-1.5 block")}>Birthday</label>
-                    <DatePickerField
-                      value={birthday}
-                      onChange={setBirthday}
-                      placeholder="Day and month"
-                    />
-                  </div>
-                  <FormField
-                    control={control}
-                    name="birth_year"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className={LBL}>Birth year</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="e.g. 1995"
-                            value={field.value ?? ""}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value === ""
-                                  ? undefined
-                                  : parseInt(e.target.value, 10),
-                              )
-                            }
-                            className={INP}
+                {/* Additional phone */}
+                <FormField
+                  control={control}
+                  name="additional_phone_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={LBL}>
+                        Additional phone number
+                      </FormLabel>
+                      <FormControl>
+                        <div className="flex h-11 rounded-lg border border-gray-200 overflow-hidden focus-within:border-[#051e3a] transition-colors">
+                          <span className="flex items-center px-3 text-sm font-medium text-[#051e3a] bg-gray-50 border-r border-gray-200 shrink-0">
+                            +61
+                          </span>
+                          <input
+                            {...field}
+                            type="tel"
+                            placeholder="4xx xxx xxx"
+                            className="flex-1 px-3 text-sm text-[#051e3a] placeholder:text-gray-400 outline-none bg-white"
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Birth year */}
+                <FormField
+                  control={control}
+                  name="birth_year"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={LBL}>Birth year</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="e.g. 1995"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? undefined
+                                : parseInt(e.target.value, 10),
+                            )
+                          }
+                          className={INP}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 {/* Calendar color */}
                 <div>
@@ -1177,13 +1170,12 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                   <button
                     type="button"
                     onClick={toggleAll}
-                    className="w-full flex items-center gap-3 py-3 px-2 hover:bg-gray-50 rounded-xl transition-colors">
+                    className="group w-full flex items-center gap-3 py-3 px-2 hover:bg-gray-50 rounded-xl transition-colors">
                     <ChkBox
                       checked={
                         allServices.length > 0 &&
                         selectedServices.length === allServices.length
                       }
-                      onToggle={toggleAll}
                     />
                     <span className="font-semibold text-[#051e3a]">
                       All services
@@ -1202,11 +1194,8 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                         <button
                           type="button"
                           onClick={() => toggleCategory(catIds)}
-                          className="w-full flex items-center gap-3 py-2.5 px-2 hover:bg-gray-50 rounded-xl transition-colors mt-1">
-                          <ChkBox
-                            checked={catAllSel}
-                            onToggle={() => toggleCategory(catIds)}
-                          />
+                          className="group w-full flex items-center gap-3 py-2.5 px-2 hover:bg-gray-50 rounded-xl transition-colors mt-1">
+                          <ChkBox checked={catAllSel} />
                           <span className="font-semibold text-[#051e3a] capitalize">
                             {cat}
                           </span>
@@ -1219,10 +1208,9 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                             key={svc._id}
                             type="button"
                             onClick={() => toggleService(svc._id)}
-                            className="w-full flex items-center gap-3 py-3 pl-10 pr-2 hover:bg-gray-50 rounded-xl transition-colors">
+                            className="group w-full flex items-center gap-3 py-3 pl-10 pr-2 hover:bg-gray-50 rounded-xl transition-colors">
                             <ChkBox
                               checked={selectedServices.includes(svc._id)}
-                              onToggle={() => toggleService(svc._id)}
                             />
                             <div className="flex-1 text-left">
                               <p className="text-sm font-medium text-[#051e3a]">
