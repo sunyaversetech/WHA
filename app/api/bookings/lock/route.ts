@@ -131,7 +131,7 @@ export async function POST(request: Request) {
       const requested_quantity = matching_item?.quantity || 1;
 
       // Compute full continuous duration bounds
-      const final_duration = service.base_duration * requested_multiplier;
+      const final_duration = (service.base_duration as number) * requested_multiplier;
       const requested_start = new Date(validated_data.start_time);
       requested_start.setUTCMilliseconds(0);
       const requested_end = new Date(
@@ -150,13 +150,13 @@ export async function POST(request: Request) {
       const day_start = new Date(`${local_date_str}T00:00:00Z`);
       const day_end = new Date(`${local_date_str}T23:59:59.999Z`);
 
-      // ─── FORK A: ITEM BASED INVENTORY LOGIC (e.g., Kayaks) ───
+      // ─── FORK A: RESOURCE BASED LOGIC ───
       if (
-        service.business_type === "item_based" ||
+        service.service_type === "resource_based" ||
         !service.assigned_employees ||
         service.assigned_employees.length === 0
       ) {
-        const max_inventory = Number(service.inventory) || 0;
+        const max_inventory = Number(service.max_concurrent_bookings) || 0;
         if (max_inventory <= 0) throw new Error("SLOT_TAKEN");
 
         // CRITICAL FIX: Clear all expired locks out globally first so inventory capacity metrics are precise

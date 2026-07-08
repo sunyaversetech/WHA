@@ -660,9 +660,7 @@ export function EmployeeTable() {
             </svg>
           </button>
           <span className="text-xs font-semibold text-gray-400">Contact</span>
-          <span className="text-xs font-semibold text-gray-400">
-            Permission role
-          </span>
+
           <div />
         </div>
 
@@ -694,17 +692,18 @@ export function EmployeeTable() {
               </div>
               <div className="flex items-center gap-3 min-w-0">
                 <EmpAvatar emp={emp} idx={idx} />
-                <span className="text-sm font-semibold text-[#051e3a] truncate">
+                <span className="text-sm font-semibold text-[#051e3a] truncate flex flex-col">
                   {emp.full_name}
+                  <span className="text-xs font-semibold text-gray-500 truncate">
+                    {emp.job_title}
+                  </span>
                 </span>
               </div>
               <div className="text-sm text-gray-500 space-y-0.5 min-w-0">
                 {emp.email && <p className="truncate">{emp.email}</p>}
                 {emp.phone_number && <p>{emp.phone_number}</p>}
               </div>
-              <span className="text-sm text-gray-500">
-                {emp.is_active ? "No access" : "Archived"}
-              </span>
+
               <div className="flex justify-end">
                 <ActionsDropdown
                   emp={emp}
