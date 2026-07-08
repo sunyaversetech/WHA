@@ -94,9 +94,10 @@ export async function POST(
     } = body;
 
     // Verify ownership
-    const existing = await Service.findOne({ _id: id, business_id }).select(
-      "assigned_employees",
-    );
+    const existing: any = await Service.findOne({
+      _id: id,
+      business_id,
+    }).select("assigned_employees");
     if (!existing) {
       return NextResponse.json(
         { success: false, error: "Service not found" },
