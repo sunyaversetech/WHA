@@ -99,9 +99,9 @@ export async function POST(request: Request) {
       }
 
       // 2. Fetch service server-side
-      const service = await Service.findById(validated_data.service_id).session(
-        db_session,
-      );
+      const service: any = await Service.findById(
+        validated_data.service_id,
+      ).session(db_session);
       if (!service) throw new Error("SERVICE_NOT_FOUND");
       if (!service.is_active) throw new Error("SERVICE_UNAVAILABLE");
 
@@ -120,9 +120,9 @@ export async function POST(request: Request) {
 
       const requested_multiplier = Number(item_context?.multiplier || 1);
 
-      let duration = (service.base_duration as unknown as number) * requested_multiplier;
+      let duration = service.base_duration * requested_multiplier;
       let total_price =
-        (service.base_price as unknown as number) * (requested_quantity || 1) * requested_multiplier;
+        service.base_price * (requested_quantity || 1) * requested_multiplier;
       let employee_id = null;
 
       // 3. BRANCH LOGIC: EMPLOYEE MODEL VS INVENTORY MODEL

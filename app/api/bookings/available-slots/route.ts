@@ -115,7 +115,7 @@ export async function GET(request: Request) {
   try {
     await connectToDb();
 
-    const service = await Service.findById(params.service_id).lean();
+    const service: any = await Service.findById(params.service_id).lean();
 
     if (!service) {
       return NextResponse.json(
@@ -136,7 +136,7 @@ export async function GET(request: Request) {
     const end_of_day = new Date(`${params.date}T23:59:59.999Z`);
 
     const step_minutes: number =
-      (service.base_duration as unknown as number) ?? DEFAULT_SLOT_STEP_MINUTES;
+      service.base_duration ?? DEFAULT_SLOT_STEP_MINUTES;
     const step_ms = step_minutes * 60_000;
     const now = new Date();
     const available_slots: string[] = [];
@@ -144,7 +144,7 @@ export async function GET(request: Request) {
     // ✅ Dynamic Duration Assessment (uses explicit param selection, falls back to base service)
     const selected_duration = params.duration_minutes
       ? parseInt(params.duration_minutes, 10)
-      : (service.base_duration as unknown as number);
+      : service.base_duration;
 
     // Lookup dynamic business hours upfront
     let business_start_string = DEFAULT_BUSINESS_START;
@@ -322,7 +322,11 @@ export async function GET(request: Request) {
         .filter(Boolean) as any[];
 
       if (day_scheds.length === 0) {
-        return NextResponse.json({ success: true, count: 0, available_slots: [] });
+        return NextResponse.json({
+          success: true,
+          count: 0,
+          available_slots: [],
+        });
       }
 
       const shift_bounds = day_scheds.map((s) => ({
@@ -358,12 +362,15 @@ export async function GET(request: Request) {
       runner = new Date(Math.ceil(runner.getTime() / step_ms) * step_ms);
 
       while (runner < group_shift_end) {
-        const slot_end = new Date(runner.getTime() + selected_duration * 60_000);
+        const slot_end = new Date(
+          runner.getTime() + selected_duration * 60_000,
+        );
         if (slot_end > group_shift_end) break;
 
         const occupied =
-          group_bookings.filter((b) => b.start_time.getTime() === runner.getTime())
-            .length +
+          group_bookings.filter(
+            (b) => b.start_time.getTime() === runner.getTime(),
+          ).length +
           group_locks.filter((l) => l.start_time.getTime() === runner.getTime())
             .length;
 
@@ -441,7 +448,7 @@ export async function GET(request: Request) {
         const duration =
           selected_duration ??
           override?.custom_duration ??
-          (service.base_duration as unknown as number);
+          service.base_duration;
 
         const shift_start = to_utc(
           params.date,

@@ -117,9 +117,9 @@ export async function POST(request: Request) {
 
     await db_session.withTransaction(async () => {
       // 3. Fetch Service Server-Side
-      const service = await Service.findById(validated_data.service_id).session(
-        db_session,
-      );
+      const service: any = await Service.findById(
+        validated_data.service_id,
+      ).session(db_session);
       if (!service) throw new Error("SERVICE_NOT_FOUND");
       if (!service.is_active) throw new Error("SERVICE_UNAVAILABLE");
 
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
       const requested_quantity = matching_item?.quantity || 1;
 
       // Compute full continuous duration bounds
-      const final_duration = (service.base_duration as unknown as number) * requested_multiplier;
+      const final_duration = service.base_duration * requested_multiplier;
       const requested_start = new Date(validated_data.start_time);
       requested_start.setUTCMilliseconds(0);
       const requested_end = new Date(

@@ -15,9 +15,15 @@ export async function GET() {
       business_id: (session.user as any).id,
     }).lean();
 
-    return NextResponse.json({ success: true, data: categories }, { status: 200 });
+    return NextResponse.json(
+      { success: true, data: categories },
+      { status: 200 },
+    );
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 },
+    );
   }
 }
 
@@ -45,7 +51,10 @@ export async function POST(request: Request) {
       description: description ?? "",
     });
 
-    return NextResponse.json({ success: true, data: category }, { status: 201 });
+    return NextResponse.json(
+      { success: true, data: category },
+      { status: 201 },
+    );
   } catch (error: any) {
     if (error.code === 11000) {
       return NextResponse.json(
@@ -53,6 +62,9 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 },
+    );
   }
 }
