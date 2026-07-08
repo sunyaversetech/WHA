@@ -89,7 +89,7 @@ function AddCategoryDialog({
 
   const onSubmit = (data: CategoryFormValues) => {
     createCategory(
-      { name: data.name, color: data.color, description: data.description, type: "service" as const },
+      { name: data.name, color: data.color, description: data.description },
       {
         onSuccess: (res: any) => {
           if (res?.success) {
@@ -349,7 +349,7 @@ export default function ServicesTable() {
 
   const { data: servicesData, isLoading: loadingServices } = useGetServices();
   const { data: categoriesData, isLoading: loadingCategories } =
-    useGetCategories("service");
+    useGetCategories();
   const { mutate: deleteService } = useDeleteServices();
   const { mutate: deleteCategory } = useDeleteCategory();
   const { mutate: toggleActive } = useToggleServiceActive();

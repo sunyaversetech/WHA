@@ -8,21 +8,22 @@ export interface ICategory {
   name: string;
   color: string;
   description: string;
-  type: "service" | "resource";
   created_at: string;
   updated_at: string;
 }
 
-export function useGetCategories(type?: "service" | "resource") {
-  const url = type ? `/api/categories?type=${type}` : "/api/categories";
-  const key = type ? ["categories", type] : ["categories"];
-  return useFetcher<{ success: boolean; data: ICategory[] }>(key, null, url);
+export function useGetCategories() {
+  return useFetcher<{ success: boolean; data: ICategory[] }>(
+    ["categories"],
+    null,
+    "/api/categories",
+  );
 }
 
 export function useCreateCategory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { name: string; color: string; description?: string; type?: "service" | "resource" }) =>
+    mutationFn: (data: { name: string; color: string; description?: string }) =>
       Post({ url: "/api/categories", data }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
   });

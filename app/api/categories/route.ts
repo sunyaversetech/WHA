@@ -4,20 +4,16 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "../auth/[...nextauth]/route";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     await connectToDb();
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type");
-
-    const query: Record<string, any> = { business_id: (session.user as any).id };
-    if (type === "service" || type === "resource") query.type = type;
-
-    const categories = await Category.find(query).lean();
+    const categories = await Category.find({
+      business_id: (session.user as any).id,
+    }).lean();
 
     return NextResponse.json({ success: true, data: categories }, { status: 200 });
   } catch (error: any) {
@@ -33,7 +29,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { name, color, description, type } = body;
+    const { name, color, description } = body;
 
     if (!name?.trim()) {
       return NextResponse.json(
@@ -47,7 +43,6 @@ export async function POST(request: Request) {
       name: name.trim(),
       color: color ?? "Blue",
       description: description ?? "",
-      type: type === "resource" ? "resource" : "service",
     });
 
     return NextResponse.json({ success: true, data: category }, { status: 201 });

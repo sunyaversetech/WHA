@@ -29,9 +29,13 @@ export async function POST(request: Request) {
       require_employee_selection,
       is_active,
       inventory,
+      service_type,
       allow_multiple_bookings,
       max_bookings_per_slot,
       is_one_time_booking,
+      availability_type,
+      availability_schedule,
+      max_concurrent_bookings,
     } = body;
 
     const cleanName = name?.trim();
@@ -44,14 +48,20 @@ export async function POST(request: Request) {
       price_type: price_type ?? "Fixed",
       base_price,
       base_duration,
-      assigned_employees: assigned_employees || [],
-      description: description,
+      description,
       inventory,
-      require_employee_selection: require_employee_selection || false,
       is_active: is_active !== undefined ? is_active : true,
+      service_type: service_type ?? "employee_based",
+      // employee-based
+      assigned_employees: assigned_employees || [],
+      require_employee_selection: require_employee_selection || false,
       allow_multiple_bookings: allow_multiple_bookings || false,
       max_bookings_per_slot: max_bookings_per_slot || 1,
       is_one_time_booking: is_one_time_booking || false,
+      // resource-based
+      availability_type: availability_type ?? "always",
+      availability_schedule: availability_schedule ?? [],
+      max_concurrent_bookings: max_concurrent_bookings ?? 1,
     });
 
     if (assigned_employees?.length > 0) {
@@ -84,7 +94,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     await connectToDb();
     const session = await getServerSession(authOptions);

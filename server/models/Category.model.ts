@@ -6,7 +6,6 @@ const CategorySchema = new mongoose.Schema(
     name: { type: String, required: true },
     color: { type: String, default: "Blue" },
     description: { type: String, default: "" },
-    type: { type: String, enum: ["service", "resource"], default: "service" },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } },
 );

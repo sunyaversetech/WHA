@@ -1,64 +1,68 @@
 import mongoose, { model, models } from "mongoose";
 
+const availabilityDaySchema = new mongoose.Schema(
+  {
+    day_of_week:  { type: String, required: true },
+    is_available: { type: Boolean, default: true },
+    start_time:   { type: String, default: "09:00" },
+    end_time:     { type: String, default: "17:00" },
+  },
+  { _id: false },
+);
+
 const service_schema = new mongoose.Schema(
   {
-    business_id: {
-      type: String,
-      required: true,
-      index: true,
-      ref: "User",
-    },
-    name: { type: String, required: true },
+    business_id: { type: String, required: true, index: true, ref: "User" },
+
+    name:        { type: String, required: true },
     description: { type: String },
-    category: { type: String, default: "" },
+    category:    { type: String, default: "" },
     category_id: { type: String, default: null },
 
     price_type: {
-      type: String,
-      enum: ["Fixed", "From", "Free", "Custom"],
+      type:    String,
+      enum:    ["Fixed", "From", "Free", "Custom"],
       default: "Fixed",
     },
 
-    base_price: { type: Number, required: true, min: 0 },
+    base_price:    { type: Number, required: true, min: 0 },
     base_duration: { type: Number, required: true },
-    require_employee_selection: { type: Boolean, default: false },
+    buffer_time:   { type: Number, default: 0 },
 
-    business_type: {
-      type: String,
-      enum: ["employee_based", "item_based"],
+    // Whether this service uses team members or a physical resource/space
+    service_type: {
+      type:    String,
+      enum:    ["employee_based", "resource_based"],
       default: "employee_based",
-      required: true,
     },
 
-    slot_interval: {
-      type: Number,
-      default: null,
-    },
+    // --- Employee-based fields ---
+    require_employee_selection: { type: Boolean, default: false },
+    assigned_employees: [{ type: mongoose.Schema.Types.ObjectId, ref: "Employee" }],
+    // Booking capacity (employee-based)
+    allow_multiple_bookings: { type: Boolean, default: false },
+    max_bookings_per_slot:   { type: Number,  default: 1, min: 1 },
+    is_one_time_booking:     { type: Boolean, default: false },
 
-    assigned_employees: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Employee",
-      },
-    ],
+    // --- Resource-based fields ---
+    availability_type: {
+      type:    String,
+      enum:    ["always", "specific"],
+      default: "always",
+    },
+    availability_schedule: { type: [availabilityDaySchema], default: [] },
+    // Capacity (resource-based)
+    max_concurrent_bookings: { type: Number, default: 1, min: 1 },
 
     is_active: { type: Boolean, default: true },
-    metadata: { type: Map, of: String },
-    buffer_time: { type: Number, default: 0 },
+    metadata:  { type: Map, of: String },
 
-    // inventory is only meaningful when business_type === "item_based"
-    inventory: { type: Number, default: 0 },
-
-    // Allows more than one customer to book the same service at the same time slot
-    allow_multiple_bookings: { type: Boolean, default: false },
-    // Max number of concurrent bookings permitted per slot when allow_multiple_bookings is true
-    max_bookings_per_slot: { type: Number, default: 1, min: 1 },
-    // A one-off service (e.g. a single event) — once its slot fills up, it is auto-deactivated
-    is_one_time_booking: { type: Boolean, default: false },
+    // Legacy fields kept for backward compat
+    business_type: { type: String, enum: ["employee_based", "item_based"], default: "employee_based" },
+    slot_interval: { type: Number, default: null },
+    inventory:     { type: Number, default: 0 },
   },
-  {
-    timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
-  },
+  { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } },
 );
 
 service_schema.index({ business_id: 1, category: 1 });
