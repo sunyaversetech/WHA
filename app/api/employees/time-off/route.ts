@@ -36,14 +36,16 @@ export async function GET(request: Request) {
       query.employee_id = employee_id;
     }
 
-    if (start_date_str || end_date_str) {
-      query.start_time = {};
-      if (start_date_str) {
-        query.start_time.$gte = new Date(start_date_str);
-      }
-      if (end_date_str) {
-        query.end_time = { $lte: new Date(end_date_str) };
-      }
+    if (start_date_str && end_date_str) {
+      // Time off that overlaps [start, end]: start_time <= end AND end_time >= start
+      query.$and = [
+        { start_time: { $lte: new Date(end_date_str) } },
+        { end_time: { $gte: new Date(start_date_str) } },
+      ];
+    } else if (start_date_str) {
+      query.start_time = { $gte: new Date(start_date_str) };
+    } else if (end_date_str) {
+      query.end_time = { $lte: new Date(end_date_str) };
     }
 
     const time_offs = await EmployeeTimeOff.find(query).sort({ start_time: 1 });

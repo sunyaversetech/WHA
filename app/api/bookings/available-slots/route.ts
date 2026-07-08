@@ -8,7 +8,6 @@ import { EmployeeTimeOff } from "@/server/models/EmployeeTimeOff.model";
 import { Service } from "@/server/models/Service.model";
 import { logger } from "@/lib/logger";
 import { OperatingHours } from "@/server/models/OperatingHour.model";
-import mongoose from "mongoose";
 
 const DEAD_BOOKING_STATUSES = ["cancelled", "no_show", "refunded"];
 const DEFAULT_SLOT_STEP_MINUTES = 30;
@@ -137,9 +136,7 @@ export async function GET(request: Request) {
     const end_of_day = new Date(`${params.date}T23:59:59.999Z`);
 
     const step_minutes: number =
-      service.slot_interval ??
-      service.base_duration ??
-      DEFAULT_SLOT_STEP_MINUTES;
+      (service.base_duration as number) ?? DEFAULT_SLOT_STEP_MINUTES;
     const step_ms = step_minutes * 60_000;
     const now = new Date();
     const available_slots: string[] = [];

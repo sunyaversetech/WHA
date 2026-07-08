@@ -13,6 +13,7 @@ import {
   MoreVertical,
   Pencil,
   Plus,
+  PlusCircle,
   Trash2,
   X,
 } from "lucide-react";
@@ -23,6 +24,7 @@ import {
   useUpdateEmployeeSchedule,
   useCreateTimeOff,
   useGetShiftOverrides,
+  useGetWeekTimeOffs,
   useUpsertShiftOverride,
 } from "@/services/employee.service";
 import { useRouter } from "next/navigation";
@@ -132,25 +134,171 @@ function getDaySchedule(schedule: any[], dayKey: string) {
   return schedule?.find((s: any) => s.day_of_week === dayKey);
 }
 
+// Parse "Jul 8, 2026" (the format used by fmtDateShort / repeating_schedule_config)
+function parseFmtDateShort(s: string | undefined): Date | null {
+  if (!s) return null;
+  const match = s.match(/^(\w{3})\s+(\d+),\s+(\d{4})$/);
+  if (!match) return null;
+  const monthIdx = MONTH_SHORT.indexOf(match[1]);
+  if (monthIdx === -1) return null;
+  return new Date(parseInt(match[3], 10), monthIdx, parseInt(match[2], 10));
+}
+
+// Parse dd/mm date string + year into a Date
+function parseEmploymentDate(
+  dateStr: string | undefined,
+  year: number | undefined,
+): Date | null {
+  if (!year) return null;
+  if (!dateStr) return new Date(year, 0, 1);
+  const parts = dateStr.split("/");
+  if (parts.length !== 2) return new Date(year, 0, 1);
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  return new Date(year, month, day);
+}
+
+function isOutsideEmploymentRange(emp: any, date: Date): boolean {
+  const startDate = parseEmploymentDate(
+    emp.employment_start_date,
+    emp.employment_start_year,
+  );
+  const endDate = parseEmploymentDate(
+    emp.employment_end_date,
+    emp.employment_end_year,
+  );
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+  if (startDate && dayStart < startDate) return true;
+  if (endDate) {
+    const endDay = new Date(endDate);
+    endDay.setHours(23, 59, 59, 999);
+    if (dayStart > endDay) return true;
+  }
+  return false;
+}
+
+function isPastDay(date: Date): boolean {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d < today;
+}
+
+function dateToHHMM(d: Date): string {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function clipShiftsForTimeOff(
+  shifts: ShiftSlot[],
+  toStart: string,
+  toEnd: string,
+): ShiftSlot[] {
+  const result: ShiftSlot[] = [];
+  for (const s of shifts) {
+    if (s.end <= toStart || s.start >= toEnd) {
+      result.push(s);
+      continue;
+    }
+    if (s.start < toStart) result.push({ start: s.start, end: toStart });
+    if (s.end > toEnd) result.push({ start: toEnd, end: s.end });
+  }
+  return result;
+}
+
+type EffectiveDayData = {
+  is_working: boolean;
+  shifts: ShiftSlot[];
+  overrideId?: string;
+  isOutsideSchedule?: boolean;
+  isTimeOff?: boolean;
+  timeOffType?: string;
+  timeOffId?: string;
+  timeOffStart?: string;
+  timeOffEnd?: string;
+};
+
 function getEffectiveDayData(
   emp: any,
   date: Date,
   overrides: any[],
-): { is_working: boolean; shifts: ShiftSlot[]; overrideId?: string } {
+  timeOffs: any[] = [],
+): EffectiveDayData {
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(date);
+  dayEnd.setHours(23, 59, 59, 999);
+  const empId = emp._id?.toString();
+
+  // Resolve base shifts from override or weekly schedule
   const iso = fmtISODate(date);
   const override = overrides.find(
     (o) => o.employee_id === emp._id && o.date === iso,
   );
+  let baseWorking: boolean;
+  let baseShifts: ShiftSlot[];
+  let overrideId: string | undefined;
   if (override) {
+    baseWorking = !override.is_day_off && override.shifts?.length > 0;
+    baseShifts = override.shifts ?? [];
+    overrideId = override._id;
+  } else {
+    const dayKey = DAY_KEYS[(date.getDay() + 6) % 7];
+    const s = getDaySchedule(emp.availability_schedule ?? [], dayKey);
+    baseWorking = s?.is_working ?? false;
+    baseShifts = s?.shifts ?? [];
+
+    // Apply repeating_schedule_config date range
+    const cfg = emp.repeating_schedule_config;
+    if (cfg && baseWorking) {
+      const d0 = new Date(date);
+      d0.setHours(0, 0, 0, 0);
+      const cfgStart = parseFmtDateShort(cfg.start_date);
+      if (cfgStart && d0 < cfgStart) {
+        return { is_working: false, shifts: [], isOutsideSchedule: true };
+      }
+      if (cfg.ends_type === "On a specific date") {
+        const cfgEnd = parseFmtDateShort(cfg.end_date);
+        if (cfgEnd) {
+          cfgEnd.setHours(0, 0, 0, 0);
+          if (d0 > cfgEnd) {
+            return { is_working: false, shifts: [], isOutsideSchedule: true };
+          }
+        }
+      }
+    }
+  }
+
+  // Apply time off: clip shifts to exclude the time-off window
+  const timeOff = timeOffs.find((t) => {
+    if (t.employee_id?.toString() !== empId) return false;
+    const tStart = new Date(t.start_time);
+    const tEnd = new Date(t.end_time);
+    return tStart <= dayEnd && tEnd >= dayStart;
+  });
+
+  if (timeOff) {
+    const tStart = new Date(timeOff.start_time);
+    const tEnd = new Date(timeOff.end_time);
+    const toStartHHMM = dateToHHMM(tStart);
+    const toEndHHMM = dateToHHMM(tEnd);
+    const remaining = baseWorking
+      ? clipShiftsForTimeOff(baseShifts, toStartHHMM, toEndHHMM)
+      : [];
     return {
-      is_working: !override.is_day_off && override.shifts?.length > 0,
-      shifts: override.shifts ?? [],
-      overrideId: override._id,
+      is_working: remaining.length > 0,
+      shifts: remaining,
+      overrideId,
+      isTimeOff: true,
+      timeOffType: timeOff.type ?? "Time off",
+      timeOffId: timeOff._id,
+      timeOffStart: toStartHHMM,
+      timeOffEnd: toEndHHMM,
     };
   }
-  const dayKey = DAY_KEYS[(date.getDay() + 6) % 7];
-  const s = getDaySchedule(emp.availability_schedule ?? [], dayKey);
-  return { is_working: s?.is_working ?? false, shifts: s?.shifts ?? [] };
+
+  return { is_working: baseWorking, shifts: baseShifts, overrideId };
 }
 
 function slotMins(start: string, end: string): number {
@@ -602,7 +750,7 @@ function TimeOffDialog({
   defaultEmpId?: string;
   defaultDate?: Date;
   onClose: () => void;
-  onSave: (payload: any) => void;
+  onSave: (payloads: any[]) => void;
   isSaving?: boolean;
 }) {
   const dateOptions = useMemo(() => {
@@ -612,15 +760,27 @@ function TimeOffDialog({
 
   const [empId, setEmpId] = useState(defaultEmpId ?? employees[0]?._id ?? "");
   const [type, setType] = useState(TIME_OFF_TYPES[0]);
-  const [startDate, setStartDate] = useState(
-    () => (defaultDate ? fmtDateShort(defaultDate) : null) ?? dateOptions[0],
-  );
+  const [startDate, setStartDate] = useState(() => {
+    if (defaultDate && !isPastDay(defaultDate)) {
+      const fmt = fmtDateShort(defaultDate);
+      if (dateOptions.includes(fmt)) return fmt;
+    }
+    return dateOptions[0];
+  });
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
-  const [repeat, setRepeat] = useState(false);
+  const [extraDates, setExtraDates] = useState<string[]>([]);
   const [desc, setDesc] = useState("");
   const [approved, setApproved] = useState(false);
   const totalMins = slotMins(startTime, endTime);
+
+  const addExtraDate = () => setExtraDates((prev) => [...prev, dateOptions[0]]);
+  const removeExtraDate = (i: number) =>
+    setExtraDates((prev) => prev.filter((_, idx) => idx !== i));
+  const updateExtraDate = (i: number, val: string) =>
+    setExtraDates((prev) => prev.map((d, idx) => (idx === i ? val : d)));
+
+  const allDates = [startDate, ...extraDates];
 
   return (
     <div
@@ -668,42 +828,58 @@ function TimeOffDialog({
           </div>
         </div>
 
-        <p className="text-sm font-semibold text-white mb-2">Start date</p>
-        <div className="grid grid-cols-1 gap-2 mb-4">
-          <SelectField
-            value={startDate}
-            onChange={setStartDate}
-            options={dateOptions}
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <p className="text-xs text-gray-400 mb-1.5">Start time</p>
+        {/* Dates */}
+        <div className="space-y-3 mb-4">
+          {allDates.map((date, i) => (
+            <div key={i}>
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-sm font-semibold text-white">
+                  {i === 0 ? "Date" : `Additional date ${i}`}
+                </p>
+                {i > 0 && (
+                  <button
+                    onClick={() => removeExtraDate(i - 1)}
+                    className="text-red-400 hover:text-red-300 transition-colors">
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
               <SelectField
-                value={startTime}
-                onChange={setStartTime}
-                options={TIME_OPTIONS}
+                value={date}
+                onChange={(v) =>
+                  i === 0 ? setStartDate(v) : updateExtraDate(i - 1, v)
+                }
+                options={dateOptions}
               />
             </div>
-            <div>
-              <p className="text-xs text-gray-400 mb-1.5">End time</p>
-              <SelectField
-                value={endTime}
-                onChange={setEndTime}
-                options={TIME_OPTIONS}
-              />
-            </div>
-          </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={addExtraDate}
+            className="flex items-center gap-1.5 text-sm text-[#6B5CE7] hover:text-purple-300 transition-colors">
+            <Plus size={14} /> Add another date
+          </button>
         </div>
 
-        <label className="flex items-center gap-2 mb-4 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={repeat}
-            onChange={(e) => setRepeat(e.target.checked)}
-            className="w-4 h-4 accent-[#051e3a]"
-          />
-          <span className="text-sm text-white">Repeat</span>
-        </label>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div>
+            <p className="text-xs text-gray-400 mb-1.5">Start time</p>
+            <SelectField
+              value={startTime}
+              onChange={setStartTime}
+              options={TIME_OPTIONS}
+            />
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 mb-1.5">End time</p>
+            <SelectField
+              value={endTime}
+              onChange={setEndTime}
+              options={TIME_OPTIONS}
+            />
+          </div>
+        </div>
 
         <div className="mb-4">
           <div className="flex justify-between mb-2">
@@ -731,6 +907,7 @@ function TimeOffDialog({
           </label>
           <span className="text-sm font-bold text-white">
             Time off total: {fmtHours(totalMins)}
+            {allDates.length > 1 && ` × ${allDates.length} days`}
           </span>
         </div>
         <p className="text-xs text-gray-500 mb-6">
@@ -743,15 +920,16 @@ function TimeOffDialog({
           </button>
           <button
             onClick={() =>
-              onSave({
-                employee_id: empId,
-                type,
-                start_time: combineDatetime(startDate, startTime),
-                end_time: combineDatetime(startDate, endTime),
-                repeat,
-                description: desc,
-                approved,
-              })
+              onSave(
+                allDates.map((date) => ({
+                  employee_id: empId,
+                  type,
+                  start_time: combineDatetime(date, startTime),
+                  end_time: combineDatetime(date, endTime),
+                  description: desc,
+                  approved,
+                })),
+              )
             }
             disabled={isSaving}
             className={cn(
@@ -1055,7 +1233,9 @@ function RepeatingShiftsPanel({
 
                   {/* Slots */}
                   {!day.enabled ? (
-                    <p className="text-sm text-gray-500 pl-8">Not working</p>
+                    <div>
+                      <p className="text-sm text-gray-500 pl-8 ">Not working</p>
+                    </div>
                   ) : (
                     <div className="space-y-2 pl-8">
                       {day.slots.map((slot, si) => (
@@ -1207,7 +1387,7 @@ export default function ScheduleShift() {
   const queryClient = useQueryClient();
   const { mutate: updateSchedule, isPending: savingSchedule } =
     useUpdateEmployeeSchedule();
-  const { mutate: createTimeOff, isPending: savingTimeOff } =
+  const { mutateAsync: createTimeOffAsync, isPending: savingTimeOff } =
     useCreateTimeOff();
   const { mutate: upsertOverride, isPending: savingOverride } =
     useUpsertShiftOverride();
@@ -1229,6 +1409,11 @@ export default function ScheduleShift() {
   const overrides = useMemo<any[]>(
     () => overridesData?.data ?? [],
     [overridesData],
+  );
+  const { data: timeOffsData } = useGetWeekTimeOffs(weekStartISO, weekEndISO);
+  const timeOffs = useMemo<any[]>(
+    () => timeOffsData?.data ?? [],
+    [timeOffsData],
   );
 
   const handleSaveEditDay = (emp: any, dayDate: Date, slots: ShiftSlot[]) => {
@@ -1272,8 +1457,12 @@ export default function ScheduleShift() {
     );
   };
 
-  const handleSaveTimeOff = (payload: any) => {
-    createTimeOff(payload, { onSuccess: () => setTimeOffDialog(null) });
+  const handleSaveTimeOff = async (payloads: any[]) => {
+    for (const payload of payloads) {
+      await createTimeOffAsync(payload);
+    }
+    queryClient.invalidateQueries({ queryKey: ["weekTimeOffs"] });
+    setTimeOffDialog(null);
   };
   const handleDeleteShift = (emp: any, dayDate: Date) => {
     upsertOverride(
@@ -1301,7 +1490,7 @@ export default function ScheduleShift() {
     () =>
       weekDays.map((day) =>
         employees.reduce((acc, emp) => {
-          const eff = getEffectiveDayData(emp, day, overrides);
+          const eff = getEffectiveDayData(emp, day, overrides, timeOffs);
           return (
             acc +
             (eff.is_working
@@ -1313,7 +1502,7 @@ export default function ScheduleShift() {
           );
         }, 0),
       ),
-    [employees, weekDays, overrides],
+    [employees, weekDays, overrides, timeOffs],
   );
 
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
@@ -1404,9 +1593,7 @@ export default function ScheduleShift() {
         </div>
       </div>
 
-      {/* ── Mobile controls ── */}
       <div className="md:hidden mb-4 space-y-3">
-        {/* Week nav */}
         <div className="flex items-center justify-between bg-[#051e3a] rounded-2xl px-3 py-2 border border-[#0e3258]">
           <button
             onClick={goPrev}
@@ -1425,7 +1612,6 @@ export default function ScheduleShift() {
           </button>
         </div>
 
-        {/* Day tabs */}
         <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] pb-0.5">
           {weekDays.map((day, i) => (
             <button
@@ -1483,7 +1669,7 @@ export default function ScheduleShift() {
         ) : (
           employees.map((emp, empIdx) => {
             const weekMins = weekDays.reduce((acc, day) => {
-              const eff = getEffectiveDayData(emp, day, overrides);
+              const eff = getEffectiveDayData(emp, day, overrides, timeOffs);
               return (
                 acc +
                 (eff.is_working
@@ -1521,7 +1707,14 @@ export default function ScheduleShift() {
 
                 {DAY_KEYS.map((key, di) => {
                   const dayDate = weekDays[di];
-                  const eff = getEffectiveDayData(emp, dayDate, overrides);
+                  const locked = isOutsideEmploymentRange(emp, dayDate);
+                  const past = isPastDay(dayDate);
+                  const eff = getEffectiveDayData(
+                    emp,
+                    dayDate,
+                    overrides,
+                    timeOffs,
+                  );
                   return (
                     <div
                       key={key}
@@ -1529,29 +1722,92 @@ export default function ScheduleShift() {
                         "px-2 py-4 flex items-center justify-center",
                         di < 6 && "border-r border-[#0e3258]",
                       )}>
-                      {eff.is_working ? (
-                        <button
-                          onClick={(e) =>
-                            openCtxMenu(e, emp, empIdx, key, dayDate)
-                          }
-                          className="w-full bg-[#1e3a7a] hover:bg-[#2435a0] transition-colors rounded-lg px-2 py-2.5 text-center cursor-pointer space-y-0.5">
-                          {eff.shifts.map((sh: ShiftSlot, si: number) => (
-                            <p
-                              key={si}
-                              className="text-xs font-semibold text-white leading-tight">
-                              {sh.start} – {sh.end}
+                      {locked || eff.isOutsideSchedule ? (
+                        <div className="w-full bg-[#051e3a] rounded-lg px-2 py-2.5 text-center opacity-40">
+                          <p className="text-xs text-gray-600">Not working</p>
+                        </div>
+                      ) : eff.isTimeOff ? (
+                        <div className="w-full space-y-1">
+                          <div className="w-full bg-amber-900/40 border border-amber-700/50 rounded-lg px-2 py-1.5 text-center">
+                            <p className="text-[10px] font-semibold text-amber-400 uppercase tracking-wide leading-none">
+                              Time off
                             </p>
-                          ))}
-                        </button>
+                            <p className="text-[10px] text-amber-300/80 leading-tight mt-0.5">
+                              {eff.timeOffStart} – {eff.timeOffEnd}
+                            </p>
+                            <p className="text-[9px] text-amber-300/60 leading-tight truncate">
+                              {eff.timeOffType}
+                            </p>
+                          </div>
+                          {eff.is_working &&
+                            (past ? (
+                              <div className="w-full bg-[#1e3a7a] opacity-50 rounded-lg px-2 py-1.5 text-center space-y-0.5">
+                                {eff.shifts.map((sh: ShiftSlot, si: number) => (
+                                  <p
+                                    key={si}
+                                    className="text-xs font-semibold text-white leading-tight">
+                                    {sh.start} – {sh.end}
+                                  </p>
+                                ))}
+                              </div>
+                            ) : (
+                              <button
+                                onClick={(e) =>
+                                  openCtxMenu(e, emp, empIdx, key, dayDate)
+                                }
+                                className="w-full bg-[#1e3a7a] hover:bg-[#2435a0] transition-colors rounded-lg px-2 py-1.5 text-center cursor-pointer space-y-0.5">
+                                {eff.shifts.map((sh: ShiftSlot, si: number) => (
+                                  <p
+                                    key={si}
+                                    className="text-xs font-semibold text-white leading-tight">
+                                    {sh.start} – {sh.end}
+                                  </p>
+                                ))}
+                              </button>
+                            ))}
+                        </div>
+                      ) : eff.is_working ? (
+                        past ? (
+                          <div className="w-full bg-[#1e3a7a] opacity-50 rounded-lg px-2 py-2.5 text-center space-y-0.5">
+                            {eff.shifts.map((sh: ShiftSlot, si: number) => (
+                              <p
+                                key={si}
+                                className="text-xs font-semibold text-white leading-tight">
+                                {sh.start} – {sh.end}
+                              </p>
+                            ))}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={(e) =>
+                              openCtxMenu(e, emp, empIdx, key, dayDate)
+                            }
+                            className="w-full bg-[#1e3a7a] hover:bg-[#2435a0] transition-colors rounded-lg px-2 py-2.5 text-center cursor-pointer space-y-0.5">
+                            {eff.shifts.map((sh: ShiftSlot, si: number) => (
+                              <p
+                                key={si}
+                                className="text-xs font-semibold text-white leading-tight">
+                                {sh.start} – {sh.end}
+                              </p>
+                            ))}
+                          </button>
+                        )
+                      ) : past ? (
+                        <div className="w-full bg-[#082040] opacity-50 rounded-lg px-2 py-2.5 text-center">
+                          <p className="text-xs text-gray-500">Not working</p>
+                        </div>
                       ) : (
                         <button
                           onClick={(e) =>
                             openCtxMenu(e, emp, empIdx, key, dayDate)
                           }
-                          className="w-full bg-[#082040] hover:bg-[#0d2d4e] transition-colors rounded-lg px-2 py-2.5 text-center cursor-pointer">
-                          <p className="text-xs font-medium text-gray-500 leading-none">
+                          className="group w-full bg-[#082040] hover:bg-[#0d2d4e] transition-colors rounded-lg px-2 py-2.5 text-center cursor-pointer">
+                          <p className="text-xs text-gray-500 group-hover:hidden">
                             Not working
                           </p>
+                          <div className="hidden group-hover:flex items-center justify-center text-gray-400">
+                            <PlusCircle size={15} />
+                          </div>
                         </button>
                       )}
                     </div>
@@ -1563,9 +1819,7 @@ export default function ScheduleShift() {
         )}
       </div>
 
-      {/* ── Mobile Day View ── */}
       <div className="md:hidden">
-        {/* Day header */}
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-base font-bold text-[#051e3a]">
@@ -1585,7 +1839,14 @@ export default function ScheduleShift() {
         ) : (
           <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
             {employees.map((emp, empIdx) => {
-              const eff = getEffectiveDayData(emp, selectedDayDate, overrides);
+              const locked = isOutsideEmploymentRange(emp, selectedDayDate);
+              const past = isPastDay(selectedDayDate);
+              const eff = getEffectiveDayData(
+                emp,
+                selectedDayDate,
+                overrides,
+                timeOffs,
+              );
               return (
                 <div
                   key={emp._id}
@@ -1598,7 +1859,24 @@ export default function ScheduleShift() {
                     <p className="text-sm font-semibold text-[#051e3a] truncate">
                       {emp.full_name}
                     </p>
-                    {eff.is_working ? (
+                    {locked || eff.isOutsideSchedule ? (
+                      <p className="text-xs text-gray-300 mt-0.5">
+                        Not working
+                      </p>
+                    ) : eff.isTimeOff ? (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <span className="inline-block text-[11px] font-semibold text-amber-700 bg-amber-100 rounded-md px-2 py-0.5">
+                          Time off {eff.timeOffStart}–{eff.timeOffEnd}
+                        </span>
+                        {eff.shifts.map((sh: ShiftSlot, si: number) => (
+                          <span
+                            key={si}
+                            className="inline-block text-[11px] font-semibold text-white bg-[#1e3a7a] rounded-md px-2 py-0.5">
+                            {sh.start} – {sh.end}
+                          </span>
+                        ))}
+                      </div>
+                    ) : eff.is_working ? (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {eff.shifts.map((sh: ShiftSlot, si: number) => (
                           <span
@@ -1614,12 +1892,14 @@ export default function ScheduleShift() {
                       </p>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => openMobileSheet(emp, selectedDayDate)}
-                    className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#051e3a] transition-colors shrink-0">
-                    <MoreVertical size={18} />
-                  </button>
+                  {!locked && !past && !eff.isOutsideSchedule && (
+                    <button
+                      type="button"
+                      onClick={() => openMobileSheet(emp, selectedDayDate)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#051e3a] transition-colors shrink-0">
+                      <MoreVertical size={18} />
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -1653,6 +1933,7 @@ export default function ScheduleShift() {
               ctxMenu.emp,
               ctxMenu.dayDate,
               overrides,
+              timeOffs,
             );
             setEditDialog({
               emp: ctxMenu.emp,
@@ -1679,6 +1960,7 @@ export default function ScheduleShift() {
             mobileSheet.emp,
             mobileSheet.dayDate,
             overrides,
+            timeOffs,
           );
           setEditDialog({
             emp: mobileSheet.emp,

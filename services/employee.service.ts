@@ -60,6 +60,15 @@ export const useUpdateEmployeeSchedule = () => {
   });
 };
 
+export const useGetWeekTimeOffs = (weekStart?: string, weekEnd?: string) => {
+  return useFetcher<ApiResponseType<any[]>>(
+    ["weekTimeOffs", weekStart ?? "", weekEnd ?? ""],
+    null,
+    `/api/employees/time-off${weekStart ? `?start_date=${weekStart}&end_date=${weekEnd}` : ""}`,
+    !!(weekStart && weekEnd),
+  );
+};
+
 export const useGetEmployeeTimeOff = (employeeId?: string) => {
   return useFetcher<ApiResponseType<any[]>>(
     ["employeeTimeOff", employeeId ?? ""],
