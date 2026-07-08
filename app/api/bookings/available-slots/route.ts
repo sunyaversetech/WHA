@@ -179,13 +179,13 @@ export async function GET(request: Request) {
       });
     }
 
-    // ─── 1. ITEM BASED REVENUE PIPELINE ───
+    // ─── 1. RESOURCE BASED PIPELINE ───
     if (
-      service.business_type === "item_based" ||
+      service.service_type === "resource_based" ||
       !service.assigned_employees ||
       service.assigned_employees.length === 0
     ) {
-      const max_inventory = Number(service.inventory) || 0;
+      const max_inventory = Number(service.max_concurrent_bookings) || 0;
       if (max_inventory <= 0) {
         return NextResponse.json({
           success: true,

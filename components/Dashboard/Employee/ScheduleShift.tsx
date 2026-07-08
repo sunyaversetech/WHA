@@ -361,6 +361,141 @@ function Avatar({ emp, idx }: { emp: any; idx: number }) {
   );
 }
 
+// ─── Employee action dropdown ─────────────────────────────────────────────────
+
+function EmpActionDropdown({
+  emp,
+  onAssignRepeating,
+  onDeleteAllShifts,
+  onView,
+  onEdit,
+}: {
+  emp: any;
+  onAssignRepeating: () => void;
+  onDeleteAllShifts: () => void;
+  onView: () => void;
+  onEdit: () => void;
+}) {
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!pos) return;
+    const h = (e: MouseEvent) => {
+      const menu = document.querySelector("[data-emp-menu]");
+      if (menu && !menu.contains(e.target as Node)) setPos(null);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [pos]);
+
+  const handleOpen = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (pos) {
+      setPos(null);
+      return;
+    }
+    const rect = btnRef.current!.getBoundingClientRect();
+    setPos({ x: rect.left, y: rect.bottom + 6 });
+  };
+
+  const items: { label: string; action: () => void; danger?: boolean }[] = [
+    { label: "Assign repeating shift", action: onAssignRepeating },
+    { label: "View team member", action: onView },
+    { label: "Edit team member", action: onEdit },
+    { label: "Delete all shifts", action: onDeleteAllShifts, danger: true },
+  ];
+
+  return (
+    <div className="shrink-0">
+      <button
+        ref={btnRef}
+        onClick={handleOpen}
+        className="flex items-center gap-0.5 text-gray-500 hover:text-gray-300 transition-colors">
+        <Pencil size={13} />
+        <ChevronDown
+          size={11}
+          className={cn("transition-transform", !!pos && "rotate-180")}
+        />
+      </button>
+      {pos && (
+        <div
+          data-emp-menu
+          style={{ position: "fixed", top: pos.y, left: pos.x, zIndex: 999 }}
+          className="bg-[#082040] border border-[#0e3258] rounded-xl shadow-2xl py-1.5 max-w-50">
+          {items.map(({ label, action, danger }) => (
+            <button
+              key={label}
+              onClick={() => {
+                action();
+                setPos(null);
+              }}
+              className={cn(
+                "w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-[#0d2d4e]",
+                danger ? "text-red-400" : "text-white",
+              )}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Confirm delete-all-shifts dialog ────────────────────────────────────────
+
+function ConfirmDeleteShiftsDialog({
+  emp,
+  onConfirm,
+  onCancel,
+  isDeleting,
+}: {
+  emp: any;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isDeleting?: boolean;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}>
+      <div className="bg-[#051e3a] border border-[#0e3258] rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+        <div className="flex items-start justify-between mb-4">
+          <h2 className="text-lg font-bold text-white">Delete all shifts</h2>
+          <button
+            onClick={onCancel}
+            className="text-gray-400 hover:text-white transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+        <p className="text-sm text-gray-400 mb-6 leading-relaxed">
+          This will clear the entire weekly repeating schedule for{" "}
+          <span className="text-white font-semibold">{emp.full_name}</span>. Any
+          day-specific overrides will remain. This action cannot be undone.
+        </p>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="px-5 py-2 rounded-full border border-[#0e3258] text-white text-sm font-semibold hover:bg-[#082040] disabled:opacity-50 transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="px-5 py-2 rounded-full bg-red-600 text-white text-sm font-bold hover:bg-red-700 disabled:opacity-60 transition-colors flex items-center gap-1.5">
+            {isDeleting && <Loader2 size={13} className="animate-spin" />}
+            Delete shifts
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const SEL =
@@ -1381,6 +1516,7 @@ function AddDropdown({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ScheduleShift() {
+  const router = useRouter();
   const { data: empData } = useGetEmployees();
   const employees = useMemo<any[]>(() => empData?.data ?? [], [empData]);
 
@@ -1464,6 +1600,28 @@ export default function ScheduleShift() {
     queryClient.invalidateQueries({ queryKey: ["weekTimeOffs"] });
     setTimeOffDialog(null);
   };
+  const handleDeleteAllShifts = (emp: any) => {
+    setDeleteShiftsDialog({ emp });
+  };
+
+  const confirmDeleteAllShifts = () => {
+    if (!deleteShiftsDialog) return;
+    const emptySchedule = DAY_KEYS.map((key) => ({
+      day_of_week: key,
+      is_working: false,
+      shifts: [],
+    }));
+    updateSchedule(
+      { empId: deleteShiftsDialog.emp._id, schedule: emptySchedule },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["employees"] });
+          setDeleteShiftsDialog(null);
+        },
+      },
+    );
+  };
+
   const handleDeleteShift = (emp: any, dayDate: Date) => {
     upsertOverride(
       {
@@ -1522,6 +1680,9 @@ export default function ScheduleShift() {
   const [repeatingPanel, setRepeatingPanel] = useState<{ emp: any } | null>(
     null,
   );
+  const [deleteShiftsDialog, setDeleteShiftsDialog] = useState<{
+    emp: any;
+  } | null>(null);
 
   const openCtxMenu = (
     e: React.MouseEvent,
@@ -1563,12 +1724,11 @@ export default function ScheduleShift() {
         </div>
       </div>
 
-      {/* ── Desktop controls bar ── */}
       <div className="hidden md:flex items-center justify-between mb-5">
-        <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#0e3258] bg-[#051e3a] text-sm font-semibold text-white hover:bg-[#0d2d4e] transition-colors">
+        {/* <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#0e3258] bg-[#051e3a] text-sm font-semibold text-white hover:bg-[#0d2d4e] transition-colors">
           <ArrowUpDown size={14} className="text-gray-400" />
           Custom order
-        </button>
+        </button> */}
         <div className="flex items-center gap-2">
           <button
             onClick={goThisWeek}
@@ -1698,11 +1858,15 @@ export default function ScheduleShift() {
                       {fmtHours(weekMins)}
                     </p>
                   </div>
-                  <button
-                    onClick={() => setRepeatingPanel({ emp })}
-                    className="text-gray-500 hover:text-gray-300 transition-colors shrink-0">
-                    <Pencil size={14} />
-                  </button>
+                  <EmpActionDropdown
+                    emp={emp}
+                    onAssignRepeating={() => setRepeatingPanel({ emp })}
+                    onDeleteAllShifts={() => handleDeleteAllShifts(emp)}
+                    onView={() => router.push(`/dashboard/employees`)}
+                    onEdit={() =>
+                      router.push(`/dashboard/employees/edit/${emp._id}`)
+                    }
+                  />
                 </div>
 
                 {DAY_KEYS.map((key, di) => {
@@ -2016,6 +2180,15 @@ export default function ScheduleShift() {
             handleSaveRepeating(repeatingPanel.emp, days, config)
           }
           isSaving={savingSchedule}
+        />
+      )}
+
+      {deleteShiftsDialog && (
+        <ConfirmDeleteShiftsDialog
+          emp={deleteShiftsDialog.emp}
+          onConfirm={confirmDeleteAllShifts}
+          onCancel={() => setDeleteShiftsDialog(null)}
+          isDeleting={savingSchedule}
         />
       )}
     </div>
