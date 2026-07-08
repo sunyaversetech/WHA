@@ -131,7 +131,7 @@ export async function POST(request: Request) {
       const requested_quantity = matching_item?.quantity || 1;
 
       // Compute full continuous duration bounds
-      const final_duration = (service.base_duration as number) * requested_multiplier;
+      const final_duration = (service.base_duration as unknown as number) * requested_multiplier;
       const requested_start = new Date(validated_data.start_time);
       requested_start.setUTCMilliseconds(0);
       const requested_end = new Date(

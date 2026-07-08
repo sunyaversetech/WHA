@@ -136,7 +136,7 @@ export async function GET(request: Request) {
     const end_of_day = new Date(`${params.date}T23:59:59.999Z`);
 
     const step_minutes: number =
-      (service.base_duration as number) ?? DEFAULT_SLOT_STEP_MINUTES;
+      (service.base_duration as unknown as number) ?? DEFAULT_SLOT_STEP_MINUTES;
     const step_ms = step_minutes * 60_000;
     const now = new Date();
     const available_slots: string[] = [];
@@ -144,7 +144,7 @@ export async function GET(request: Request) {
     // ✅ Dynamic Duration Assessment (uses explicit param selection, falls back to base service)
     const selected_duration = params.duration_minutes
       ? parseInt(params.duration_minutes, 10)
-      : service.base_duration;
+      : (service.base_duration as unknown as number);
 
     // Lookup dynamic business hours upfront
     let business_start_string = DEFAULT_BUSINESS_START;
@@ -441,7 +441,7 @@ export async function GET(request: Request) {
         const duration =
           selected_duration ??
           override?.custom_duration ??
-          service.base_duration;
+          (service.base_duration as unknown as number);
 
         const shift_start = to_utc(
           params.date,

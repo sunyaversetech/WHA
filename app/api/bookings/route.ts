@@ -112,7 +112,7 @@ export async function POST(request: Request) {
 
       // ✅ FIXED: Look up quantity from items payload structure first, fallback to lock parameters
       const requested_quantity =
-        service.business_type === "item_based" ||
+        service.service_type === "resource_based" ||
         !service.assigned_employees ||
         service.assigned_employees.length === 0
           ? Number(item_context?.quantity || lock.inventory_quantity || 1)
@@ -120,14 +120,14 @@ export async function POST(request: Request) {
 
       const requested_multiplier = Number(item_context?.multiplier || 1);
 
-      let duration = service.base_duration * requested_multiplier;
+      let duration = (service.base_duration as unknown as number) * requested_multiplier;
       let total_price =
-        service.base_price * (requested_quantity || 1) * requested_multiplier;
+        (service.base_price as unknown as number) * (requested_quantity || 1) * requested_multiplier;
       let employee_id = null;
 
       // 3. BRANCH LOGIC: EMPLOYEE MODEL VS INVENTORY MODEL
       if (
-        service.business_type === "employee_based" &&
+        service.service_type === "employee_based" &&
         service.assigned_employees?.length > 0
       ) {
         employee_id =
@@ -203,7 +203,7 @@ export async function POST(request: Request) {
         if (overlap) throw new Error("SLOT_TAKEN: Employee is fully booked");
       } else {
         // Advanced Inventory allocation logic
-        const max_inventory = Number(service.inventory) || 0;
+        const max_inventory = Number(service.max_concurrent_bookings) || 0;
 
         // Find all active bookings overlapping our checkout window
         const active_bookings = await Booking.find({
