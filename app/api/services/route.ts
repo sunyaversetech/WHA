@@ -36,6 +36,12 @@ export async function POST(request: Request) {
       availability_type,
       availability_schedule,
       max_concurrent_bookings,
+      group_schedule,
+      waitlist_enabled,
+      min_notice_hours,
+      advance_booking_days,
+      cancellation_policy,
+      is_refundable,
     } = body;
 
     const cleanName = name?.trim();
@@ -62,6 +68,14 @@ export async function POST(request: Request) {
       availability_type: availability_type ?? "always",
       availability_schedule: availability_schedule ?? [],
       max_concurrent_bookings: max_concurrent_bookings ?? 1,
+      // group session
+      group_schedule: group_schedule ?? [],
+      waitlist_enabled: waitlist_enabled ?? false,
+      // settings
+      min_notice_hours: min_notice_hours ?? 0,
+      advance_booking_days: advance_booking_days ?? 30,
+      cancellation_policy: cancellation_policy ?? "anytime",
+      is_refundable: is_refundable !== undefined ? is_refundable : true,
     });
 
     if (assigned_employees?.length > 0) {

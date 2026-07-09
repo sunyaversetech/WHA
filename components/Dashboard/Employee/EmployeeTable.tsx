@@ -8,6 +8,8 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  FileSpreadsheet,
+  FileText,
   MapPin,
   MoreVertical,
   Search,
@@ -242,9 +244,10 @@ function ActionsDropdown({ emp, onEdit }: { emp: any; onEdit: () => void }) {
 
 // ─── Options Dropdown ─────────────────────────────────────────────────────────
 
-function OptionsDropdown() {
+function OptionsDropdown({ employees }: { employees: any[] }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node))
@@ -253,6 +256,56 @@ function OptionsDropdown() {
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  const handleExcel = () => {
+    const headers = ["Name", "Email", "Phone", "Job Title", "Status"];
+    const rows = employees.map((e) => [
+      e.full_name ?? "",
+      e.email ?? "",
+      e.phone_number ?? "",
+      e.job_title ?? "",
+      e.is_active !== false ? "Active" : "Archived",
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
+      )
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "team-members.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    setOpen(false);
+  };
+
+  const handlePDF = async () => {
+    const { default: jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Team Members", 14, 15);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Exported ${new Date().toLocaleDateString()}`, 14, 22);
+    autoTable(doc, {
+      head: [["Name", "Email", "Phone", "Job Title", "Status"]],
+      body: employees.map((e) => [
+        e.full_name ?? "",
+        e.email ?? "",
+        e.phone_number ?? "",
+        e.job_title ?? "",
+        e.is_active !== false ? "Active" : "Archived",
+      ]),
+      startY: 27,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [5, 30, 58] },
+    });
+    doc.save("team-members.pdf");
+    setOpen(false);
+  };
 
   return (
     <div ref={ref} className="relative">
@@ -263,14 +316,22 @@ function OptionsDropdown() {
         {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 min-w-[160px]">
-          {["Export", "Import", "Archive all"].map((opt) => (
-            <button
-              key={opt}
-              className="w-full text-left px-4 py-2.5 text-sm text-[#051e3a] hover:bg-gray-50 transition-colors">
-              {opt}
-            </button>
-          ))}
+        <div className="absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 min-w-[168px]">
+          <p className="px-4 pt-1.5 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+            Export
+          </p>
+          <button
+            onClick={handleExcel}
+            className="w-full text-left px-4 py-2.5 text-sm text-[#051e3a] hover:bg-gray-50 transition-colors flex items-center gap-2.5">
+            <FileSpreadsheet size={14} className="text-green-600 shrink-0" />
+            Excel (.csv)
+          </button>
+          <button
+            onClick={handlePDF}
+            className="w-full text-left px-4 py-2.5 text-sm text-[#051e3a] hover:bg-gray-50 transition-colors flex items-center gap-2.5">
+            <FileText size={14} className="text-red-500 shrink-0" />
+            PDF
+          </button>
         </div>
       )}
     </div>
@@ -580,7 +641,6 @@ export function EmployeeTable() {
 
   return (
     <div className="min-h-screen">
-      {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
           <h1 className="text-xl md:text-2xl font-bold text-[#051e3a]">
