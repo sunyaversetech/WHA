@@ -1,0 +1,50 @@
+import { Delete, Post } from "@/lib/action";
+import { ApiResponseType } from "./apitypes";
+import { useMutation } from "@tanstack/react-query";
+import { useFetcher } from "@/lib/generic.service";
+
+export const useGetResourceOverrides = (
+  weekStart?: string,
+  weekEnd?: string,
+) => {
+  return useFetcher<ApiResponseType<any[]>>(
+    ["resourceOverrides", weekStart ?? "", weekEnd ?? ""],
+    null,
+    `/api/resources/overrides${weekStart ? `?week_start=${weekStart}&week_end=${weekEnd}` : ""}`,
+    !!(weekStart && weekEnd),
+  );
+};
+
+export const useUpsertResourceOverride = () => {
+  return useMutation<
+    ApiResponseType<any>,
+    any,
+    {
+      service_id: string;
+      date: string;
+      is_closed: boolean;
+      quantity_override?: number | null;
+    }
+  >({
+    mutationKey: ["upsertResourceOverride"],
+    mutationFn: (payload) =>
+      Post<any, ApiResponseType<any>>({
+        url: `/api/resources/overrides`,
+        data: payload,
+      }),
+  });
+};
+
+export const useDeleteResourceOverride = () => {
+  return useMutation<
+    ApiResponseType<any>,
+    any,
+    { service_id: string; date: string }
+  >({
+    mutationKey: ["deleteResourceOverride"],
+    mutationFn: ({ service_id, date }) =>
+      Delete<ApiResponseType<any>>({
+        url: `/api/resources/overrides?service_id=${service_id}&date=${date}`,
+      }),
+  });
+};

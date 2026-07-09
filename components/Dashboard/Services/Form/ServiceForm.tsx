@@ -179,10 +179,7 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
 
   const categories = categoriesData?.data ?? [];
   const allEmployees = (empData as any)?.data ?? [];
-
-  const [section, setSection] = useState<Section>(
-    initialData ? "basic" : "service_type",
-  );
+  const [section, setSection] = useState<Section>("basic");
 
   const form = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceSchema) as any,
@@ -446,7 +443,6 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
       </div>
 
       <div className="flex flex-col md:flex-row flex-1">
-        {/* ── Sidebar ── */}
         <div className="w-full md:w-64 shrink-0 p-4 md:p-6 border-b md:border-b-0 md:border-r border-gray-100">
           <h1 className="text-2xl font-bold text-[#051e3a] mb-5">
             {initialData ? "Edit service" : "New service"}
