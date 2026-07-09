@@ -10,13 +10,19 @@ export interface ServiceType {
   name: string;
   description?: string;
   category: string;
-  inventory: number;
+  /** @deprecated use max_concurrent_bookings for resource_based services */
+  inventory?: number;
   base_price: number;
   base_duration: number;
+  service_type?: "employee_based" | "resource_based" | "group_session";
   require_employee_selection: boolean;
   assigned_employees: EmployeeType[];
   is_active: boolean;
   buffer_time?: number;
+  // resource_based
+  availability_type?: "always" | "specific";
+  max_concurrent_bookings?: number;
+  // group_session
   allow_multiple_bookings?: boolean;
   max_bookings_per_slot?: number;
   is_one_time_booking?: boolean;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format, addDays, formatDate } from "date-fns";
 import {
   Clock,
@@ -53,6 +53,12 @@ function formatDurationLabel(totalMinutes: number): string {
   return `${hours} ${hours === 1 ? "hr" : "hrs"} ${mins} mins`;
 }
 
+/** Returns the bookable quantity cap for a service (resource_based uses max_concurrent_bookings) */
+function getServiceMaxQty(s: ServiceType): number {
+  if (s.service_type === "resource_based") return s.max_concurrent_bookings ?? 0;
+  return 0; // employee_based and group_session don't have multi-quantity booking
+}
+
 export default function BookingContainer({ services }: BookingContainerProps) {
   const router = useRouter();
 
@@ -73,6 +79,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const [isNoPreference, setIsNoPreference] = useState<boolean>(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedSlot, setSelectedSlot] = useState<string>("");
+  const [hasAutoAdvancedDate, setHasAutoAdvancedDate] = useState(false);
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [activeLockId, setActiveLockId] = useState<string | null>(null);
@@ -98,7 +105,14 @@ export default function BookingContainer({ services }: BookingContainerProps) {
       : s.category === activeTab && s.is_active,
   );
 
+  // Only employee_based services have professionals to select
+  const isEmployeeBasedSelection = useMemo(
+    () => selectedServices.every((s) => !s.service_type || s.service_type === "employee_based"),
+    [selectedServices],
+  );
+
   const dynamicAvailableEmployees = useMemo(() => {
+    if (!isEmployeeBasedSelection) return [];
     const empMap = new Map<string, EmployeeType>();
     selectedServices.forEach((srv) => {
       if (Array.isArray(srv.assigned_employees)) {
@@ -108,7 +122,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
       }
     });
     return Array.from(empMap.values());
-  }, [selectedServices]);
+  }, [selectedServices, isEmployeeBasedSelection]);
 
   const primaryServiceId = selectedServices[0]?._id ?? "";
 
@@ -160,6 +174,22 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     finalDuration,
   );
 
+  // When the time step opens and today has no remaining slots, advance to tomorrow.
+  useEffect(() => {
+    if (
+      currentStep === "time" &&
+      !isLoadingSlots &&
+      !hasAutoAdvancedDate &&
+      slotsData?.available_slots?.length === 0
+    ) {
+      const todayStr = format(new Date(), "yyyy-MM-dd");
+      if (formattedDate === todayStr) {
+        setSelectedDate(addDays(new Date(), 1));
+        setHasAutoAdvancedDate(true);
+      }
+    }
+  }, [currentStep, isLoadingSlots, slotsData, formattedDate, hasAutoAdvancedDate]);
+
   const handleOpenBookingWizard = (service: ServiceType) => {
     setSelectedServices([service]);
     setSelectedMultipliers({ [service._id]: 1 });
@@ -169,6 +199,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     setSelectedEmployee(null);
     setSelectedDate(new Date());
     setSelectedSlot("");
+    setHasAutoAdvancedDate(false);
     setIsDialogOpen(true);
   };
 
@@ -229,6 +260,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     if (currentStep === "professionals") {
       setCurrentStep("services");
     } else if (currentStep === "time") {
+      setHasAutoAdvancedDate(false);
       if (dynamicAvailableEmployees.length > 0) {
         setCurrentStep("professionals");
       } else {
@@ -256,6 +288,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     setCalculatedPrice(0);
     setCheckoutSummary(null);
     setIsPaymentModalOpen(false);
+    setHasAutoAdvancedDate(false);
   };
 
   // ─── BOOKING PIPELINE ─────────────────────────────────────────────────────
@@ -412,10 +445,10 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                   <span className="text-[10px] uppercase font-bold text-primary tracking-wider bg-purple-50 px-2 py-0.5 rounded-md">
                     {service.category}
                   </span>
-                  {service.inventory !== undefined && service.inventory > 0 && (
+                  {getServiceMaxQty(service) > 0 && (
                     <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider bg-amber-50 px-2 py-0.5 rounded-md flex items-center gap-1">
-                      <Layers className="w-2.5 h-2.5" /> Total Stock:{" "}
-                      {service.inventory}
+                      <Layers className="w-2.5 h-2.5" /> Max Qty:{" "}
+                      {getServiceMaxQty(service)}
                     </span>
                   )}
                 </div>
@@ -521,8 +554,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                           (s) => s._id === item._id,
                         );
                         const currentMult = selectedMultipliers[item._id] || 1;
-                        const hasInventory =
-                          item.inventory !== undefined && item.inventory > 0;
+                        const hasInventory = getServiceMaxQty(item) > 0;
 
                         return (
                           <div
@@ -551,7 +583,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                                   {hasInventory && (
                                     <span className="text-[10px] text-amber-600 bg-amber-50 font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
                                       <Layers className="w-2.5 h-2.5" /> Max
-                                      Stock: {item.inventory}
+                                      Qty: {getServiceMaxQty(item)}
                                     </span>
                                   )}
                                 </div>
@@ -805,28 +837,22 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                         </div>
                       ) : (
                         <p className="text-xs text-destructive text-center py-6 bg-red-50 border border-red-100 rounded-2xl font-medium italic">
-                          No openings or hours assigned for this specific day.
+                          No available openings for this day. Try selecting a different date.
                         </p>
                       )}
                     </div>
 
-                    {/* Quantity Controls (inventory-based services only) */}
+                    {/* Quantity Controls (resource_based services only — up to max_concurrent_bookings) */}
                     {selectedSlot &&
-                      selectedServices.some(
-                        (s) => s.inventory !== undefined && s.inventory > 0,
-                      ) && (
+                      selectedServices.some((s) => getServiceMaxQty(s) > 1) && (
                         <div className="pt-2 border-t border-slate-100 space-y-2">
                           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                             Configure Quantities
                           </span>
                           {selectedServices.map((item) => {
-                            if (
-                              item.inventory === undefined ||
-                              item.inventory <= 0
-                            )
-                              return null;
-                            const currentQty =
-                              selectedQuantities[item._id] || 1;
+                            const maxQty = getServiceMaxQty(item);
+                            if (maxQty <= 1) return null;
+                            const currentQty = selectedQuantities[item._id] || 1;
                             return (
                               <div
                                 key={item._id}
@@ -837,22 +863,14 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                                   </span>
                                   <span className="text-[10px] text-slate-400 flex items-center gap-1">
                                     <Layers className="w-3 h-3 text-slate-400" />{" "}
-                                    Max Stock: {item.inventory}
+                                    Max: {maxQty}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <button
                                     type="button"
-                                    disabled={
-                                      currentQty <= 1 || isMutationLoading
-                                    }
-                                    onClick={() =>
-                                      handleUpdateQuantity(
-                                        item._id,
-                                        -1,
-                                        item.inventory,
-                                      )
-                                    }
+                                    disabled={currentQty <= 1 || isMutationLoading}
+                                    onClick={() => handleUpdateQuantity(item._id, -1, maxQty)}
                                     className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
                                     <Minus className="w-3 h-3" />
                                   </button>
@@ -861,17 +879,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                                   </span>
                                   <button
                                     type="button"
-                                    disabled={
-                                      currentQty >= (item.inventory || 1) ||
-                                      isMutationLoading
-                                    }
-                                    onClick={() =>
-                                      handleUpdateQuantity(
-                                        item._id,
-                                        1,
-                                        item.inventory,
-                                      )
-                                    }
+                                    disabled={currentQty >= maxQty || isMutationLoading}
+                                    onClick={() => handleUpdateQuantity(item._id, 1, maxQty)}
                                     className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
                                     <Plus className="w-3 h-3" />
                                   </button>
