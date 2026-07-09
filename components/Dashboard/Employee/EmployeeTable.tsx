@@ -316,7 +316,7 @@ function OptionsDropdown({ employees }: { employees: any[] }) {
         {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 min-w-[168px]">
+        <div className="absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 min-w-42">
           <p className="px-4 pt-1.5 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
             Export
           </p>
@@ -652,7 +652,7 @@ export function EmployeeTable() {
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden sm:block">
-            <OptionsDropdown />
+            <OptionsDropdown employees={filteredEmployees} />
           </div>
           <Link href="/dashboard/employees/add">
             <button className="px-4 md:px-5 py-2 rounded-full bg-[#051e3a] text-white text-sm font-bold hover:bg-[#082040] transition-colors">
