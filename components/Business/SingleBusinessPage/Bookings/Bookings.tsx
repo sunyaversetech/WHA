@@ -55,7 +55,8 @@ function formatDurationLabel(totalMinutes: number): string {
 
 /** Returns the bookable quantity cap for a service (resource_based uses max_concurrent_bookings) */
 function getServiceMaxQty(s: ServiceType): number {
-  if (s.service_type === "resource_based") return s.max_concurrent_bookings ?? 0;
+  if (s.service_type === "resource_based")
+    return s.max_concurrent_bookings ?? 0;
   return 0; // employee_based and group_session don't have multi-quantity booking
 }
 
@@ -107,7 +108,10 @@ export default function BookingContainer({ services }: BookingContainerProps) {
 
   // Only employee_based services have professionals to select
   const isEmployeeBasedSelection = useMemo(
-    () => selectedServices.every((s) => !s.service_type || s.service_type === "employee_based"),
+    () =>
+      selectedServices.every(
+        (s) => !s.service_type || s.service_type === "employee_based",
+      ),
     [selectedServices],
   );
 
@@ -184,11 +188,19 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     ) {
       const todayStr = format(new Date(), "yyyy-MM-dd");
       if (formattedDate === todayStr) {
-        setSelectedDate(addDays(new Date(), 1));
-        setHasAutoAdvancedDate(true);
+        setTimeout(() => {
+          setSelectedDate(addDays(new Date(), 1));
+          setHasAutoAdvancedDate(true);
+        }, 0);
       }
     }
-  }, [currentStep, isLoadingSlots, slotsData, formattedDate, hasAutoAdvancedDate]);
+  }, [
+    currentStep,
+    isLoadingSlots,
+    slotsData,
+    formattedDate,
+    hasAutoAdvancedDate,
+  ]);
 
   const handleOpenBookingWizard = (service: ServiceType) => {
     setSelectedServices([service]);
@@ -837,7 +849,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                         </div>
                       ) : (
                         <p className="text-xs text-destructive text-center py-6 bg-red-50 border border-red-100 rounded-2xl font-medium italic">
-                          No available openings for this day. Try selecting a different date.
+                          No available openings for this day. Try selecting a
+                          different date.
                         </p>
                       )}
                     </div>
@@ -852,7 +865,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                           {selectedServices.map((item) => {
                             const maxQty = getServiceMaxQty(item);
                             if (maxQty <= 1) return null;
-                            const currentQty = selectedQuantities[item._id] || 1;
+                            const currentQty =
+                              selectedQuantities[item._id] || 1;
                             return (
                               <div
                                 key={item._id}
@@ -869,8 +883,12 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                                 <div className="flex items-center gap-3">
                                   <button
                                     type="button"
-                                    disabled={currentQty <= 1 || isMutationLoading}
-                                    onClick={() => handleUpdateQuantity(item._id, -1, maxQty)}
+                                    disabled={
+                                      currentQty <= 1 || isMutationLoading
+                                    }
+                                    onClick={() =>
+                                      handleUpdateQuantity(item._id, -1, maxQty)
+                                    }
                                     className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
                                     <Minus className="w-3 h-3" />
                                   </button>
@@ -879,8 +897,12 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                                   </span>
                                   <button
                                     type="button"
-                                    disabled={currentQty >= maxQty || isMutationLoading}
-                                    onClick={() => handleUpdateQuantity(item._id, 1, maxQty)}
+                                    disabled={
+                                      currentQty >= maxQty || isMutationLoading
+                                    }
+                                    onClick={() =>
+                                      handleUpdateQuantity(item._id, 1, maxQty)
+                                    }
                                     className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
                                     <Plus className="w-3 h-3" />
                                   </button>
