@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
 import Booking from "@/server/models/Booking.model";
+import { connectToDb } from "@/lib/db";
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  pending: ["confirmed", "cancelled"],
-  confirmed: ["completed", "cancelled", "no_show"],
+  pending: ["confirmed", "rescheduled", "cancelled"],
+  confirmed: ["completed", "rescheduled", "no_show", "cancelled"],
+  rescheduled: ["confirmed", "cancelled"],
   completed: ["refunded"],
   cancelled: [],
   no_show: [],
@@ -22,12 +23,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    if (mongoose.connection.readyState !== 1) {
-      return NextResponse.json(
-        { error: "Database connection error" },
-        { status: 500 },
-      );
-    }
+    await connectToDb();
 
     const booking = await Booking.findById(bookingId);
     if (!booking) {

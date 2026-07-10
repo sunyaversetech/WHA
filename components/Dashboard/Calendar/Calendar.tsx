@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,6 +14,9 @@ import {
   CalendarDays,
   User,
   Loader2,
+  Ban,
+  CalendarCheck,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetEmployees } from "@/services/employee.service";
@@ -84,7 +86,12 @@ function isToday(d: Date) {
 }
 
 function fmtISO(d: Date) {
-  return d.toISOString().split("T")[0];
+  // Use LOCAL date parts so the date string matches what the user sees,
+  // not the UTC date (which differs by timezone offset).
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function fmtTime(d: Date) {
@@ -180,6 +187,51 @@ function ColumnAvatar({
   );
 }
 
+// ─── Blocked Time Block ───────────────────────────────────────────────────────
+
+function BlockedTimeBlock({
+  entry,
+  onDelete,
+}: {
+  entry: any;
+  onDelete: (entry: any) => void;
+}) {
+  const start = new Date(entry.start_time);
+  const end = new Date(entry.end_time);
+  const top = (minutesFromMidnight(start) / 60) * HOUR_H;
+  const mins = (end.getTime() - start.getTime()) / 60_000;
+  const height = Math.max((mins / 60) * HOUR_H, 26);
+
+  return (
+    <button
+      onClick={() => onDelete(entry)}
+      style={{
+        position: "absolute",
+        top,
+        left: 2,
+        right: 2,
+        height,
+        zIndex: 3,
+      }}
+      className="rounded-md px-1.5 text-left overflow-hidden text-gray-300 border border-dashed border-gray-500/60 bg-gray-800/60 hover:bg-gray-700/70 transition-colors group">
+      <div className="flex items-center gap-1">
+        <Ban size={9} className="shrink-0 text-gray-400" />
+        <p className="text-[10px] font-semibold leading-tight truncate">
+          {fmtTime(start)} – {fmtTime(end)}
+        </p>
+      </div>
+      {height >= 40 && (
+        <p className="text-[10px] text-gray-500 leading-tight mt-0.5 truncate">
+          {entry.description || "Blocked"}
+        </p>
+      )}
+      <span className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <X size={10} className="text-red-400" />
+      </span>
+    </button>
+  );
+}
+
 // ─── Event Block ──────────────────────────────────────────────────────────────
 
 function EventBlock({
@@ -240,37 +292,169 @@ function EventBlock({
 
 // ─── Booking Detail Panel ─────────────────────────────────────────────────────
 
-const STATUS_STYLES: Record<string, string> = {
-  pending: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
-  confirmed: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
-  completed: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
-  cancelled: "bg-red-500/20 text-red-300 border border-red-500/30",
-  no_show: "bg-gray-500/20 text-gray-300 border border-gray-500/30",
+const STATUS_STYLES: Record<string, { badge: string; label: string }> = {
+  pending: {
+    badge: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
+    label: "Pending",
+  },
+  confirmed: {
+    badge: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+    label: "Confirmed",
+  },
+  rescheduled: {
+    badge: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
+    label: "Rescheduled",
+  },
+  completed: {
+    badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
+    label: "Completed",
+  },
+  cancelled: {
+    badge: "bg-red-500/20 text-red-300 border border-red-500/30",
+    label: "Cancelled",
+  },
+  no_show: {
+    badge: "bg-gray-500/20 text-gray-300 border border-gray-500/30",
+    label: "No Show",
+  },
+};
+
+const STATUS_TRANSITIONS: Record<string, string[]> = {
+  pending: ["confirmed", "rescheduled", "cancelled"],
+  confirmed: ["rescheduled", "no_show", "cancelled"],
+  rescheduled: ["confirmed", "cancelled"],
+  completed: [],
+  cancelled: [],
+  no_show: [],
 };
 
 function BookingDetailPanel({
-  booking,
+  booking: initialBooking,
   mode,
+  allEmployees,
   onClose,
+  onRefresh,
 }: {
   booking: any;
   mode: CalendarMode;
+  allEmployees: any[];
   onClose: () => void;
+  onRefresh: () => void;
 }) {
+  const [booking, setBooking] = useState(initialBooking);
+  const [statusLoading, setStatusLoading] = useState<string | null>(null);
+  const [reassignLoading, setReassignLoading] = useState(false);
+  const [showReassign, setShowReassign] = useState(false);
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+  const [selectedEmpId, setSelectedEmpId] = useState(
+    booking.employee_id?._id || booking.employee_id || "",
+  );
+  const [actionError, setActionError] = useState("");
+
+  // Reschedule form state — pre-filled with current booking time
+  const _start = new Date(booking.start_time);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const [rescheduleForm, setRescheduleForm] = useState({
+    date: fmtISO(_start),
+    time: `${pad(_start.getHours())}:${pad(_start.getMinutes())}`,
+  });
+
+  const handleReschedule = async () => {
+    setRescheduleLoading(true);
+    setActionError("");
+    try {
+      const [h, m] = rescheduleForm.time.split(":").map(Number);
+      const newStart = new Date(rescheduleForm.date);
+      newStart.setHours(h, m, 0, 0);
+      const res = await fetch(`/api/bookings/${booking._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          start_time: newStart.toISOString(),
+          duration: booking.duration,
+          status: "rescheduled",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reschedule");
+      setBooking((b: any) => ({
+        ...b,
+        start_time: data.data?.start_time ?? newStart.toISOString(),
+        end_time: data.data?.end_time,
+        status: "rescheduled",
+      }));
+      setShowReschedule(false);
+      onRefresh();
+    } catch (e: any) {
+      setActionError(e.message);
+    } finally {
+      setRescheduleLoading(false);
+    }
+  };
+
   const color = eventColor(booking, mode);
   const start = new Date(booking.start_time);
   const end = new Date(booking.end_time);
   const customer = booking.user_id as any;
   const employee = booking.employee_id;
   const service = booking.service_id;
+  const isEmployeeBased =
+    !service?.service_type || service.service_type === "employee_based";
+
+  const nextStatuses = STATUS_TRANSITIONS[booking.status] ?? [];
+
+  const handleStatusChange = async (newStatus: string) => {
+    setStatusLoading(newStatus);
+    setActionError("");
+    try {
+      const res = await fetch("/api/bookings/status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: booking._id, newStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update status");
+      setBooking((b: any) => ({ ...b, status: newStatus }));
+      onRefresh();
+    } catch (e: any) {
+      setActionError(e.message);
+    } finally {
+      setStatusLoading(null);
+    }
+  };
+
+  const handleReassign = async () => {
+    setReassignLoading(true);
+    setActionError("");
+    try {
+      const res = await fetch(`/api/bookings/${booking._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employee_id: selectedEmpId || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reassign");
+      setBooking((b: any) => ({ ...b, employee_id: data.data?.employee_id }));
+      setShowReassign(false);
+      onRefresh();
+    } catch (e: any) {
+      setActionError(e.message);
+    } finally {
+      setReassignLoading(false);
+    }
+  };
+
+  const statusInfo = STATUS_STYLES[booking.status] ?? STATUS_STYLES.pending;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end bg-black/40 p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-[#0a1929] border border-[#0e3258] rounded-t-2xl sm:rounded-2xl w-full sm:w-80 shadow-2xl overflow-hidden">
+      <div className="bg-[#0a1929] border border-[#0e3258] rounded-t-2xl sm:rounded-2xl w-full sm:w-84 shadow-2xl overflow-hidden">
         <div className="h-1.5 w-full" style={{ background: color }} />
         <div className="p-4">
+          {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div>
               <h3 className="text-base font-bold text-white">
@@ -290,7 +474,9 @@ function BookingDetailPanel({
               <X size={16} />
             </button>
           </div>
-          <div className="space-y-3">
+
+          {/* Details */}
+          <div className="space-y-2.5">
             <div className="flex items-center gap-2.5">
               <Clock size={13} className="text-gray-400 shrink-0" />
               <p className="text-sm text-white">
@@ -305,7 +491,7 @@ function BookingDetailPanel({
                 <User size={13} className="text-gray-400 shrink-0" />
                 <div>
                   <p className="text-sm text-white">
-                    {customer.name || "Guest"}
+                    {customer.name || "Walk-in"}
                   </p>
                   {customer.email && (
                     <p className="text-xs text-gray-400">{customer.email}</p>
@@ -316,7 +502,16 @@ function BookingDetailPanel({
             {employee && (
               <div className="flex items-center gap-2.5">
                 <Users size={13} className="text-gray-400 shrink-0" />
-                <p className="text-sm text-white">{employee.full_name}</p>
+                <p className="text-sm text-white">
+                  {employee.full_name}
+                  {isEmployeeBased && (
+                    <button
+                      onClick={() => setShowReassign((v) => !v)}
+                      className="ml-2 text-[11px] text-[#6B5CE7] hover:underline">
+                      Reassign
+                    </button>
+                  )}
+                </p>
               </div>
             )}
             {service && (
@@ -332,14 +527,15 @@ function BookingDetailPanel({
                 </p>
               </div>
             )}
+
+            {/* Status badge */}
             <div className="flex items-center gap-2">
               <span
                 className={cn(
                   "text-[11px] font-semibold px-2 py-0.5 rounded-full",
-                  STATUS_STYLES[booking.status] || STATUS_STYLES.pending,
+                  statusInfo.badge,
                 )}>
-                {booking.status?.charAt(0).toUpperCase() +
-                  booking.status?.slice(1)}
+                {statusInfo.label}
               </span>
               <span
                 className={cn(
@@ -351,19 +547,156 @@ function BookingDetailPanel({
                 {booking.payment_status}
               </span>
             </div>
+
             {booking.notes && (
               <p className="text-xs text-gray-400 bg-[#0d2d4e] rounded-lg p-2.5 leading-relaxed">
                 {booking.notes}
               </p>
             )}
           </div>
+
+          {/* Reassign employee inline */}
+          {showReassign && isEmployeeBased && (
+            <div className="mt-4 pt-4 border-t border-[#1a3a60] space-y-2.5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                Reassign Employee
+              </p>
+              <select
+                value={selectedEmpId}
+                onChange={(e) => setSelectedEmpId(e.target.value)}
+                className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7]">
+                <option value="">Unassigned</option>
+                {allEmployees.map((emp) => (
+                  <option key={emp._id} value={emp._id}>
+                    {emp.full_name}
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowReassign(false)}
+                  className="flex-1 py-1.5 text-xs font-semibold text-gray-400 border border-[#1a3a60] rounded-lg hover:bg-[#0d2040]">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReassign}
+                  disabled={reassignLoading}
+                  className="flex-1 py-1.5 text-xs font-bold bg-[#6B5CE7] text-white rounded-lg hover:bg-[#5a4cd1] disabled:opacity-50 flex items-center justify-center gap-1">
+                  {reassignLoading && (
+                    <Loader2 size={11} className="animate-spin" />
+                  )}
+                  Save
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Reschedule form */}
+          {showReschedule && (
+            <div className="mt-4 pt-4 border-t border-[#1a3a60] space-y-2.5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                Reschedule Appointment
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-gray-500 block mb-1">
+                    New Date
+                  </label>
+                  <input
+                    type="date"
+                    value={rescheduleForm.date}
+                    onChange={(e) =>
+                      setRescheduleForm((f) => ({ ...f, date: e.target.value }))
+                    }
+                    className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-gray-500 block mb-1">
+                    New Time
+                  </label>
+                  <input
+                    type="time"
+                    value={rescheduleForm.time}
+                    onChange={(e) =>
+                      setRescheduleForm((f) => ({ ...f, time: e.target.value }))
+                    }
+                    className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7]"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowReschedule(false)}
+                  className="flex-1 py-1.5 text-xs font-semibold text-gray-400 border border-[#1a3a60] rounded-lg hover:bg-[#0d2040]">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReschedule}
+                  disabled={rescheduleLoading}
+                  className="flex-1 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-1">
+                  {rescheduleLoading && (
+                    <Loader2 size={11} className="animate-spin" />
+                  )}
+                  Confirm
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Status change actions */}
+          {!showReschedule && nextStatuses.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-[#1a3a60]">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2.5">
+                Update Status
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {nextStatuses.map((st) => {
+                  const info = STATUS_STYLES[st];
+                  const actionColors: Record<string, string> = {
+                    confirmed: "bg-blue-600 hover:bg-blue-700 text-white",
+                    rescheduled: "bg-purple-600 hover:bg-purple-700 text-white",
+                    cancelled: "bg-red-600 hover:bg-red-700 text-white",
+                    no_show: "bg-gray-600 hover:bg-gray-700 text-white",
+                    completed: "bg-emerald-600 hover:bg-emerald-700 text-white",
+                  };
+                  return (
+                    <button
+                      key={st}
+                      disabled={!!statusLoading}
+                      onClick={() => {
+                        if (st === "rescheduled") {
+                          setShowReschedule(true);
+                        } else {
+                          handleStatusChange(st);
+                        }
+                      }}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50",
+                        actionColors[st] ||
+                          "bg-gray-700 hover:bg-gray-600 text-white",
+                      )}>
+                      {statusLoading === st && (
+                        <Loader2 size={11} className="animate-spin" />
+                      )}
+                      {info?.label ?? st}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {actionError && (
+            <p className="mt-3 text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">
+              {actionError}
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
 }
-
-// ─── Current Time Indicator ───────────────────────────────────────────────────
 
 function CurrentTimeIndicator() {
   const [now, setNow] = useState(new Date());
@@ -553,14 +886,20 @@ function DayView({
   date,
   columns,
   bookings,
+  blockedTimes,
   mode,
   onBookingClick,
+  onBlockedTimeClick,
+  onSlotClick,
 }: {
   date: Date;
   columns: any[];
   bookings: any[];
+  blockedTimes: any[];
   mode: CalendarMode;
   onBookingClick: (b: any) => void;
+  onBlockedTimeClick: (entry: any) => void;
+  onSlotClick?: (slot: SlotClick) => void;
 }) {
   const todayFlag = isToday(date);
   const gridH = 24 * HOUR_H;
@@ -579,6 +918,21 @@ function DayView({
     });
     return map;
   }, [bookings, columns, mode]);
+
+  const blockedByColumn = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    columns.forEach((col) => {
+      map[col._id] = [];
+    });
+    blockedTimes.forEach((bt) => {
+      const empId =
+        bt.employee_id?._id ||
+        bt.employee_id?.toString?.() ||
+        String(bt.employee_id);
+      if (map[empId] !== undefined) map[empId].push(bt);
+    });
+    return map;
+  }, [blockedTimes, columns]);
 
   return (
     <>
@@ -623,7 +977,26 @@ function DayView({
           columns.map((col) => (
             <div
               key={col._id}
-              className="relative flex-1 border-r border-[#162640] last:border-r-0">
+              className="relative flex-1 border-r border-[#162640] last:border-r-0 cursor-crosshair"
+              onClick={(e) => {
+                if (!onSlotClick) return;
+                if ((e.target as Element).closest("button")) return;
+                const rect = (
+                  e.currentTarget as HTMLElement
+                ).getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                const totalMin = Math.floor((y / HOUR_H) * 60);
+                const snapped = Math.round(totalMin / 15) * 15;
+                const t = new Date(date);
+                t.setHours(Math.floor(snapped / 60), snapped % 60, 0, 0);
+                onSlotClick({
+                  time: t,
+                  date,
+                  column: col,
+                  x: e.clientX,
+                  y: e.clientY,
+                });
+              }}>
               <GridLines />
               {(bookingsByColumn[col._id] || []).map((b) => (
                 <EventBlock
@@ -633,6 +1006,14 @@ function DayView({
                   onClick={() => onBookingClick(b)}
                 />
               ))}
+              {mode === "employee" &&
+                (blockedByColumn[col._id] || []).map((bt) => (
+                  <BlockedTimeBlock
+                    key={bt._id}
+                    entry={bt}
+                    onDelete={onBlockedTimeClick}
+                  />
+                ))}
             </div>
           ))
         ) : (
@@ -669,13 +1050,19 @@ function DayView({
 function WeekView({
   weekDays,
   bookings,
+  blockedTimes,
   mode,
   onBookingClick,
+  onBlockedTimeClick,
+  onSlotClick,
 }: {
   weekDays: Date[];
   bookings: any[];
+  blockedTimes: any[];
   mode: CalendarMode;
   onBookingClick: (b: any) => void;
+  onBlockedTimeClick: (entry: any) => void;
+  onSlotClick?: (slot: SlotClick) => void;
 }) {
   const gridH = 24 * HOUR_H;
 
@@ -690,6 +1077,18 @@ function WeekView({
     });
     return map;
   }, [bookings, weekDays]);
+
+  const blockedByDay = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    weekDays.forEach((d) => {
+      map[fmtISO(d)] = [];
+    });
+    blockedTimes.forEach((bt) => {
+      const k = fmtISO(new Date(bt.start_time));
+      if (map[k]) map[k].push(bt);
+    });
+    return map;
+  }, [blockedTimes, weekDays]);
 
   return (
     <>
@@ -739,9 +1138,22 @@ function WeekView({
             <div
               key={di}
               className={cn(
-                "relative flex-1 border-r border-[#162640] last:border-r-0",
+                "relative flex-1 border-r border-[#162640] last:border-r-0 cursor-crosshair",
                 todayFlag && "bg-[#6B5CE7]/2",
-              )}>
+              )}
+              onClick={(e) => {
+                if (!onSlotClick) return;
+                if ((e.target as Element).closest("button")) return;
+                const rect = (
+                  e.currentTarget as HTMLElement
+                ).getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                const totalMin = Math.floor((y / HOUR_H) * 60);
+                const snapped = Math.round(totalMin / 15) * 15;
+                const t = new Date(day);
+                t.setHours(Math.floor(snapped / 60), snapped % 60, 0, 0);
+                onSlotClick({ time: t, date: day, x: e.clientX, y: e.clientY });
+              }}>
               <GridLines />
               {(bookingsByDay[key] || []).map((b) => (
                 <EventBlock
@@ -751,12 +1163,691 @@ function WeekView({
                   onClick={() => onBookingClick(b)}
                 />
               ))}
+              {mode === "employee" &&
+                (blockedByDay[key] || []).map((bt) => (
+                  <BlockedTimeBlock
+                    key={bt._id}
+                    entry={bt}
+                    onDelete={onBlockedTimeClick}
+                  />
+                ))}
               {todayFlag && <CurrentTimeIndicator />}
             </div>
           );
         })}
       </div>
     </>
+  );
+}
+
+// ─── Slot types ───────────────────────────────────────────────────────────────
+
+interface SlotClick {
+  time: Date;
+  date: Date;
+  column?: any;
+  x: number;
+  y: number;
+}
+
+// ─── Add Dropdown ─────────────────────────────────────────────────────────────
+
+function AddDropdown({
+  onAddAppointment,
+  onAddBlockedTime,
+}: {
+  onAddAppointment: () => void;
+  onAddBlockedTime: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-[#060f1a] text-sm font-bold hover:bg-gray-100 transition-colors">
+        <Plus size={14} />
+        <span className="hidden sm:inline">Add</span>
+        <ChevronDown size={12} />
+      </button>
+      {open && (
+        <div className="absolute top-full right-0 mt-2 bg-[#0a1929] border border-[#1a3a60] rounded-xl shadow-2xl py-1.5 w-52 z-50">
+          <button
+            onClick={() => {
+              onAddAppointment();
+              setOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
+            <CalendarCheck size={14} className="text-[#6B5CE7]" />
+            Appointment
+          </button>
+          <button
+            onClick={() => {
+              onAddBlockedTime();
+              setOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
+            <Ban size={14} className="text-red-400" />
+            Blocked time
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Slot Context Menu ────────────────────────────────────────────────────────
+
+function SlotContextMenu({
+  slot,
+  onAddAppointment,
+  onAddBlockedTime,
+  onClose,
+}: {
+  slot: SlotClick;
+  onAddAppointment: () => void;
+  onAddBlockedTime: () => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Clamp to viewport after render
+  const [pos, setPos] = useState({ x: slot.x + 8, y: slot.y + 8 });
+  useEffect(() => {
+    if (!ref.current) return;
+    const { width, height } = ref.current.getBoundingClientRect();
+    setPos({
+      x: Math.min(slot.x + 8, window.innerWidth - width - 8),
+      y: Math.min(slot.y + 8, window.innerHeight - height - 8),
+    });
+  }, [slot.x, slot.y]);
+
+  const timeStr = `${slot.time.getHours().toString().padStart(2, "0")}:${slot.time.getMinutes().toString().padStart(2, "0")}`;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div
+        ref={ref}
+        className="fixed z-50 bg-[#111827] border border-[#1e3a5f] rounded-xl shadow-2xl w-56 overflow-hidden"
+        style={{ left: pos.x, top: pos.y }}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e3a5f]">
+          <span className="text-sm font-bold text-white">{timeStr}</span>
+          <button onClick={onClose} className="text-gray-500 hover:text-white">
+            <X size={14} />
+          </button>
+        </div>
+        <div className="py-1">
+          <button
+            onClick={() => {
+              onAddAppointment();
+              onClose();
+            }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1e3a5f] transition-colors">
+            <CalendarCheck size={14} className="text-[#6B5CE7]" />
+            Add appointment
+          </button>
+          <button
+            onClick={() => {
+              onAddBlockedTime();
+              onClose();
+            }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1e3a5f] transition-colors">
+            <Ban size={14} className="text-red-400" />
+            Add blocked time
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Appointment Wizard Drawer ────────────────────────────────────────────────
+
+function AppointmentModal({
+  employees,
+  services,
+  prefill,
+  onClose,
+  onSuccess,
+}: {
+  employees: any[];
+  services: any[];
+  prefill: SlotClick;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const defaultTime = `${pad(prefill.time.getHours())}:${pad(prefill.time.getMinutes())}`;
+
+  const [search, setSearch] = useState("");
+  const [selectedService, setSelectedService] = useState<any>(null);
+  const [form, setForm] = useState({
+    employee_id: prefill.column?._id || "",
+    date: fmtISO(prefill.date),
+    start_time: defaultTime,
+    duration: 60,
+    customer_name: "",
+    notes: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const filteredServices = useMemo(() => {
+    const q = search.toLowerCase();
+    return services.filter(
+      (s) =>
+        !q ||
+        s.name?.toLowerCase().includes(q) ||
+        s.category?.toLowerCase().includes(q),
+    );
+  }, [services, search]);
+
+  const grouped = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    for (const svc of filteredServices) {
+      const cat = svc.category || "Other";
+      if (!map[cat]) map[cat] = [];
+      map[cat].push(svc);
+    }
+    return map;
+  }, [filteredServices]);
+
+  const handleSelectService = (svc: any) => {
+    setSelectedService(svc);
+    setForm((f) => ({ ...f, duration: svc.base_duration || 60 }));
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedService || !form.start_time || !form.date) {
+      setError("Please select a service, date and start time.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const [h, m] = form.start_time.split(":").map(Number);
+      const start = new Date(form.date);
+      start.setHours(h, m, 0, 0);
+
+      const res = await fetch("/api/calendar/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          service_id: selectedService._id,
+          employee_id: form.employee_id || null,
+          start_time: start.toISOString(),
+          duration: form.duration,
+          customer_name: form.customer_name || undefined,
+          notes: form.notes || undefined,
+          total_price: selectedService.base_price ?? 0,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.error || "Failed to create appointment");
+      onSuccess();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputCls =
+    "w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7] transition-colors";
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
+
+      {/* Right-side drawer */}
+      <div className="fixed top-0 right-0 bottom-0 z-50 flex flex-col bg-[#07111f] border-l border-[#0e3258] w-full sm:w-[480px] shadow-2xl overflow-hidden">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#0e3258] shrink-0">
+          <div className="flex items-center gap-2.5">
+            <CalendarCheck size={16} className="text-[#6B5CE7]" />
+            <h2 className="text-base font-bold text-white">New Appointment</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors p-1">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex flex-1 min-h-0">
+          {/* Left panel — client + datetime */}
+          <div className="w-[200px] shrink-0 flex flex-col border-r border-[#0e3258] p-4 gap-4 overflow-y-auto">
+            {/* Client */}
+            <div>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                Client
+              </p>
+              <input
+                type="text"
+                value={form.customer_name}
+                onChange={(e) =>
+                  setForm({ ...form, customer_name: e.target.value })
+                }
+                placeholder="Walk-in / name…"
+                className={cn(inputCls, "placeholder:text-gray-600 text-xs")}
+              />
+            </div>
+
+            {/* Date & time */}
+            <div>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                Date & Time
+              </p>
+              <div className="space-y-2">
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  className={cn(inputCls, "text-xs")}
+                />
+                <input
+                  type="time"
+                  value={form.start_time}
+                  onChange={(e) =>
+                    setForm({ ...form, start_time: e.target.value })
+                  }
+                  className={cn(inputCls, "text-xs")}
+                />
+                <div>
+                  <label className="text-[10px] text-gray-500 mb-1 block">
+                    Duration (min)
+                  </label>
+                  <input
+                    type="number"
+                    value={form.duration}
+                    min={15}
+                    step={15}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        duration: parseInt(e.target.value) || 60,
+                      })
+                    }
+                    className={cn(inputCls, "text-xs")}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Employee */}
+            <div>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                Employee
+              </p>
+              <select
+                value={form.employee_id}
+                onChange={(e) =>
+                  setForm({ ...form, employee_id: e.target.value })
+                }
+                className={cn(inputCls, "text-xs")}>
+                <option value="">Any available</option>
+                {employees.map((emp) => (
+                  <option key={emp._id} value={emp._id}>
+                    {emp.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                Notes
+              </p>
+              <textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                rows={3}
+                placeholder="Optional notes…"
+                className={cn(
+                  inputCls,
+                  "text-xs placeholder:text-gray-600 resize-none",
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Right panel — service selection */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="px-4 pt-4 pb-3 border-b border-[#0e3258] shrink-0">
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                Select a Service
+              </p>
+              <div className="relative">
+                <Search
+                  size={13}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+                />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search services…"
+                  className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:border-[#6B5CE7] transition-colors placeholder:text-gray-600"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+              {Object.keys(grouped).length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-6">
+                  No services found
+                </p>
+              )}
+              {Object.entries(grouped).map(([cat, svcs]) => (
+                <div key={cat}>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                    {cat}
+                  </p>
+                  <div className="space-y-1">
+                    {svcs.map((svc) => {
+                      const isSelected = selectedService?._id === svc._id;
+                      return (
+                        <button
+                          key={svc._id}
+                          onClick={() => handleSelectService(svc)}
+                          className={cn(
+                            "w-full text-left px-3 py-2.5 rounded-xl border transition-all",
+                            isSelected
+                              ? "bg-[#6B5CE7]/20 border-[#6B5CE7]/60 text-white"
+                              : "bg-[#0d2040] border-[#1a3a60] text-gray-300 hover:border-[#6B5CE7]/40 hover:bg-[#0e1f3a]",
+                          )}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">
+                              {svc.name}
+                            </span>
+                            {svc.base_price != null && (
+                              <span
+                                className={cn(
+                                  "text-xs",
+                                  isSelected
+                                    ? "text-[#a093f8]"
+                                    : "text-gray-500",
+                                )}>
+                                ${svc.base_price}
+                              </span>
+                            )}
+                          </div>
+                          {svc.base_duration && (
+                            <p
+                              className={cn(
+                                "text-[11px] mt-0.5",
+                                isSelected ? "text-[#a093f8]" : "text-gray-500",
+                              )}>
+                              {svc.base_duration} min
+                            </p>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="shrink-0 px-5 py-4 border-t border-[#0e3258] space-y-3">
+          {/* Selected service summary */}
+          {selectedService && (
+            <div className="flex items-center gap-2 text-sm text-gray-300 bg-[#0d2040] rounded-lg px-3 py-2">
+              <CalendarCheck size={13} className="text-[#6B5CE7] shrink-0" />
+              <span className="font-medium text-white">
+                {selectedService.name}
+              </span>
+              <span className="text-gray-500">·</span>
+              <span className="text-gray-400">{form.duration} min</span>
+              {selectedService.base_price != null && (
+                <>
+                  <span className="text-gray-500">·</span>
+                  <span className="text-gray-400">
+                    ${selectedService.base_price}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+          {error && (
+            <p className="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">
+              {error}
+            </p>
+          )}
+          <div className="flex gap-2.5">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 text-sm font-semibold text-gray-400 border border-[#1a3a60] rounded-xl hover:bg-[#0d2040] transition-colors">
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !selectedService}
+              className="flex-1 py-2.5 text-sm font-bold bg-[#6B5CE7] text-white rounded-xl hover:bg-[#5a4cd1] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              {loading && <Loader2 size={13} className="animate-spin" />}
+              Confirm Appointment
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Blocked Time Modal ───────────────────────────────────────────────────────
+
+function BlockedTimeModal({
+  employees,
+  prefill,
+  onClose,
+  onSuccess,
+}: {
+  employees: any[];
+  prefill: SlotClick;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const startHH = pad(prefill.time.getHours());
+  const startMM = pad(prefill.time.getMinutes());
+  const endH = prefill.time.getHours() + 1;
+  const defaultEndTime = `${pad(endH >= 24 ? 23 : endH)}:${endH >= 24 ? "59" : startMM}`;
+
+  const [form, setForm] = useState({
+    employee_id: prefill.column?._id || (employees[0]?._id ?? ""),
+    date: fmtISO(prefill.date),
+    start_time: `${startHH}:${startMM}`,
+    end_time: defaultEndTime,
+    note: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async () => {
+    if (!form.employee_id || !form.date || !form.start_time || !form.end_time) {
+      setError("Employee, date, start and end time are required.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const [sh, sm] = form.start_time.split(":").map(Number);
+      const [eh, em] = form.end_time.split(":").map(Number);
+      const startDate = new Date(form.date);
+      startDate.setHours(sh, sm, 0, 0);
+      const endDate = new Date(form.date);
+      endDate.setHours(eh, em, 0, 0);
+
+      if (endDate <= startDate) {
+        setError("End time must be after start time.");
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/employees/time-off", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employee_id: form.employee_id,
+          type: "Blocked",
+          start_time: startDate.toISOString(),
+          end_time: endDate.toISOString(),
+          description: form.note || undefined,
+          approved: true,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to block time");
+      onSuccess();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputCls =
+    "w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-red-500 transition-colors";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end bg-black/50 p-0 sm:p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-[#0a1929] border border-[#0e3258] rounded-t-2xl sm:rounded-2xl w-full sm:w-96 shadow-2xl overflow-hidden">
+        <div className="h-1 bg-red-500" />
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <Ban size={16} className="text-red-400" />
+              <h3 className="text-base font-bold text-white">
+                Add Blocked Time
+              </h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-white transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="space-y-3.5">
+            <div>
+              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                Employee <span className="text-red-400">*</span>
+              </label>
+              <select
+                value={form.employee_id}
+                onChange={(e) =>
+                  setForm({ ...form, employee_id: e.target.value })
+                }
+                className={inputCls}>
+                <option value="">Select employee</option>
+                {employees.map((emp) => (
+                  <option key={emp._id} value={emp._id}>
+                    {emp.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                Date <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="date"
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+                className={inputCls}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                  Start <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="time"
+                  value={form.start_time}
+                  onChange={(e) =>
+                    setForm({ ...form, start_time: e.target.value })
+                  }
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                  End <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="time"
+                  value={form.end_time}
+                  onChange={(e) =>
+                    setForm({ ...form, end_time: e.target.value })
+                  }
+                  className={inputCls}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                Note
+              </label>
+              <textarea
+                value={form.note}
+                onChange={(e) => setForm({ ...form, note: e.target.value })}
+                rows={2}
+                placeholder="Reason for blocking (optional)…"
+                className={cn(
+                  inputCls,
+                  "placeholder:text-gray-600 resize-none",
+                )}
+              />
+            </div>
+
+            {error && (
+              <p className="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">
+                {error}
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-2.5 mt-5">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 text-sm font-semibold text-gray-400 border border-[#1a3a60] rounded-xl hover:bg-[#0d2040] transition-colors">
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="flex-1 py-2.5 text-sm font-bold bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              {loading && <Loader2 size={13} className="animate-spin" />}
+              Block Time
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -802,8 +1893,6 @@ function MobileDayTabs({
 // ─── Main Calendar ────────────────────────────────────────────────────────────
 
 export default function Calendar() {
-  const router = useRouter();
-
   const [view, setView] = useState<CalendarView>("day");
   const [mode, setMode] = useState<CalendarMode>("employee");
   const [currentDate, setCurrentDate] = useState(() => {
@@ -817,6 +1906,32 @@ export default function Calendar() {
     return day === 0 ? 6 : day - 1;
   });
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [slotClick, setSlotClick] = useState<SlotClick | null>(null);
+  const [openModal, setOpenModal] = useState<
+    "appointment" | "blocked_time" | null
+  >(null);
+  const [modalPrefill, setModalPrefill] = useState<SlotClick>({
+    time: new Date(),
+    date: new Date(),
+    x: 0,
+    y: 0,
+  });
+
+  const openAppointmentModal = (prefill?: SlotClick) => {
+    setModalPrefill(
+      prefill ?? { time: new Date(), date: currentDate, x: 0, y: 0 },
+    );
+    setSlotClick(null);
+    setOpenModal("appointment");
+  };
+  const openBlockedTimeModal = (prefill?: SlotClick) => {
+    setModalPrefill(
+      prefill ?? { time: new Date(), date: currentDate, x: 0, y: 0 },
+    );
+    setSlotClick(null);
+    setOpenModal("blocked_time");
+  };
+  const closeModal = () => setOpenModal(null);
 
   const { data: empData, isLoading: empLoading } = useGetEmployees();
   const { data: svcData } = useGetServices();
@@ -855,6 +1970,44 @@ export default function Calendar() {
     () => bookingData?.data ?? [],
     [bookingData],
   );
+
+  // Fetch blocked times for current date range
+  const [blockedTimes, setBlockedTimes] = useState<any[]>([]);
+  const [deletingBlock, setDeletingBlock] = useState<any>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const fetchBlockedTimes = (sd: string, ed?: string) => {
+    fetch(
+      `/api/employees/time-off?start_date=${sd}T00:00:00Z&end_date=${ed ?? sd}T23:59:59Z`,
+    )
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) setBlockedTimes(d.data ?? []);
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    if (startDate) fetchBlockedTimes(startDate, endDate);
+  }, [startDate, endDate]);
+
+  const handleBlockedTimeDelete = async () => {
+    if (!deletingBlock) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/employees/time-off/${deletingBlock._id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setBlockedTimes((prev) =>
+          prev.filter((bt) => bt._id !== deletingBlock._id),
+        );
+        setDeletingBlock(null);
+      }
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const columns = useMemo(() => {
     const source = mode === "employee" ? allEmployees : resourceServices;
@@ -996,12 +2149,10 @@ export default function Calendar() {
             ))}
           </div>
 
-          <button
-            onClick={() => router.push("/dashboard/services")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-[#060f1a] text-sm font-bold hover:bg-gray-100 transition-colors">
-            <Plus size={14} />
-            <span className="hidden sm:inline">Add</span>
-          </button>
+          <AddDropdown
+            onAddAppointment={() => openAppointmentModal()}
+            onAddBlockedTime={() => openBlockedTimeModal()}
+          />
         </div>
       </div>
 
@@ -1060,15 +2211,21 @@ export default function Calendar() {
             date={currentDate}
             columns={columns}
             bookings={allBookings}
+            blockedTimes={blockedTimes}
             mode={mode}
             onBookingClick={setSelectedBooking}
+            onBlockedTimeClick={setDeletingBlock}
+            onSlotClick={setSlotClick}
           />
         ) : (
           <WeekView
             weekDays={weekDays}
             bookings={allBookings}
+            blockedTimes={blockedTimes}
             mode={mode}
             onBookingClick={setSelectedBooking}
+            onBlockedTimeClick={setDeletingBlock}
+            onSlotClick={setSlotClick}
           />
         )}
       </div>
@@ -1084,17 +2241,107 @@ export default function Calendar() {
               view === "week" ? mobileDate : currentDate,
             ),
           )}
+          blockedTimes={blockedTimes.filter((bt) =>
+            sameDay(
+              new Date(bt.start_time),
+              view === "week" ? mobileDate : currentDate,
+            ),
+          )}
           mode={mode}
           onBookingClick={setSelectedBooking}
+          onBlockedTimeClick={setDeletingBlock}
+          onSlotClick={setSlotClick}
         />
       </div>
+
+      {/* ── Slot context menu ── */}
+      {slotClick && (
+        <SlotContextMenu
+          slot={slotClick}
+          onAddAppointment={() => openAppointmentModal(slotClick)}
+          onAddBlockedTime={() => openBlockedTimeModal(slotClick)}
+          onClose={() => setSlotClick(null)}
+        />
+      )}
+
+      {/* ── Appointment modal ── */}
+      {openModal === "appointment" && (
+        <AppointmentModal
+          employees={allEmployees}
+          services={svcData?.data ?? []}
+          prefill={modalPrefill}
+          onClose={closeModal}
+          onSuccess={() => {
+            closeModal();
+            refetch();
+          }}
+        />
+      )}
+
+      {/* ── Blocked time modal ── */}
+      {openModal === "blocked_time" && (
+        <BlockedTimeModal
+          employees={allEmployees}
+          prefill={modalPrefill}
+          onClose={closeModal}
+          onSuccess={() => {
+            closeModal();
+            refetch();
+            if (startDate) fetchBlockedTimes(startDate, endDate);
+          }}
+        />
+      )}
+
+      {/* ── Delete blocked time confirmation ── */}
+      {deletingBlock && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={(e) =>
+            e.target === e.currentTarget && setDeletingBlock(null)
+          }>
+          <div className="bg-[#0a1929] border border-[#0e3258] rounded-2xl w-80 shadow-2xl p-5">
+            <div className="flex items-center gap-2.5 mb-3">
+              <Ban size={16} className="text-red-400 shrink-0" />
+              <h3 className="text-sm font-bold text-white">
+                Remove Blocked Time?
+              </h3>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              {fmtTime(new Date(deletingBlock.start_time))} –{" "}
+              {fmtTime(new Date(deletingBlock.end_time))}
+              {deletingBlock.description && ` · ${deletingBlock.description}`}
+            </p>
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => setDeletingBlock(null)}
+                className="flex-1 py-2 text-xs font-semibold text-gray-400 border border-[#1a3a60] rounded-xl hover:bg-[#0d2040]">
+                Cancel
+              </button>
+              <button
+                onClick={handleBlockedTimeDelete}
+                disabled={deleteLoading}
+                className="flex-1 py-2 text-xs font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-1.5">
+                {deleteLoading && (
+                  <Loader2 size={11} className="animate-spin" />
+                )}
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Booking detail ── */}
       {selectedBooking && (
         <BookingDetailPanel
           booking={selectedBooking}
           mode={mode}
+          allEmployees={allEmployees}
           onClose={() => setSelectedBooking(null)}
+          onRefresh={() => {
+            refetch();
+            setSelectedBooking(null);
+          }}
         />
       )}
     </div>

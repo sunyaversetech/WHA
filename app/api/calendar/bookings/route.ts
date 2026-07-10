@@ -4,6 +4,31 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "../../auth/[...nextauth]/route";
 
+/** Convert a local date string (YYYY-MM-DD) + wall-clock time to UTC Date. */
+function localToUtc(dateStr: string, time: "start" | "end", timezone: string): Date {
+  const timeStr = time === "start" ? "00:00" : "23:59";
+  const seconds = time === "start" ? "00" : "59";
+  // Treat the wall-clock time as UTC temporarily
+  const naive = new Date(`${dateStr}T${timeStr}:${seconds}Z`);
+  // Find what that UTC instant shows in the target timezone
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(naive);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  const inTz = new Date(
+    `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}Z`,
+  );
+  // Offset = inTz - naive; actual UTC = naive - offset
+  return new Date(naive.getTime() - (inTz.getTime() - naive.getTime()));
+}
+
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id)
@@ -13,7 +38,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const start_date = searchParams.get("start_date");
   const end_date = searchParams.get("end_date");
-  const statuses = searchParams.get("statuses"); // comma-separated, default excludes cancelled etc
+  const statuses = searchParams.get("statuses");
+  const timezone = searchParams.get("timezone") || "UTC";
 
   await connectToDb();
 
@@ -27,10 +53,8 @@ export async function GET(request: Request) {
   };
 
   if (start_date) {
-    const start = new Date(start_date);
-    start.setHours(0, 0, 0, 0);
-    const end = end_date ? new Date(end_date) : new Date(start_date);
-    end.setHours(23, 59, 59, 999);
+    const start = localToUtc(start_date, "start", timezone);
+    const end = localToUtc(end_date ?? start_date, "end", timezone);
     query.start_time = { $gte: start, $lte: end };
   }
 

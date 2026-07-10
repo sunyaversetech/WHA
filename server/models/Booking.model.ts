@@ -66,6 +66,7 @@ const booking_schema = new mongoose.Schema(
       enum: [
         "pending",
         "confirmed",
+        "rescheduled",
         "completed",
         "cancelled",
         "no_show",

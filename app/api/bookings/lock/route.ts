@@ -31,19 +31,34 @@ const lock_schema = z.object({
 });
 
 function to_utc(date_str: string, time_str: string, timezone: string): Date {
-  const local_iso = `${date_str}T${time_str}:00`;
-  return new Date(
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone: timezone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    }).format(new Date(local_iso)),
-  );
+  if (!time_str) throw new Error(`to_utc: empty time_str for ${date_str}`);
+  let t = time_str.trim();
+  // Normalise 12-hour → 24-hour if needed
+  if (/am|pm/i.test(t)) {
+    const m = t.match(/^(\d+):(\d+)\s*(am|pm)$/i);
+    if (m) {
+      let h = parseInt(m[1], 10);
+      const min = m[2];
+      if (h === 12) h = 0;
+      if (m[3].toLowerCase() === "pm") h += 12;
+      t = `${String(h).padStart(2, "0")}:${min.padStart(2, "0")}`;
+    }
+  }
+  // Treat the wall-clock time as UTC momentarily, then calculate the real offset
+  const naive = new Date(`${date_str}T${t}:00Z`);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(naive);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
+  const inTz = new Date(`${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}Z`);
+  return new Date(naive.getTime() - (inTz.getTime() - naive.getTime()));
 }
 
 function get_local_day_name(date: Date, timezone: string): string {
@@ -394,20 +409,16 @@ export async function POST(request: Request) {
           const sched = emp.availability_schedule?.find(
             (s: any) => s.day_of_week === day_name && s.is_working,
           );
-          if (!sched) continue;
+          if (!sched?.shifts?.length) continue;
 
-          const shift_start = to_utc(
-            local_date_str,
-            sched.shift_start,
-            validated_data.timezone,
-          );
-          const shift_end = to_utc(
-            local_date_str,
-            sched.shift_end,
-            validated_data.timezone,
-          );
-          if (requested_start < shift_start || requested_end > shift_end)
-            continue;
+          // Check if the requested slot fits inside ANY of this employee's shifts
+          const fits_in_shift = sched.shifts.some((shift: any) => {
+            if (!shift.start || !shift.end) return false;
+            const shift_start = to_utc(local_date_str, shift.start, validated_data.timezone);
+            const shift_end = to_utc(local_date_str, shift.end, validated_data.timezone);
+            return requested_start >= shift_start && requested_end <= shift_end;
+          });
+          if (!fits_in_shift) continue;
 
           const has_time_off = time_offs.some(
             (to) =>
