@@ -43,14 +43,18 @@ export async function GET(request: Request) {
 
   await connectToDb();
 
-  const excludeStatuses = statuses
-    ? statuses.split(",")
-    : ["cancelled", "no_show", "refunded"];
+  // statuses=null (param absent) → default calendar exclusions
+  // statuses=""  (param present but empty) → show everything
+  // statuses="a,b" → exclude those specific values
+  const excludeStatuses =
+    statuses === null
+      ? ["cancelled", "no_show", "refunded"]
+      : statuses
+        ? statuses.split(",")
+        : [];
 
-  const query: any = {
-    business_id,
-    status: { $nin: excludeStatuses },
-  };
+  const query: any = { business_id };
+  if (excludeStatuses.length) query.status = { $nin: excludeStatuses };
 
   if (start_date) {
     const start = localToUtc(start_date, "start", timezone);

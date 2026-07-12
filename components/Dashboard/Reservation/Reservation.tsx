@@ -113,9 +113,22 @@ function presetRange(
   return null;
 }
 
-const DAY_NAMES = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+const DAY_NAMES = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+];
 
-function empCanTakeSlot(employee: any, dateStr: string, timeStr: string, durationMins: number): boolean {
+function empCanTakeSlot(
+  employee: any,
+  dateStr: string,
+  timeStr: string,
+  durationMins: number,
+): boolean {
   if (!dateStr || !timeStr) return true;
   const dayName = DAY_NAMES[new Date(dateStr + "T12:00:00").getDay()];
   const daySched = (employee.availability_schedule ?? []).find(
@@ -136,7 +149,10 @@ function empCanTakeSlot(employee: any, dateStr: string, timeStr: string, duratio
 function empCanDoService(employee: any, serviceId: string): boolean {
   if (!employee.service_overrides?.length) return true;
   return employee.service_overrides.some((o: any) => {
-    const id = typeof o.service_id === "string" ? o.service_id : (o.service_id?._id ?? o.service_id)?.toString();
+    const id =
+      typeof o.service_id === "string"
+        ? o.service_id
+        : (o.service_id?._id ?? o.service_id)?.toString();
     return id === serviceId;
   });
 }
@@ -263,7 +279,9 @@ function BookingDetailPanel({
   const _pad = (n: number) => String(n).padStart(2, "0");
   const _bookingDateStr = `${_start.getFullYear()}-${_pad(_start.getMonth() + 1)}-${_pad(_start.getDate())}`;
   const _bookingTimeStr = `${_pad(_start.getHours())}:${_pad(_start.getMinutes())}`;
-  const _bookingDuration = booking.duration || Math.round((_end.getTime() - _start.getTime()) / 60_000);
+  const _bookingDuration =
+    booking.duration ||
+    Math.round((_end.getTime() - _start.getTime()) / 60_000);
   const _serviceId = (booking.service_id?._id ?? booking.service_id) || "";
 
   const eligibleEmployees = allEmployees.filter(
@@ -385,12 +403,15 @@ function BookingDetailPanel({
                     </option>
                   ))
                 ) : (
-                  <option disabled value="">No available employees</option>
+                  <option disabled value="">
+                    No available employees
+                  </option>
                 )}
               </select>
               {eligibleEmployees.length === 0 && (
                 <p className="text-[10px] text-amber-400 mt-1">
-                  No employees are available at this booking&apos;s time and duration.
+                  No employees are available at this booking&apos;s time and
+                  duration.
                 </p>
               )}
               <div className="flex gap-2">
@@ -525,7 +546,10 @@ export default function Reservation() {
   useEffect(() => {
     let active = true;
     const range = presetRange(datePreset);
-    const params = new URLSearchParams({ timezone: decodeURIComponent(tz) });
+    const params = new URLSearchParams({
+      timezone: decodeURIComponent(tz),
+      statuses: "", // empty = show all statuses including cancelled / no_show
+    });
     if (range) {
       params.set("start_date", range.start);
       params.set("end_date", range.end);
@@ -597,7 +621,7 @@ export default function Reservation() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#060f1a] text-white">
+    <div className="min-h-screen bg-[#060f1a] text-white ">
       {/* ── Page header ── */}
       <div className="border-b border-[#0e3258] px-6 py-5">
         <div className="flex items-center justify-between gap-4 flex-wrap">

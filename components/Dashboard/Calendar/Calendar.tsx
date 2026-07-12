@@ -6,6 +6,7 @@ import {
   ChevronRight,
   RefreshCw,
   Plus,
+  Minus,
   ChevronDown,
   X,
   Clock,
@@ -17,13 +18,12 @@ import {
   Ban,
   CalendarCheck,
   Search,
-  LayoutList,
 } from "lucide-react";
-import Reservation from "@/components/Dashboard/Reservation/Reservation";
 import { cn } from "@/lib/utils";
 import { useGetEmployees } from "@/services/employee.service";
 import { useGetServices } from "@/services/services.service";
 import { useGetCalendarBookings } from "@/services/calendar.service";
+import Link from "next/link";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -982,16 +982,16 @@ function NoScheduleState() {
       </div>
 
       <div className="flex items-center gap-3 mt-1">
-        <a
+        <Link
           href="/dashboard/employees?tab=schedule"
           className="px-4 py-2 text-xs font-semibold text-white bg-[#0d2040] border border-[#1a3a60] rounded-full hover:bg-[#142840] hover:border-[#6B5CE7]/50 transition-colors">
           Scheduled shifts
-        </a>
-        <a
+        </Link>
+        <Link
           href="/dashboard/employees"
           className="px-4 py-2 text-xs font-semibold text-white bg-white/10 border border-white/20 rounded-full hover:bg-white/15 transition-colors">
           View all team members
-        </a>
+        </Link>
       </div>
     </div>
   );
@@ -1055,6 +1055,90 @@ function getShiftLabel(employee: any, dateStr: string): string | null {
   return `${fmt(s.start)} – ${fmt(s.end)}`;
 }
 
+/** Unavailable zones for resource_based (availability_schedule) and group_session (group_schedule) columns */
+function getResourceUnavailableZones(
+  service: any,
+  dateStr: string,
+): { topPx: number; heightPx: number }[] {
+  const dayName = DAY_NAMES[new Date(dateStr + "T12:00:00").getDay()];
+  const toPx = (mins: number) => (mins / 60) * HOUR_H;
+  const toMins = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  if (service.service_type === "resource_based") {
+    const sched = (service.availability_schedule ?? []).find(
+      (s: any) => (s.day_of_week ?? "").toLowerCase() === dayName,
+    );
+    if (!sched?.is_available) return [{ topPx: 0, heightPx: 24 * HOUR_H }];
+    const startMins = toMins(sched.start_time || "09:00");
+    const endMins = toMins(sched.end_time || "17:00");
+    const zones: { topPx: number; heightPx: number }[] = [];
+    if (startMins > 0) zones.push({ topPx: 0, heightPx: toPx(startMins) });
+    if (endMins < 24 * 60)
+      zones.push({ topPx: toPx(endMins), heightPx: toPx(24 * 60 - endMins) });
+    return zones;
+  }
+
+  if (service.service_type === "group_session") {
+    const groupDay = (service.group_schedule ?? []).find(
+      (s: any) => (s.day_of_week ?? "").toLowerCase() === dayName,
+    );
+    if (!groupDay?.is_active || !groupDay.slots?.length)
+      return [{ topPx: 0, heightPx: 24 * HOUR_H }];
+    const slots = [...groupDay.slots]
+      .map((s: any) => ({
+        start: toMins(s.start_time),
+        end: toMins(s.end_time),
+      }))
+      .sort((a, b) => a.start - b.start);
+    const zones: { topPx: number; heightPx: number }[] = [];
+    let prev = 0;
+    for (const slot of slots) {
+      if (slot.start > prev)
+        zones.push({ topPx: toPx(prev), heightPx: toPx(slot.start - prev) });
+      prev = slot.end;
+    }
+    if (prev < 24 * 60)
+      zones.push({ topPx: toPx(prev), heightPx: toPx(24 * 60 - prev) });
+    return zones;
+  }
+
+  return [];
+}
+
+/** Header label for resource/group columns, e.g. "9:00 AM – 5:00 PM" or null if unavailable */
+function getServiceLabel(service: any, dateStr: string): string | null {
+  const dayName = DAY_NAMES[new Date(dateStr + "T12:00:00").getDay()];
+  const fmt = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    const ap = h >= 12 ? "PM" : "AM";
+    const hr = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${hr}:${m.toString().padStart(2, "0")} ${ap}`;
+  };
+
+  if (service.service_type === "resource_based") {
+    const sched = (service.availability_schedule ?? []).find(
+      (s: any) => (s.day_of_week ?? "").toLowerCase() === dayName,
+    );
+    if (!sched?.is_available) return null;
+    return `${fmt(sched.start_time)} – ${fmt(sched.end_time)}`;
+  }
+
+  if (service.service_type === "group_session") {
+    const groupDay = (service.group_schedule ?? []).find(
+      (s: any) => (s.day_of_week ?? "").toLowerCase() === dayName,
+    );
+    if (!groupDay?.is_active || !groupDay.slots?.length) return null;
+    return groupDay.slots
+      .map((s: any) => `${fmt(s.start_time)}–${fmt(s.end_time)}`)
+      .join(", ");
+  }
+
+  return null;
+}
+
 function UnavailableZone({
   topPx,
   heightPx,
@@ -1103,7 +1187,9 @@ function EmployeeColumn({
   const [hoverY, setHoverY] = useState<number | null>(null);
 
   const unavailableZones =
-    mode === "employee" ? getUnavailableZones(col, fmtISO(date)) : [];
+    mode === "employee"
+      ? getUnavailableZones(col, fmtISO(date))
+      : getResourceUnavailableZones(col, fmtISO(date));
 
   const yToLabel = (y: number) => {
     const totalMin = Math.max(0, Math.floor((y / HOUR_H) * 60));
@@ -1243,8 +1329,12 @@ function DayView({
           style={{ width: GUTTER_W }}
         />
         {columns.map((col) => {
-          const shiftLabel =
-            mode === "employee" ? getShiftLabel(col, fmtISO(date)) : null;
+          const label =
+            mode === "employee"
+              ? getShiftLabel(col, fmtISO(date))
+              : getServiceLabel(col, fmtISO(date));
+          const unavailableLabel =
+            mode === "employee" ? "Not working today" : "Not available today";
           return (
             <div
               key={col._id}
@@ -1259,19 +1349,17 @@ function DayView({
                 }
                 subtitle={col.job_title || col.service_type}
               />
-              {mode === "employee" && (
-                <div className="px-2 pb-2 flex justify-center">
-                  {shiftLabel ? (
-                    <span className="text-[9px] font-medium text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-2 py-0.5 whitespace-nowrap">
-                      {shiftLabel}
-                    </span>
-                  ) : (
-                    <span className="text-[9px] font-medium text-gray-500 bg-gray-500/10 border border-gray-500/20 rounded-full px-2 py-0.5 whitespace-nowrap">
-                      Not working today
-                    </span>
-                  )}
-                </div>
-              )}
+              <div className="px-2 pb-2 flex justify-center">
+                {label ? (
+                  <span className="text-[9px] font-medium text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-2 py-0.5 whitespace-nowrap">
+                    {label}
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-medium text-gray-500 bg-gray-500/10 border border-gray-500/20 rounded-full px-2 py-0.5 whitespace-nowrap">
+                    {unavailableLabel}
+                  </span>
+                )}
+              </div>
             </div>
           );
         })}
@@ -1600,7 +1688,11 @@ function SlotContextMenu({
 
 // ─── Appointment Wizard Drawer ────────────────────────────────────────────────
 
-function AppointmentModal({
+// ─── Appointment Wizard ──────────────────────────────────────────────────────
+
+type WizardStep = "service" | "employee" | "datetime" | "confirm";
+
+function AppointmentWizard({
   employees,
   services,
   prefill,
@@ -1613,100 +1705,143 @@ function AppointmentModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const defaultTime = `${pad(prefill.time.getHours())}:${pad(prefill.time.getMinutes())}`;
+  const fromSlot = !!prefill.column;
+  const initDate = fmtISO(prefill.date);
 
-  const [search, setSearch] = useState("");
+  const [stepIdx, setStepIdx] = useState(0);
+  const [serviceSearch, setServiceSearch] = useState("");
   const [selectedService, setSelectedService] = useState<any>(null);
-  const [form, setForm] = useState({
-    employee_id: prefill.column?._id || "",
-    date: fmtISO(prefill.date),
-    start_time: defaultTime,
-    duration: 60,
-    customer_name: "",
-    notes: "",
-  });
-  const [loading, setLoading] = useState(false);
+  const [selectedEmpId, setSelectedEmpId] = useState<string>(
+    prefill.column?._id || "",
+  );
+  const [date, setDate] = useState(initDate);
+  const [selectedSlot, setSelectedSlot] = useState<string>("");
+  const [quantity, setQuantity] = useState(1);
+  const [customerName, setCustomerName] = useState("");
+  const [notes, setNotes] = useState("");
+  const [slots, setSlots] = useState<string[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [slotFetchKey, setSlotFetchKey] = useState(0);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Annotate each employee with shift+service availability for the current form values
-  const annotatedEmployees = useMemo(
-    () =>
-      employees.map((emp) => ({
-        ...emp,
-        _shiftOk: empCanTakeSlot(
-          emp,
-          form.date,
-          form.start_time,
-          form.duration,
-        ),
-        _serviceOk: selectedService
-          ? empCanDoService(emp, selectedService._id)
-          : true,
-      })),
-    [employees, form.date, form.start_time, form.duration, selectedService],
-  );
+  // Holds the latest fetch params; read by the effect so it never has a stale closure.
+  const slotParamsRef = useRef({ date: initDate, serviceId: "", empId: "" });
 
-  const selectedEmpAvailable = useMemo(() => {
-    if (!form.employee_id) return true; // "any available" — backend decides
-    const emp = annotatedEmployees.find((e) => e._id === form.employee_id);
-    return emp ? emp._shiftOk && emp._serviceOk : true;
-  }, [form.employee_id, annotatedEmployees]);
+  const isEmployeeBased =
+    !selectedService?.service_type ||
+    selectedService?.service_type === "employee_based";
 
-  const filteredServices = useMemo(() => {
-    const q = search.toLowerCase();
-    return services.filter(
-      (s) =>
-        !q ||
-        s.name?.toLowerCase().includes(q) ||
-        s.category?.toLowerCase().includes(q),
-    );
-  }, [services, search]);
-
-  const grouped = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    for (const svc of filteredServices) {
-      const cat = svc.category || "Other";
-      if (!map[cat]) map[cat] = [];
-      map[cat].push(svc);
+  // Max quantity for the selected slot: group slot capacity or resource max_concurrent_bookings
+  const maxQuantity = useMemo(() => {
+    if (!selectedService || isEmployeeBased) return 1;
+    if (selectedService.service_type === "group_session" && selectedSlot) {
+      const slotDate = new Date(selectedSlot);
+      const dayName = DAY_NAMES[slotDate.getDay()];
+      const slotMins = slotDate.getHours() * 60 + slotDate.getMinutes();
+      const groupDay = (selectedService.group_schedule ?? []).find(
+        (d: any) => (d.day_of_week ?? "").toLowerCase() === dayName,
+      );
+      const match = (groupDay?.slots ?? []).find((s: any) => {
+        const [h, m] = (s.start_time || "0:0").split(":").map(Number);
+        return h * 60 + m === slotMins;
+      });
+      if (match?.capacity) return match.capacity as number;
     }
-    return map;
-  }, [filteredServices]);
+    return (selectedService.max_concurrent_bookings as number) || 20;
+  }, [selectedService, isEmployeeBased, selectedSlot]);
 
-  const handleSelectService = (svc: any) => {
-    setSelectedService(svc);
-    setForm((f) => ({ ...f, duration: svc.base_duration || 60 }));
+  const stepSequence = useMemo((): WizardStep[] => {
+    const s: WizardStep[] = ["service"];
+    if (isEmployeeBased) s.push("employee");
+    s.push("datetime");
+    s.push("confirm");
+    return s;
+  }, [isEmployeeBased]);
+
+  const currentStep = stepSequence[stepIdx];
+  const totalSteps = stepSequence.length;
+
+  // Called from event handlers (never inside an effect) to reset display state
+  // and kick off a new slot fetch.
+  const triggerSlotFetch = (d: string, serviceId: string, empId: string) => {
+    slotParamsRef.current = { date: d, serviceId, empId };
+    setSlotsLoading(true);
+    setSlots([]);
+    setSelectedSlot("");
+    setSlotFetchKey((k) => k + 1);
+  };
+
+  // Only fires when slotFetchKey increments; reads fresh params from the ref.
+  useEffect(() => {
+    const { date: d, serviceId, empId } = slotParamsRef.current;
+    if (!serviceId) return;
+    let active = true;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const p = new URLSearchParams({
+      date: d,
+      service_id: serviceId,
+      timezone: tz,
+    });
+    if (empId) p.set("employee_id", empId);
+    fetch(`/api/bookings/available-slots?${p}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (active && data.success) setSlots(data.available_slots || []);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setSlotsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [slotFetchKey]);
+
+  const goNext = () => {
+    if (currentStep === "service" && !selectedService) {
+      setError("Please select a service.");
+      return;
+    }
+    if (currentStep === "datetime" && !selectedSlot) {
+      setError("Please select an available time.");
+      return;
+    }
+    setError("");
+    const nextStep = stepSequence[stepIdx + 1];
+    if (nextStep === "datetime" && selectedService) {
+      triggerSlotFetch(date, selectedService._id, selectedEmpId);
+    }
+    setStepIdx((s) => Math.min(s + 1, totalSteps - 1));
+  };
+
+  const goBack = () => {
+    setError("");
+    setStepIdx((s) => Math.max(0, s - 1));
   };
 
   const handleSubmit = async () => {
-    if (!selectedService || !form.start_time || !form.date) {
-      setError("Please select a service, date and start time.");
+    if (!selectedSlot) {
+      setError("No time slot selected.");
       return;
     }
-    if (form.employee_id && !selectedEmpAvailable) {
-      setError(
-        "This employee is not available at the selected time. Please choose a different employee or time.",
-      );
-      return;
-    }
-    setLoading(true);
+    setSubmitLoading(true);
     setError("");
     try {
-      const [h, m] = form.start_time.split(":").map(Number);
-      const start = new Date(form.date);
-      start.setHours(h, m, 0, 0);
-
       const res = await fetch("/api/calendar/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           service_id: selectedService._id,
-          employee_id: form.employee_id || null,
-          start_time: start.toISOString(),
-          duration: form.duration,
-          customer_name: form.customer_name || undefined,
-          notes: form.notes || undefined,
-          total_price: selectedService.base_price ?? 0,
+          employee_id: selectedEmpId || null,
+          start_time: selectedSlot,
+          duration: selectedService.base_duration || 60,
+          quantity: isEmployeeBased ? 1 : quantity,
+          customer_name: customerName || undefined,
+          notes: notes || undefined,
+          total_price:
+            (selectedService.base_price ?? 0) *
+            (isEmployeeBased ? 1 : quantity),
         }),
       });
       const data = await res.json();
@@ -1716,259 +1851,490 @@ function AppointmentModal({
     } catch (e: any) {
       setError(e.message);
     } finally {
-      setLoading(false);
+      setSubmitLoading(false);
     }
   };
 
-  const inputCls =
-    "w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7] transition-colors";
+  const filteredServices = useMemo(() => {
+    const q = serviceSearch.toLowerCase();
+    return services.filter(
+      (s) =>
+        !q ||
+        s.name?.toLowerCase().includes(q) ||
+        s.category?.toLowerCase().includes(q),
+    );
+  }, [services, serviceSearch]);
+
+  const groupedServices = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    for (const svc of filteredServices) {
+      const cat = svc.category || "Other";
+      if (!map[cat]) map[cat] = [];
+      map[cat].push(svc);
+    }
+    return map;
+  }, [filteredServices]);
+
+  const eligibleEmployees = useMemo(() => {
+    if (!selectedService) return employees;
+    return employees.filter((emp) => empCanDoService(emp, selectedService._id));
+  }, [employees, selectedService]);
+
+  const stepLabels: Record<WizardStep, string> = {
+    service: "Service",
+    employee: "Employee",
+    datetime: "Date & Time",
+    confirm: "Confirm",
+  };
+
+  const dateLabel = new Date(date + "T12:00:00").toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
+      <div
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
-      {/* Right-side drawer */}
-      <div className="fixed top-0 right-0 bottom-0 z-50 flex flex-col bg-[#07111f] border-l border-[#0e3258] w-full sm:w-[480px] shadow-2xl overflow-hidden">
-        {/* Top bar */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#0e3258] shrink-0">
-          <div className="flex items-center gap-2.5">
-            <CalendarCheck size={16} className="text-[#6B5CE7]" />
-            <h2 className="text-base font-bold text-white">New Appointment</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="flex flex-1 min-h-0">
-          {/* Left panel — client + datetime */}
-          <div className="w-[200px] shrink-0 flex flex-col border-r border-[#0e3258] p-4 gap-4 overflow-y-auto">
-            {/* Client */}
-            <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Client
-              </p>
-              <input
-                type="text"
-                value={form.customer_name}
-                onChange={(e) =>
-                  setForm({ ...form, customer_name: e.target.value })
-                }
-                placeholder="Walk-in / name…"
-                className={cn(inputCls, "placeholder:text-gray-600 text-xs")}
-              />
+      {/* Centered wizard card */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div
+          className="w-full max-w-xl bg-[#07111f] border border-[#0e3258] rounded-2xl shadow-2xl flex flex-col pointer-events-auto"
+          style={{ maxHeight: "92vh" }}
+          onClick={(e) => e.stopPropagation()}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#0e3258] shrink-0">
+            <div className="flex items-center gap-2">
+              <CalendarCheck size={15} className="text-[#6B5CE7]" />
+              <h2 className="text-sm font-bold text-white">New Appointment</h2>
             </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5">
+              <X size={17} />
+            </button>
+          </div>
 
-            {/* Date & time */}
-            <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Date & Time
-              </p>
-              <div className="space-y-2">
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  className={cn(inputCls, "text-xs")}
-                />
-                <input
-                  type="time"
-                  value={form.start_time}
-                  onChange={(e) =>
-                    setForm({ ...form, start_time: e.target.value })
-                  }
-                  className={cn(inputCls, "text-xs")}
-                />
-                <div>
-                  <label className="text-[10px] text-gray-500 mb-1 block">
-                    Duration (min)
-                  </label>
+          {/* Progress bar */}
+          <div className="flex items-center px-6 py-3 border-b border-[#0e3258] shrink-0 gap-0">
+            {stepSequence.map((step, i) => (
+              <div
+                key={step}
+                className="flex items-center flex-1 last:flex-none">
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className={cn(
+                      "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 transition-colors",
+                      i < stepIdx
+                        ? "bg-[#6B5CE7] text-white"
+                        : i === stepIdx
+                          ? "bg-[#6B5CE7] text-white ring-2 ring-[#6B5CE7]/30"
+                          : "bg-[#0d2040] border border-[#1a3a60] text-gray-600",
+                    )}>
+                    {i < stepIdx ? "✓" : i + 1}
+                  </div>
+                  <span
+                    className={cn(
+                      "text-[10px] font-medium hidden sm:block whitespace-nowrap",
+                      i === stepIdx
+                        ? "text-white"
+                        : i < stepIdx
+                          ? "text-[#6B5CE7]"
+                          : "text-gray-600",
+                    )}>
+                    {stepLabels[step]}
+                  </span>
+                </div>
+                {i < stepSequence.length - 1 && (
+                  <div
+                    className={cn(
+                      "flex-1 h-px mx-2",
+                      i < stepIdx ? "bg-[#6B5CE7]/50" : "bg-[#1a3a60]",
+                    )}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Step content */}
+          <div className="flex-1 overflow-y-auto">
+            {/* ── Step: Service ─────────────────────────────────────────── */}
+            {currentStep === "service" && (
+              <div className="p-5">
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+                  Select a Service
+                </p>
+                <div className="relative mb-4">
+                  <Search
+                    size={12}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  />
                   <input
-                    type="number"
-                    value={form.duration}
-                    min={15}
-                    step={15}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        duration: parseInt(e.target.value) || 60,
-                      })
-                    }
-                    className={cn(inputCls, "text-xs")}
+                    value={serviceSearch}
+                    onChange={(e) => setServiceSearch(e.target.value)}
+                    placeholder="Search services…"
+                    className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:border-[#6B5CE7] placeholder:text-gray-600"
+                  />
+                </div>
+                {Object.keys(groupedServices).length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-8">
+                    No services found
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {Object.entries(groupedServices).map(([cat, svcs]) => (
+                      <div key={cat}>
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                          {cat}
+                        </p>
+                        <div className="space-y-1.5">
+                          {svcs.map((svc) => {
+                            const sel = selectedService?._id === svc._id;
+                            return (
+                              <button
+                                key={svc._id}
+                                onClick={() => {
+                                  setSelectedService(svc);
+                                  setSelectedEmpId(prefill.column?._id || "");
+                                  setSelectedSlot("");
+                                  setQuantity(1);
+                                }}
+                                className={cn(
+                                  "w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center justify-between",
+                                  sel
+                                    ? "bg-[#6B5CE7]/15 border-[#6B5CE7]/60 text-white"
+                                    : "bg-[#0d2040] border-[#1a3a60] text-gray-300 hover:border-[#6B5CE7]/40",
+                                )}>
+                                <div>
+                                  <p className="text-sm font-semibold">
+                                    {svc.name}
+                                  </p>
+                                  <p className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1.5">
+                                    <span>{svc.base_duration} min</span>
+                                    {svc.service_type && (
+                                      <span className="px-1.5 py-0.5 rounded bg-[#1a3a60] text-[9px] text-gray-400">
+                                        {svc.service_type.replace(/_/g, " ")}
+                                      </span>
+                                    )}
+                                  </p>
+                                </div>
+                                {svc.base_price != null && (
+                                  <span
+                                    className={cn(
+                                      "text-sm font-bold shrink-0",
+                                      sel ? "text-[#a093f8]" : "text-gray-400",
+                                    )}>
+                                    ${svc.base_price}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Step: Employee ────────────────────────────────────────── */}
+            {currentStep === "employee" && (
+              <div className="p-5">
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+                  Select an Employee
+                </p>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setSelectedEmpId("")}
+                    className={cn(
+                      "w-full text-left px-4 py-3 rounded-xl border transition-all",
+                      !selectedEmpId
+                        ? "bg-[#6B5CE7]/15 border-[#6B5CE7]/60 text-white"
+                        : "bg-[#0d2040] border-[#1a3a60] text-gray-300 hover:border-[#6B5CE7]/40",
+                    )}>
+                    <p className="text-sm font-semibold">Any available</p>
+                    <p className="text-[11px] text-gray-500">
+                      Auto-assign to the first available employee
+                    </p>
+                  </button>
+                  {eligibleEmployees.map((emp) => {
+                    const sel = selectedEmpId === emp._id;
+                    const shiftLabel = getShiftLabel(emp, date);
+                    return (
+                      <button
+                        key={emp._id}
+                        onClick={() => setSelectedEmpId(emp._id)}
+                        className={cn(
+                          "w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center gap-3",
+                          sel
+                            ? "bg-[#6B5CE7]/15 border-[#6B5CE7]/60 text-white"
+                            : "bg-[#0d2040] border-[#1a3a60] text-gray-300 hover:border-[#6B5CE7]/40",
+                        )}>
+                        <div
+                          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+                          style={{
+                            background: emp.calendar_color || "#1e3a5f",
+                            color: "#fff",
+                          }}>
+                          {getInitials(emp.full_name)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate">
+                            {emp.full_name}
+                          </p>
+                          <p className="text-[11px] mt-0.5">
+                            {shiftLabel ? (
+                              <span className="text-emerald-400">
+                                {shiftLabel}
+                              </span>
+                            ) : (
+                              <span className="text-red-400">
+                                Not working this day
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        {sel && (
+                          <div className="w-2 h-2 rounded-full bg-[#6B5CE7] shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                  {eligibleEmployees.length === 0 && (
+                    <p className="text-sm text-gray-500 text-center py-6">
+                      No employees can perform this service
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── Step: Date & Time ─────────────────────────────────────── */}
+            {currentStep === "datetime" && (
+              <div className="p-5 space-y-5">
+                {fromSlot ? (
+                  <div className="flex items-center gap-2 text-xs text-gray-300 bg-[#0d2040] rounded-lg px-3 py-2.5 border border-[#1a3a60]">
+                    <CalendarDays
+                      size={13}
+                      className="text-[#6B5CE7] shrink-0"
+                    />
+                    <span>{dateLabel}</span>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                      Date
+                    </p>
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={(e) => {
+                        setDate(e.target.value);
+                        if (selectedService) {
+                          triggerSlotFetch(
+                            e.target.value,
+                            selectedService._id,
+                            selectedEmpId,
+                          );
+                        }
+                      }}
+                      className="bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7] w-full"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+                    Available Times
+                  </p>
+                  {slotsLoading ? (
+                    <div className="flex items-center gap-2 text-gray-500 text-sm py-4">
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Fetching available times…</span>
+                    </div>
+                  ) : slots.length === 0 ? (
+                    <p className="text-sm text-gray-500 py-4">
+                      No available times for this date. Try a different day or
+                      employee.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      {slots.map((slot) => {
+                        const sel = selectedSlot === slot;
+                        return (
+                          <button
+                            key={slot}
+                            onClick={() => setSelectedSlot(slot)}
+                            className={cn(
+                              "py-2 px-3 rounded-lg text-xs font-semibold border transition-all",
+                              sel
+                                ? "bg-[#6B5CE7] border-[#6B5CE7] text-white"
+                                : "bg-[#0d2040] border-[#1a3a60] text-gray-300 hover:border-[#6B5CE7]/50 hover:bg-[#0e1f3a]",
+                            )}>
+                            {fmtTime(new Date(slot))}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── Step: Confirm ─────────────────────────────────────────── */}
+            {currentStep === "confirm" && (
+              <div className="p-5 space-y-4">
+                {/* Booking summary */}
+                <div className="bg-[#0d2040] border border-[#1a3a60] rounded-xl p-4 space-y-3">
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                    Booking Summary
+                  </p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Package size={13} className="text-[#6B5CE7] shrink-0" />
+                      <span className="text-white font-semibold">
+                        {selectedService?.name}
+                      </span>
+                      <span className="text-gray-500 text-xs">
+                        · {selectedService?.base_duration} min
+                      </span>
+                      {selectedService?.base_price != null && (
+                        <span className="text-gray-500 text-xs">
+                          · ${selectedService.base_price}
+                        </span>
+                      )}
+                    </div>
+                    {selectedEmpId && (
+                      <div className="flex items-center gap-2">
+                        <User size={13} className="text-[#6B5CE7] shrink-0" />
+                        <span className="text-gray-300">
+                          {employees.find((e) => e._id === selectedEmpId)
+                            ?.full_name ?? "—"}
+                        </span>
+                      </div>
+                    )}
+                    {selectedSlot && (
+                      <div className="flex items-center gap-2">
+                        <Clock size={13} className="text-[#6B5CE7] shrink-0" />
+                        <span className="text-gray-300">
+                          {dateLabel} · {fmtTime(new Date(selectedSlot))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quantity — resource_based and group_session only */}
+                {!isEmployeeBased && (
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                      Quantity
+                      <span className="ml-1.5 font-normal text-gray-600 normal-case tracking-normal">
+                        (max {maxQuantity})
+                      </span>
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                        disabled={quantity <= 1}
+                        className="w-8 h-8 rounded-lg border border-[#1a3a60] flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#0d2040] disabled:opacity-40 transition-colors">
+                        <Minus size={13} />
+                      </button>
+                      <span className="text-white font-bold text-lg w-8 text-center">
+                        {quantity}
+                      </span>
+                      <button
+                        onClick={() =>
+                          setQuantity((q) => Math.min(maxQuantity, q + 1))
+                        }
+                        disabled={quantity >= maxQuantity}
+                        className="w-8 h-8 rounded-lg border border-[#1a3a60] flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#0d2040] disabled:opacity-40 transition-colors">
+                        <Plus size={13} />
+                      </button>
+                      {selectedService?.base_price != null && quantity > 1 && (
+                        <span className="text-xs text-gray-500 ml-1">
+                          = $
+                          {(selectedService.base_price * quantity).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Client */}
+                <div>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Client (optional)
+                  </p>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Walk-in / name…"
+                    className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7] placeholder:text-gray-600"
+                  />
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Notes (optional)
+                  </p>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={3}
+                    placeholder="Optional notes…"
+                    className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7] placeholder:text-gray-600 resize-none"
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Employee */}
-            <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Employee
-              </p>
-              <select
-                value={form.employee_id}
-                onChange={(e) =>
-                  setForm({ ...form, employee_id: e.target.value })
-                }
-                className={cn(inputCls, "text-xs")}>
-                <option value="">Any available</option>
-                {annotatedEmployees.map((emp) => {
-                  const ok = emp._shiftOk && emp._serviceOk;
-                  return (
-                    <option key={emp._id} value={emp._id} disabled={!ok}>
-                      {emp.full_name}
-                      {!ok ? " (unavailable)" : ""}
-                    </option>
-                  );
-                })}
-              </select>
-              {form.employee_id && !selectedEmpAvailable && (
-                <p className="text-[10px] text-amber-400 flex items-center gap-1 mt-1">
-                  <span>⚠</span> Not available at this time or for this service
-                </p>
-              )}
-            </div>
-
-            {/* Notes */}
-            <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Notes
-              </p>
-              <textarea
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                rows={3}
-                placeholder="Optional notes…"
-                className={cn(
-                  inputCls,
-                  "text-xs placeholder:text-gray-600 resize-none",
-                )}
-              />
-            </div>
+            )}
           </div>
 
-          {/* Right panel — service selection */}
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="px-4 pt-4 pb-3 border-b border-[#0e3258] shrink-0">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Select a Service
+          {/* Footer */}
+          <div className="shrink-0 px-5 py-4 border-t border-[#0e3258] space-y-3">
+            {error && (
+              <p className="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">
+                {error}
               </p>
-              <div className="relative">
-                <Search
-                  size={13}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-                />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search services…"
-                  className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:border-[#6B5CE7] transition-colors placeholder:text-gray-600"
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-              {Object.keys(grouped).length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-6">
-                  No services found
-                </p>
+            )}
+            <div className="flex items-center gap-3">
+              {stepIdx > 0 && (
+                <button
+                  onClick={goBack}
+                  className="px-4 py-2.5 text-sm font-semibold text-gray-400 border border-[#1a3a60] rounded-xl hover:bg-[#0d2040] transition-colors">
+                  Back
+                </button>
               )}
-              {Object.entries(grouped).map(([cat, svcs]) => (
-                <div key={cat}>
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                    {cat}
-                  </p>
-                  <div className="space-y-1">
-                    {svcs.map((svc) => {
-                      const isSelected = selectedService?._id === svc._id;
-                      return (
-                        <button
-                          key={svc._id}
-                          onClick={() => handleSelectService(svc)}
-                          className={cn(
-                            "w-full text-left px-3 py-2.5 rounded-xl border transition-all",
-                            isSelected
-                              ? "bg-[#6B5CE7]/20 border-[#6B5CE7]/60 text-white"
-                              : "bg-[#0d2040] border-[#1a3a60] text-gray-300 hover:border-[#6B5CE7]/40 hover:bg-[#0e1f3a]",
-                          )}>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">
-                              {svc.name}
-                            </span>
-                            {svc.base_price != null && (
-                              <span
-                                className={cn(
-                                  "text-xs",
-                                  isSelected
-                                    ? "text-[#a093f8]"
-                                    : "text-gray-500",
-                                )}>
-                                ${svc.base_price}
-                              </span>
-                            )}
-                          </div>
-                          {svc.base_duration && (
-                            <p
-                              className={cn(
-                                "text-[11px] mt-0.5",
-                                isSelected ? "text-[#a093f8]" : "text-gray-500",
-                              )}>
-                              {svc.base_duration} min
-                            </p>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="shrink-0 px-5 py-4 border-t border-[#0e3258] space-y-3">
-          {/* Selected service summary */}
-          {selectedService && (
-            <div className="flex items-center gap-2 text-sm text-gray-300 bg-[#0d2040] rounded-lg px-3 py-2">
-              <CalendarCheck size={13} className="text-[#6B5CE7] shrink-0" />
-              <span className="font-medium text-white">
-                {selectedService.name}
-              </span>
-              <span className="text-gray-500">·</span>
-              <span className="text-gray-400">{form.duration} min</span>
-              {selectedService.base_price != null && (
-                <>
-                  <span className="text-gray-500">·</span>
-                  <span className="text-gray-400">
-                    ${selectedService.base_price}
-                  </span>
-                </>
+              <div className="flex-1" />
+              {currentStep !== "confirm" ? (
+                <button
+                  onClick={goNext}
+                  disabled={currentStep === "service" && !selectedService}
+                  className="px-6 py-2.5 text-sm font-bold bg-[#6B5CE7] text-white rounded-xl hover:bg-[#5a4cd1] transition-colors disabled:opacity-50">
+                  Continue
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitLoading || !selectedSlot}
+                  className="px-6 py-2.5 text-sm font-bold bg-[#6B5CE7] text-white rounded-xl hover:bg-[#5a4cd1] transition-colors disabled:opacity-50 flex items-center gap-2">
+                  {submitLoading && (
+                    <Loader2 size={13} className="animate-spin" />
+                  )}
+                  Confirm Appointment
+                </button>
               )}
             </div>
-          )}
-          {error && (
-            <p className="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">
-              {error}
-            </p>
-          )}
-          <div className="flex gap-2.5">
-            <button
-              onClick={onClose}
-              className="flex-1 py-2.5 text-sm font-semibold text-gray-400 border border-[#1a3a60] rounded-xl hover:bg-[#0d2040] transition-colors">
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={loading || !selectedService}
-              className="flex-1 py-2.5 text-sm font-bold bg-[#6B5CE7] text-white rounded-xl hover:bg-[#5a4cd1] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-              {loading && <Loader2 size={13} className="animate-spin" />}
-              Confirm Appointment
-            </button>
           </div>
         </div>
       </div>
@@ -2218,9 +2584,6 @@ function MobileDayTabs({
 // ─── Main Calendar ────────────────────────────────────────────────────────────
 
 export default function Calendar() {
-  const [panelView, setPanelView] = useState<"calendar" | "reservations">(
-    "calendar",
-  );
   const [view, setView] = useState<CalendarView>("day");
   const [mode, setMode] = useState<CalendarMode>("employee");
   const [currentDate, setCurrentDate] = useState(() => {
@@ -2393,129 +2756,89 @@ export default function Calendar() {
         }}>
         {/* Left */}
         <div className="flex items-center gap-2">
-          {/* Calendar / Reservations toggle */}
-          <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
+          <button
+            onClick={goToday}
+            className="px-3 py-1.5 text-sm font-semibold text-white bg-[#0d2040] border border-[#1a3a60] rounded-full hover:bg-[#142840] transition-colors">
+            Today
+          </button>
+          <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full overflow-hidden">
             <button
-              onClick={() => setPanelView("calendar")}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                panelView === "calendar"
-                  ? "bg-[#6B5CE7] text-white"
-                  : "text-gray-400 hover:text-white",
-              )}>
-              <CalendarDays size={12} />
-              <span className="hidden sm:inline">Calendar</span>
+              onClick={goPrev}
+              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#142840] transition-colors">
+              <ChevronLeft size={15} />
             </button>
+            <span className="text-sm font-semibold text-white px-2 min-w-[110px] md:min-w-[160px] text-center">
+              {dateLabel}
+            </span>
             <button
-              onClick={() => setPanelView("reservations")}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                panelView === "reservations"
-                  ? "bg-[#6B5CE7] text-white"
-                  : "text-gray-400 hover:text-white",
-              )}>
-              <LayoutList size={12} />
-              <span className="hidden sm:inline">Reservations</span>
+              onClick={goNext}
+              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#142840] transition-colors">
+              <ChevronRight size={15} />
             </button>
           </div>
-
-          {panelView === "calendar" && (
-            <>
-              <button
-                onClick={goToday}
-                className="px-3 py-1.5 text-sm font-semibold text-white bg-[#0d2040] border border-[#1a3a60] rounded-full hover:bg-[#142840] transition-colors">
-                Today
-              </button>
-              <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full overflow-hidden">
-                <button
-                  onClick={goPrev}
-                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#142840] transition-colors">
-                  <ChevronLeft size={15} />
-                </button>
-                <span className="text-sm font-semibold text-white px-2 min-w-[110px] md:min-w-[160px] text-center">
-                  {dateLabel}
-                </span>
-                <button
-                  onClick={goNext}
-                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#142840] transition-colors">
-                  <ChevronRight size={15} />
-                </button>
-              </div>
-            </>
-          )}
         </div>
 
-        {panelView === "calendar" && (
-          <div className="hidden sm:block">
-            <TeamFilterDropdown
-              employees={allEmployees}
-              services={resourceServices}
-              mode={mode}
-              selectedId={filterId}
-              onSelect={setFilterId}
-            />
-          </div>
-        )}
+        <div className="hidden sm:block">
+          <TeamFilterDropdown
+            employees={allEmployees}
+            services={resourceServices}
+            mode={mode}
+            selectedId={filterId}
+            onSelect={setFilterId}
+          />
+        </div>
 
         <div className="flex-1" />
 
         {/* Right */}
         <div className="flex items-center gap-1.5">
-          {panelView === "calendar" && (
-            <>
-              <div className="hidden sm:flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
-                {(["employee", "resource"] as CalendarMode[]).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => {
-                      setMode(m);
-                      setFilterId(null);
-                    }}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                      mode === m
-                        ? "bg-[#6B5CE7] text-white"
-                        : "text-gray-400 hover:text-white",
-                    )}>
-                    {m === "employee" ? (
-                      <Users size={12} />
-                    ) : (
-                      <Package size={12} />
-                    )}
-                    <span className="hidden md:inline">
-                      {m === "employee" ? "Team" : "Resources"}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
+          <div className="hidden sm:flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
+            {(["employee", "resource"] as CalendarMode[]).map((m) => (
               <button
-                onClick={() => refetch()}
-                disabled={bookingLoading}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1a3a60] text-gray-400 hover:text-white hover:bg-[#0d2040] transition-colors">
-                <RefreshCw
-                  size={13}
-                  className={cn(bookingLoading && "animate-spin")}
-                />
+                key={m}
+                onClick={() => {
+                  setMode(m);
+                  setFilterId(null);
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                  mode === m
+                    ? "bg-[#6B5CE7] text-white"
+                    : "text-gray-400 hover:text-white",
+                )}>
+                {m === "employee" ? <Users size={12} /> : <Package size={12} />}
+                <span className="hidden md:inline">
+                  {m === "employee" ? "Team" : "Resources"}
+                </span>
               </button>
+            ))}
+          </div>
 
-              <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
-                {(["day", "week"] as CalendarView[]).map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setView(v)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors capitalize",
-                      view === v
-                        ? "bg-white text-[#060f1a]"
-                        : "text-gray-400 hover:text-white",
-                    )}>
-                    {v}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+          <button
+            onClick={() => refetch()}
+            disabled={bookingLoading}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1a3a60] text-gray-400 hover:text-white hover:bg-[#0d2040] transition-colors">
+            <RefreshCw
+              size={13}
+              className={cn(bookingLoading && "animate-spin")}
+            />
+          </button>
+
+          <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
+            {(["day", "week"] as CalendarView[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors capitalize",
+                  view === v
+                    ? "bg-white text-[#060f1a]"
+                    : "text-gray-400 hover:text-white",
+                )}>
+                {v}
+              </button>
+            ))}
+          </div>
 
           <AddDropdown
             onAddAppointment={() => openAppointmentModal()}
@@ -2525,37 +2848,35 @@ export default function Calendar() {
       </div>
 
       {/* ── Mobile: mode + filter bar ── */}
-      {panelView === "calendar" && (
-        <div className="sm:hidden flex items-center gap-2 px-3 py-2 border-b border-[#162640] bg-[#060f1a]">
-          <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
-            {(["employee", "resource"] as CalendarMode[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => {
-                  setMode(m);
-                  setFilterId(null);
-                }}
-                className={cn(
-                  "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-colors",
-                  mode === m ? "bg-[#6B5CE7] text-white" : "text-gray-400",
-                )}>
-                {m === "employee" ? <Users size={11} /> : <Package size={11} />}
-                {m === "employee" ? "Team" : "Resources"}
-              </button>
-            ))}
-          </div>
-          <TeamFilterDropdown
-            employees={allEmployees}
-            services={resourceServices}
-            mode={mode}
-            selectedId={filterId}
-            onSelect={setFilterId}
-          />
+      <div className="sm:hidden flex items-center gap-2 px-3 py-2 border-b border-[#162640] bg-[#060f1a]">
+        <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
+          {(["employee", "resource"] as CalendarMode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => {
+                setMode(m);
+                setFilterId(null);
+              }}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-colors",
+                mode === m ? "bg-[#6B5CE7] text-white" : "text-gray-400",
+              )}>
+              {m === "employee" ? <Users size={11} /> : <Package size={11} />}
+              {m === "employee" ? "Team" : "Resources"}
+            </button>
+          ))}
         </div>
-      )}
+        <TeamFilterDropdown
+          employees={allEmployees}
+          services={resourceServices}
+          mode={mode}
+          selectedId={filterId}
+          onSelect={setFilterId}
+        />
+      </div>
 
       {/* ── Week mobile day tabs ── */}
-      {panelView === "calendar" && view === "week" && (
+      {view === "week" && (
         <MobileDayTabs
           weekDays={weekDays}
           selectedIdx={mobileDayIdx}
@@ -2567,68 +2888,62 @@ export default function Calendar() {
       )}
 
       {/* ── Loading ── */}
-      {panelView === "calendar" && (bookingLoading || empLoading) && (
+      {(bookingLoading || empLoading) && (
         <div className="flex items-center justify-center py-3 gap-2 border-b border-[#162640]">
           <Loader2 size={14} className="animate-spin text-[#6B5CE7]" />
           <span className="text-xs text-gray-500">Loading bookings…</span>
         </div>
       )}
 
-      {panelView === "reservations" ? (
-        <Reservation />
-      ) : (
-        <>
-          {/* ── Calendar grid — desktop ── */}
-          <div className="hidden sm:block">
-            {view === "day" ? (
-              <DayView
-                date={currentDate}
-                columns={columns}
-                bookings={allBookings}
-                blockedTimes={blockedTimes}
-                mode={mode}
-                onBookingClick={setSelectedBooking}
-                onBlockedTimeClick={setDeletingBlock}
-                onSlotClick={setSlotClick}
-              />
-            ) : (
-              <WeekView
-                weekDays={weekDays}
-                bookings={allBookings}
-                blockedTimes={blockedTimes}
-                mode={mode}
-                onBookingClick={setSelectedBooking}
-                onBlockedTimeClick={setDeletingBlock}
-                onSlotClick={setSlotClick}
-              />
-            )}
-          </div>
+      {/* ── Calendar grid — desktop ── */}
+      <div className="hidden sm:block">
+        {view === "day" ? (
+          <DayView
+            date={currentDate}
+            columns={columns}
+            bookings={allBookings}
+            blockedTimes={blockedTimes}
+            mode={mode}
+            onBookingClick={setSelectedBooking}
+            onBlockedTimeClick={setDeletingBlock}
+            onSlotClick={setSlotClick}
+          />
+        ) : (
+          <WeekView
+            weekDays={weekDays}
+            bookings={allBookings}
+            blockedTimes={blockedTimes}
+            mode={mode}
+            onBookingClick={setSelectedBooking}
+            onBlockedTimeClick={setDeletingBlock}
+            onSlotClick={setSlotClick}
+          />
+        )}
+      </div>
 
-          {/* ── Calendar grid — mobile (single day always) ── */}
-          <div className="sm:hidden">
-            <DayView
-              date={view === "week" ? mobileDate : currentDate}
-              columns={columns}
-              bookings={allBookings.filter((b) =>
-                sameDay(
-                  new Date(b.start_time),
-                  view === "week" ? mobileDate : currentDate,
-                ),
-              )}
-              blockedTimes={blockedTimes.filter((bt) =>
-                sameDay(
-                  new Date(bt.start_time),
-                  view === "week" ? mobileDate : currentDate,
-                ),
-              )}
-              mode={mode}
-              onBookingClick={setSelectedBooking}
-              onBlockedTimeClick={setDeletingBlock}
-              onSlotClick={setSlotClick}
-            />
-          </div>
-        </>
-      )}
+      {/* ── Calendar grid — mobile (single day always) ── */}
+      <div className="sm:hidden">
+        <DayView
+          date={view === "week" ? mobileDate : currentDate}
+          columns={columns}
+          bookings={allBookings.filter((b) =>
+            sameDay(
+              new Date(b.start_time),
+              view === "week" ? mobileDate : currentDate,
+            ),
+          )}
+          blockedTimes={blockedTimes.filter((bt) =>
+            sameDay(
+              new Date(bt.start_time),
+              view === "week" ? mobileDate : currentDate,
+            ),
+          )}
+          mode={mode}
+          onBookingClick={setSelectedBooking}
+          onBlockedTimeClick={setDeletingBlock}
+          onSlotClick={setSlotClick}
+        />
+      </div>
 
       {/* ── Slot context menu ── */}
       {slotClick && (
@@ -2642,7 +2957,7 @@ export default function Calendar() {
 
       {/* ── Appointment modal ── */}
       {openModal === "appointment" && (
-        <AppointmentModal
+        <AppointmentWizard
           employees={allEmployees}
           services={svcData?.data ?? []}
           prefill={modalPrefill}

@@ -31,7 +31,18 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Calendar, label: "Calendar", href: "/dashboard/calendar" },
+  {
+    icon: Calendar,
+    label: "Calendar",
+    children: [
+      {
+        items: [
+          { label: "Calendar", href: "/dashboard/calendar" },
+          { label: "Reservations", href: "/dashboard/reservations" },
+        ],
+      },
+    ],
+  },
   { icon: Tag, label: "Deals", href: "/dashboard/deals" },
   { icon: Smile, label: "Clients", href: "/dashboard/clients" },
   {
