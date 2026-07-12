@@ -110,10 +110,36 @@ function presetRange(
     const e = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     return { start: fmtISO(s), end: fmtISO(e) };
   }
-  return null; // All time — no filter
+  return null;
 }
 
-// ─── Detail Panel ─────────────────────────────────────────────────────────────
+const DAY_NAMES = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+
+function empCanTakeSlot(employee: any, dateStr: string, timeStr: string, durationMins: number): boolean {
+  if (!dateStr || !timeStr) return true;
+  const dayName = DAY_NAMES[new Date(dateStr + "T12:00:00").getDay()];
+  const daySched = (employee.availability_schedule ?? []).find(
+    (s: any) => (s.day_of_week ?? "").toLowerCase() === dayName,
+  );
+  if (!daySched?.is_working || !daySched.shifts?.length) return false;
+  const [h, m] = timeStr.split(":").map(Number);
+  const startMins = h * 60 + m;
+  const endMins = startMins + durationMins;
+  return daySched.shifts.some((shift: any) => {
+    if (!shift.start || !shift.end) return false;
+    const [sh, sm] = (shift.start as string).split(":").map(Number);
+    const [eh, em] = (shift.end as string).split(":").map(Number);
+    return startMins >= sh * 60 + sm && endMins <= eh * 60 + em;
+  });
+}
+
+function empCanDoService(employee: any, serviceId: string): boolean {
+  if (!employee.service_overrides?.length) return true;
+  return employee.service_overrides.some((o: any) => {
+    const id = typeof o.service_id === "string" ? o.service_id : (o.service_id?._id ?? o.service_id)?.toString();
+    return id === serviceId;
+  });
+}
 
 function BookingDetailPanel({
   booking: initial,
@@ -136,7 +162,6 @@ function BookingDetailPanel({
     booking.employee_id?._id || booking.employee_id || "",
   );
   const [error, setError] = useState("");
-
   const start = new Date(booking.start_time);
   const end = new Date(booking.end_time);
   const customer = booking.user_id as any;
@@ -233,17 +258,29 @@ function BookingDetailPanel({
   const inputCls =
     "w-full bg-[#0d2040] border border-[#1a3a60] text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7]";
 
+  const _start = new Date(booking.start_time);
+  const _end = new Date(booking.end_time);
+  const _pad = (n: number) => String(n).padStart(2, "0");
+  const _bookingDateStr = `${_start.getFullYear()}-${_pad(_start.getMonth() + 1)}-${_pad(_start.getDate())}`;
+  const _bookingTimeStr = `${_pad(_start.getHours())}:${_pad(_start.getMinutes())}`;
+  const _bookingDuration = booking.duration || Math.round((_end.getTime() - _start.getTime()) / 60_000);
+  const _serviceId = (booking.service_id?._id ?? booking.service_id) || "";
+
+  const eligibleEmployees = allEmployees.filter(
+    (emp) =>
+      empCanTakeSlot(emp, _bookingDateStr, _bookingTimeStr, _bookingDuration) &&
+      empCanDoService(emp, _serviceId),
+  );
+
   return (
     <div
       className="fixed inset-0 z-50 flex justify-end"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative w-full sm:w-96 bg-[#07111f] border-l border-[#0e3258] flex flex-col shadow-2xl overflow-y-auto">
-        {/* top colour bar */}
         <div className="h-1.5 bg-[#6B5CE7] shrink-0" />
 
         <div className="p-5 flex-1">
-          {/* Header */}
           <div className="flex items-start justify-between mb-5">
             <div>
               <h2 className="text-base font-bold text-white">
@@ -258,7 +295,6 @@ function BookingDetailPanel({
             </button>
           </div>
 
-          {/* Details */}
           <div className="space-y-3 mb-5">
             <div className="flex items-center gap-2.5">
               <Clock size={13} className="text-gray-400 shrink-0" />
@@ -332,7 +368,6 @@ function BookingDetailPanel({
             )}
           </div>
 
-          {/* Reassign */}
           {showReassign && isEmployeeBased && (
             <div className="mb-4 pt-4 border-t border-[#1a3a60] space-y-2.5">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
@@ -343,12 +378,21 @@ function BookingDetailPanel({
                 onChange={(e) => setSelectedEmpId(e.target.value)}
                 className={inputCls}>
                 <option value="">Unassigned</option>
-                {allEmployees.map((emp) => (
-                  <option key={emp._id} value={emp._id}>
-                    {emp.full_name}
-                  </option>
-                ))}
+                {eligibleEmployees.length > 0 ? (
+                  eligibleEmployees.map((emp) => (
+                    <option key={emp._id} value={emp._id}>
+                      {emp.full_name}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled value="">No available employees</option>
+                )}
               </select>
+              {eligibleEmployees.length === 0 && (
+                <p className="text-[10px] text-amber-400 mt-1">
+                  No employees are available at this booking&apos;s time and duration.
+                </p>
+              )}
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowReassign(false)}
@@ -368,7 +412,6 @@ function BookingDetailPanel({
             </div>
           )}
 
-          {/* Reschedule form */}
           {showReschedule && (
             <div className="mb-4 pt-4 border-t border-[#1a3a60] space-y-2.5">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
@@ -462,8 +505,6 @@ function BookingDetailPanel({
     </div>
   );
 }
-
-// ─── Main Reservation Component ───────────────────────────────────────────────
 
 export default function Reservation() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -626,7 +667,6 @@ export default function Reservation() {
           </div>
         </div>
 
-        {/* Status tabs */}
         <div className="flex gap-1 mt-4 overflow-x-auto [scrollbar-width:none]">
           {STATUS_TABS.map((st) => {
             const meta = STATUS_META[st];
@@ -658,7 +698,6 @@ export default function Reservation() {
         </div>
       </div>
 
-      {/* ── Table ── */}
       <div className="overflow-x-auto">
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-20">
@@ -735,13 +774,11 @@ export default function Reservation() {
                         </div>
                       </div>
                     </td>
-                    {/* Service */}
                     <td className="px-4 py-3.5">
                       <p className="text-sm text-white">
                         {service?.name || "—"}
                       </p>
                     </td>
-                    {/* Employee */}
                     <td className="px-4 py-3.5">
                       {employee?.full_name ? (
                         <div className="flex items-center gap-1.5">
@@ -760,7 +797,6 @@ export default function Reservation() {
                         <p className="text-sm text-gray-500">Unassigned</p>
                       )}
                     </td>
-                    {/* Date & Time */}
                     <td className="px-4 py-3.5">
                       <p className="text-sm text-white whitespace-nowrap">
                         {fmtTime(start)}
@@ -773,17 +809,14 @@ export default function Reservation() {
                         })}
                       </p>
                     </td>
-                    {/* Duration */}
                     <td className="px-4 py-3.5">
                       <p className="text-sm text-gray-300">{b.duration} min</p>
                     </td>
-                    {/* Amount */}
                     <td className="px-4 py-3.5">
                       <p className="text-sm font-semibold text-white">
                         ${b.total_price ?? 0}
                       </p>
                     </td>
-                    {/* Status */}
                     <td className="px-4 py-3.5">
                       <span
                         className={cn(
@@ -812,7 +845,6 @@ export default function Reservation() {
         )}
       </div>
 
-      {/* ── Detail panel ── */}
       {selectedBooking && (
         <BookingDetailPanel
           booking={selectedBooking}

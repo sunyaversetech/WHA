@@ -17,7 +17,9 @@ import {
   Ban,
   CalendarCheck,
   Search,
+  LayoutList,
 } from "lucide-react";
+import Reservation from "@/components/Dashboard/Reservation/Reservation";
 import { cn } from "@/lib/utils";
 import { useGetEmployees } from "@/services/employee.service";
 import { useGetServices } from "@/services/services.service";
@@ -146,6 +148,56 @@ function isDark(hex: string) {
   }
 }
 
+// ─── Availability Helpers ─────────────────────────────────────────────────────
+
+const DAY_NAMES = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+];
+
+/** Returns true if the employee's shift covers [timeStr, timeStr+durationMins] on dateStr. */
+function empCanTakeSlot(
+  employee: any,
+  dateStr: string, // "YYYY-MM-DD"
+  timeStr: string, // "HH:MM" (local, 24h)
+  durationMins: number,
+): boolean {
+  if (!dateStr || !timeStr) return true; // not enough info yet — don't restrict
+  const dayName = DAY_NAMES[new Date(dateStr + "T12:00:00").getDay()];
+  const daySched = (employee.availability_schedule ?? []).find(
+    (s: any) => (s.day_of_week ?? "").toLowerCase() === dayName,
+  );
+  if (!daySched?.is_working || !daySched.shifts?.length) return false;
+
+  const [h, m] = timeStr.split(":").map(Number);
+  const startMins = h * 60 + m;
+  const endMins = startMins + durationMins;
+
+  return daySched.shifts.some((shift: any) => {
+    if (!shift.start || !shift.end) return false;
+    const [sh, sm] = (shift.start as string).split(":").map(Number);
+    const [eh, em] = (shift.end as string).split(":").map(Number);
+    return startMins >= sh * 60 + sm && endMins <= eh * 60 + em;
+  });
+}
+
+/** Returns true if the employee provides the service (service_overrides check). */
+function empCanDoService(employee: any, serviceId: string): boolean {
+  if (!employee.service_overrides?.length) return true; // no restrictions
+  return employee.service_overrides.some((o: any) => {
+    const id =
+      typeof o.service_id === "string"
+        ? o.service_id
+        : (o.service_id?._id ?? o.service_id)?.toString();
+    return id === serviceId;
+  });
+}
+
 // ─── Column Avatar ────────────────────────────────────────────────────────────
 
 function ColumnAvatar({
@@ -211,7 +263,7 @@ function BlockedTimeBlock({
         left: 2,
         right: 2,
         height,
-        zIndex: 3,
+        zIndex: 6,
       }}
       className="rounded-md px-1.5 text-left overflow-hidden text-gray-300 border border-dashed border-gray-500/60 bg-gray-800/60 hover:bg-gray-700/70 transition-colors group">
       <div className="flex items-center gap-1">
@@ -266,7 +318,7 @@ function EventBlock({
         height,
         background: color,
         color: textCol,
-        zIndex: 2,
+        zIndex: 5,
       }}
       className="rounded-md px-1.5 text-left overflow-hidden shadow hover:brightness-110 active:scale-[0.98] transition-all">
       {isShort ? (
@@ -403,6 +455,19 @@ function BookingDetailPanel({
     !service?.service_type || service.service_type === "employee_based";
 
   const nextStatuses = STATUS_TRANSITIONS[booking.status] ?? [];
+
+  const pad2 = (n: number) => String(n).padStart(2, "0");
+  const bookingDateStr = fmtISO(start);
+  const bookingTimeStr = `${pad2(start.getHours())}:${pad2(start.getMinutes())}`;
+  const bookingDuration =
+    booking.duration || Math.round((end.getTime() - start.getTime()) / 60_000);
+  const serviceId = service?._id || booking.service_id;
+
+  const eligibleEmployees = allEmployees.filter(
+    (emp) =>
+      empCanTakeSlot(emp, bookingDateStr, bookingTimeStr, bookingDuration) &&
+      empCanDoService(emp, serviceId),
+  );
 
   const handleStatusChange = async (newStatus: string) => {
     setStatusLoading(newStatus);
@@ -566,12 +631,24 @@ function BookingDetailPanel({
                 onChange={(e) => setSelectedEmpId(e.target.value)}
                 className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7]">
                 <option value="">Unassigned</option>
-                {allEmployees.map((emp) => (
-                  <option key={emp._id} value={emp._id}>
-                    {emp.full_name}
+                {eligibleEmployees.length > 0 ? (
+                  eligibleEmployees.map((emp) => (
+                    <option key={emp._id} value={emp._id}>
+                      {emp.full_name}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled value="">
+                    No available employees
                   </option>
-                ))}
+                )}
               </select>
+              {eligibleEmployees.length === 0 && (
+                <p className="text-[10px] text-amber-400 mt-1">
+                  No employees are available at this booking&apos;s time and
+                  duration.
+                </p>
+              )}
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowReassign(false)}
@@ -880,6 +957,220 @@ function GridLines() {
   );
 }
 
+// ─── No-schedule Empty State ─────────────────────────────────────────────────
+
+function NoScheduleState() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-5 py-20 px-6 text-center flex-1 min-h-[90vh]">
+      {/* Icon: calendar + X badge */}
+      <div className="relative">
+        <div className="w-20 h-20 rounded-2xl bg-[#1a2a40] border border-[#1e3a60] flex items-center justify-center shadow-lg">
+          <CalendarDays size={38} className="text-[#6B5CE7]" />
+        </div>
+        <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-[#0d1f35] border border-[#162640] flex items-center justify-center">
+          <X size={14} className="text-gray-400" />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <h3 className="text-base font-bold text-white">
+          No scheduled team members
+        </h3>
+        <p className="text-xs text-gray-500 max-w-xs leading-relaxed">
+          Add availability to your team by managing your scheduled shifts
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3 mt-1">
+        <a
+          href="/dashboard/employees?tab=schedule"
+          className="px-4 py-2 text-xs font-semibold text-white bg-[#0d2040] border border-[#1a3a60] rounded-full hover:bg-[#142840] hover:border-[#6B5CE7]/50 transition-colors">
+          Scheduled shifts
+        </a>
+        <a
+          href="/dashboard/employees"
+          className="px-4 py-2 text-xs font-semibold text-white bg-white/10 border border-white/20 rounded-full hover:bg-white/15 transition-colors">
+          View all team members
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// ─── Unavailability Overlay ───────────────────────────────────────────────────
+
+function getUnavailableZones(
+  employee: any,
+  dateStr: string,
+): { topPx: number; heightPx: number }[] {
+  const dayName = DAY_NAMES[new Date(dateStr + "T12:00:00").getDay()];
+  const daySched = (employee.availability_schedule ?? []).find(
+    (s: any) => (s.day_of_week ?? "").toLowerCase() === dayName,
+  );
+  const toPx = (mins: number) => (mins / 60) * HOUR_H;
+
+  if (!daySched?.is_working || !daySched.shifts?.length) {
+    return [{ topPx: 0, heightPx: 24 * HOUR_H }];
+  }
+
+  const shifts = daySched.shifts
+    .filter((s: any) => s.start && s.end)
+    .map((s: any) => {
+      const [sh, sm] = (s.start as string).split(":").map(Number);
+      const [eh, em] = (s.end as string).split(":").map(Number);
+      return { start: sh * 60 + sm, end: eh * 60 + em };
+    })
+    .sort((a: any, b: any) => a.start - b.start);
+
+  const zones: { topPx: number; heightPx: number }[] = [];
+  if (shifts[0].start > 0)
+    zones.push({ topPx: 0, heightPx: toPx(shifts[0].start) });
+  for (let i = 0; i < shifts.length - 1; i++) {
+    if (shifts[i].end < shifts[i + 1].start)
+      zones.push({
+        topPx: toPx(shifts[i].end),
+        heightPx: toPx(shifts[i + 1].start - shifts[i].end),
+      });
+  }
+  const last = shifts[shifts.length - 1];
+  if (last.end < 24 * 60)
+    zones.push({ topPx: toPx(last.end), heightPx: toPx(24 * 60 - last.end) });
+  return zones;
+}
+
+/** Returns the shift label for the header badge, e.g. "9:00 AM – 5:00 PM" or null if not working */
+function getShiftLabel(employee: any, dateStr: string): string | null {
+  const dayName = DAY_NAMES[new Date(dateStr + "T12:00:00").getDay()];
+  const daySched = (employee.availability_schedule ?? []).find(
+    (s: any) => (s.day_of_week ?? "").toLowerCase() === dayName,
+  );
+  if (!daySched?.is_working || !daySched.shifts?.length) return null;
+  const fmt = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    const ap = h >= 12 ? "PM" : "AM";
+    const hr = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${hr}:${m.toString().padStart(2, "0")} ${ap}`;
+  };
+  const s = daySched.shifts[0];
+  return `${fmt(s.start)} – ${fmt(s.end)}`;
+}
+
+function UnavailableZone({
+  topPx,
+  heightPx,
+}: {
+  topPx: number;
+  heightPx: number;
+}) {
+  return (
+    <div
+      className="absolute left-0 right-0"
+      style={{
+        top: topPx,
+        height: heightPx,
+        zIndex: 4,
+        cursor: "not-allowed",
+        backgroundColor: "rgba(0,0,0,0.45)",
+        backgroundImage:
+          "repeating-linear-gradient(45deg,rgba(255,255,255,0.018) 0px,rgba(255,255,255,0.018) 1px,transparent 1px,transparent 6px)",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    />
+  );
+}
+
+// ─── Employee Column (DayView per-employee column with hover indicator) ────────
+
+function EmployeeColumn({
+  col,
+  date,
+  bookings,
+  blockedTimes,
+  mode,
+  onBookingClick,
+  onBlockedTimeClick,
+  onSlotClick,
+}: {
+  col: any;
+  date: Date;
+  bookings: any[];
+  blockedTimes: any[];
+  mode: CalendarMode;
+  onBookingClick: (b: any) => void;
+  onBlockedTimeClick: (entry: any) => void;
+  onSlotClick?: (slot: SlotClick) => void;
+}) {
+  const [hoverY, setHoverY] = useState<number | null>(null);
+
+  const unavailableZones =
+    mode === "employee" ? getUnavailableZones(col, fmtISO(date)) : [];
+
+  const yToLabel = (y: number) => {
+    const totalMin = Math.max(0, Math.floor((y / HOUR_H) * 60));
+    const snapped = Math.round(totalMin / 15) * 15;
+    const h = Math.floor(snapped / 60) % 24;
+    const m = snapped % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  };
+
+  return (
+    <div
+      className="relative flex-1 border-r border-[#162640] last:border-r-0 cursor-crosshair"
+      onMouseMove={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setHoverY(e.clientY - rect.top);
+      }}
+      onMouseLeave={() => setHoverY(null)}
+      onClick={(e) => {
+        if (!onSlotClick) return;
+        if ((e.target as Element).closest("button")) return;
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        const totalMin = Math.floor((y / HOUR_H) * 60);
+        const snapped = Math.round(totalMin / 15) * 15;
+        const t = new Date(date);
+        t.setHours(Math.floor(snapped / 60), snapped % 60, 0, 0);
+        onSlotClick({ time: t, date, column: col, x: e.clientX, y: e.clientY });
+      }}>
+      <GridLines />
+
+      {bookings.map((b) => (
+        <EventBlock
+          key={b._id}
+          booking={b}
+          mode={mode}
+          onClick={() => onBookingClick(b)}
+        />
+      ))}
+
+      {mode === "employee" &&
+        blockedTimes.map((bt) => (
+          <BlockedTimeBlock
+            key={bt._id}
+            entry={bt}
+            onDelete={onBlockedTimeClick}
+          />
+        ))}
+
+      {unavailableZones.map((zone, i) => (
+        <UnavailableZone key={i} topPx={zone.topPx} heightPx={zone.heightPx} />
+      ))}
+
+      {/* Hover time indicator — shows on all zones */}
+      {hoverY !== null && (
+        <div
+          className="absolute left-0 right-0 flex items-center pointer-events-none"
+          style={{ top: hoverY - 9, zIndex: 20 }}>
+          <span className="text-[10px] font-mono bg-[#1a3060] border border-[#6B5CE7]/50 text-blue-200 px-1.5 py-0.5 rounded-sm whitespace-nowrap ml-0.5 shadow">
+            {yToLabel(hoverY)}
+          </span>
+          <div className="flex-1 h-px bg-[#6B5CE7]/25" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Day View ─────────────────────────────────────────────────────────────────
 
 function DayView({
@@ -934,6 +1225,13 @@ function DayView({
     return map;
   }, [blockedTimes, columns]);
 
+  const allNotWorking =
+    mode === "employee" &&
+    columns.length > 0 &&
+    columns.every((col) => getShiftLabel(col, fmtISO(date)) === null);
+
+  if (allNotWorking) return <NoScheduleState />;
+
   return (
     <>
       {/* Column headers — sticky below toolbar */}
@@ -944,22 +1242,39 @@ function DayView({
           className="shrink-0 border-r border-[#162640]"
           style={{ width: GUTTER_W }}
         />
-        {columns.map((col) => (
-          <div
-            key={col._id}
-            className="flex-1 border-r border-[#162640] last:border-r-0">
-            <ColumnAvatar
-              name={col.full_name || col.name}
-              photo={col.employee_photo}
-              color={
-                mode === "employee"
-                  ? col.calendar_color
-                  : resourceColor(col._id)
-              }
-              subtitle={col.job_title || col.service_type}
-            />
-          </div>
-        ))}
+        {columns.map((col) => {
+          const shiftLabel =
+            mode === "employee" ? getShiftLabel(col, fmtISO(date)) : null;
+          return (
+            <div
+              key={col._id}
+              className="flex-1 border-r border-[#162640] last:border-r-0">
+              <ColumnAvatar
+                name={col.full_name || col.name}
+                photo={col.employee_photo}
+                color={
+                  mode === "employee"
+                    ? col.calendar_color
+                    : resourceColor(col._id)
+                }
+                subtitle={col.job_title || col.service_type}
+              />
+              {mode === "employee" && (
+                <div className="px-2 pb-2 flex justify-center">
+                  {shiftLabel ? (
+                    <span className="text-[9px] font-medium text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-2 py-0.5 whitespace-nowrap">
+                      {shiftLabel}
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-medium text-gray-500 bg-gray-500/10 border border-gray-500/20 rounded-full px-2 py-0.5 whitespace-nowrap">
+                      Not working today
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
         {columns.length === 0 && (
           <div className="flex-1 flex items-center justify-center py-4">
             <p className="text-xs text-gray-600">
@@ -975,46 +1290,17 @@ function DayView({
 
         {columns.length > 0 ? (
           columns.map((col) => (
-            <div
+            <EmployeeColumn
               key={col._id}
-              className="relative flex-1 border-r border-[#162640] last:border-r-0 cursor-crosshair"
-              onClick={(e) => {
-                if (!onSlotClick) return;
-                if ((e.target as Element).closest("button")) return;
-                const rect = (
-                  e.currentTarget as HTMLElement
-                ).getBoundingClientRect();
-                const y = e.clientY - rect.top;
-                const totalMin = Math.floor((y / HOUR_H) * 60);
-                const snapped = Math.round(totalMin / 15) * 15;
-                const t = new Date(date);
-                t.setHours(Math.floor(snapped / 60), snapped % 60, 0, 0);
-                onSlotClick({
-                  time: t,
-                  date,
-                  column: col,
-                  x: e.clientX,
-                  y: e.clientY,
-                });
-              }}>
-              <GridLines />
-              {(bookingsByColumn[col._id] || []).map((b) => (
-                <EventBlock
-                  key={b._id}
-                  booking={b}
-                  mode={mode}
-                  onClick={() => onBookingClick(b)}
-                />
-              ))}
-              {mode === "employee" &&
-                (blockedByColumn[col._id] || []).map((bt) => (
-                  <BlockedTimeBlock
-                    key={bt._id}
-                    entry={bt}
-                    onDelete={onBlockedTimeClick}
-                  />
-                ))}
-            </div>
+              col={col}
+              date={date}
+              bookings={bookingsByColumn[col._id] || []}
+              blockedTimes={blockedByColumn[col._id] || []}
+              mode={mode}
+              onBookingClick={onBookingClick}
+              onBlockedTimeClick={onBlockedTimeClick}
+              onSlotClick={onSlotClick}
+            />
           ))
         ) : (
           <div className="relative flex-1">
@@ -1343,6 +1629,30 @@ function AppointmentModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Annotate each employee with shift+service availability for the current form values
+  const annotatedEmployees = useMemo(
+    () =>
+      employees.map((emp) => ({
+        ...emp,
+        _shiftOk: empCanTakeSlot(
+          emp,
+          form.date,
+          form.start_time,
+          form.duration,
+        ),
+        _serviceOk: selectedService
+          ? empCanDoService(emp, selectedService._id)
+          : true,
+      })),
+    [employees, form.date, form.start_time, form.duration, selectedService],
+  );
+
+  const selectedEmpAvailable = useMemo(() => {
+    if (!form.employee_id) return true; // "any available" — backend decides
+    const emp = annotatedEmployees.find((e) => e._id === form.employee_id);
+    return emp ? emp._shiftOk && emp._serviceOk : true;
+  }, [form.employee_id, annotatedEmployees]);
+
   const filteredServices = useMemo(() => {
     const q = search.toLowerCase();
     return services.filter(
@@ -1371,6 +1681,12 @@ function AppointmentModal({
   const handleSubmit = async () => {
     if (!selectedService || !form.start_time || !form.date) {
       setError("Please select a service, date and start time.");
+      return;
+    }
+    if (form.employee_id && !selectedEmpAvailable) {
+      setError(
+        "This employee is not available at the selected time. Please choose a different employee or time.",
+      );
       return;
     }
     setLoading(true);
@@ -1499,12 +1815,21 @@ function AppointmentModal({
                 }
                 className={cn(inputCls, "text-xs")}>
                 <option value="">Any available</option>
-                {employees.map((emp) => (
-                  <option key={emp._id} value={emp._id}>
-                    {emp.full_name}
-                  </option>
-                ))}
+                {annotatedEmployees.map((emp) => {
+                  const ok = emp._shiftOk && emp._serviceOk;
+                  return (
+                    <option key={emp._id} value={emp._id} disabled={!ok}>
+                      {emp.full_name}
+                      {!ok ? " (unavailable)" : ""}
+                    </option>
+                  );
+                })}
               </select>
+              {form.employee_id && !selectedEmpAvailable && (
+                <p className="text-[10px] text-amber-400 flex items-center gap-1 mt-1">
+                  <span>⚠</span> Not available at this time or for this service
+                </p>
+              )}
             </div>
 
             {/* Notes */}
@@ -1893,6 +2218,9 @@ function MobileDayTabs({
 // ─── Main Calendar ────────────────────────────────────────────────────────────
 
 export default function Calendar() {
+  const [panelView, setPanelView] = useState<"calendar" | "reservations">(
+    "calendar",
+  );
   const [view, setView] = useState<CalendarView>("day");
   const [mode, setMode] = useState<CalendarMode>("employee");
   const [currentDate, setCurrentDate] = useState(() => {
@@ -2065,89 +2393,129 @@ export default function Calendar() {
         }}>
         {/* Left */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={goToday}
-            className="px-3 py-1.5 text-sm font-semibold text-white bg-[#0d2040] border border-[#1a3a60] rounded-full hover:bg-[#142840] transition-colors">
-            Today
-          </button>
-          <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full overflow-hidden">
+          {/* Calendar / Reservations toggle */}
+          <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
             <button
-              onClick={goPrev}
-              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#142840] transition-colors">
-              <ChevronLeft size={15} />
+              onClick={() => setPanelView("calendar")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                panelView === "calendar"
+                  ? "bg-[#6B5CE7] text-white"
+                  : "text-gray-400 hover:text-white",
+              )}>
+              <CalendarDays size={12} />
+              <span className="hidden sm:inline">Calendar</span>
             </button>
-            <span className="text-sm font-semibold text-white px-2 min-w-[110px] md:min-w-[160px] text-center">
-              {dateLabel}
-            </span>
             <button
-              onClick={goNext}
-              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#142840] transition-colors">
-              <ChevronRight size={15} />
+              onClick={() => setPanelView("reservations")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                panelView === "reservations"
+                  ? "bg-[#6B5CE7] text-white"
+                  : "text-gray-400 hover:text-white",
+              )}>
+              <LayoutList size={12} />
+              <span className="hidden sm:inline">Reservations</span>
             </button>
           </div>
+
+          {panelView === "calendar" && (
+            <>
+              <button
+                onClick={goToday}
+                className="px-3 py-1.5 text-sm font-semibold text-white bg-[#0d2040] border border-[#1a3a60] rounded-full hover:bg-[#142840] transition-colors">
+                Today
+              </button>
+              <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full overflow-hidden">
+                <button
+                  onClick={goPrev}
+                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#142840] transition-colors">
+                  <ChevronLeft size={15} />
+                </button>
+                <span className="text-sm font-semibold text-white px-2 min-w-[110px] md:min-w-[160px] text-center">
+                  {dateLabel}
+                </span>
+                <button
+                  onClick={goNext}
+                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#142840] transition-colors">
+                  <ChevronRight size={15} />
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
-        <div className="hidden sm:block">
-          <TeamFilterDropdown
-            employees={allEmployees}
-            services={resourceServices}
-            mode={mode}
-            selectedId={filterId}
-            onSelect={setFilterId}
-          />
-        </div>
+        {panelView === "calendar" && (
+          <div className="hidden sm:block">
+            <TeamFilterDropdown
+              employees={allEmployees}
+              services={resourceServices}
+              mode={mode}
+              selectedId={filterId}
+              onSelect={setFilterId}
+            />
+          </div>
+        )}
 
         <div className="flex-1" />
 
         {/* Right */}
         <div className="flex items-center gap-1.5">
-          <div className="hidden sm:flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
-            {(["employee", "resource"] as CalendarMode[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => {
-                  setMode(m);
-                  setFilterId(null);
-                }}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                  mode === m
-                    ? "bg-[#6B5CE7] text-white"
-                    : "text-gray-400 hover:text-white",
-                )}>
-                {m === "employee" ? <Users size={12} /> : <Package size={12} />}
-                <span className="hidden md:inline">
-                  {m === "employee" ? "Team" : "Resources"}
-                </span>
-              </button>
-            ))}
-          </div>
+          {panelView === "calendar" && (
+            <>
+              <div className="hidden sm:flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
+                {(["employee", "resource"] as CalendarMode[]).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => {
+                      setMode(m);
+                      setFilterId(null);
+                    }}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                      mode === m
+                        ? "bg-[#6B5CE7] text-white"
+                        : "text-gray-400 hover:text-white",
+                    )}>
+                    {m === "employee" ? (
+                      <Users size={12} />
+                    ) : (
+                      <Package size={12} />
+                    )}
+                    <span className="hidden md:inline">
+                      {m === "employee" ? "Team" : "Resources"}
+                    </span>
+                  </button>
+                ))}
+              </div>
 
-          <button
-            onClick={() => refetch()}
-            disabled={bookingLoading}
-            className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1a3a60] text-gray-400 hover:text-white hover:bg-[#0d2040] transition-colors">
-            <RefreshCw
-              size={13}
-              className={cn(bookingLoading && "animate-spin")}
-            />
-          </button>
-
-          <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
-            {(["day", "week"] as CalendarView[]).map((v) => (
               <button
-                key={v}
-                onClick={() => setView(v)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors capitalize",
-                  view === v
-                    ? "bg-white text-[#060f1a]"
-                    : "text-gray-400 hover:text-white",
-                )}>
-                {v}
+                onClick={() => refetch()}
+                disabled={bookingLoading}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1a3a60] text-gray-400 hover:text-white hover:bg-[#0d2040] transition-colors">
+                <RefreshCw
+                  size={13}
+                  className={cn(bookingLoading && "animate-spin")}
+                />
               </button>
-            ))}
-          </div>
+
+              <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
+                {(["day", "week"] as CalendarView[]).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors capitalize",
+                      view === v
+                        ? "bg-white text-[#060f1a]"
+                        : "text-gray-400 hover:text-white",
+                    )}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           <AddDropdown
             onAddAppointment={() => openAppointmentModal()}
@@ -2157,35 +2525,37 @@ export default function Calendar() {
       </div>
 
       {/* ── Mobile: mode + filter bar ── */}
-      <div className="sm:hidden flex items-center gap-2 px-3 py-2 border-b border-[#162640] bg-[#060f1a]">
-        <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
-          {(["employee", "resource"] as CalendarMode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => {
-                setMode(m);
-                setFilterId(null);
-              }}
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-colors",
-                mode === m ? "bg-[#6B5CE7] text-white" : "text-gray-400",
-              )}>
-              {m === "employee" ? <Users size={11} /> : <Package size={11} />}
-              {m === "employee" ? "Team" : "Resources"}
-            </button>
-          ))}
+      {panelView === "calendar" && (
+        <div className="sm:hidden flex items-center gap-2 px-3 py-2 border-b border-[#162640] bg-[#060f1a]">
+          <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
+            {(["employee", "resource"] as CalendarMode[]).map((m) => (
+              <button
+                key={m}
+                onClick={() => {
+                  setMode(m);
+                  setFilterId(null);
+                }}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-colors",
+                  mode === m ? "bg-[#6B5CE7] text-white" : "text-gray-400",
+                )}>
+                {m === "employee" ? <Users size={11} /> : <Package size={11} />}
+                {m === "employee" ? "Team" : "Resources"}
+              </button>
+            ))}
+          </div>
+          <TeamFilterDropdown
+            employees={allEmployees}
+            services={resourceServices}
+            mode={mode}
+            selectedId={filterId}
+            onSelect={setFilterId}
+          />
         </div>
-        <TeamFilterDropdown
-          employees={allEmployees}
-          services={resourceServices}
-          mode={mode}
-          selectedId={filterId}
-          onSelect={setFilterId}
-        />
-      </div>
+      )}
 
       {/* ── Week mobile day tabs ── */}
-      {view === "week" && (
+      {panelView === "calendar" && view === "week" && (
         <MobileDayTabs
           weekDays={weekDays}
           selectedIdx={mobileDayIdx}
@@ -2197,62 +2567,68 @@ export default function Calendar() {
       )}
 
       {/* ── Loading ── */}
-      {(bookingLoading || empLoading) && (
+      {panelView === "calendar" && (bookingLoading || empLoading) && (
         <div className="flex items-center justify-center py-3 gap-2 border-b border-[#162640]">
           <Loader2 size={14} className="animate-spin text-[#6B5CE7]" />
           <span className="text-xs text-gray-500">Loading bookings…</span>
         </div>
       )}
 
-      {/* ── Calendar grid — desktop ── */}
-      <div className="hidden sm:block">
-        {view === "day" ? (
-          <DayView
-            date={currentDate}
-            columns={columns}
-            bookings={allBookings}
-            blockedTimes={blockedTimes}
-            mode={mode}
-            onBookingClick={setSelectedBooking}
-            onBlockedTimeClick={setDeletingBlock}
-            onSlotClick={setSlotClick}
-          />
-        ) : (
-          <WeekView
-            weekDays={weekDays}
-            bookings={allBookings}
-            blockedTimes={blockedTimes}
-            mode={mode}
-            onBookingClick={setSelectedBooking}
-            onBlockedTimeClick={setDeletingBlock}
-            onSlotClick={setSlotClick}
-          />
-        )}
-      </div>
+      {panelView === "reservations" ? (
+        <Reservation />
+      ) : (
+        <>
+          {/* ── Calendar grid — desktop ── */}
+          <div className="hidden sm:block">
+            {view === "day" ? (
+              <DayView
+                date={currentDate}
+                columns={columns}
+                bookings={allBookings}
+                blockedTimes={blockedTimes}
+                mode={mode}
+                onBookingClick={setSelectedBooking}
+                onBlockedTimeClick={setDeletingBlock}
+                onSlotClick={setSlotClick}
+              />
+            ) : (
+              <WeekView
+                weekDays={weekDays}
+                bookings={allBookings}
+                blockedTimes={blockedTimes}
+                mode={mode}
+                onBookingClick={setSelectedBooking}
+                onBlockedTimeClick={setDeletingBlock}
+                onSlotClick={setSlotClick}
+              />
+            )}
+          </div>
 
-      {/* ── Calendar grid — mobile (single day always) ── */}
-      <div className="sm:hidden">
-        <DayView
-          date={view === "week" ? mobileDate : currentDate}
-          columns={columns}
-          bookings={allBookings.filter((b) =>
-            sameDay(
-              new Date(b.start_time),
-              view === "week" ? mobileDate : currentDate,
-            ),
-          )}
-          blockedTimes={blockedTimes.filter((bt) =>
-            sameDay(
-              new Date(bt.start_time),
-              view === "week" ? mobileDate : currentDate,
-            ),
-          )}
-          mode={mode}
-          onBookingClick={setSelectedBooking}
-          onBlockedTimeClick={setDeletingBlock}
-          onSlotClick={setSlotClick}
-        />
-      </div>
+          {/* ── Calendar grid — mobile (single day always) ── */}
+          <div className="sm:hidden">
+            <DayView
+              date={view === "week" ? mobileDate : currentDate}
+              columns={columns}
+              bookings={allBookings.filter((b) =>
+                sameDay(
+                  new Date(b.start_time),
+                  view === "week" ? mobileDate : currentDate,
+                ),
+              )}
+              blockedTimes={blockedTimes.filter((bt) =>
+                sameDay(
+                  new Date(bt.start_time),
+                  view === "week" ? mobileDate : currentDate,
+                ),
+              )}
+              mode={mode}
+              onBookingClick={setSelectedBooking}
+              onBlockedTimeClick={setDeletingBlock}
+              onSlotClick={setSlotClick}
+            />
+          </div>
+        </>
+      )}
 
       {/* ── Slot context menu ── */}
       {slotClick && (

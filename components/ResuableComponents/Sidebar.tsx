@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   Calendar,
-  ClipboardList,
   Tag,
   BookOpen,
   Megaphone,
@@ -33,7 +32,6 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: Calendar, label: "Calendar", href: "/dashboard/calendar" },
-  { icon: ClipboardList, label: "Reservations", href: "/dashboard/reservations" },
   { icon: Tag, label: "Deals", href: "/dashboard/deals" },
   { icon: Smile, label: "Clients", href: "/dashboard/clients" },
   {
