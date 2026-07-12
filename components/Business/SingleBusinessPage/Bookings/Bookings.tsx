@@ -178,7 +178,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     finalDuration,
   );
 
-  // When the time step opens and today has no remaining slots, advance to tomorrow.
   useEffect(() => {
     if (
       currentStep === "time" &&
