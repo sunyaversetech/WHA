@@ -62,7 +62,7 @@ export default function EventsBackend() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto overflow-hidden">
+    <div className="space-y-6  mx-auto overflow-hidden">
       <div className="flex items-center justify-between no-scrollbar ">
         <ChevronLeft
           onClick={() => router.back()}

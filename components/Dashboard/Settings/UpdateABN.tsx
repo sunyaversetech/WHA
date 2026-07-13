@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { z } from "zod";
 
@@ -108,7 +108,7 @@ export function ABNUpdateForm() {
 
         <Button
           type="submit"
-          className="w-full bg-blue-950 hover:bg-blue-900"
+          className="w-full bg-[#051e3a] hover:bg-[#082040]"
           disabled={isUpdating || !form.formState.isDirty}>
           {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Update ABN

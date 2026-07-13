@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import {
@@ -44,7 +44,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const RESOURCE_PALETTE = [
-  "#6B5CE7",
+  "#051e3a",
   "#0ea5e9",
   "#10b981",
   "#f59e0b",
@@ -227,7 +227,7 @@ function ColumnAvatar({
           </span>
         )}
       </div>
-      <p className="text-xs font-semibold text-white leading-tight text-center truncate max-w-[130px]">
+      <p className="text-xs font-semibold text-gray-900 leading-tight text-center truncate max-w-[130px]">
         {name}
       </p>
       {subtitle && (
@@ -265,7 +265,7 @@ function BlockedTimeBlock({
         height,
         zIndex: 6,
       }}
-      className="rounded-md px-1.5 text-left overflow-hidden text-gray-300 border border-dashed border-gray-500/60 bg-gray-800/60 hover:bg-gray-700/70 transition-colors group">
+      className="rounded-md px-1.5 text-left overflow-hidden text-gray-600 border border-dashed border-gray-500/60 bg-gray-800/60 hover:bg-gray-700/70 transition-colors group">
       <div className="flex items-center gap-1">
         <Ban size={9} className="shrink-0 text-gray-400" />
         <p className="text-[10px] font-semibold leading-tight truncate">
@@ -366,7 +366,7 @@ const STATUS_STYLES: Record<string, { badge: string; label: string }> = {
     label: "Cancelled",
   },
   no_show: {
-    badge: "bg-gray-500/20 text-gray-300 border border-gray-500/30",
+    badge: "bg-gray-500/20 text-gray-600 border border-gray-500/30",
     label: "No Show",
   },
 };
@@ -516,13 +516,13 @@ function BookingDetailPanel({
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end bg-black/40 p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-[#0a1929] border border-[#0e3258] rounded-t-2xl sm:rounded-2xl w-full sm:w-84 shadow-2xl overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-t-2xl sm:rounded-2xl w-full sm:w-84 shadow-2xl overflow-hidden">
         <div className="h-1.5 w-full" style={{ background: color }} />
         <div className="p-4">
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-base font-bold text-gray-900">
                 {service?.name || "Booking"}
               </h3>
               <p className="text-xs text-gray-400 mt-0.5">
@@ -535,7 +535,7 @@ function BookingDetailPanel({
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white p-1">
+              className="text-gray-400 hover:text-gray-900 p-1">
               <X size={16} />
             </button>
           </div>
@@ -544,7 +544,7 @@ function BookingDetailPanel({
           <div className="space-y-2.5">
             <div className="flex items-center gap-2.5">
               <Clock size={13} className="text-gray-400 shrink-0" />
-              <p className="text-sm text-white">
+              <p className="text-sm text-gray-900">
                 {fmtTime(start)} – {fmtTime(end)}
                 <span className="text-gray-400 ml-1.5">
                   · {booking.duration} min
@@ -555,7 +555,7 @@ function BookingDetailPanel({
               <div className="flex items-center gap-2.5">
                 <User size={13} className="text-gray-400 shrink-0" />
                 <div>
-                  <p className="text-sm text-white">
+                  <p className="text-sm text-gray-900">
                     {customer.name || "Walk-in"}
                   </p>
                   {customer.email && (
@@ -567,12 +567,12 @@ function BookingDetailPanel({
             {employee && (
               <div className="flex items-center gap-2.5">
                 <Users size={13} className="text-gray-400 shrink-0" />
-                <p className="text-sm text-white">
+                <p className="text-sm text-gray-900">
                   {employee.full_name}
                   {isEmployeeBased && (
                     <button
                       onClick={() => setShowReassign((v) => !v)}
-                      className="ml-2 text-[11px] text-[#6B5CE7] hover:underline">
+                      className="ml-2 text-[11px] text-[#051e3a] hover:underline">
                       Reassign
                     </button>
                   )}
@@ -582,7 +582,7 @@ function BookingDetailPanel({
             {service && (
               <div className="flex items-center gap-2.5">
                 <Package size={13} className="text-gray-400 shrink-0" />
-                <p className="text-sm text-white">
+                <p className="text-sm text-gray-900">
                   {service.name}
                   {booking.total_price != null && (
                     <span className="text-gray-400 ml-1.5">
@@ -614,7 +614,7 @@ function BookingDetailPanel({
             </div>
 
             {booking.notes && (
-              <p className="text-xs text-gray-400 bg-[#0d2d4e] rounded-lg p-2.5 leading-relaxed">
+              <p className="text-xs text-gray-400 bg-gray-100 rounded-lg p-2.5 leading-relaxed">
                 {booking.notes}
               </p>
             )}
@@ -622,14 +622,14 @@ function BookingDetailPanel({
 
           {/* Reassign employee inline */}
           {showReassign && isEmployeeBased && (
-            <div className="mt-4 pt-4 border-t border-[#1a3a60] space-y-2.5">
+            <div className="mt-4 pt-4 border-t border-gray-200 space-y-2.5">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                 Reassign Employee
               </p>
               <select
                 value={selectedEmpId}
                 onChange={(e) => setSelectedEmpId(e.target.value)}
-                className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7]">
+                className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#051e3a]">
                 <option value="">Unassigned</option>
                 {eligibleEmployees.length > 0 ? (
                   eligibleEmployees.map((emp) => (
@@ -652,13 +652,13 @@ function BookingDetailPanel({
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowReassign(false)}
-                  className="flex-1 py-1.5 text-xs font-semibold text-gray-400 border border-[#1a3a60] rounded-lg hover:bg-[#0d2040]">
+                  className="flex-1 py-1.5 text-xs font-semibold text-gray-400 border border-gray-200 rounded-lg hover:bg-gray-50">
                   Cancel
                 </button>
                 <button
                   onClick={handleReassign}
                   disabled={reassignLoading}
-                  className="flex-1 py-1.5 text-xs font-bold bg-[#6B5CE7] text-white rounded-lg hover:bg-[#5a4cd1] disabled:opacity-50 flex items-center justify-center gap-1">
+                  className="flex-1 py-1.5 text-xs font-bold bg-[#051e3a] text-white rounded-lg hover:bg-[#082040] disabled:opacity-50 flex items-center justify-center gap-1">
                   {reassignLoading && (
                     <Loader2 size={11} className="animate-spin" />
                   )}
@@ -670,7 +670,7 @@ function BookingDetailPanel({
 
           {/* Reschedule form */}
           {showReschedule && (
-            <div className="mt-4 pt-4 border-t border-[#1a3a60] space-y-2.5">
+            <div className="mt-4 pt-4 border-t border-gray-200 space-y-2.5">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                 Reschedule Appointment
               </p>
@@ -685,7 +685,7 @@ function BookingDetailPanel({
                     onChange={(e) =>
                       setRescheduleForm((f) => ({ ...f, date: e.target.value }))
                     }
-                    className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7]"
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#051e3a]"
                   />
                 </div>
                 <div>
@@ -698,20 +698,20 @@ function BookingDetailPanel({
                     onChange={(e) =>
                       setRescheduleForm((f) => ({ ...f, time: e.target.value }))
                     }
-                    className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7]"
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#051e3a]"
                   />
                 </div>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowReschedule(false)}
-                  className="flex-1 py-1.5 text-xs font-semibold text-gray-400 border border-[#1a3a60] rounded-lg hover:bg-[#0d2040]">
+                  className="flex-1 py-1.5 text-xs font-semibold text-gray-400 border border-gray-200 rounded-lg hover:bg-gray-50">
                   Cancel
                 </button>
                 <button
                   onClick={handleReschedule}
                   disabled={rescheduleLoading}
-                  className="flex-1 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-1">
+                  className="flex-1 py-1.5 text-xs font-bold bg-purple-600 text-gray-900 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-1">
                   {rescheduleLoading && (
                     <Loader2 size={11} className="animate-spin" />
                   )}
@@ -723,7 +723,7 @@ function BookingDetailPanel({
 
           {/* Status change actions */}
           {!showReschedule && nextStatuses.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-[#1a3a60]">
+            <div className="mt-4 pt-4 border-t border-gray-200">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2.5">
                 Update Status
               </p>
@@ -731,11 +731,11 @@ function BookingDetailPanel({
                 {nextStatuses.map((st) => {
                   const info = STATUS_STYLES[st];
                   const actionColors: Record<string, string> = {
-                    confirmed: "bg-blue-600 hover:bg-blue-700 text-white",
-                    rescheduled: "bg-purple-600 hover:bg-purple-700 text-white",
-                    cancelled: "bg-red-600 hover:bg-red-700 text-white",
-                    no_show: "bg-gray-600 hover:bg-gray-700 text-white",
-                    completed: "bg-emerald-600 hover:bg-emerald-700 text-white",
+                    confirmed: "bg-[#051e3a] hover:bg-[#082040] text-white",
+                    rescheduled: "bg-[#051e3a] hover:bg-[#082040] text-white",
+                    cancelled: "bg-[#051e3a] hover:bg-[#082040] text-white",
+                    no_show: "bg-[#051e3a] hover:bg-[#082040] text-white",
+                    completed: "bg-[#051e3a] hover:bg-[#082040] text-white",
                   };
                   return (
                     <button
@@ -751,7 +751,7 @@ function BookingDetailPanel({
                       className={cn(
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50",
                         actionColors[st] ||
-                          "bg-gray-700 hover:bg-gray-600 text-white",
+                          "bg-gray-700 hover:bg-gray-600 text-gray-900",
                       )}>
                       {statusLoading === st && (
                         <Loader2 size={11} className="animate-spin" />
@@ -794,7 +794,7 @@ function CurrentTimeIndicator() {
         zIndex: 10,
       }}
       className="pointer-events-none flex items-center">
-      <div className="bg-red-500 text-white text-[9px] font-bold px-1 py-0.5 rounded shrink-0 ml-1">
+      <div className="bg-red-500 text-gray-900 text-[9px] font-bold px-1 py-0.5 rounded shrink-0 ml-1">
         {fmtTime(now)}
       </div>
       <div className="flex-1 h-[1.5px] bg-red-500" />
@@ -841,12 +841,12 @@ function TeamFilterDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0e1f35] border border-[#1a3a60] text-sm font-semibold text-white hover:bg-[#142840] transition-colors">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 text-sm font-semibold text-gray-900 hover:bg-gray-100 transition-colors">
         {label}
         <ChevronDown size={13} className="text-gray-400" />
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-2 bg-[#0a1929] border border-[#1a3a60] rounded-xl shadow-2xl py-1.5 min-w-[180px] z-40 max-h-60 overflow-y-auto">
+        <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl py-1.5 min-w-[180px] z-40 max-h-60 overflow-y-auto">
           <button
             onClick={() => {
               onSelect(null);
@@ -855,12 +855,12 @@ function TeamFilterDropdown({
             className={cn(
               "w-full text-left px-3.5 py-2 text-sm transition-colors",
               selectedId === null
-                ? "text-[#6B5CE7] font-semibold"
-                : "text-white hover:bg-[#0d2d4e]",
+                ? "text-[#051e3a] font-semibold"
+                : "text-gray-900 hover:bg-gray-100",
             )}>
             {mode === "employee" ? "All team" : "All resources"}
           </button>
-          <div className="h-px bg-[#1a3a60] mx-2 my-1" />
+          <div className="h-px bg-gray-100 mx-2 my-1" />
           {items.map((item) => (
             <button
               key={item._id}
@@ -871,8 +871,8 @@ function TeamFilterDropdown({
               className={cn(
                 "w-full text-left px-3.5 py-2 text-sm transition-colors flex items-center gap-2",
                 selectedId === item._id
-                  ? "text-[#6B5CE7] font-semibold"
-                  : "text-white hover:bg-[#0d2d4e]",
+                  ? "text-[#051e3a] font-semibold"
+                  : "text-gray-900 hover:bg-gray-100",
               )}>
               {mode === "employee" ? (
                 <div
@@ -881,7 +881,7 @@ function TeamFilterDropdown({
                   {getInitials(item.full_name)}
                 </div>
               ) : (
-                <div className="w-5 h-5 rounded flex items-center justify-center shrink-0 bg-[#1a3a60]">
+                <div className="w-5 h-5 rounded flex items-center justify-center shrink-0 bg-gray-100">
                   {item.service_type === "group_session" ? (
                     <CalendarDays size={11} className="text-purple-400" />
                   ) : (
@@ -905,7 +905,7 @@ function TeamFilterDropdown({
 function TimeGutter() {
   return (
     <div
-      className="bg-[#060f1a] border-r border-[#162640] shrink-0"
+      className="bg-white border-r border-gray-200 shrink-0"
       style={{ position: "sticky", left: 0, zIndex: 15, width: GUTTER_W }}>
       {HOURS.map((h) => (
         <div
@@ -961,19 +961,19 @@ function GridLines() {
 
 function NoScheduleState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-5 py-20 px-6 text-center flex-1 min-h-[90vh]">
+    <div className="flex flex-col  items-center justify-center gap-5 py-20 px-6 text-center flex-1 min-h-[90vh]">
       {/* Icon: calendar + X badge */}
-      <div className="relative">
-        <div className="w-20 h-20 rounded-2xl bg-[#1a2a40] border border-[#1e3a60] flex items-center justify-center shadow-lg">
-          <CalendarDays size={38} className="text-[#6B5CE7]" />
+      <div className="relative ">
+        <div className="w-20 h-20 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center shadow-lg">
+          <CalendarDays size={38} className="text-[#051e3a]" />
         </div>
-        <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-[#0d1f35] border border-[#162640] flex items-center justify-center">
+        <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
           <X size={14} className="text-gray-400" />
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <h3 className="text-base font-bold text-white">
+        <h3 className="text-base font-bold text-gray-900">
           No scheduled team members
         </h3>
         <p className="text-xs text-gray-500 max-w-xs leading-relaxed">
@@ -984,12 +984,12 @@ function NoScheduleState() {
       <div className="flex items-center gap-3 mt-1">
         <Link
           href="/dashboard/employees?tab=schedule"
-          className="px-4 py-2 text-xs font-semibold text-white bg-[#0d2040] border border-[#1a3a60] rounded-full hover:bg-[#142840] hover:border-[#6B5CE7]/50 transition-colors">
+          className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-full hover:bg-gray-100 hover:border-[#051e3a]/50 transition-colors">
           Scheduled shifts
         </Link>
         <Link
           href="/dashboard/employees"
-          className="px-4 py-2 text-xs font-semibold text-white bg-white/10 border border-white/20 rounded-full hover:bg-white/15 transition-colors">
+          className="px-4 py-2 text-xs font-semibold text-gray-900 bg-white/10 border border-white/20 rounded-full hover:bg-white/15 transition-colors">
           View all team members
         </Link>
       </div>
@@ -1154,9 +1154,9 @@ function UnavailableZone({
         height: heightPx,
         zIndex: 4,
         cursor: "not-allowed",
-        backgroundColor: "rgba(0,0,0,0.45)",
+        backgroundColor: "rgba(0,0,0,0.06)",
         backgroundImage:
-          "repeating-linear-gradient(45deg,rgba(255,255,255,0.018) 0px,rgba(255,255,255,0.018) 1px,transparent 1px,transparent 6px)",
+          "repeating-linear-gradient(45deg,rgba(0,0,0,0.04) 0px,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 6px)",
       }}
       onClick={(e) => e.stopPropagation()}
     />
@@ -1201,7 +1201,7 @@ function EmployeeColumn({
 
   return (
     <div
-      className="relative flex-1 border-r border-[#162640] last:border-r-0 cursor-crosshair"
+      className="relative flex-1 border-r border-gray-200 last:border-r-0 cursor-crosshair"
       onMouseMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setHoverY(e.clientY - rect.top);
@@ -1247,10 +1247,10 @@ function EmployeeColumn({
         <div
           className="absolute left-0 right-0 flex items-center pointer-events-none"
           style={{ top: hoverY - 9, zIndex: 20 }}>
-          <span className="text-[10px] font-mono bg-[#1a3060] border border-[#6B5CE7]/50 text-blue-200 px-1.5 py-0.5 rounded-sm whitespace-nowrap ml-0.5 shadow">
+          <span className="text-[10px] font-mono bg-gray-100 border border-[#051e3a]/50 text-blue-200 px-1.5 py-0.5 rounded-sm whitespace-nowrap ml-0.5 shadow">
             {yToLabel(hoverY)}
           </span>
-          <div className="flex-1 h-px bg-[#6B5CE7]/25" />
+          <div className="flex-1 h-px bg-[#051e3a]/25" />
         </div>
       )}
     </div>
@@ -1322,10 +1322,10 @@ function DayView({
     <>
       {/* Column headers — sticky below toolbar */}
       <div
-        className="flex border-b border-[#162640] bg-[#060f1a]"
+        className="flex border-b border-gray-200 bg-white "
         style={{ position: "sticky", top: COL_HEADER_TOP, zIndex: 20 }}>
         <div
-          className="shrink-0 border-r border-[#162640]"
+          className="shrink-0 border-r border-gray-200"
           style={{ width: GUTTER_W }}
         />
         {columns.map((col) => {
@@ -1338,7 +1338,7 @@ function DayView({
           return (
             <div
               key={col._id}
-              className="flex-1 border-r border-[#162640] last:border-r-0">
+              className="flex-1 border-r border-gray-200 last:border-r-0">
               <ColumnAvatar
                 name={col.full_name || col.name}
                 photo={col.employee_photo}
@@ -1468,10 +1468,10 @@ function WeekView({
     <>
       {/* Day headers — sticky below toolbar */}
       <div
-        className="flex border-b border-[#162640] bg-[#060f1a]"
+        className="flex border-b border-gray-200 bg-white"
         style={{ position: "sticky", top: COL_HEADER_TOP, zIndex: 20 }}>
         <div
-          className="shrink-0 border-r border-[#162640]"
+          className="shrink-0 border-r border-gray-200"
           style={{ width: GUTTER_W }}
         />
         {weekDays.map((day, i) => {
@@ -1480,20 +1480,20 @@ function WeekView({
             <div
               key={i}
               className={cn(
-                "flex-1 py-3 text-center border-r border-[#162640] last:border-r-0",
-                todayFlag && "bg-[#6B5CE7]/5",
+                "flex-1 py-3 text-center border-r border-gray-200 last:border-r-0",
+                todayFlag && "bg-[#051e3a]/5",
               )}>
               <p
                 className={cn(
                   "text-xs font-semibold",
-                  todayFlag ? "text-[#6B5CE7]" : "text-gray-500",
+                  todayFlag ? "text-[#051e3a]" : "text-gray-500",
                 )}>
                 {DAY_SHORT[day.getDay()]}
               </p>
               <p
                 className={cn(
                   "text-lg font-bold mt-0.5 w-8 h-8 flex items-center justify-center rounded-full mx-auto",
-                  todayFlag ? "bg-[#6B5CE7] text-white" : "text-white",
+                  todayFlag ? "bg-[#051e3a] text-white" : "text-gray-900",
                 )}>
                 {day.getDate()}
               </p>
@@ -1512,8 +1512,8 @@ function WeekView({
             <div
               key={di}
               className={cn(
-                "relative flex-1 border-r border-[#162640] last:border-r-0 cursor-crosshair",
-                todayFlag && "bg-[#6B5CE7]/2",
+                "relative flex-1 border-r border-gray-200 last:border-r-0 cursor-crosshair",
+                todayFlag && "bg-[#051e3a]/2",
               )}
               onClick={(e) => {
                 if (!onSlotClick) return;
@@ -1589,20 +1589,20 @@ function AddDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-[#060f1a] text-sm font-bold hover:bg-gray-100 transition-colors">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#051e3a] text-white text-sm font-bold hover:bg-[#082040] transition-colors">
         <Plus size={14} />
         <span className="hidden sm:inline">Add</span>
         <ChevronDown size={12} />
       </button>
       {open && (
-        <div className="absolute top-full right-0 mt-2 bg-[#0a1929] border border-[#1a3a60] rounded-xl shadow-2xl py-1.5 w-52 z-50">
+        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl py-1.5 w-52 z-50">
           <button
             onClick={() => {
               onAddAppointment();
               setOpen(false);
             }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
-            <CalendarCheck size={14} className="text-[#6B5CE7]" />
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-100 transition-colors">
+            <CalendarCheck size={14} className="text-[#051e3a]" />
             Appointment
           </button>
           <button
@@ -1610,7 +1610,7 @@ function AddDropdown({
               onAddBlockedTime();
               setOpen(false);
             }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors">
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-100 transition-colors">
             <Ban size={14} className="text-red-400" />
             Blocked time
           </button>
@@ -1653,11 +1653,13 @@ function SlotContextMenu({
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
         ref={ref}
-        className="fixed z-50 bg-[#111827] border border-[#1e3a5f] rounded-xl shadow-2xl w-56 overflow-hidden"
+        className="fixed z-50 bg-gray-200 border border-indigo-200 rounded-xl shadow-2xl w-56 overflow-hidden"
         style={{ left: pos.x, top: pos.y }}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e3a5f]">
-          <span className="text-sm font-bold text-white">{timeStr}</span>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-indigo-200">
+          <span className="text-sm font-bold text-gray-900">{timeStr}</span>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-900">
             <X size={14} />
           </button>
         </div>
@@ -1667,8 +1669,8 @@ function SlotContextMenu({
               onAddAppointment();
               onClose();
             }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1e3a5f] transition-colors">
-            <CalendarCheck size={14} className="text-[#6B5CE7]" />
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-900 hover:bg-indigo-50 transition-colors">
+            <CalendarCheck size={14} className="text-[#051e3a]" />
             Add appointment
           </button>
           <button
@@ -1676,7 +1678,7 @@ function SlotContextMenu({
               onAddBlockedTime();
               onClose();
             }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#1e3a5f] transition-colors">
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-900 hover:bg-indigo-50 transition-colors">
             <Ban size={14} className="text-red-400" />
             Add blocked time
           </button>
@@ -1905,24 +1907,26 @@ function AppointmentWizard({
       {/* Centered wizard card */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="w-full max-w-xl bg-[#07111f] border border-[#0e3258] rounded-2xl shadow-2xl flex flex-col pointer-events-auto"
+          className="w-full max-w-xl bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col pointer-events-auto"
           style={{ maxHeight: "92vh" }}
           onClick={(e) => e.stopPropagation()}>
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#0e3258] shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
             <div className="flex items-center gap-2">
-              <CalendarCheck size={15} className="text-[#6B5CE7]" />
-              <h2 className="text-sm font-bold text-white">New Appointment</h2>
+              <CalendarCheck size={15} className="text-[#051e3a]" />
+              <h2 className="text-sm font-bold text-gray-900">
+                New Appointment
+              </h2>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5">
+              className="text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-lg hover:bg-white/5">
               <X size={17} />
             </button>
           </div>
 
           {/* Progress bar */}
-          <div className="flex items-center px-6 py-3 border-b border-[#0e3258] shrink-0 gap-0">
+          <div className="flex items-center px-6 py-3 border-b border-gray-200 shrink-0 gap-0">
             {stepSequence.map((step, i) => (
               <div
                 key={step}
@@ -1932,10 +1936,10 @@ function AppointmentWizard({
                     className={cn(
                       "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 transition-colors",
                       i < stepIdx
-                        ? "bg-[#6B5CE7] text-white"
+                        ? "bg-[#051e3a] text-white"
                         : i === stepIdx
-                          ? "bg-[#6B5CE7] text-white ring-2 ring-[#6B5CE7]/30"
-                          : "bg-[#0d2040] border border-[#1a3a60] text-gray-600",
+                          ? "bg-[#051e3a] text-white ring-2 ring-[#051e3a]/30"
+                          : "bg-gray-50 border border-gray-200 text-gray-600",
                     )}>
                     {i < stepIdx ? "✓" : i + 1}
                   </div>
@@ -1943,9 +1947,9 @@ function AppointmentWizard({
                     className={cn(
                       "text-[10px] font-medium hidden sm:block whitespace-nowrap",
                       i === stepIdx
-                        ? "text-white"
+                        ? "text-gray-900"
                         : i < stepIdx
-                          ? "text-[#6B5CE7]"
+                          ? "text-[#051e3a]"
                           : "text-gray-600",
                     )}>
                     {stepLabels[step]}
@@ -1955,7 +1959,7 @@ function AppointmentWizard({
                   <div
                     className={cn(
                       "flex-1 h-px mx-2",
-                      i < stepIdx ? "bg-[#6B5CE7]/50" : "bg-[#1a3a60]",
+                      i < stepIdx ? "bg-[#051e3a]/50" : "bg-gray-100",
                     )}
                   />
                 )}
@@ -1980,7 +1984,7 @@ function AppointmentWizard({
                     value={serviceSearch}
                     onChange={(e) => setServiceSearch(e.target.value)}
                     placeholder="Search services…"
-                    className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:border-[#6B5CE7] placeholder:text-gray-600"
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:border-[#051e3a] placeholder:text-gray-600"
                   />
                 </div>
                 {Object.keys(groupedServices).length === 0 ? (
@@ -2009,8 +2013,8 @@ function AppointmentWizard({
                                 className={cn(
                                   "w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center justify-between",
                                   sel
-                                    ? "bg-[#6B5CE7]/15 border-[#6B5CE7]/60 text-white"
-                                    : "bg-[#0d2040] border-[#1a3a60] text-gray-300 hover:border-[#6B5CE7]/40",
+                                    ? "bg-[#051e3a]/15 border-[#051e3a]/60 text-gray-900"
+                                    : "bg-gray-50 border-gray-200 text-gray-600 hover:border-[#051e3a]/40",
                                 )}>
                                 <div>
                                   <p className="text-sm font-semibold">
@@ -2019,7 +2023,7 @@ function AppointmentWizard({
                                   <p className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1.5">
                                     <span>{svc.base_duration} min</span>
                                     {svc.service_type && (
-                                      <span className="px-1.5 py-0.5 rounded bg-[#1a3a60] text-[9px] text-gray-400">
+                                      <span className="px-1.5 py-0.5 rounded bg-gray-100 text-[9px] text-gray-400">
                                         {svc.service_type.replace(/_/g, " ")}
                                       </span>
                                     )}
@@ -2057,8 +2061,8 @@ function AppointmentWizard({
                     className={cn(
                       "w-full text-left px-4 py-3 rounded-xl border transition-all",
                       !selectedEmpId
-                        ? "bg-[#6B5CE7]/15 border-[#6B5CE7]/60 text-white"
-                        : "bg-[#0d2040] border-[#1a3a60] text-gray-300 hover:border-[#6B5CE7]/40",
+                        ? "bg-[#051e3a]/15 border-[#051e3a]/60 text-gray-900"
+                        : "bg-gray-50 border-gray-200 text-gray-600 hover:border-[#051e3a]/40",
                     )}>
                     <p className="text-sm font-semibold">Any available</p>
                     <p className="text-[11px] text-gray-500">
@@ -2075,8 +2079,8 @@ function AppointmentWizard({
                         className={cn(
                           "w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center gap-3",
                           sel
-                            ? "bg-[#6B5CE7]/15 border-[#6B5CE7]/60 text-white"
-                            : "bg-[#0d2040] border-[#1a3a60] text-gray-300 hover:border-[#6B5CE7]/40",
+                            ? "bg-[#051e3a]/15 border-[#051e3a]/60 text-gray-900"
+                            : "bg-gray-50 border-gray-200 text-gray-600 hover:border-[#051e3a]/40",
                         )}>
                         <div
                           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
@@ -2103,7 +2107,7 @@ function AppointmentWizard({
                           </p>
                         </div>
                         {sel && (
-                          <div className="w-2 h-2 rounded-full bg-[#6B5CE7] shrink-0" />
+                          <div className="w-2 h-2 rounded-full bg-[#051e3a] shrink-0" />
                         )}
                       </button>
                     );
@@ -2121,10 +2125,10 @@ function AppointmentWizard({
             {currentStep === "datetime" && (
               <div className="p-5 space-y-5">
                 {fromSlot ? (
-                  <div className="flex items-center gap-2 text-xs text-gray-300 bg-[#0d2040] rounded-lg px-3 py-2.5 border border-[#1a3a60]">
+                  <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-200">
                     <CalendarDays
                       size={13}
-                      className="text-[#6B5CE7] shrink-0"
+                      className="text-[#051e3a] shrink-0"
                     />
                     <span>{dateLabel}</span>
                   </div>
@@ -2146,7 +2150,7 @@ function AppointmentWizard({
                           );
                         }
                       }}
-                      className="bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7] w-full"
+                      className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#051e3a] w-full"
                     />
                   </div>
                 )}
@@ -2176,8 +2180,8 @@ function AppointmentWizard({
                             className={cn(
                               "py-2 px-3 rounded-lg text-xs font-semibold border transition-all",
                               sel
-                                ? "bg-[#6B5CE7] border-[#6B5CE7] text-white"
-                                : "bg-[#0d2040] border-[#1a3a60] text-gray-300 hover:border-[#6B5CE7]/50 hover:bg-[#0e1f3a]",
+                                ? "bg-[#051e3a] border-[#051e3a] text-gray-900"
+                                : "bg-gray-50 border-gray-200 text-gray-600 hover:border-[#051e3a]/50 hover:bg-gray-50",
                             )}>
                             {fmtTime(new Date(slot))}
                           </button>
@@ -2193,14 +2197,14 @@ function AppointmentWizard({
             {currentStep === "confirm" && (
               <div className="p-5 space-y-4">
                 {/* Booking summary */}
-                <div className="bg-[#0d2040] border border-[#1a3a60] rounded-xl p-4 space-y-3">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                     Booking Summary
                   </p>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <Package size={13} className="text-[#6B5CE7] shrink-0" />
-                      <span className="text-white font-semibold">
+                      <Package size={13} className="text-[#051e3a] shrink-0" />
+                      <span className="text-gray-900 font-semibold">
                         {selectedService?.name}
                       </span>
                       <span className="text-gray-500 text-xs">
@@ -2214,8 +2218,8 @@ function AppointmentWizard({
                     </div>
                     {selectedEmpId && (
                       <div className="flex items-center gap-2">
-                        <User size={13} className="text-[#6B5CE7] shrink-0" />
-                        <span className="text-gray-300">
+                        <User size={13} className="text-[#051e3a] shrink-0" />
+                        <span className="text-gray-600">
                           {employees.find((e) => e._id === selectedEmpId)
                             ?.full_name ?? "—"}
                         </span>
@@ -2223,8 +2227,8 @@ function AppointmentWizard({
                     )}
                     {selectedSlot && (
                       <div className="flex items-center gap-2">
-                        <Clock size={13} className="text-[#6B5CE7] shrink-0" />
-                        <span className="text-gray-300">
+                        <Clock size={13} className="text-[#051e3a] shrink-0" />
+                        <span className="text-gray-600">
                           {dateLabel} · {fmtTime(new Date(selectedSlot))}
                         </span>
                       </div>
@@ -2245,10 +2249,10 @@ function AppointmentWizard({
                       <button
                         onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                         disabled={quantity <= 1}
-                        className="w-8 h-8 rounded-lg border border-[#1a3a60] flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#0d2040] disabled:opacity-40 transition-colors">
+                        className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 transition-colors">
                         <Minus size={13} />
                       </button>
-                      <span className="text-white font-bold text-lg w-8 text-center">
+                      <span className="text-gray-900 font-bold text-lg w-8 text-center">
                         {quantity}
                       </span>
                       <button
@@ -2256,7 +2260,7 @@ function AppointmentWizard({
                           setQuantity((q) => Math.min(maxQuantity, q + 1))
                         }
                         disabled={quantity >= maxQuantity}
-                        className="w-8 h-8 rounded-lg border border-[#1a3a60] flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#0d2040] disabled:opacity-40 transition-colors">
+                        className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 transition-colors">
                         <Plus size={13} />
                       </button>
                       {selectedService?.base_price != null && quantity > 1 && (
@@ -2279,7 +2283,7 @@ function AppointmentWizard({
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Walk-in / name…"
-                    className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7] placeholder:text-gray-600"
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#051e3a] placeholder:text-gray-600"
                   />
                 </div>
 
@@ -2293,7 +2297,7 @@ function AppointmentWizard({
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
                     placeholder="Optional notes…"
-                    className="w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7] placeholder:text-gray-600 resize-none"
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#051e3a] placeholder:text-gray-600 resize-none"
                   />
                 </div>
               </div>
@@ -2301,7 +2305,7 @@ function AppointmentWizard({
           </div>
 
           {/* Footer */}
-          <div className="shrink-0 px-5 py-4 border-t border-[#0e3258] space-y-3">
+          <div className="shrink-0 px-5 py-4 border-t border-gray-200 space-y-3">
             {error && (
               <p className="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">
                 {error}
@@ -2311,7 +2315,7 @@ function AppointmentWizard({
               {stepIdx > 0 && (
                 <button
                   onClick={goBack}
-                  className="px-4 py-2.5 text-sm font-semibold text-gray-400 border border-[#1a3a60] rounded-xl hover:bg-[#0d2040] transition-colors">
+                  className="px-4 py-2.5 text-sm font-semibold text-gray-400 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                   Back
                 </button>
               )}
@@ -2320,14 +2324,14 @@ function AppointmentWizard({
                 <button
                   onClick={goNext}
                   disabled={currentStep === "service" && !selectedService}
-                  className="px-6 py-2.5 text-sm font-bold bg-[#6B5CE7] text-white rounded-xl hover:bg-[#5a4cd1] transition-colors disabled:opacity-50">
+                  className="px-6 py-2.5 text-sm font-bold bg-[#051e3a] text-white rounded-xl hover:bg-[#082040] transition-colors disabled:opacity-50">
                   Continue
                 </button>
               ) : (
                 <button
                   onClick={handleSubmit}
                   disabled={submitLoading || !selectedSlot}
-                  className="px-6 py-2.5 text-sm font-bold bg-[#6B5CE7] text-white rounded-xl hover:bg-[#5a4cd1] transition-colors disabled:opacity-50 flex items-center gap-2">
+                  className="px-6 py-2.5 text-sm font-bold bg-[#051e3a] text-white rounded-xl hover:bg-[#082040] transition-colors disabled:opacity-50 flex items-center gap-2">
                   {submitLoading && (
                     <Loader2 size={13} className="animate-spin" />
                   )}
@@ -2415,25 +2419,25 @@ function BlockedTimeModal({
   };
 
   const inputCls =
-    "w-full bg-[#0d2040] border border-[#1a3a60] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-red-500 transition-colors";
+    "w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-red-500 transition-colors";
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end bg-black/50 p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-[#0a1929] border border-[#0e3258] rounded-t-2xl sm:rounded-2xl w-full sm:w-96 shadow-2xl overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-t-2xl sm:rounded-2xl w-full sm:w-96 shadow-2xl overflow-hidden">
         <div className="h-1 bg-red-500" />
         <div className="p-5">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2.5">
               <Ban size={16} className="text-red-400" />
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-base font-bold text-gray-900">
                 Add Blocked Time
               </h3>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-white transition-colors">
+              className="text-gray-500 hover:text-gray-900 transition-colors">
               <X size={16} />
             </button>
           </div>
@@ -2525,13 +2529,13 @@ function BlockedTimeModal({
           <div className="flex gap-2.5 mt-5">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 text-sm font-semibold text-gray-400 border border-[#1a3a60] rounded-xl hover:bg-[#0d2040] transition-colors">
+              className="flex-1 py-2.5 text-sm font-semibold text-gray-400 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="flex-1 py-2.5 text-sm font-bold bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              className="flex-1 py-2.5 text-sm font-bold bg-red-500 text-gray-900 rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
               {loading && <Loader2 size={13} className="animate-spin" />}
               Block Time
             </button>
@@ -2554,7 +2558,7 @@ function MobileDayTabs({
   onSelect: (i: number) => void;
 }) {
   return (
-    <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] px-3 py-2 bg-[#060f1a] border-b border-[#162640]">
+    <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] px-3 py-2 bg-white border-b border-gray-200">
       {weekDays.map((d, i) => {
         const todayFlag = isToday(d);
         const active = i === selectedIdx;
@@ -2565,10 +2569,10 @@ function MobileDayTabs({
             className={cn(
               "flex flex-col items-center min-w-[44px] px-2 py-1.5 rounded-xl border text-center transition-colors shrink-0",
               active
-                ? "bg-[#6B5CE7] border-[#6B5CE7] text-white"
+                ? "bg-[#051e3a] border-[#051e3a] text-gray-900"
                 : todayFlag
-                  ? "bg-[#6B5CE7]/10 border-[#6B5CE7]/30 text-[#6B5CE7]"
-                  : "bg-[#0d2040] border-[#1a3060] text-gray-400",
+                  ? "bg-[#051e3a]/10 border-[#051e3a]/30 text-[#051e3a]"
+                  : "bg-gray-50 border-gray-200 text-gray-400",
             )}>
             <span className="text-[10px] font-semibold leading-none">
               {DAY_SHORT[d.getDay()]}
@@ -2743,11 +2747,9 @@ export default function Calendar() {
   }, []);
 
   return (
-    // No height/overflow constraints — the page (window) scrolls naturally
-    <div className="bg-[#060f1a] text-white">
-      {/* ── Sticky Toolbar ── */}
+    <div className="bg-white text-gray-900 p-4">
       <div
-        className="flex items-center gap-2 px-3 md:px-4 border-b border-[#162640] bg-[#060f1a] flex-wrap"
+        className="flex items-center gap-2 px-3 md:px-4 border-b border-gray-200 bg-white flex-wrap"
         style={{
           position: "sticky",
           top: DASH_HEADER_H,
@@ -2758,21 +2760,21 @@ export default function Calendar() {
         <div className="flex items-center gap-2">
           <button
             onClick={goToday}
-            className="px-3 py-1.5 text-sm font-semibold text-white bg-[#0d2040] border border-[#1a3a60] rounded-full hover:bg-[#142840] transition-colors">
+            className="px-3 py-1.5 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-full hover:bg-gray-100 transition-colors">
             Today
           </button>
-          <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full overflow-hidden">
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full overflow-hidden">
             <button
               onClick={goPrev}
-              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#142840] transition-colors">
+              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors">
               <ChevronLeft size={15} />
             </button>
-            <span className="text-sm font-semibold text-white px-2 min-w-[110px] md:min-w-[160px] text-center">
+            <span className="text-sm font-semibold text-gray-900 px-2 min-w-[110px] md:min-w-[160px] text-center">
               {dateLabel}
             </span>
             <button
               onClick={goNext}
-              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#142840] transition-colors">
+              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors">
               <ChevronRight size={15} />
             </button>
           </div>
@@ -2792,7 +2794,7 @@ export default function Calendar() {
 
         {/* Right */}
         <div className="flex items-center gap-1.5">
-          <div className="hidden sm:flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
+          <div className="hidden sm:flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
             {(["employee", "resource"] as CalendarMode[]).map((m) => (
               <button
                 key={m}
@@ -2803,8 +2805,8 @@ export default function Calendar() {
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
                   mode === m
-                    ? "bg-[#6B5CE7] text-white"
-                    : "text-gray-400 hover:text-white",
+                    ? "bg-[#051e3a] text-white"
+                    : "text-gray-400 hover:text-gray-900",
                 )}>
                 {m === "employee" ? <Users size={12} /> : <Package size={12} />}
                 <span className="hidden md:inline">
@@ -2817,14 +2819,14 @@ export default function Calendar() {
           <button
             onClick={() => refetch()}
             disabled={bookingLoading}
-            className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1a3a60] text-gray-400 hover:text-white hover:bg-[#0d2040] transition-colors">
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
             <RefreshCw
               size={13}
               className={cn(bookingLoading && "animate-spin")}
             />
           </button>
 
-          <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
             {(["day", "week"] as CalendarView[]).map((v) => (
               <button
                 key={v}
@@ -2832,8 +2834,8 @@ export default function Calendar() {
                 className={cn(
                   "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors capitalize",
                   view === v
-                    ? "bg-white text-[#060f1a]"
-                    : "text-gray-400 hover:text-white",
+                    ? "bg-white text-gray-900"
+                    : "text-gray-400 hover:text-gray-900",
                 )}>
                 {v}
               </button>
@@ -2848,8 +2850,8 @@ export default function Calendar() {
       </div>
 
       {/* ── Mobile: mode + filter bar ── */}
-      <div className="sm:hidden flex items-center gap-2 px-3 py-2 border-b border-[#162640] bg-[#060f1a]">
-        <div className="flex items-center bg-[#0d2040] border border-[#1a3a60] rounded-full p-0.5 gap-0.5">
+      <div className="sm:hidden flex items-center gap-2 px-3 py-2 border-b border-gray-200 bg-white">
+        <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
           {(["employee", "resource"] as CalendarMode[]).map((m) => (
             <button
               key={m}
@@ -2859,7 +2861,7 @@ export default function Calendar() {
               }}
               className={cn(
                 "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-colors",
-                mode === m ? "bg-[#6B5CE7] text-white" : "text-gray-400",
+                mode === m ? "bg-[#051e3a] text-white" : "text-gray-400",
               )}>
               {m === "employee" ? <Users size={11} /> : <Package size={11} />}
               {m === "employee" ? "Team" : "Resources"}
@@ -2889,8 +2891,8 @@ export default function Calendar() {
 
       {/* ── Loading ── */}
       {(bookingLoading || empLoading) && (
-        <div className="flex items-center justify-center py-3 gap-2 border-b border-[#162640]">
-          <Loader2 size={14} className="animate-spin text-[#6B5CE7]" />
+        <div className="flex items-center justify-center py-3 gap-2 border-b border-gray-200">
+          <Loader2 size={14} className="animate-spin text-[#051e3a]" />
           <span className="text-xs text-gray-500">Loading bookings…</span>
         </div>
       )}
@@ -2990,10 +2992,10 @@ export default function Calendar() {
           onClick={(e) =>
             e.target === e.currentTarget && setDeletingBlock(null)
           }>
-          <div className="bg-[#0a1929] border border-[#0e3258] rounded-2xl w-80 shadow-2xl p-5">
+          <div className="bg-white border border-gray-200 rounded-2xl w-80 shadow-2xl p-5">
             <div className="flex items-center gap-2.5 mb-3">
               <Ban size={16} className="text-red-400 shrink-0" />
-              <h3 className="text-sm font-bold text-white">
+              <h3 className="text-sm font-bold text-gray-900">
                 Remove Blocked Time?
               </h3>
             </div>
@@ -3005,13 +3007,13 @@ export default function Calendar() {
             <div className="flex gap-2.5">
               <button
                 onClick={() => setDeletingBlock(null)}
-                className="flex-1 py-2 text-xs font-semibold text-gray-400 border border-[#1a3a60] rounded-xl hover:bg-[#0d2040]">
+                className="flex-1 py-2 text-xs font-semibold text-gray-400 border border-gray-200 rounded-xl hover:bg-gray-50">
                 Cancel
               </button>
               <button
                 onClick={handleBlockedTimeDelete}
                 disabled={deleteLoading}
-                className="flex-1 py-2 text-xs font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-1.5">
+                className="flex-1 py-2 text-xs font-bold bg-red-600 text-gray-900 rounded-xl hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-1.5">
                 {deleteLoading && (
                   <Loader2 size={11} className="animate-spin" />
                 )}

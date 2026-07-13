@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -184,20 +184,20 @@ function ServiceActionDropdown({ onEdit }: { onEdit: () => void }) {
       <button
         ref={btnRef}
         onClick={toggle}
-        className="w-6 h-6 flex items-center justify-center rounded-full text-gray-500 hover:text-white hover:bg-[#0d2d4e] transition-colors opacity-0 group-hover:opacity-100">
+        className="w-6 h-6 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100">
         <MoreHorizontal size={14} />
       </button>
       {open && (
         <div
           data-svc-menu
           style={{ position: "fixed", left: pos.x - 160, top: pos.y }}
-          className="bg-[#051e3a] border border-[#0e3258] rounded-xl shadow-2xl py-1.5 min-w-[160px] z-50">
+          className="bg-white border border-gray-200 rounded-xl shadow-2xl py-1.5 min-w-[160px] z-50">
           <button
             onClick={() => {
               onEdit();
               setOpen(false);
             }}
-            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#0d2d4e] transition-colors flex items-center gap-2">
+            className="w-full text-left px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2">
             <ExternalLink size={13} className="text-gray-400" />
             Edit service
           </button>
@@ -249,24 +249,24 @@ function DayOverrideDialog({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}>
-      <div className="bg-[#051e3a] border border-[#0e3258] rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+      <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
         <div className="flex items-start justify-between mb-5">
           <div>
-            <h2 className="text-lg font-bold text-white">{service.name}</h2>
+            <h2 className="text-lg font-bold text-gray-900">{service.name}</h2>
             <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors">
+            className="text-gray-400 hover:text-gray-900 transition-colors">
             <X size={18} />
           </button>
         </div>
 
         <div className="space-y-4">
           {/* Closed toggle */}
-          <div className="flex items-center justify-between p-3 bg-[#082040] rounded-xl border border-[#0e3258]">
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
             <div>
-              <p className="text-sm font-semibold text-white">
+              <p className="text-sm font-semibold text-gray-900">
                 {service.service_type === "group_session"
                   ? "Cancel all sessions"
                   : "Closed for this day"}
@@ -283,7 +283,7 @@ function DayOverrideDialog({
                 "w-10 h-5.5 rounded-full border relative transition-colors shrink-0",
                 isClosed
                   ? "bg-red-500 border-red-500"
-                  : "bg-[#0e3258] border-[#1a4a7a]",
+                  : "bg-gray-50 border-gray-200",
               )}
               style={{ height: "22px", width: "40px" }}>
               <span
@@ -298,7 +298,7 @@ function DayOverrideDialog({
           {/* Quantity override (resource_based only) */}
           {isResource && !isClosed && (
             <div>
-              <p className="text-sm font-semibold text-white mb-2">
+              <p className="text-sm font-semibold text-gray-900 mb-2">
                 Override quantity
               </p>
               <p className="text-xs text-gray-400 mb-2.5">
@@ -311,7 +311,7 @@ function DayOverrideDialog({
                 value={qty}
                 onChange={(e) => setQty(e.target.value)}
                 placeholder={String(service.max_concurrent_bookings ?? 1)}
-                className="w-full bg-[#061930] border border-[#0e3258] text-white text-sm rounded-xl px-3 py-2.5 outline-none focus:border-[#6B5CE7] transition-colors placeholder:text-gray-600"
+                className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-3 py-2.5 outline-none focus:border-[#051e3a] transition-colors placeholder:text-gray-600"
               />
             </div>
           )}
@@ -324,14 +324,14 @@ function DayOverrideDialog({
                 onSave({ is_closed: false, quantity_override: null })
               }
               disabled={isSaving}
-              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white border border-[#0e3258] rounded-full px-3.5 py-1.5 hover:bg-[#082040] transition-colors">
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-900 border border-gray-200 rounded-full px-3.5 py-1.5 hover:bg-gray-50 transition-colors">
               <RotateCcw size={13} /> Reset
             </button>
           )}
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="text-sm text-gray-400 border border-[#0e3258] rounded-full px-4 py-1.5 hover:bg-[#082040] hover:text-white transition-colors">
+            className="text-sm text-gray-400 border border-gray-200 rounded-full px-4 py-1.5 hover:bg-gray-50 hover:text-gray-900 transition-colors">
             Cancel
           </button>
           <button
@@ -345,7 +345,7 @@ function DayOverrideDialog({
               })
             }
             disabled={isSaving}
-            className="flex items-center gap-1.5 text-sm font-semibold bg-[#6B5CE7] text-white rounded-full px-4 py-1.5 hover:bg-[#5a4dd3] disabled:opacity-60 transition-colors">
+            className="flex items-center gap-1.5 text-sm font-semibold bg-[#051e3a] text-white rounded-full px-4 py-1.5 hover:bg-[#082040] disabled:opacity-60 transition-colors">
             {isSaving && <Loader2 size={13} className="animate-spin" />}
             Save
           </button>
@@ -460,8 +460,8 @@ function DayCell({
   const bg = (() => {
     if (info.kind === "no_schedule")
       return past
-        ? "bg-[#040f1e]/30 border border-[#0a1f38]/40"
-        : "bg-[#061525]/50 border border-[#0a1f38]/60";
+        ? "bg-white/30 border border-gray-200/40"
+        : "bg-gray-50/50 border border-gray-200/60";
     if (past) {
       if (info.kind === "closed")
         return "bg-red-950/20 border border-red-900/20";
@@ -479,7 +479,7 @@ function DayCell({
         : "bg-emerald-900/60 border border-emerald-700/50";
     if (info.kind === "group")
       return "bg-purple-900/60 border border-purple-700/50";
-    return "bg-[#082040]";
+    return "bg-gray-50";
   })();
 
   if (past || info.kind === "no_schedule") {
@@ -500,7 +500,7 @@ function DayCell({
       className={cn(
         "w-full rounded-lg px-2 py-2.5 min-h-[52px] flex items-center justify-center hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-sm",
         bg,
-        today && "ring-2 ring-[#6B5CE7]/60 ring-offset-1 ring-offset-[#051e3a]",
+        today && "ring-2 ring-[#051e3a]/60 ring-offset-1 ring-offset-[#051e3a]",
       )}>
       {inner}
     </button>
@@ -615,7 +615,7 @@ export default function Resources() {
   const selectedDayDate = weekDays[selectedDayIdx];
 
   return (
-    <div className="min-h-screen text-[#0e3258]">
+    <div className="min-h-screen text-gray-700">
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-5 md:mb-6">
         <div>
@@ -633,21 +633,21 @@ export default function Resources() {
         <div className="flex items-center gap-2">
           <button
             onClick={goThisWeek}
-            className="px-4 py-2 rounded-full border border-[#0e3258] bg-[#051e3a] text-sm font-semibold text-white hover:bg-[#0d2d4e] transition-colors">
+            className="px-4 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-100 transition-colors">
             This week
           </button>
-          <div className="flex items-center gap-1 border border-[#0e3258] bg-[#051e3a] rounded-full px-2 py-1.5">
+          <div className="flex items-center gap-1 border border-gray-200 bg-white rounded-full px-2 py-1.5">
             <button
               onClick={goPrev}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#0d2d4e] transition-colors text-gray-400 hover:text-white">
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-900">
               <ChevronLeft size={15} />
             </button>
-            <span className="text-sm font-semibold text-white px-2 min-w-[170px] text-center">
+            <span className="text-sm font-semibold text-gray-900 px-2 min-w-[170px] text-center">
               {fmtWeekRange(monday)}
             </span>
             <button
               onClick={goNext}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#0d2d4e] transition-colors text-gray-400 hover:text-white">
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-900">
               <ChevronRight size={15} />
             </button>
           </div>
@@ -675,15 +675,15 @@ export default function Resources() {
 
       {/* ── Mobile week nav ── */}
       <div className="md:hidden mb-4 space-y-3">
-        <div className="flex items-center justify-between bg-[#051e3a] rounded-2xl px-3 py-2 border border-[#0e3258]">
+        <div className="flex items-center justify-between bg-white rounded-2xl px-3 py-2 border border-gray-200">
           <button
             onClick={goPrev}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-[#0d2d4e] transition-colors">
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors">
             <ChevronLeft size={16} />
           </button>
           <button
             onClick={goThisWeek}
-            className="text-sm font-semibold text-white">
+            className="text-sm font-semibold text-gray-900">
             {monday.toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
@@ -696,7 +696,7 @@ export default function Resources() {
           </button>
           <button
             onClick={goNext}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-[#0d2d4e] transition-colors">
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors">
             <ChevronRight size={16} />
           </button>
         </div>
@@ -709,7 +709,7 @@ export default function Resources() {
               className={cn(
                 "flex flex-col items-center justify-center min-w-[52px] px-2 py-2 rounded-xl border text-xs font-semibold transition-colors shrink-0",
                 selectedDayIdx === i
-                  ? "bg-[#051e3a] border-[#051e3a] text-white"
+                  ? "bg-white border-gray-200 text-gray-900"
                   : "bg-white border-gray-200 text-[#051e3a] hover:bg-gray-50",
               )}>
               <span>{DAY_SHORT[i]}</span>
@@ -722,11 +722,11 @@ export default function Resources() {
       </div>
 
       {/* ── Desktop Table ── */}
-      <div className="hidden md:block border border-[#0e3258] rounded-2xl overflow-hidden bg-white/5">
+      <div className="hidden md:block border border-gray-200 rounded-2xl overflow-hidden bg-white/5">
         {/* Header */}
-        <div className="grid grid-cols-[220px_repeat(7,1fr)] border-b border-[#0e3258]">
-          <div className="px-4 py-3 flex items-center border-r border-[#0e3258]">
-            <span className="text-sm font-semibold text-[#0e3258]">
+        <div className="grid grid-cols-[220px_repeat(7,1fr)] border-b border-gray-200">
+          <div className="px-4 py-3 flex items-center border-r border-gray-200">
+            <span className="text-sm font-semibold text-gray-700">
               Resource / Service
             </span>
           </div>
@@ -735,13 +735,13 @@ export default function Resources() {
               key={i}
               className={cn(
                 "px-3 py-3 text-center",
-                i < 6 && "border-r border-[#0e3258]",
-                isToday(day) && "bg-[#6B5CE7]/5",
+                i < 6 && "border-r border-gray-200",
+                isToday(day) && "bg-[#051e3a]/5",
               )}>
               <p
                 className={cn(
                   "text-sm font-bold",
-                  isToday(day) ? "text-[#6B5CE7]" : "text-[#0e3258]",
+                  isToday(day) ? "text-[#051e3a]" : "text-gray-700",
                 )}>
                 {DAY_SHORT[i]}, {fmtShort(day)}
               </p>
@@ -761,7 +761,7 @@ export default function Resources() {
             </p>
             <button
               onClick={() => router.push("/dashboard/services/add")}
-              className="mt-4 text-sm font-semibold text-[#6B5CE7] hover:text-purple-300 transition-colors">
+              className="mt-4 text-sm font-semibold text-[#051e3a] hover:text-purple-300 transition-colors">
               + Create service
             </button>
           </div>
@@ -771,15 +771,15 @@ export default function Resources() {
               key={svc._id}
               className={cn(
                 "group grid grid-cols-[220px_repeat(7,1fr)]",
-                si < services.length - 1 && "border-b border-[#0e3258]",
+                si < services.length - 1 && "border-b border-gray-200",
               )}>
               {/* Service info cell */}
-              <div className="px-4 py-4 flex items-center gap-2.5 border-r border-[#0e3258] min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-[#0e3258] flex items-center justify-center shrink-0">
+              <div className="px-4 py-4 flex items-center gap-2.5 border-r border-gray-200 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
                   <ServiceIcon type={svc.service_type} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#0e3258] truncate">
+                  <p className="text-sm font-semibold text-gray-700 truncate">
                     {svc.name}
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
@@ -801,8 +801,8 @@ export default function Resources() {
                   key={di}
                   className={cn(
                     "px-2 py-3 flex items-center justify-center",
-                    di < 6 && "border-r border-[#0e3258]",
-                    isToday(dayDate) && "bg-[#6B5CE7]/5",
+                    di < 6 && "border-r border-gray-200",
+                    isToday(dayDate) && "bg-[#051e3a]/5",
                   )}>
                   <DayCell
                     service={svc}
@@ -839,7 +839,7 @@ export default function Resources() {
             <p className="text-gray-500 text-sm">No resource services yet.</p>
             <button
               onClick={() => router.push("/dashboard/services/add")}
-              className="mt-3 text-sm font-semibold text-[#6B5CE7]">
+              className="mt-3 text-sm font-semibold text-[#051e3a]">
               + Create service
             </button>
           </div>
@@ -856,12 +856,12 @@ export default function Resources() {
             return (
               <div
                 key={svc._id}
-                className="bg-[#051e3a] border border-[#0e3258] rounded-2xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#0e3258] flex items-center justify-center shrink-0">
+                className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
                   <ServiceIcon type={svc.service_type} size={18} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">
+                  <p className="text-sm font-semibold text-gray-900 truncate">
                     {svc.name}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
@@ -882,7 +882,7 @@ export default function Resources() {
                         dayDate: selectedDayDate,
                       })
                     }
-                    className="text-sm font-semibold text-[#6B5CE7] hover:text-purple-300 transition-colors shrink-0">
+                    className="text-sm font-semibold text-[#051e3a] hover:text-purple-300 transition-colors shrink-0">
                     Configure
                   </button>
                 )}

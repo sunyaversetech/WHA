@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -119,7 +119,7 @@ const CreateCategoryDialog = ({
             />
             <Button
               type="submit"
-              className="w-full bg-orange-600 hover:bg-orange-700"
+              className="w-full bg-[#051e3a] hover:bg-[#082040]"
               disabled={isPending}>
               {isPending ? (
                 <>

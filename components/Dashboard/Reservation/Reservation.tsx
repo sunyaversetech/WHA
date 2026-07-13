@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import {
@@ -22,33 +22,33 @@ const STATUS_META: Record<
 > = {
   pending: {
     label: "Pending",
-    badge: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
-    btn: "bg-amber-600 hover:bg-amber-700 text-white",
+    badge: "bg-amber-50 text-amber-700 border border-amber-200",
+    btn: "bg-[#051e3a] hover:bg-[#082040] text-white",
   },
   confirmed: {
     label: "Confirmed",
-    badge: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
-    btn: "bg-blue-600 hover:bg-blue-700 text-white",
+    badge: "bg-blue-50 text-blue-700 border border-blue-200",
+    btn: "bg-[#051e3a] hover:bg-[#082040] text-white",
   },
   rescheduled: {
     label: "Rescheduled",
-    badge: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
-    btn: "bg-purple-600 hover:bg-purple-700 text-white",
+    badge: "bg-purple-50 text-purple-700 border border-purple-200",
+    btn: "bg-[#051e3a] hover:bg-[#082040] text-white",
   },
   completed: {
     label: "Completed",
-    badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
-    btn: "bg-emerald-600 hover:bg-emerald-700 text-white",
+    badge: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    btn: "bg-[#051e3a] hover:bg-[#082040] text-white",
   },
   cancelled: {
     label: "Cancelled",
-    badge: "bg-red-500/20 text-red-300 border border-red-500/30",
-    btn: "bg-red-600 hover:bg-red-700 text-white",
+    badge: "bg-red-50 text-red-700 border border-red-200",
+    btn: "bg-[#051e3a] hover:bg-[#082040] text-white",
   },
   no_show: {
     label: "No Show",
-    badge: "bg-gray-500/20 text-gray-300 border border-gray-500/30",
-    btn: "bg-gray-600 hover:bg-gray-700 text-white",
+    badge: "bg-gray-100 text-gray-600 border border-gray-200",
+    btn: "bg-[#051e3a] hover:bg-[#082040] text-white",
   },
 };
 
@@ -62,10 +62,10 @@ const STATUS_TRANSITIONS: Record<string, string[]> = {
 };
 
 const PAYMENT_META: Record<string, string> = {
-  paid: "bg-emerald-500/20 text-emerald-300",
-  unpaid: "bg-amber-500/20 text-amber-300",
-  pending: "bg-amber-500/20 text-amber-300",
-  refunded: "bg-gray-500/20 text-gray-300",
+  paid: "bg-emerald-50 text-emerald-700",
+  unpaid: "bg-amber-50 text-amber-700",
+  pending: "bg-amber-50 text-amber-700",
+  refunded: "bg-gray-100 text-gray-600",
 };
 
 const DATE_PRESETS = ["Today", "This week", "This month", "All time"] as const;
@@ -272,7 +272,7 @@ function BookingDetailPanel({
 
   const statusInfo = STATUS_META[booking.status] ?? STATUS_META.pending;
   const inputCls =
-    "w-full bg-[#0d2040] border border-[#1a3a60] text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#6B5CE7]";
+    "w-full bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#051e3a]";
 
   const _start = new Date(booking.start_time);
   const _end = new Date(booking.end_time);
@@ -295,20 +295,20 @@ function BookingDetailPanel({
       className="fixed inset-0 z-50 flex justify-end"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full sm:w-96 bg-[#07111f] border-l border-[#0e3258] flex flex-col shadow-2xl overflow-y-auto">
-        <div className="h-1.5 bg-[#6B5CE7] shrink-0" />
+      <div className="relative w-full sm:w-96 bg-white border-l border-gray-200 flex flex-col shadow-2xl overflow-y-auto">
+        <div className="h-1.5 bg-[#051e3a] shrink-0" />
 
         <div className="p-5 flex-1">
           <div className="flex items-start justify-between mb-5">
             <div>
-              <h2 className="text-base font-bold text-white">
+              <h2 className="text-base font-bold text-gray-900">
                 {service?.name || "Booking"}
               </h2>
               <p className="text-xs text-gray-400 mt-0.5">{fmtDate(start)}</p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white p-1">
+              className="text-gray-400 hover:text-gray-900 p-1">
               <X size={16} />
             </button>
           </div>
@@ -316,7 +316,7 @@ function BookingDetailPanel({
           <div className="space-y-3 mb-5">
             <div className="flex items-center gap-2.5">
               <Clock size={13} className="text-gray-400 shrink-0" />
-              <p className="text-sm text-white">
+              <p className="text-sm text-gray-900">
                 {fmtTime(start)} – {fmtTime(end)}{" "}
                 <span className="text-gray-400">· {booking.duration} min</span>
               </p>
@@ -325,7 +325,7 @@ function BookingDetailPanel({
               <div className="flex items-center gap-2.5">
                 <User size={13} className="text-gray-400 shrink-0" />
                 <div>
-                  <p className="text-sm text-white">
+                  <p className="text-sm text-gray-900">
                     {customer.name || "Walk-in"}
                   </p>
                   {customer.email && (
@@ -337,12 +337,12 @@ function BookingDetailPanel({
             {employee && (
               <div className="flex items-center gap-2.5">
                 <Users size={13} className="text-gray-400 shrink-0" />
-                <p className="text-sm text-white">
+                <p className="text-sm text-gray-900">
                   {employee.full_name}
                   {isEmployeeBased && (
                     <button
                       onClick={() => setShowReassign((v) => !v)}
-                      className="ml-2 text-[11px] text-[#6B5CE7] hover:underline">
+                      className="ml-2 text-[11px] text-[#051e3a] hover:underline">
                       Reassign
                     </button>
                   )}
@@ -352,7 +352,7 @@ function BookingDetailPanel({
             {service && (
               <div className="flex items-center gap-2.5">
                 <Package size={13} className="text-gray-400 shrink-0" />
-                <p className="text-sm text-white">
+                <p className="text-sm text-gray-900">
                   {service.name}
                   {booking.total_price != null && (
                     <span className="text-gray-400 ml-1.5">
@@ -374,20 +374,20 @@ function BookingDetailPanel({
                 className={cn(
                   "text-[11px] font-semibold px-2 py-0.5 rounded-full",
                   PAYMENT_META[booking.payment_status] ||
-                    "bg-gray-500/20 text-gray-300",
+                    "bg-gray-500/20 text-gray-600",
                 )}>
                 {booking.payment_status}
               </span>
             </div>
             {booking.notes && (
-              <p className="text-xs text-gray-400 bg-[#0d2d4e] rounded-lg p-2.5 leading-relaxed">
+              <p className="text-xs text-gray-400 bg-gray-100 rounded-lg p-2.5 leading-relaxed">
                 {booking.notes}
               </p>
             )}
           </div>
 
           {showReassign && isEmployeeBased && (
-            <div className="mb-4 pt-4 border-t border-[#1a3a60] space-y-2.5">
+            <div className="mb-4 pt-4 border-t border-gray-200 space-y-2.5">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                 Reassign Employee
               </p>
@@ -417,13 +417,13 @@ function BookingDetailPanel({
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowReassign(false)}
-                  className="flex-1 py-1.5 text-xs font-semibold text-gray-400 border border-[#1a3a60] rounded-lg hover:bg-[#0d2040]">
+                  className="flex-1 py-1.5 text-xs font-semibold text-gray-400 border border-gray-200 rounded-lg hover:bg-gray-50">
                   Cancel
                 </button>
                 <button
                   onClick={handleReassign}
                   disabled={reassignLoading}
-                  className="flex-1 py-1.5 text-xs font-bold bg-[#6B5CE7] text-white rounded-lg hover:bg-[#5a4cd1] disabled:opacity-50 flex items-center justify-center gap-1">
+                  className="flex-1 py-1.5 text-xs font-bold bg-[#051e3a] text-white rounded-lg hover:bg-[#082040] disabled:opacity-50 flex items-center justify-center gap-1">
                   {reassignLoading && (
                     <Loader2 size={11} className="animate-spin" />
                   )}{" "}
@@ -434,7 +434,7 @@ function BookingDetailPanel({
           )}
 
           {showReschedule && (
-            <div className="mb-4 pt-4 border-t border-[#1a3a60] space-y-2.5">
+            <div className="mb-4 pt-4 border-t border-gray-200 space-y-2.5">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                 Reschedule Appointment
               </p>
@@ -469,13 +469,13 @@ function BookingDetailPanel({
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowReschedule(false)}
-                  className="flex-1 py-1.5 text-xs font-semibold text-gray-400 border border-[#1a3a60] rounded-lg hover:bg-[#0d2040]">
+                  className="flex-1 py-1.5 text-xs font-semibold text-gray-400 border border-gray-200 rounded-lg hover:bg-gray-50">
                   Cancel
                 </button>
                 <button
                   onClick={handleReschedule}
                   disabled={rescheduleLoading}
-                  className="flex-1 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-1">
+                  className="flex-1 py-1.5 text-xs font-bold bg-[#051e3a] text-white rounded-lg hover:bg-[#082040] disabled:opacity-50 flex items-center justify-center gap-1">
                   {rescheduleLoading && (
                     <Loader2 size={11} className="animate-spin" />
                   )}{" "}
@@ -487,7 +487,7 @@ function BookingDetailPanel({
 
           {/* Status buttons */}
           {!showReschedule && nextStatuses.length > 0 && (
-            <div className="pt-4 border-t border-[#1a3a60]">
+            <div className="pt-4 border-t border-gray-200">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2.5">
                 Update Status
               </p>
@@ -504,7 +504,7 @@ function BookingDetailPanel({
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50",
                       STATUS_META[st]?.btn ||
-                        "bg-gray-700 hover:bg-gray-600 text-white",
+                        "bg-gray-700 hover:bg-gray-600 text-gray-900",
                     )}>
                     {statusLoading === st && (
                       <Loader2 size={11} className="animate-spin" />
@@ -621,12 +621,12 @@ export default function Reservation() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#060f1a] text-white ">
+    <div className="min-h-screen bg-white text-gray-900 ">
       {/* ── Page header ── */}
-      <div className="border-b border-[#0e3258] px-6 py-5">
+      <div className="border-b border-gray-200 px-6 py-5">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-xl font-bold text-white">Reservations</h1>
+            <h1 className="text-xl font-bold text-gray-900">Reservations</h1>
             <p className="text-xs text-gray-400 mt-0.5">
               {bookings.length} total booking{bookings.length !== 1 ? "s" : ""}
             </p>
@@ -641,7 +641,7 @@ export default function Reservation() {
                   setDatePreset(e.target.value as DatePreset);
                   setLoading(true);
                 }}
-                className="bg-[#0d2040] border border-[#1a3a60] text-white text-xs rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:border-[#6B5CE7] appearance-none cursor-pointer">
+                className="bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:border-[#051e3a] appearance-none cursor-pointer">
                 {DATE_PRESETS.map((p) => (
                   <option key={p} value={p}>
                     {p}
@@ -668,12 +668,12 @@ export default function Reservation() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search client, service…"
-                className="bg-[#0d2040] border border-[#1a3a60] text-white text-xs rounded-lg pl-8 pr-8 py-2 w-48 focus:outline-none focus:border-[#6B5CE7] placeholder:text-gray-600"
+                className="bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg pl-8 pr-8 py-2 w-48 focus:outline-none focus:border-[#051e3a] placeholder:text-gray-600"
               />
               {search && (
                 <button
                   onClick={() => setSearch("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900">
                   <X size={12} />
                 </button>
               )}
@@ -685,7 +685,7 @@ export default function Reservation() {
                 setRefreshKey((k) => k + 1);
               }}
               disabled={loading}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#0d2040] border border-[#1a3a60] text-gray-400 hover:text-white hover:border-[#6B5CE7] transition-colors disabled:opacity-50">
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 border border-gray-200 text-gray-400 hover:text-gray-900 hover:border-[#051e3a] transition-colors disabled:opacity-50">
               <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
             </button>
           </div>
@@ -703,16 +703,16 @@ export default function Reservation() {
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all",
                   active
-                    ? "bg-[#6B5CE7] text-white"
-                    : "text-gray-400 hover:text-white hover:bg-[#0d2040]",
+                    ? "bg-[#051e3a] text-white"
+                    : "text-gray-400 hover:text-gray-900 hover:bg-gray-50",
                 )}>
                 {st === "all" ? "All" : (meta?.label ?? st)}
                 <span
                   className={cn(
                     "text-[10px] px-1.5 py-0.5 rounded-full font-bold",
                     active
-                      ? "bg-white/20 text-white"
-                      : "bg-[#0d2040] text-gray-400",
+                      ? "bg-white/20 text-gray-900"
+                      : "bg-gray-50 text-gray-400",
                   )}>
                   {count}
                 </span>
@@ -725,7 +725,7 @@ export default function Reservation() {
       <div className="overflow-x-auto">
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-20">
-            <Loader2 size={18} className="animate-spin text-[#6B5CE7]" />
+            <Loader2 size={18} className="animate-spin text-[#051e3a]" />
             <span className="text-sm text-gray-400">Loading reservations…</span>
           </div>
         ) : filtered.length === 0 ? (
@@ -738,7 +738,7 @@ export default function Reservation() {
                   setSearch("");
                   setStatusFilter("all");
                 }}
-                className="text-xs text-[#6B5CE7] hover:underline">
+                className="text-xs text-[#051e3a] hover:underline">
                 Clear filters
               </button>
             )}
@@ -746,7 +746,7 @@ export default function Reservation() {
         ) : (
           <table className="w-full min-w-[720px]">
             <thead>
-              <tr className="border-b border-[#0e3258] bg-[#060f1a]">
+              <tr className="border-b border-gray-200 bg-white">
                 {[
                   "Client",
                   "Service",
@@ -777,17 +777,17 @@ export default function Reservation() {
                     key={b._id}
                     onClick={() => setSelectedBooking(b)}
                     className={cn(
-                      "border-b border-[#0e3258]/60 cursor-pointer transition-colors hover:bg-[#0d2040]/60",
-                      i % 2 === 0 ? "bg-[#060f1a]" : "bg-[#07111f]",
+                      "border-b border-gray-200/60 cursor-pointer transition-colors hover:bg-gray-50/60",
+                      i % 2 === 0 ? "bg-white" : "bg-white",
                     )}>
                     {/* Client */}
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-[#1a3a60] flex items-center justify-center text-[11px] font-bold text-white shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-900 shrink-0">
                           {(customer?.name || "?")[0].toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-white leading-tight">
+                          <p className="text-sm font-medium text-gray-900 leading-tight">
                             {customer?.name || "Walk-in"}
                           </p>
                           {customer?.email && (
@@ -799,7 +799,7 @@ export default function Reservation() {
                       </div>
                     </td>
                     <td className="px-4 py-3.5">
-                      <p className="text-sm text-white">
+                      <p className="text-sm text-gray-900">
                         {service?.name || "—"}
                       </p>
                     </td>
@@ -807,13 +807,13 @@ export default function Reservation() {
                       {employee?.full_name ? (
                         <div className="flex items-center gap-1.5">
                           <div
-                            className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-gray-900 shrink-0"
                             style={{
                               background: employee.calendar_color || "#1a3a60",
                             }}>
                             {employee.full_name[0]}
                           </div>
-                          <p className="text-sm text-white">
+                          <p className="text-sm text-gray-900">
                             {employee.full_name}
                           </p>
                         </div>
@@ -822,7 +822,7 @@ export default function Reservation() {
                       )}
                     </td>
                     <td className="px-4 py-3.5">
-                      <p className="text-sm text-white whitespace-nowrap">
+                      <p className="text-sm text-gray-900 whitespace-nowrap">
                         {fmtTime(start)}
                       </p>
                       <p className="text-[11px] text-gray-400">
@@ -834,10 +834,10 @@ export default function Reservation() {
                       </p>
                     </td>
                     <td className="px-4 py-3.5">
-                      <p className="text-sm text-gray-300">{b.duration} min</p>
+                      <p className="text-sm text-gray-600">{b.duration} min</p>
                     </td>
                     <td className="px-4 py-3.5">
-                      <p className="text-sm font-semibold text-white">
+                      <p className="text-sm font-semibold text-gray-900">
                         ${b.total_price ?? 0}
                       </p>
                     </td>
@@ -856,7 +856,7 @@ export default function Reservation() {
                         className={cn(
                           "text-[11px] font-semibold px-2 py-0.5 rounded-full",
                           PAYMENT_META[b.payment_status] ||
-                            "bg-gray-500/20 text-gray-300",
+                            "bg-gray-500/20 text-gray-600",
                         )}>
                         {b.payment_status}
                       </span>

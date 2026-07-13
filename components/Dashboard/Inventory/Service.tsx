@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import {
@@ -172,7 +172,7 @@ export default function CategorizedServices() {
         </div>
         <Button
           onClick={() => setIsCatDialogOpen(true)}
-          className="bg-orange-600 hover:bg-orange-700 shadow-md">
+          className="bg-[#051e3a] hover:bg-[#082040] shadow-md">
           <FolderPlus className="mr-2 h-4 w-4" /> Add Category
         </Button>
       </div>
@@ -452,7 +452,7 @@ export default function CategorizedServices() {
                 />
               </div>
 
-              <Button type="submit" className="w-full bg-orange-600 h-11">
+              <Button type="submit" className="w-full bg-[#051e3a] hover:bg-[#082040] h-11">
                 {editingService
                   ? "Update Service Information"
                   : "Add Service to Category"}

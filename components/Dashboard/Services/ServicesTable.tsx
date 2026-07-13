@@ -456,7 +456,7 @@ export default function ServicesTable() {
   const loading = loadingServices || loadingCategories;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen ">
       {/* ── Page header ── */}
       <div className="flex items-start justify-between mb-5">
         <div>

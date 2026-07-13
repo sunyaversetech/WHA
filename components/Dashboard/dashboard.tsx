@@ -265,9 +265,10 @@ export default function Dashboard() {
     const today = bizData?.data?.todayBookings ?? [];
 
     return (
-      <div style={{ maxWidth: 1100 }}>
+      <div>
         <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6"
+          style={{ display: "grid", gap: 20 }}>
           {/* Recent sales */}
           <Card>
             <CardHeader

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { ClipboardCheck, Loader2, Camera } from "lucide-react";
@@ -92,7 +92,7 @@ export default function VerifyEventPage() {
         <button
           onClick={() => handleVerify()}
           disabled={isPending}
-          className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2">
+          className="w-full bg-[#051e3a] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#082040] transition-colors">
           {isPending ? (
             <Loader2 className="animate-spin" />
           ) : (

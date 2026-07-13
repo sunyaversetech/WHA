@@ -56,8 +56,8 @@ export default function Settings() {
   const [active, setActive] = useState<TabId>("profile");
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div className="min-h-screen ">
+      <div className="">
         {/* Page header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#051e3a]">
@@ -109,7 +109,10 @@ export default function Settings() {
                     <p className="text-xs text-gray-400 truncate">{tab.desc}</p>
                   </div>
                   {isActive && (
-                    <ChevronRight size={14} className="text-[#051e3a] shrink-0" />
+                    <ChevronRight
+                      size={14}
+                      className="text-[#051e3a] shrink-0"
+                    />
                   )}
                 </button>
               );

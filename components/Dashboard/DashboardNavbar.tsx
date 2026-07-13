@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
@@ -42,7 +42,7 @@ export default function DashboardNavbar() {
         pathname.startsWith("/dashboard") ? (
           <Link
             href="/"
-            className="text-sm font-medium bg-red-600 text-white px-4 py-2 rounded-lg flex gap-1 items-center">
+            className="text-sm font-medium bg-[#051e3a] text-white px-4 py-2 rounded-lg flex gap-1 items-center hover:bg-[#082040] transition-colors">
             <MapPin className="h-4 w-4" />
             <span>Request For Business</span>
           </Link>

@@ -20,6 +20,7 @@ import {
   CircleDollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const PROTECTED_PATHS = [
   "/dashboard/bookings",
@@ -368,12 +369,12 @@ export default function DashboardLayoutContent({
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6]">
+    <div className="min-h-screen ">
       {/* Sidebar — always visible, fixed */}
       {isBusiness ? <Sidebar /> : <UserSidebar />}
 
       {/* Content — offset from sidebar */}
-      <div className="ml-[48px] md:ml-[48px] flex flex-col min-h-screen">
+      <div className="ml-[48px] md:ml-[48px] flex flex-col min-h-screen ">
         {isBusiness && (
           <header className="h-[56px] md:h-[60px] bg-[#111111] flex items-center justify-end px-4 md:px-5 sticky top-0 z-30 border-b border-[#1e1e1e]">
             {/* Mobile: empty left */}
@@ -401,7 +402,13 @@ export default function DashboardLayoutContent({
                   type="button"
                   onClick={() => setShowProfile((p) => !p)}
                   className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-[11px] font-bold text-white hover:opacity-90 transition-opacity">
-                  {initials}
+                  <Avatar>
+                    <AvatarImage
+                      src={session?.user?.image ?? ""}
+                      className="rounded-full"
+                    />
+                    <AvatarFallback>{initials}</AvatarFallback>
+                  </Avatar>
                 </button>
                 {showProfile && (
                   <ProfileDropdown
@@ -414,7 +421,7 @@ export default function DashboardLayoutContent({
           </header>
         )}
 
-        <main className="flex-1 p-4 md:p-8">{children}</main>
+        <main className="flex-1 p-4 ">{children}</main>
       </div>
 
       {/* Overlays */}

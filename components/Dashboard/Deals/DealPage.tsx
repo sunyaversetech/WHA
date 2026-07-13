@@ -10,7 +10,7 @@ export default function DealsPage() {
   const { data, isLoading } = useGetDeals();
   const router = useRouter();
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 ">
       <div className="flex items-start justify-between md:hidden">
         <ChevronLeft
           onClick={() => router.back()}
@@ -28,10 +28,10 @@ export default function DealsPage() {
 
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-xl text-secondary  font-bold tracking-tight">
+          <h1 className="text-xl text-primary   font-bold tracking-tight">
             Deals dashboard
           </h1>
-          <p className="text-muted">
+          <p className="text-gray-500">
             View and manage the deals offered by your business.
           </p>
         </div>
