@@ -10,7 +10,7 @@ import { BarChart2, CalendarClock } from "lucide-react";
 /* ─── SVG line chart ─── */
 function LineChart({
   data,
-  color = "#4f46e5",
+  color = "#3771db",
   secondary = "#10b981",
 }: {
   data: { date: string; appointments: number; sales: number }[];
@@ -240,7 +240,7 @@ export default function Dashboard() {
             height: 32,
             borderRadius: "50%",
             border: "3px solid #e5e7eb",
-            borderTopColor: "#7c3aed",
+            borderTopColor: "#3771db",
             animation: "spin 0.8s linear infinite",
           }}
         />
@@ -316,7 +316,7 @@ export default function Dashboard() {
                     width: 10,
                     height: 10,
                     borderRadius: "50%",
-                    background: "#4f46e5",
+                    background: "#3771db",
                     flexShrink: 0,
                   }}
                 />
@@ -453,7 +453,7 @@ export default function Dashboard() {
                         style={{
                           fontSize: 16,
                           fontWeight: 800,
-                          color: "#7c3aed",
+                          color: "#3771db",
                           margin: 0,
                         }}>
                         {format(new Date(b.start_time), "d")}
