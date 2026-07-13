@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
   PlusCircle,
   Edit,
-  ChevronLeft,
   ShieldCheck,
   ExternalLink,
 } from "lucide-react";
@@ -62,62 +61,68 @@ export default function EventsBackend() {
   };
 
   return (
-    <div className="space-y-6  mx-auto overflow-hidden">
-      <div className="flex items-center justify-between no-scrollbar ">
-        <ChevronLeft
-          onClick={() => router.back()}
-          className="h-10 w-10 cursor-pointer rounded-full  p-1 -ml-2
-               text-[#ODODOD]
-
-               transition-all hover:scale-105 active:scale-95"
-        />
-        <div className="flex items-center gap-2">
+    <div className="space-y-5">
+      {/* ── Page header ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold text-[#051e3a]">Marketing</h1>
+          <p className="text-sm text-gray-400 mt-0.5 hidden sm:block">
+            Manage your events and promotions
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Icon-only on mobile, icon + label on sm+ */}
           <Link
             href="/dashboard/events/redemtion-table"
-            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
-            <span className="hidden md:flex">
-              <ExternalLink className="mr-2 h-4 w-4" />
-            </span>{" "}
-            Redemtion Table
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-[#051e3a] border border-gray-200 rounded-full hover:bg-gray-50 transition-colors"
+            title="Redemption Table">
+            <ExternalLink size={14} />
+            <span className="hidden sm:inline">Redemption Table</span>
           </Link>
-
           <Link
             href="/dashboard/events/verify-event"
-            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
-            <span className="hidden md:flex">
-              <ShieldCheck className="mr-2 h-4 w-4" />
-            </span>{" "}
-            Verify Event
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-[#051e3a] border border-gray-200 rounded-full hover:bg-gray-50 transition-colors"
+            title="Verify Event">
+            <ShieldCheck size={14} />
+            <span className="hidden sm:inline">Verify Event</span>
           </Link>
-
           <Link
             href="/dashboard/events/add-event"
-            className="ml-auto flex bg-[#041e3a] text-sm text-white items-center py-2 px-4 rounded-full hover:bg-slate-100 hover:text-[#041e3a] border hover:border-[#041e3a] transition-colors duration-200">
-            <span className="hidden md:flex">
-              <PlusCircle className="mr-2 h-4 w-4" />
-            </span>{" "}
-            Add Event
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold bg-[#051e3a] text-white rounded-full hover:bg-[#082040] transition-colors">
+            <PlusCircle size={14} />
+            <span>Add Event</span>
           </Link>
         </div>
       </div>
-      <div className="flex gap-4 border-b border-slate-200 w-full">
+
+      {/* ── Tabs ── */}
+      <div className="flex border-b border-gray-200">
         <button
           onClick={() => setActiveTab("upcoming")}
-          className={`pb-2 px-1 w-full font-semibold transition-colors ${activeTab === "upcoming" ? "text-primary border-b-2 border-primary" : "text-slate-500"}`}>
+          className={`pb-2.5 px-4 text-sm font-semibold transition-colors whitespace-nowrap ${
+            activeTab === "upcoming"
+              ? "text-[#051e3a] border-b-2 border-[#051e3a]"
+              : "text-gray-400 hover:text-gray-700"
+          }`}>
           Upcoming Events
         </button>
         <button
           onClick={() => setActiveTab("past")}
-          className={`pb-2 px-1 w-full font-semibold transition-colors ${activeTab === "past" ? "text-primary border-b-2 border-primary" : "text-slate-500"}`}>
+          className={`pb-2.5 px-4 text-sm font-semibold transition-colors whitespace-nowrap ${
+            activeTab === "past"
+              ? "text-[#051e3a] border-b-2 border-[#051e3a]"
+              : "text-gray-400 hover:text-gray-700"
+          }`}>
           Past Events
         </button>
       </div>
 
+      {/* ── Event grid ── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filteredEvents.map((event) => (
           <div
             key={event._id}
-            className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition">
+            className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
             <div className="relative h-40 w-full">
               <Image
                 src={event.image}
@@ -127,30 +132,29 @@ export default function EventsBackend() {
               />
             </div>
             <div className="p-4 space-y-2">
-              <h3 className="text-lg font-bold">{event.title}</h3>
-              <p className="text-sm text-muted-foreground">{event.venue}</p>
-              <div className="flex justify-between text-sm">
-                <span>
+              <h3 className="text-base font-bold text-[#051e3a] truncate">{event.title}</h3>
+              <p className="text-sm text-gray-500 truncate">{event.venue}</p>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">
                   {event?.dateRange?.from &&
-                    new Date(event?.dateRange?.from).toLocaleDateString(
-                      "en-AU",
-                      {
-                        day: "2-digit",
-                        month: "short",
-                      },
-                    )}
+                    new Date(event.dateRange.from).toLocaleDateString("en-AU", {
+                      day: "2-digit",
+                      month: "short",
+                    })}
                 </span>
-                <span>
+                <span className="font-semibold text-[#051e3a]">
                   {event.ticket_price ? `$${event.ticket_price}` : "Free"}
                 </span>
               </div>
-              <div className="flex justify-between items-center mt-2 border-t-2 pt-2">
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                 <Button
                   onClick={() =>
                     router.push(`/dashboard/events/add-event?id=${event._id}`)
                   }
-                  variant="ghost">
-                  <Edit className="h-4 w-4" />
+                  variant="ghost"
+                  size="sm"
+                  className="text-[#051e3a]">
+                  <Edit className="h-4 w-4 mr-1" /> Edit
                 </Button>
                 <DeleteConfirmDialog
                   onConfirm={() => handleDelete(event._id ?? "")}
@@ -162,9 +166,16 @@ export default function EventsBackend() {
           </div>
         ))}
         {filteredEvents.length === 0 && (
-          <p className="col-span-full text-center py-10 text-muted-foreground">
-            No {activeTab} events found.
-          </p>
+          <div className="col-span-full py-16 text-center">
+            <p className="text-gray-400 text-sm">
+              No {activeTab} events found.
+            </p>
+            <Link
+              href="/dashboard/events/add-event"
+              className="mt-4 inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#051e3a] text-white text-sm font-bold hover:bg-[#082040] transition-colors">
+              <PlusCircle size={14} /> Create your first event
+            </Link>
+          </div>
         )}
       </div>
     </div>

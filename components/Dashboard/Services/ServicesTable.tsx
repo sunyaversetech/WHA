@@ -458,19 +458,19 @@ export default function ServicesTable() {
   return (
     <div className="min-h-screen ">
       {/* ── Page header ── */}
-      <div className="flex items-start justify-between mb-5">
-        <div>
+      <div className="flex items-center justify-between mb-5 gap-3">
+        <div className="min-w-0">
           <h1 className="text-xl md:text-2xl font-bold text-[#051e3a]">
             Service menu
           </h1>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <p className="text-sm text-gray-400 mt-0.5 hidden sm:block">
             View and manage the services offered by your business.{" "}
             <span className="text-[#051e3a] font-medium cursor-pointer hover:underline">
               Learn more
             </span>
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <AddDropdown
             onCategory={() => setAddCatOpen(true)}
             onSingleService={() => router.push("/dashboard/services/add")}
@@ -479,8 +479,8 @@ export default function ServicesTable() {
       </div>
 
       {/* ── Controls ── */}
-      <div className="flex items-center gap-2 mb-6">
-        <div className="relative flex-1 max-w-xs">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1">
           <Search
             size={14}
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -494,16 +494,60 @@ export default function ServicesTable() {
           />
         </div>
 
-        <button className="ml-auto flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors">
+        <button className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors shrink-0">
           <ArrowUpDown size={13} className="text-gray-400" />
           <span className="hidden sm:inline">Manage order</span>
         </button>
       </div>
 
+      {/* ── Mobile: category tabs (horizontal scroll) ── */}
+      <div className="md:hidden -mx-4 px-4 overflow-x-auto mb-4" style={{ scrollbarWidth: "none" }}>
+        <div className="flex gap-2 pb-1" style={{ width: "max-content" }}>
+          <button
+            onClick={() => setSelectedCatId(null)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap border transition-colors",
+              !selectedCatId
+                ? "bg-[#051e3a] text-white border-[#051e3a]"
+                : "text-[#051e3a] border-gray-200 bg-white hover:bg-gray-50",
+            )}>
+            All
+            <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded-full", !selectedCatId ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500")}>
+              {allServices.length}
+            </span>
+          </button>
+          {allCategories?.map((cat) => {
+            const count = allServices.filter((s) => s.category_id === cat._id).length;
+            const active = selectedCatId === cat._id;
+            return (
+              <button
+                key={cat._id}
+                onClick={() => setSelectedCatId(cat._id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap border transition-colors",
+                  active
+                    ? "bg-[#051e3a] text-white border-[#051e3a]"
+                    : "text-[#051e3a] border-gray-200 bg-white hover:bg-gray-50",
+                )}>
+                {cat.name}
+                <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded-full", active ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500")}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+          <button
+            onClick={() => setAddCatOpen(true)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap border border-dashed border-gray-300 text-gray-400 hover:text-[#051e3a] hover:border-gray-400 transition-colors">
+            <Plus size={12} /> New
+          </button>
+        </div>
+      </div>
+
       {/* ── Body ── */}
       <div className="flex flex-col md:flex-row gap-5 md:gap-7 items-start">
-        {/* Categories sidebar */}
-        <div className="w-full md:w-52 shrink-0 bg-white border border-gray-200 rounded-2xl p-4">
+        {/* Categories sidebar — desktop only */}
+        <div className="hidden md:block w-52 shrink-0 bg-white border border-gray-200 rounded-2xl p-4">
           <h2 className="text-base font-bold text-[#051e3a] mb-3">
             Categories
           </h2>
@@ -623,19 +667,19 @@ export default function ServicesTable() {
                           className="w-1 shrink-0"
                           style={{ background: catColor }}
                         />
-                        <div className="flex-1 flex items-center justify-between px-4 py-4 min-w-0">
-                          <div className="min-w-0">
+                        <div className="flex-1 flex items-center justify-between px-3 md:px-4 py-3 md:py-4 min-w-0 gap-2">
+                          <div className="min-w-0 flex-1">
                             <p className="text-sm font-bold text-[#051e3a] truncate">
                               {svc.name}
                             </p>
-                            <p className="text-xs text-gray-400 mt-0.5">
+                            <p className="text-xs text-gray-400 mt-0.5 truncate">
                               {fmtDuration(svc.base_duration)}
                               {svc.buffer_time > 0 &&
                                 ` · +${fmtDuration(svc.buffer_time)} buffer`}
                             </p>
                           </div>
-                          <div className="flex items-center gap-3 shrink-0 ml-4">
-                            <span className="text-sm font-bold text-[#051e3a] whitespace-nowrap">
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-xs md:text-sm font-bold text-[#051e3a] whitespace-nowrap">
                               {svc.price_type === "Free"
                                 ? "Free"
                                 : svc.price_type === "Custom"

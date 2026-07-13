@@ -58,7 +58,7 @@ const BusinessType = () => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4 ">
           <FormField
             control={form.control}
             name="business_type"
@@ -69,7 +69,7 @@ const BusinessType = () => {
                   onValueChange={field.onChange}
                   defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="max-sm:max-w-60">
                       <SelectValue placeholder="Select how this service is fulfilled" />
                     </SelectTrigger>
                   </FormControl>

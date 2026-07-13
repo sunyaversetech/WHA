@@ -37,8 +37,10 @@ const GUTTER_W = 56; // time-label gutter width
 const TOOLBAR_H = 52;
 const DASH_HEADER_H = 56; // matches h-[56px] in DashboardLayout
 const DASH_HEADER_H_MD = 60; // matches md:h-[60px] in DashboardLayout
-const COL_HEADER_TOP = DASH_HEADER_H + TOOLBAR_H; // 108
+const MOBILE_SECONDARY_H = 44; // secondary row (mode+view+filter) on mobile
+const COL_HEADER_TOP = DASH_HEADER_H + TOOLBAR_H; // 108 — desktop
 const COL_HEADER_TOP_MD = DASH_HEADER_H_MD + TOOLBAR_H; // 112
+const COL_HEADER_TOP_MOBILE = DASH_HEADER_H + TOOLBAR_H + MOBILE_SECONDARY_H; // 152 — mobile
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -1268,6 +1270,7 @@ function DayView({
   onBookingClick,
   onBlockedTimeClick,
   onSlotClick,
+  colHeaderTop = COL_HEADER_TOP,
 }: {
   date: Date;
   columns: any[];
@@ -1277,6 +1280,7 @@ function DayView({
   onBookingClick: (b: any) => void;
   onBlockedTimeClick: (entry: any) => void;
   onSlotClick?: (slot: SlotClick) => void;
+  colHeaderTop?: number;
 }) {
   const todayFlag = isToday(date);
   const gridH = 24 * HOUR_H;
@@ -1323,7 +1327,7 @@ function DayView({
       {/* Column headers — sticky below toolbar */}
       <div
         className="flex border-b border-gray-200 bg-white "
-        style={{ position: "sticky", top: COL_HEADER_TOP, zIndex: 20 }}>
+        style={{ position: "sticky", top: colHeaderTop, zIndex: 20 }}>
         <div
           className="shrink-0 border-r border-gray-200"
           style={{ width: GUTTER_W }}
@@ -2747,29 +2751,32 @@ export default function Calendar() {
   }, []);
 
   return (
-    <div className="bg-white text-gray-900 p-4">
+    <div className="bg-white text-gray-900">
+      {/* ── Sticky toolbar ── */}
       <div
-        className="flex items-center gap-2 px-3 md:px-4 border-b border-gray-200 bg-white flex-wrap"
-        style={{
-          position: "sticky",
-          top: DASH_HEADER_H,
-          zIndex: 30,
-          height: TOOLBAR_H,
-        }}>
-        {/* Left */}
-        <div className="flex items-center gap-2">
+        className="sticky bg-white z-30 border-b border-gray-200"
+        style={{ top: DASH_HEADER_H }}>
+
+        {/* ── Primary row (all viewports) ── */}
+        <div
+          className="flex items-center gap-2 px-3 md:px-4"
+          style={{ height: TOOLBAR_H }}>
+
+          {/* Today — desktop only */}
           <button
             onClick={goToday}
-            className="px-3 py-1.5 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-full hover:bg-gray-100 transition-colors">
+            className="hidden sm:block px-3 py-1.5 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-full hover:bg-gray-100 transition-colors shrink-0">
             Today
           </button>
-          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full overflow-hidden">
+
+          {/* Date nav */}
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full overflow-hidden shrink-0">
             <button
               onClick={goPrev}
               className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors">
               <ChevronLeft size={15} />
             </button>
-            <span className="text-sm font-semibold text-gray-900 px-2 min-w-[110px] md:min-w-[160px] text-center">
+            <span className="text-sm font-semibold text-gray-900 px-2 min-w-[120px] md:min-w-[160px] text-center">
               {dateLabel}
             </span>
             <button
@@ -2778,9 +2785,114 @@ export default function Calendar() {
               <ChevronRight size={15} />
             </button>
           </div>
+
+          {/* Filter — desktop only */}
+          <div className="hidden sm:block shrink-0">
+            <TeamFilterDropdown
+              employees={allEmployees}
+              services={resourceServices}
+              mode={mode}
+              selectedId={filterId}
+              onSelect={setFilterId}
+            />
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Desktop right controls */}
+          <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+            {/* Mode toggle */}
+            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
+              {(["employee", "resource"] as CalendarMode[]).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => { setMode(m); setFilterId(null); }}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                    mode === m ? "bg-[#051e3a] text-white" : "text-gray-400 hover:text-gray-900",
+                  )}>
+                  {m === "employee" ? <Users size={12} /> : <Package size={12} />}
+                  <span className="hidden md:inline">
+                    {m === "employee" ? "Team" : "Resources"}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {/* Refresh */}
+            <button
+              onClick={() => refetch()}
+              disabled={bookingLoading}
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+              <RefreshCw size={13} className={cn(bookingLoading && "animate-spin")} />
+            </button>
+            {/* View toggle */}
+            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
+              {(["day", "week"] as CalendarView[]).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors capitalize",
+                    view === v ? "bg-white text-gray-900 shadow-sm" : "text-gray-400 hover:text-gray-900",
+                  )}>
+                  {v}
+                </button>
+              ))}
+            </div>
+            <AddDropdown
+              onAddAppointment={() => openAppointmentModal()}
+              onAddBlockedTime={() => openBlockedTimeModal()}
+            />
+          </div>
+
+          {/* Mobile right controls */}
+          <div className="sm:hidden flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => refetch()}
+              disabled={bookingLoading}
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-gray-900 transition-colors">
+              <RefreshCw size={13} className={cn(bookingLoading && "animate-spin")} />
+            </button>
+            <AddDropdown
+              onAddAppointment={() => openAppointmentModal()}
+              onAddBlockedTime={() => openBlockedTimeModal()}
+            />
+          </div>
         </div>
 
-        <div className="hidden sm:block">
+        {/* ── Secondary row — mobile only ── */}
+        <div className="sm:hidden flex items-center gap-2 px-3 pb-2.5">
+          {/* Mode toggle */}
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
+            {(["employee", "resource"] as CalendarMode[]).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setMode(m); setFilterId(null); }}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-colors",
+                  mode === m ? "bg-[#051e3a] text-white" : "text-gray-500 hover:text-gray-900",
+                )}>
+                {m === "employee" ? <Users size={11} /> : <Package size={11} />}
+                {m === "employee" ? "Team" : "Resources"}
+              </button>
+            ))}
+          </div>
+          {/* View toggle */}
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
+            {(["day", "week"] as CalendarView[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors capitalize",
+                  view === v ? "bg-[#051e3a] text-white" : "text-gray-500 hover:text-gray-900",
+                )}>
+                {v}
+              </button>
+            ))}
+          </div>
+          <div className="flex-1" />
+          {/* Filter */}
           <TeamFilterDropdown
             employees={allEmployees}
             services={resourceServices}
@@ -2789,92 +2901,6 @@ export default function Calendar() {
             onSelect={setFilterId}
           />
         </div>
-
-        <div className="flex-1" />
-
-        {/* Right */}
-        <div className="flex items-center gap-1.5">
-          <div className="hidden sm:flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
-            {(["employee", "resource"] as CalendarMode[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => {
-                  setMode(m);
-                  setFilterId(null);
-                }}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                  mode === m
-                    ? "bg-[#051e3a] text-white"
-                    : "text-gray-400 hover:text-gray-900",
-                )}>
-                {m === "employee" ? <Users size={12} /> : <Package size={12} />}
-                <span className="hidden md:inline">
-                  {m === "employee" ? "Team" : "Resources"}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => refetch()}
-            disabled={bookingLoading}
-            className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-            <RefreshCw
-              size={13}
-              className={cn(bookingLoading && "animate-spin")}
-            />
-          </button>
-
-          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
-            {(["day", "week"] as CalendarView[]).map((v) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors capitalize",
-                  view === v
-                    ? "bg-white text-gray-900"
-                    : "text-gray-400 hover:text-gray-900",
-                )}>
-                {v}
-              </button>
-            ))}
-          </div>
-
-          <AddDropdown
-            onAddAppointment={() => openAppointmentModal()}
-            onAddBlockedTime={() => openBlockedTimeModal()}
-          />
-        </div>
-      </div>
-
-      {/* ── Mobile: mode + filter bar ── */}
-      <div className="sm:hidden flex items-center gap-2 px-3 py-2 border-b border-gray-200 bg-white">
-        <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
-          {(["employee", "resource"] as CalendarMode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => {
-                setMode(m);
-                setFilterId(null);
-              }}
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-colors",
-                mode === m ? "bg-[#051e3a] text-white" : "text-gray-400",
-              )}>
-              {m === "employee" ? <Users size={11} /> : <Package size={11} />}
-              {m === "employee" ? "Team" : "Resources"}
-            </button>
-          ))}
-        </div>
-        <TeamFilterDropdown
-          employees={allEmployees}
-          services={resourceServices}
-          mode={mode}
-          selectedId={filterId}
-          onSelect={setFilterId}
-        />
       </div>
 
       {/* ── Week mobile day tabs ── */}
@@ -2928,6 +2954,7 @@ export default function Calendar() {
         <DayView
           date={view === "week" ? mobileDate : currentDate}
           columns={columns}
+          colHeaderTop={COL_HEADER_TOP_MOBILE}
           bookings={allBookings.filter((b) =>
             sameDay(
               new Date(b.start_time),
