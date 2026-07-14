@@ -10,7 +10,7 @@ import { logger } from "@/lib/logger";
 import { OperatingHours } from "@/server/models/OperatingHour.model";
 
 const DEAD_BOOKING_STATUSES = ["cancelled", "no_show", "refunded"];
-const DEFAULT_SLOT_STEP_MINUTES = 30;
+const SLOT_STEP_MINUTES = 10; // 10-min intervals for all service types
 const DEFAULT_BIZ_START = "09:00";
 const DEFAULT_BIZ_END = "17:00";
 
@@ -130,17 +130,15 @@ async function get_business_window(
       end_str: DEFAULT_BIZ_END,
     };
   if (bh.is24_7) return { is_open: true, start_str: "00:00", end_str: "23:59" };
-
   const day_sched = (bh.schedule as any[])?.find(
     (h: any) => h.day.toLowerCase() === day_name,
   );
-  if (!day_sched || !day_sched.isOpen) {
+  if (!day_sched || !day_sched.isOpen)
     return {
       is_open: false,
       start_str: DEFAULT_BIZ_START,
       end_str: DEFAULT_BIZ_END,
     };
-  }
   return {
     is_open: true,
     start_str: day_sched.openTime,
@@ -217,8 +215,7 @@ export async function GET(request: Request) {
     const end_of_day = new Date(`${params.date}T23:59:59.999Z`);
     const now = new Date();
 
-    const step_minutes: number =
-      service.base_duration ?? DEFAULT_SLOT_STEP_MINUTES;
+    const step_minutes: number = SLOT_STEP_MINUTES; // 10-min intervals for all service types
     const step_ms = step_minutes * 60_000;
     const selected_duration: number = params.duration_minutes
       ? parseInt(params.duration_minutes, 10)
@@ -229,29 +226,28 @@ export async function GET(request: Request) {
 
     // ══════════════════════════════════════════════════════════════════════════
     // PIPELINE 1 — RESOURCE BASED
-    // availability_type "always"   → business operating hours
-    // availability_type "specific" → service.availability_schedule for that day
+    // "specific" → service.availability_schedule  |  "always" → business hours
     // ══════════════════════════════════════════════════════════════════════════
     if (service.service_type === "resource_based") {
       const max_inventory = Number(service.max_concurrent_bookings) || 0;
       if (max_inventory <= 0) return empty_response();
 
-      // Determine the opening window
       let open_str: string;
       let close_str: string;
 
       if (service.availability_type === "specific") {
-        const day_sched = (service.availability_schedule as any[])?.find(
+        const day_sched_res = (service.availability_schedule as any[])?.find(
           (s: any) => {
             const n = normalize_day(s.day_of_week);
             return n === day_name || n === normalize_day(day_short);
           },
         );
-        if (!day_sched || !day_sched.is_available) return empty_response();
-        open_str = day_sched.start_time; // "09:00" format
-        close_str = day_sched.end_time; // "17:00" format
+        if (!day_sched_res || !day_sched_res.is_available)
+          return empty_response();
+        open_str = day_sched_res.start_time as string;
+        close_str = day_sched_res.end_time as string;
       } else {
-        // "always" → use business hours
+        // "always" → use business operating hours
         const biz = await get_business_window(target_business_id, day_name);
         if (!biz.is_open) return empty_response();
         open_str = biz.start_str;
@@ -351,8 +347,7 @@ export async function GET(request: Request) {
 
     // ══════════════════════════════════════════════════════════════════════════
     // PIPELINE 2 — GROUP SESSION
-    // availability_type "specific" → use group_schedule discrete slots + capacity
-    // availability_type "always"   → generate slots from business hours, check capacity
+    // "specific" → group_schedule fixed slots  |  "always" → business hours + 10-min grid
     // ══════════════════════════════════════════════════════════════════════════
     if (service.service_type === "group_session") {
       const [group_bookings, group_locks] = await Promise.all([
@@ -370,32 +365,29 @@ export async function GET(request: Request) {
         }).lean(),
       ]);
 
-      if (
-        service.availability_type === "specific" &&
-        service.group_schedule?.length > 0
-      ) {
-        // Use the specific slot schedule for this day
-        const day_sched = (service.group_schedule as any[])?.find((d: any) => {
-          const n = normalize_day(d.day_of_week);
-          return n === day_name || n === normalize_day(day_short);
-        });
-        if (!day_sched || !day_sched.is_active || !day_sched.slots?.length) {
+      if (service.availability_type === "specific") {
+        // Fixed discrete slots from group_schedule
+        const day_sched_grp = (service.group_schedule as any[])?.find(
+          (d: any) => {
+            const n = normalize_day(d.day_of_week);
+            return n === day_name || n === normalize_day(day_short);
+          },
+        );
+        if (
+          !day_sched_grp ||
+          !day_sched_grp.is_active ||
+          !day_sched_grp.slots?.length
+        )
           return empty_response();
-        }
 
-        for (const slot of day_sched.slots as any[]) {
+        for (const slot of day_sched_grp.slots as any[]) {
           const slot_start = to_utc(
             params.date,
             slot.start_time,
             params.timezone,
           );
-
-          // Skip slots already in the past
           if (params.date === today && slot_start <= now) continue;
-
           const capacity = Number(slot.capacity) || 1;
-
-          // Count how many bookings/locks exist at exactly this slot time
           const taken =
             group_bookings.filter(
               (b) =>
@@ -409,11 +401,10 @@ export async function GET(request: Request) {
                   (l.start_time as Date).getTime() - slot_start.getTime(),
                 ) < 60_000,
             ).length;
-
           if (taken < capacity) available_slots.push(slot_start.toISOString());
         }
       } else {
-        // availability_type "always" — generate slots from business hours
+        // "always" → generate 10-min grid within business operating hours
         const biz = await get_business_window(target_business_id, day_name);
         if (!biz.is_open) return empty_response();
 
@@ -434,7 +425,6 @@ export async function GET(request: Request) {
             runner.getTime() + selected_duration * 60_000,
           );
           if (slot_end > close_time) break;
-
           const occupied =
             group_bookings.filter(
               (b) =>
@@ -446,7 +436,6 @@ export async function GET(request: Request) {
                 Math.abs((l.start_time as Date).getTime() - runner.getTime()) <
                 1000,
             ).length;
-
           if (occupied < max_capacity)
             available_slots.push(runner.toISOString());
           runner = new Date(runner.getTime() + step_ms);
@@ -559,13 +548,13 @@ export async function GET(request: Request) {
 
         const slot_end = new Date(runner.getTime() + duration * 60_000);
 
-        // Check if runner fits inside any of this employee's shift windows.
         const fits_shift = day_sched.shifts.some((shift: any) => {
           if (!shift.start || !shift.end) return false;
           const shift_start = to_utc(params.date, shift.start, params.timezone);
           const shift_end = to_utc(params.date, shift.end, params.timezone);
           return runner >= shift_start && slot_end <= shift_end;
         });
+
         if (!fits_shift) continue;
 
         const has_time_off = time_offs.some(

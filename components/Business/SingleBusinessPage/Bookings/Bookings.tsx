@@ -5,16 +5,15 @@ import { format, addDays, formatDate } from "date-fns";
 import {
   Clock,
   ChevronRight,
-  Check,
   Shuffle,
   Loader2,
   User,
   ChevronLeft,
-  Plus,
   MapPin,
   Layers,
   Timer,
   Minus,
+  Plus,
   CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -43,7 +42,7 @@ interface BookingContainerProps {
   services: ServiceType[];
 }
 
-type StepType = "services" | "professionals" | "time";
+type StepType = "professionals" | "time";
 
 function formatDurationLabel(totalMinutes: number): string {
   const hours = Math.floor(totalMinutes / 60);
@@ -65,7 +64,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
 
   const [activeTab, setActiveTab] = useState<string>("Featured");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [currentStep, setCurrentStep] = useState<StepType>("services");
+  const [currentStep, setCurrentStep] = useState<StepType>("professionals");
 
   const [selectedServices, setSelectedServices] = useState<ServiceType[]>([]);
   const [selectedMultipliers, setSelectedMultipliers] = useState<
@@ -202,37 +201,19 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   ]);
 
   const handleOpenBookingWizard = (service: ServiceType) => {
+    const hasEmployees =
+      service.service_type === "employee_based" &&
+      (service.assigned_employees?.length ?? 0) > 0;
     setSelectedServices([service]);
     setSelectedMultipliers({ [service._id]: 1 });
     setSelectedQuantities({ [service._id]: 1 });
-    setCurrentStep("services");
+    setCurrentStep(hasEmployees ? "professionals" : "time");
     setIsNoPreference(true);
     setSelectedEmployee(null);
     setSelectedDate(new Date());
     setSelectedSlot("");
     setHasAutoAdvancedDate(false);
     setIsDialogOpen(true);
-  };
-
-  const handleToggleServiceSelection = (service: ServiceType) => {
-    const exists = selectedServices.some((s) => s._id === service._id);
-    if (exists) {
-      if (selectedServices.length > 1) {
-        setSelectedServices(
-          selectedServices.filter((s) => s._id !== service._id),
-        );
-        const updatedMults = { ...selectedMultipliers };
-        delete updatedMults[service._id];
-        setSelectedMultipliers(updatedMults);
-        const updatedQtys = { ...selectedQuantities };
-        delete updatedQtys[service._id];
-        setSelectedQuantities(updatedQtys);
-      }
-    } else {
-      setSelectedServices([...selectedServices, service]);
-      setSelectedMultipliers({ ...selectedMultipliers, [service._id]: 1 });
-      setSelectedQuantities({ ...selectedQuantities, [service._id]: 1 });
-    }
   };
 
   const handleSelectMultiplier = (serviceId: string, value: number) => {
@@ -253,14 +234,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   };
 
   const handleNextStep = () => {
-    if (currentStep === "services") {
-      if (dynamicAvailableEmployees.length > 0) {
-        setCurrentStep("professionals");
-      } else {
-        setIsNoPreference(true);
-        setCurrentStep("time");
-      }
-    } else if (currentStep === "professionals") {
+    if (currentStep === "professionals") {
       setCurrentStep("time");
     } else if (currentStep === "time") {
       handleExecuteBookingAndPaymentPipeline();
@@ -269,13 +243,13 @@ export default function BookingContainer({ services }: BookingContainerProps) {
 
   const handleBackStep = () => {
     if (currentStep === "professionals") {
-      setCurrentStep("services");
+      handleGlobalWizardReset();
     } else if (currentStep === "time") {
       setHasAutoAdvancedDate(false);
       if (dynamicAvailableEmployees.length > 0) {
         setCurrentStep("professionals");
       } else {
-        setCurrentStep("services");
+        handleGlobalWizardReset();
       }
     }
   };
@@ -288,7 +262,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
 
     // Reset all component state
     setIsDialogOpen(false);
-    setCurrentStep("services");
+    setCurrentStep("professionals");
     setSelectedServices([]);
     setSelectedMultipliers({});
     setSelectedQuantities({});
@@ -506,7 +480,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
               <div>
                 {/* Step Header */}
                 <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                  {currentStep !== "services" && !isMutationLoading ? (
+                  {!isMutationLoading ? (
                     <button
                       onClick={handleBackStep}
                       className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-400 hover:text-black transition-colors">
@@ -517,16 +491,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                   )}
 
                   <nav className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    <span
-                      className={cn(
-                        currentStep === "services" &&
-                          "text-primary font-extrabold",
-                      )}>
-                      Services
-                    </span>
                     {dynamicAvailableEmployees.length > 0 && (
                       <>
-                        <ChevronRight className="w-3 h-3 text-slate-300" />
                         <span
                           className={cn(
                             currentStep === "professionals" &&
@@ -534,9 +500,9 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                           )}>
                           Professional
                         </span>
+                        <ChevronRight className="w-3 h-3 text-slate-300" />
                       </>
                     )}
-                    <ChevronRight className="w-3 h-3 text-slate-300" />
                     <span
                       className={cn(
                         currentStep === "time" && "text-primary font-extrabold",
@@ -546,118 +512,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                   </nav>
                 </div>
 
-                {/* STEP 1: SERVICES */}
-                {currentStep === "services" && (
-                  <div className="space-y-4 pt-4">
-                    <div className="space-y-1">
-                      <h2 className="text-2xl font-black text-slate-900">
-                        Select services
-                      </h2>
-                      <p className="text-xs text-slate-400">
-                        Configure your booking timeline intervals scaling
-                        directly from the base service settings.
-                      </p>
-                    </div>
-
-                    <div className="space-y-3.5 max-h-[420px] overflow-y-auto pr-1">
-                      {services.map((item) => {
-                        const isChecked = selectedServices.some(
-                          (s) => s._id === item._id,
-                        );
-                        const currentMult = selectedMultipliers[item._id] || 1;
-                        const hasInventory = getServiceMaxQty(item) > 0;
-
-                        return (
-                          <div
-                            key={item._id}
-                            className={cn(
-                              "p-4 bg-white border rounded-2xl flex flex-col gap-4 transition-all",
-                              isChecked
-                                ? "border-primary shadow-sm"
-                                : "border-slate-100",
-                            )}>
-                            <div
-                              onClick={() => handleToggleServiceSelection(item)}
-                              className="flex items-center justify-between cursor-pointer">
-                              <div className="space-y-0.5">
-                                <h4 className="font-bold text-sm text-slate-900">
-                                  {item.name}
-                                </h4>
-                                <p className="text-xs text-slate-400">
-                                  Base: {item.base_duration} mins •{" "}
-                                  {item.category}
-                                </p>
-                                <div className="flex items-center gap-2 pt-1">
-                                  <p className="text-xs font-extrabold text-slate-900">
-                                    AUD {item.base_price} / block
-                                  </p>
-                                  {hasInventory && (
-                                    <span className="text-[10px] text-amber-600 bg-amber-50 font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                                      <Layers className="w-2.5 h-2.5" /> Max
-                                      Qty: {getServiceMaxQty(item)}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div
-                                className={cn(
-                                  "w-5 h-5 rounded-full flex items-center justify-center border transition-all",
-                                  isChecked
-                                    ? "bg-primary border-primary text-white"
-                                    : "border-slate-200",
-                                )}>
-                                {isChecked ? (
-                                  <Check className="w-3 h-3" />
-                                ) : (
-                                  <Plus className="w-3 h-3 text-slate-400" />
-                                )}
-                              </div>
-                            </div>
-
-                            {isChecked && (
-                              <div className="border-t border-slate-100 pt-3 space-y-3.5">
-                                <div className="space-y-1.5">
-                                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                                    <Timer className="w-3 h-3" /> Choose
-                                    Duration Block:
-                                  </label>
-                                  <div className="grid grid-cols-4 gap-1.5">
-                                    {[1, 2, 3, 4].map((multiplierValue) => {
-                                      const calculatedMins =
-                                        item.base_duration * multiplierValue;
-                                      return (
-                                        <button
-                                          type="button"
-                                          key={multiplierValue}
-                                          onClick={() =>
-                                            handleSelectMultiplier(
-                                              item._id,
-                                              multiplierValue,
-                                            )
-                                          }
-                                          className={cn(
-                                            "py-2 px-1 text-[11px] font-bold rounded-xl border text-center transition-all whitespace-nowrap overflow-hidden text-ellipsis",
-                                            currentMult === multiplierValue
-                                              ? "bg-black text-white border-black shadow-sm"
-                                              : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100",
-                                          )}>
-                                          {formatDurationLabel(calculatedMins)}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 2: PROFESSIONALS */}
+                {/* STEP 1: PROFESSIONALS */}
                 {currentStep === "professionals" && (
                   <div className="space-y-4 pt-4">
                     <div className="space-y-1">
@@ -797,10 +652,55 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                       })}
                     </div>
 
+                    {/* Duration Block Picker — resource_based only */}
+                    {selectedServices.some(
+                      (s) => s.service_type === "resource_based",
+                    ) && (
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                          <Timer className="w-3 h-3" /> Choose Duration Block:
+                        </label>
+                        {selectedServices
+                          .filter((s) => s.service_type === "resource_based")
+                          .map((item) => {
+                            const currentMult =
+                              selectedMultipliers[item._id] || 1;
+                            return (
+                              <div key={item._id} className="grid grid-cols-4 gap-1.5">
+                                {[1, 2, 3, 4].map((multiplierValue) => {
+                                  const calculatedMins =
+                                    item.base_duration * multiplierValue;
+                                  return (
+                                    <button
+                                      type="button"
+                                      key={multiplierValue}
+                                      onClick={() => {
+                                        handleSelectMultiplier(
+                                          item._id,
+                                          multiplierValue,
+                                        );
+                                        setSelectedSlot("");
+                                      }}
+                                      className={cn(
+                                        "py-2 px-1 text-[11px] font-bold rounded-xl border text-center transition-all",
+                                        currentMult === multiplierValue
+                                          ? "bg-black text-white border-black shadow-sm"
+                                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100",
+                                      )}>
+                                      {formatDurationLabel(calculatedMins)}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
+
                     {/* Duration Summary */}
                     <div className="p-3.5 bg-slate-100/60 rounded-2xl border border-slate-200/40 flex justify-between items-center text-xs">
                       <span className="font-semibold text-slate-500">
-                        Total Pipeline Duration:
+                        Total Duration:
                       </span>
                       <span className="font-black text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-primary" />{" "}

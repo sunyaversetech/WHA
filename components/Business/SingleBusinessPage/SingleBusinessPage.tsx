@@ -459,10 +459,8 @@ export default function BusinessPage() {
 
   const ratingNum = avgRating ? Number(avgRating.toFixed(1)) : null;
 
-  /* ═══════════════ LEFT MAIN CONTENT sections ═══════════════ */
   const MainContent = () => (
     <div>
-      {/* COMMUNITY */}
       {community.length > 0 && (
         <>
           <section style={{ marginBottom: 28 }}>
@@ -505,12 +503,17 @@ export default function BusinessPage() {
         </>
       )}
 
-      {/* SERVICES */}
       <section>
         <SecTitle>
           Services
           {activeServices.length > 0 && (
-            <span style={{ fontSize: 13, color: T.gray, fontWeight: 500 }}>
+            <span
+              style={{
+                fontSize: 13,
+                color: T.gray,
+                fontWeight: 500,
+                marginLeft: 8,
+              }}>
               {activeServices.length} available
             </span>
           )}
@@ -518,7 +521,6 @@ export default function BusinessPage() {
         <ServiceBookingList services={biz?.services ?? []} />
       </section>
 
-      {/* EVENTS */}
       {events.length > 0 && (
         <>
           <Divider />
@@ -543,7 +545,6 @@ export default function BusinessPage() {
         </>
       )}
 
-      {/* DEALS */}
       {deals.length > 0 && (
         <>
           <Divider />

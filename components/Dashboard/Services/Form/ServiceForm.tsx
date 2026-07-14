@@ -206,7 +206,10 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
             (initialData as any).max_bookings_per_slot ?? 1,
           is_one_time_booking:
             (initialData as any).is_one_time_booking ?? false,
-          availability_type: (initialData as any).availability_type ?? "always",
+          availability_type:
+            (initialData as any).service_type === "group_session"
+              ? "specific"
+              : ((initialData as any).availability_type ?? "always"),
           availability_schedule: (initialData as any).availability_schedule
             ?.length
             ? (initialData as any).availability_schedule

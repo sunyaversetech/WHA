@@ -29,6 +29,7 @@ import Link from "next/link";
 
 const HOUR_H = 64; // px per hour
 const GUTTER_W = 56; // time-label gutter width
+const COL_MIN_W = 160; // minimum column width before horizontal scroll
 
 // Sticky offsets — these match the dashboard layout's header heights exactly:
 // Dashboard header: h-[56px] on mobile, h-[60px] on md+
@@ -286,16 +287,70 @@ function BlockedTimeBlock({
   );
 }
 
+// ─── Overlap layout ───────────────────────────────────────────────────────────
+
+function computeOverlapLayout(
+  bookings: any[],
+): Map<string, { colIndex: number; totalCols: number }> {
+  const sorted = [...bookings].sort(
+    (a, b) =>
+      new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+  );
+  const layout = new Map<string, { colIndex: number; totalCols: number }>();
+
+  // Assign a column index to each booking (greedy, like Google Calendar)
+  for (const booking of sorted) {
+    const start = new Date(booking.start_time).getTime();
+    const end = new Date(booking.end_time).getTime();
+    const overlapping = sorted.filter((b) => {
+      const bs = new Date(b.start_time).getTime();
+      const be = new Date(b.end_time).getTime();
+      return bs < end && be > start;
+    });
+    const usedCols = new Set(
+      overlapping
+        .filter((b) => b._id !== booking._id && layout.has(b._id))
+        .map((b) => layout.get(b._id)!.colIndex),
+    );
+    let colIndex = 0;
+    while (usedCols.has(colIndex)) colIndex++;
+    layout.set(booking._id, { colIndex, totalCols: 1 });
+  }
+
+  // Second pass: set totalCols = max colIndex+1 across each overlap group
+  for (const booking of sorted) {
+    const start = new Date(booking.start_time).getTime();
+    const end = new Date(booking.end_time).getTime();
+    const overlapping = sorted.filter((b) => {
+      const bs = new Date(b.start_time).getTime();
+      const be = new Date(b.end_time).getTime();
+      return bs < end && be > start;
+    });
+    const totalCols =
+      Math.max(...overlapping.map((b) => layout.get(b._id)?.colIndex ?? 0)) + 1;
+    for (const b of overlapping) {
+      const info = layout.get(b._id);
+      if (info) layout.set(b._id, { ...info, totalCols });
+    }
+  }
+
+  return layout;
+}
+
 // ─── Event Block ──────────────────────────────────────────────────────────────
 
 function EventBlock({
   booking,
   mode,
   onClick,
+  colIndex = 0,
+  totalCols = 1,
 }: {
   booking: any;
   mode: CalendarMode;
   onClick: () => void;
+  colIndex?: number;
+  totalCols?: number;
 }) {
   const start = new Date(booking.start_time);
   const end = new Date(booking.end_time);
@@ -307,7 +362,13 @@ function EventBlock({
   const customerName =
     (booking.user_id as any)?.name || booking.customer_name || "Guest";
   const serviceName = booking.service_id?.name || "Service";
+  const qty = booking.inventory_quantity;
   const isShort = height < 44;
+
+  const GAP = 2;
+  const pct = 100 / totalCols;
+  const leftPct = colIndex * pct;
+  const rightPct = (totalCols - colIndex - 1) * pct;
 
   return (
     <button
@@ -315,8 +376,8 @@ function EventBlock({
       style={{
         position: "absolute",
         top,
-        left: 2,
-        right: 2,
+        left: `calc(${leftPct}% + ${GAP}px)`,
+        right: `calc(${rightPct}% + ${GAP}px)`,
         height,
         background: color,
         color: textCol,
@@ -326,6 +387,7 @@ function EventBlock({
       {isShort ? (
         <p className="text-[10px] font-semibold leading-tight truncate">
           {fmtTime(start)} · {customerName}
+          {qty && qty > 1 ? ` ×${qty}` : ""}
         </p>
       ) : (
         <>
@@ -334,6 +396,9 @@ function EventBlock({
           </p>
           <p className="text-[11px] font-semibold leading-tight truncate mt-0.5">
             {customerName}
+            {qty && qty > 1 ? (
+              <span className="opacity-70 ml-1">×{qty}</span>
+            ) : null}
           </p>
           <p className="text-[10px] leading-tight truncate opacity-80">
             {serviceName}
@@ -1204,6 +1269,7 @@ function EmployeeColumn({
   return (
     <div
       className="relative flex-1 border-r border-gray-200 last:border-r-0 cursor-crosshair"
+      style={{ minWidth: COL_MIN_W }}
       onMouseMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setHoverY(e.clientY - rect.top);
@@ -1222,14 +1288,22 @@ function EmployeeColumn({
       }}>
       <GridLines />
 
-      {bookings.map((b) => (
-        <EventBlock
-          key={b._id}
-          booking={b}
-          mode={mode}
-          onClick={() => onBookingClick(b)}
-        />
-      ))}
+      {(() => {
+        const layout = computeOverlapLayout(bookings);
+        return bookings.map((b) => {
+          const { colIndex = 0, totalCols = 1 } = layout.get(b._id) ?? {};
+          return (
+            <EventBlock
+              key={b._id}
+              booking={b}
+              mode={mode}
+              onClick={() => onBookingClick(b)}
+              colIndex={colIndex}
+              totalCols={totalCols}
+            />
+          );
+        });
+      })()}
 
       {mode === "employee" &&
         blockedTimes.map((bt) => (
@@ -1323,14 +1397,14 @@ function DayView({
   if (allNotWorking) return <NoScheduleState />;
 
   return (
-    <>
+    <div className="overflow-x-auto">
       {/* Column headers — sticky below toolbar */}
       <div
         className="flex border-b border-gray-200 bg-white "
         style={{ position: "sticky", top: colHeaderTop, zIndex: 20 }}>
         <div
-          className="shrink-0 border-r border-gray-200"
-          style={{ width: GUTTER_W }}
+          className="shrink-0 border-r border-gray-200 bg-white"
+          style={{ position: "sticky", left: 0, zIndex: 21, width: GUTTER_W }}
         />
         {columns.map((col) => {
           const label =
@@ -1342,7 +1416,8 @@ function DayView({
           return (
             <div
               key={col._id}
-              className="flex-1 border-r border-gray-200 last:border-r-0">
+              className="flex-1 border-r border-gray-200 last:border-r-0"
+              style={{ minWidth: COL_MIN_W }}>
               <ColumnAvatar
                 name={col.full_name || col.name}
                 photo={col.employee_photo}
@@ -1419,7 +1494,7 @@ function DayView({
 
         {todayFlag && <CurrentTimeIndicator />}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -2756,12 +2831,10 @@ export default function Calendar() {
       <div
         className="sticky bg-white z-30 border-b border-gray-200"
         style={{ top: DASH_HEADER_H }}>
-
         {/* ── Primary row (all viewports) ── */}
         <div
-          className="flex items-center gap-2 px-3 md:px-4"
+          className="flex max-sm:flex-col max-sm:items-start items-center gap-2 px-3 md:px-4"
           style={{ height: TOOLBAR_H }}>
-
           {/* Today — desktop only */}
           <button
             onClick={goToday}
@@ -2770,7 +2843,7 @@ export default function Calendar() {
           </button>
 
           {/* Date nav */}
-          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full overflow-hidden shrink-0">
+          <div className="flex max-sm:mt-2 items-center bg-gray-50 border border-gray-200 rounded-full overflow-hidden shrink-0">
             <button
               onClick={goPrev}
               className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors">
@@ -2806,12 +2879,21 @@ export default function Calendar() {
               {(["employee", "resource"] as CalendarMode[]).map((m) => (
                 <button
                   key={m}
-                  onClick={() => { setMode(m); setFilterId(null); }}
+                  onClick={() => {
+                    setMode(m);
+                    setFilterId(null);
+                  }}
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                    mode === m ? "bg-[#051e3a] text-white" : "text-gray-400 hover:text-gray-900",
+                    mode === m
+                      ? "bg-[#051e3a] text-white"
+                      : "text-gray-400 hover:text-gray-900",
                   )}>
-                  {m === "employee" ? <Users size={12} /> : <Package size={12} />}
+                  {m === "employee" ? (
+                    <Users size={12} />
+                  ) : (
+                    <Package size={12} />
+                  )}
                   <span className="hidden md:inline">
                     {m === "employee" ? "Team" : "Resources"}
                   </span>
@@ -2823,7 +2905,10 @@ export default function Calendar() {
               onClick={() => refetch()}
               disabled={bookingLoading}
               className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-              <RefreshCw size={13} className={cn(bookingLoading && "animate-spin")} />
+              <RefreshCw
+                size={13}
+                className={cn(bookingLoading && "animate-spin")}
+              />
             </button>
             {/* View toggle */}
             <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
@@ -2833,7 +2918,9 @@ export default function Calendar() {
                   onClick={() => setView(v)}
                   className={cn(
                     "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors capitalize",
-                    view === v ? "bg-white text-gray-900 shadow-sm" : "text-gray-400 hover:text-gray-900",
+                    view === v
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-400 hover:text-gray-900",
                   )}>
                   {v}
                 </button>
@@ -2851,7 +2938,10 @@ export default function Calendar() {
               onClick={() => refetch()}
               disabled={bookingLoading}
               className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-gray-900 transition-colors">
-              <RefreshCw size={13} className={cn(bookingLoading && "animate-spin")} />
+              <RefreshCw
+                size={13}
+                className={cn(bookingLoading && "animate-spin")}
+              />
             </button>
             <AddDropdown
               onAddAppointment={() => openAppointmentModal()}
@@ -2861,16 +2951,21 @@ export default function Calendar() {
         </div>
 
         {/* ── Secondary row — mobile only ── */}
-        <div className="sm:hidden flex items-center gap-2 px-3 pb-2.5">
+        <div className="sm:hidden flex mt-14 flex-col items-start gap-2 px-3 pb-2.5">
           {/* Mode toggle */}
           <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
             {(["employee", "resource"] as CalendarMode[]).map((m) => (
               <button
                 key={m}
-                onClick={() => { setMode(m); setFilterId(null); }}
+                onClick={() => {
+                  setMode(m);
+                  setFilterId(null);
+                }}
                 className={cn(
                   "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-colors",
-                  mode === m ? "bg-[#051e3a] text-white" : "text-gray-500 hover:text-gray-900",
+                  mode === m
+                    ? "bg-[#051e3a] text-white"
+                    : "text-gray-500 hover:text-gray-900",
                 )}>
                 {m === "employee" ? <Users size={11} /> : <Package size={11} />}
                 {m === "employee" ? "Team" : "Resources"}
@@ -2885,7 +2980,9 @@ export default function Calendar() {
                 onClick={() => setView(v)}
                 className={cn(
                   "px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors capitalize",
-                  view === v ? "bg-[#051e3a] text-white" : "text-gray-500 hover:text-gray-900",
+                  view === v
+                    ? "bg-[#051e3a] text-white"
+                    : "text-gray-500 hover:text-gray-900",
                 )}>
                 {v}
               </button>
