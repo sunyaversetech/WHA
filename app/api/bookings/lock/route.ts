@@ -33,7 +33,6 @@ const lock_schema = z.object({
 function to_utc(date_str: string, time_str: string, timezone: string): Date {
   if (!time_str) throw new Error(`to_utc: empty time_str for ${date_str}`);
   let t = time_str.trim();
-  // Normalise 12-hour → 24-hour if needed
   if (/am|pm/i.test(t)) {
     const m = t.match(/^(\d+):(\d+)\s*(am|pm)$/i);
     if (m) {
@@ -56,8 +55,11 @@ function to_utc(date_str: string, time_str: string, timezone: string): Date {
     second: "2-digit",
     hour12: false,
   }).formatToParts(naive);
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
-  const inTz = new Date(`${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}Z`);
+  const get = (type: string) =>
+    parts.find((p) => p.type === type)?.value ?? "00";
+  const inTz = new Date(
+    `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}Z`,
+  );
   return new Date(naive.getTime() - (inTz.getTime() - naive.getTime()));
 }
 
@@ -414,8 +416,16 @@ export async function POST(request: Request) {
           // Check if the requested slot fits inside ANY of this employee's shifts
           const fits_in_shift = sched.shifts.some((shift: any) => {
             if (!shift.start || !shift.end) return false;
-            const shift_start = to_utc(local_date_str, shift.start, validated_data.timezone);
-            const shift_end = to_utc(local_date_str, shift.end, validated_data.timezone);
+            const shift_start = to_utc(
+              local_date_str,
+              shift.start,
+              validated_data.timezone,
+            );
+            const shift_end = to_utc(
+              local_date_str,
+              shift.end,
+              validated_data.timezone,
+            );
             return requested_start >= shift_start && requested_end <= shift_end;
           });
           if (!fits_in_shift) continue;
