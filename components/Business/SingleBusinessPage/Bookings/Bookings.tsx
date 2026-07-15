@@ -300,9 +300,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
         return;
       }
 
-      // Write to module-level refs synchronously BEFORE the async lock call.
-      // These survive dialog unmounts, Fast Refresh re-mounts, and React state
-      // batching — making them safe to read in handleFinalizeBookingDatabaseInsertion.
       _lockedServiceIdRef.current = resolvedServiceId;
       _lockedStartTimeRef.current = selectedSlot;
       _lockedItemsPayloadRef.current = itemsPayload;
@@ -349,8 +346,6 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   const handleFinalizeBookingDatabaseInsertion = async (
     paymentIntentId: string,
   ) => {
-    // Read from module-level refs — guaranteed to have the values captured at
-    // lock time regardless of any state resets that occurred since then.
     const serviceIdToSubmit = _lockedServiceIdRef.current;
     const rawStartTime = _lockedStartTimeRef.current;
     const itemsPayload = _lockedItemsPayloadRef.current;
@@ -365,15 +360,12 @@ export default function BookingContainer({ services }: BookingContainerProps) {
       return;
     }
 
-    // Normalise start time to zero milliseconds to match backend lock validation
     let cleanStartTime = rawStartTime || new Date().toISOString();
     try {
       const d = new Date(cleanStartTime);
       d.setUTCMilliseconds(0);
       cleanStartTime = d.toISOString();
-    } catch {
-      // keep original value if parsing fails
-    }
+    } catch {}
 
     const finalPayload = {
       lock_id: activeLockId,
@@ -404,11 +396,8 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     });
   };
 
-  // ─── RENDER ───────────────────────────────────────────────────────────────
-
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-6 space-y-6 z-1">
-      {/* ─── SERVICES DASHBOARD ─── */}
       <div className="space-y-6">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-100">
           {categories.map((cat) => (

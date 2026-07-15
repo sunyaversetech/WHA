@@ -15,6 +15,17 @@ import {
   Ban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+const PER_PAGE_OPTIONS = [5, 10, 20, 30, 40, 50] as const;
 
 const STATUS_META: Record<
   string,
@@ -156,6 +167,8 @@ function empCanDoService(employee: any, serviceId: string): boolean {
     return id === serviceId;
   });
 }
+
+// ─── Booking detail side-panel ────────────────────────────────────────────────
 
 function BookingDetailPanel({
   booking: initial,
@@ -426,7 +439,7 @@ function BookingDetailPanel({
                   className="flex-1 py-1.5 text-xs font-bold bg-[#051e3a] text-white rounded-lg hover:bg-[#082040] disabled:opacity-50 flex items-center justify-center gap-1">
                   {reassignLoading && (
                     <Loader2 size={11} className="animate-spin" />
-                  )}{" "}
+                  )}
                   Save
                 </button>
               </div>
@@ -478,14 +491,13 @@ function BookingDetailPanel({
                   className="flex-1 py-1.5 text-xs font-bold bg-[#051e3a] text-white rounded-lg hover:bg-[#082040] disabled:opacity-50 flex items-center justify-center gap-1">
                   {rescheduleLoading && (
                     <Loader2 size={11} className="animate-spin" />
-                  )}{" "}
+                  )}
                   Confirm
                 </button>
               </div>
             </div>
           )}
 
-          {/* Status buttons */}
           {!showReschedule && nextStatuses.length > 0 && (
             <div className="pt-4 border-t border-gray-200">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2.5">
@@ -527,6 +539,28 @@ function BookingDetailPanel({
   );
 }
 
+// ─── Page numbers helper ──────────────────────────────────────────────────────
+
+function pageNumbers(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (current <= 4) return [1, 2, 3, 4, 5, "…", total];
+  if (current >= total - 3)
+    return [1, "…", total - 4, total - 3, total - 2, total - 1, total];
+  return [1, "…", current - 1, current, current + 1, "…", total];
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+
+const STATUS_TABS = [
+  "all",
+  "pending",
+  "confirmed",
+  "rescheduled",
+  "completed",
+  "no_show",
+  "cancelled",
+];
+
 export default function Reservation() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -535,38 +569,60 @@ export default function Reservation() {
   const [search, setSearch] = useState("");
   const [datePreset, setDatePreset] = useState<DatePreset>("All time");
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({
+    all: 0,
+  });
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const tz = useMemo(
-    () => encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone),
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
     [],
   );
-
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let active = true;
     const range = presetRange(datePreset);
     const params = new URLSearchParams({
-      timezone: decodeURIComponent(tz),
-      statuses: "", // empty = show all statuses including cancelled / no_show
+      timezone: tz,
+      statuses: "",
+      page: String(page),
+      limit: String(pageSize),
     });
+    if (statusFilter !== "all") params.set("status_filter", statusFilter);
     if (range) {
       params.set("start_date", range.start);
       params.set("end_date", range.end);
     }
-    fetch(`/api/calendar/bookings?${params}`)
+
+    // setLoading inside .then so it is not a synchronous setState in effect body
+    Promise.resolve()
+      .then(() => {
+        if (active) setLoading(true);
+      })
+      .then(() => fetch(`/api/calendar/bookings?${params}`))
       .then((r) => r.json())
       .then((data) => {
-        if (active && data.success) setBookings(data.data ?? []);
+        if (!active) return;
+        if (data.success) {
+          setBookings(data.data ?? []);
+          setTotal(data.total ?? 0);
+          setTotalPages(data.totalPages ?? 1);
+          setStatusCounts(data.status_counts ?? { all: 0 });
+        }
+        setLoading(false);
       })
-      .catch(() => {})
-      .finally(() => {
+      .catch(() => {
         if (active) setLoading(false);
       });
+
     return () => {
       active = false;
     };
-  }, [datePreset, tz, refreshKey]);
+  }, [datePreset, tz, statusFilter, page, pageSize, refreshKey]);
 
   useEffect(() => {
     fetch("/api/employees")
@@ -577,30 +633,18 @@ export default function Reservation() {
       .catch(() => {});
   }, []);
 
+  // Client-side search across current page only
   const filtered = useMemo(() => {
-    let list = bookings;
-    if (statusFilter !== "all")
-      list = list.filter((b) => b.status === statusFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (b) =>
-          (b.user_id?.name || "").toLowerCase().includes(q) ||
-          (b.user_id?.email || "").toLowerCase().includes(q) ||
-          (b.service_id?.name || "").toLowerCase().includes(q) ||
-          (b.employee_id?.full_name || "").toLowerCase().includes(q),
-      );
-    }
-    return list;
-  }, [bookings, statusFilter, search]);
-
-  const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: bookings.length };
-    bookings.forEach((b) => {
-      counts[b.status] = (counts[b.status] || 0) + 1;
-    });
-    return counts;
-  }, [bookings]);
+    if (!search.trim()) return bookings;
+    const q = search.toLowerCase();
+    return bookings.filter(
+      (b) =>
+        (b.user_id?.name || "").toLowerCase().includes(q) ||
+        (b.user_id?.email || "").toLowerCase().includes(q) ||
+        (b.service_id?.name || "").toLowerCase().includes(q) ||
+        (b.employee_id?.full_name || "").toLowerCase().includes(q),
+    );
+  }, [bookings, search]);
 
   const handleBookingUpdated = (updated: any) => {
     setBookings((prev) =>
@@ -610,25 +654,17 @@ export default function Reservation() {
       setSelectedBooking({ ...selectedBooking, ...updated });
   };
 
-  const STATUS_TABS = [
-    "all",
-    "pending",
-    "confirmed",
-    "rescheduled",
-    "completed",
-    "no_show",
-    "cancelled",
-  ];
+  const pages = pageNumbers(page, totalPages);
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 ">
+    <div className="min-h-screen bg-white text-gray-900">
       {/* ── Page header ── */}
       <div className="border-b border-gray-200 px-6 py-5">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Reservations</h1>
             <p className="text-xs text-gray-400 mt-0.5">
-              {bookings.length} total booking{bookings.length !== 1 ? "s" : ""}
+              {total} total booking{total !== 1 ? "s" : ""}
             </p>
           </div>
 
@@ -639,7 +675,7 @@ export default function Reservation() {
                 value={datePreset}
                 onChange={(e) => {
                   setDatePreset(e.target.value as DatePreset);
-                  setLoading(true);
+                  setPage(1);
                 }}
                 className="bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:border-[#051e3a] appearance-none cursor-pointer">
                 {DATE_PRESETS.map((p) => (
@@ -667,7 +703,7 @@ export default function Reservation() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search client, service…"
+                placeholder="Search on this page…"
                 className="bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg pl-8 pr-8 py-2 w-48 focus:outline-none focus:border-[#051e3a] placeholder:text-gray-600"
               />
               {search && (
@@ -681,8 +717,8 @@ export default function Reservation() {
 
             <button
               onClick={() => {
-                setLoading(true);
                 setRefreshKey((k) => k + 1);
+                setPage(1);
               }}
               disabled={loading}
               className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 border border-gray-200 text-gray-400 hover:text-gray-900 hover:border-[#051e3a] transition-colors disabled:opacity-50">
@@ -691,6 +727,7 @@ export default function Reservation() {
           </div>
         </div>
 
+        {/* Status tabs */}
         <div className="flex gap-1 mt-4 overflow-x-auto [scrollbar-width:none]">
           {STATUS_TABS.map((st) => {
             const meta = STATUS_META[st];
@@ -699,7 +736,10 @@ export default function Reservation() {
             return (
               <button
                 key={st}
-                onClick={() => setStatusFilter(st)}
+                onClick={() => {
+                  setStatusFilter(st);
+                  setPage(1);
+                }}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all",
                   active
@@ -711,7 +751,7 @@ export default function Reservation() {
                   className={cn(
                     "text-[10px] px-1.5 py-0.5 rounded-full font-bold",
                     active
-                      ? "bg-white/20 text-gray-900"
+                      ? "bg-white/20 text-white"
                       : "bg-gray-50 text-gray-400",
                   )}>
                   {count}
@@ -722,6 +762,7 @@ export default function Reservation() {
         </div>
       </div>
 
+      {/* ── Table ── */}
       <div className="overflow-x-auto">
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-20">
@@ -737,6 +778,7 @@ export default function Reservation() {
                 onClick={() => {
                   setSearch("");
                   setStatusFilter("all");
+                  setPage(1);
                 }}
                 className="text-xs text-[#051e3a] hover:underline">
                 Clear filters
@@ -744,7 +786,7 @@ export default function Reservation() {
             )}
           </div>
         ) : (
-          <table className="w-full min-w-[720px]">
+          <table className="w-full min-w-180">
             <thead>
               <tr className="border-b border-gray-200 bg-white">
                 {[
@@ -766,7 +808,7 @@ export default function Reservation() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((b, i) => {
+              {filtered.map((b) => {
                 const start = new Date(b.start_time);
                 const customer = b.user_id as any;
                 const employee = b.employee_id as any;
@@ -776,11 +818,7 @@ export default function Reservation() {
                   <tr
                     key={b._id}
                     onClick={() => setSelectedBooking(b)}
-                    className={cn(
-                      "border-b border-gray-200/60 cursor-pointer transition-colors hover:bg-gray-50/60",
-                      i % 2 === 0 ? "bg-white" : "bg-white",
-                    )}>
-                    {/* Client */}
+                    className="border-b border-gray-200/60 cursor-pointer transition-colors hover:bg-gray-50/60 bg-white">
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-900 shrink-0">
@@ -807,7 +845,7 @@ export default function Reservation() {
                       {employee?.full_name ? (
                         <div className="flex items-center gap-1.5">
                           <div
-                            className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-gray-900 shrink-0"
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
                             style={{
                               background: employee.calendar_color || "#1a3a60",
                             }}>
@@ -850,7 +888,6 @@ export default function Reservation() {
                         {statusInfo.label}
                       </span>
                     </td>
-                    {/* Payment */}
                     <td className="px-4 py-3.5">
                       <span
                         className={cn(
@@ -868,6 +905,74 @@ export default function Reservation() {
           </table>
         )}
       </div>
+
+      {/* ── Pagination ── */}
+      {!loading && total > 0 && (
+        <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <p className="text-xs text-gray-400">
+              Showing {Math.min((page - 1) * pageSize + 1, total)}–
+              {Math.min(page * pageSize, total)} of {total}
+            </p>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-gray-400">Per page</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-[#051e3a] cursor-pointer">
+                {PER_PAGE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className={cn(
+                    "cursor-pointer select-none",
+                    page === 1 && "pointer-events-none opacity-40",
+                  )}
+                />
+              </PaginationItem>
+
+              {pages.map((p, i) =>
+                p === "…" ? (
+                  <PaginationItem key={`ellipsis-${i}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      isActive={p === page}
+                      onClick={() => setPage(p as number)}
+                      className="cursor-pointer select-none">
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                ),
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className={cn(
+                    "cursor-pointer select-none",
+                    page === totalPages && "pointer-events-none opacity-40",
+                  )}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       {selectedBooking && (
         <BookingDetailPanel
