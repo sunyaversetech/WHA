@@ -286,6 +286,8 @@ export async function GET(request: Request) {
           .lean(),
       ]);
 
+      const slot_remaining: Record<string, number> = {};
+
       let runner =
         params.date === local_today
           ? new Date(Math.max(now.getTime(), open_time.getTime()))
@@ -343,8 +345,12 @@ export async function GET(request: Request) {
           if (total > peak) peak = total;
         }
 
-        if (max_inventory - peak > 0)
-          available_slots.push(runner.toISOString());
+        const remaining = max_inventory - peak;
+        if (remaining > 0) {
+          const slot_key = runner.toISOString();
+          available_slots.push(slot_key);
+          slot_remaining[slot_key] = remaining;
+        }
         runner = new Date(runner.getTime() + step_ms);
       }
 
@@ -352,6 +358,7 @@ export async function GET(request: Request) {
         success: true,
         count: available_slots.length,
         available_slots,
+        slot_remaining,
       });
     }
 

@@ -19,7 +19,7 @@ const stripePromise = loadStripe(
 );
 
 const SURCHARGE_PERCENT = 0.025;
-const RESERVATION_LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes hardcoded block
+const RESERVATION_LOCK_DURATION_MS = 5 * 60 * 1000; // must match backend lock expires_at
 
 export interface BookingCheckoutProps {
   lockId: string;
@@ -258,7 +258,7 @@ function BookingPaymentForm({
   const elements = useElements();
   const { data: session } = useSession();
   const [isPaying, setIsPaying] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<number>(15 * 60);
+  const [timeLeft, setTimeLeft] = useState<number>(5 * 60);
 
   // Manage internal reactive countdown timer loop
   useEffect(() => {

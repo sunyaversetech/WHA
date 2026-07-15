@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ApiResponseType } from "./apitypes";
+
 import { Get, PATCH, Post } from "@/lib/action";
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
@@ -95,6 +95,7 @@ export interface AvailableSlotsResponse {
   success: boolean;
   count: number;
   available_slots: string[];
+  slot_remaining?: Record<string, number>; // resource_based only: remaining units per slot
 }
 
 // ─── Queries & Mutations ────────────────────────────────────────────────────

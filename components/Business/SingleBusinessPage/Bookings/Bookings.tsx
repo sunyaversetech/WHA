@@ -255,12 +255,10 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   };
 
   const handleGlobalWizardReset = () => {
-    // Clear module-level refs first
     _lockedServiceIdRef.current = "";
     _lockedStartTimeRef.current = "";
     _lockedItemsPayloadRef.current = [];
 
-    // Reset all component state
     setIsDialogOpen(false);
     setCurrentStep("professionals");
     setSelectedServices([]);
@@ -282,11 +280,19 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     if (selectedServices.length === 0 || !selectedSlot) return;
 
     try {
-      const itemsPayload = selectedServices.map((srv) => ({
-        service_id: srv._id,
-        quantity: selectedQuantities[srv._id] || 1,
-        multiplier: selectedMultipliers[srv._id] || 1,
-      }));
+      const slotRemaining = slotsData?.slot_remaining?.[selectedSlot];
+      const itemsPayload = selectedServices.map((srv) => {
+        const rawQty = selectedQuantities[srv._id] || 1;
+        const quantity =
+          srv.service_type === "resource_based" && slotRemaining != null
+            ? Math.min(rawQty, slotRemaining)
+            : rawQty;
+        return {
+          service_id: srv._id,
+          quantity,
+          multiplier: selectedMultipliers[srv._id] || 1,
+        };
+      });
 
       const resolvedServiceId = primaryServiceId || selectedServices[0]?._id;
       if (!resolvedServiceId) {
@@ -464,7 +470,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
         onOpenChange={(open) => {
           if (!open && !isMutationLoading) handleGlobalWizardReset();
         }}>
-        <DialogContent className="min-w-5xl z-50 p-0 overflow-hidden bg-[#F9F9F9] rounded-3xl border-none flex flex-col md:flex-row h-[90vh] max-h-[720px] shadow-2xl">
+        <DialogContent className="w-full md:max-w-5xl z-50 p-0 overflow-hidden bg-[#F9F9F9] rounded-none md:rounded-3xl border-none flex flex-col md:flex-row h-dvh md:h-[90vh] md:max-h-180 shadow-2xl">
           {/* Left Step Canvas */}
           {isPaymentModalOpen && activeLockId && checkoutSummary ? (
             <BookingCheckout
@@ -756,18 +762,27 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                       )}
                     </div>
 
-                    {/* Quantity Controls (resource_based services only — up to max_concurrent_bookings) */}
+                    {/* Quantity Controls (resource_based services only) */}
                     {selectedSlot &&
-                      selectedServices.some((s) => getServiceMaxQty(s) > 1) && (
+                      selectedServices.some(
+                        (s) => s.service_type === "resource_based",
+                      ) && (
                         <div className="pt-2 border-t border-slate-100 space-y-2">
                           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                             Configure Quantities
                           </span>
                           {selectedServices.map((item) => {
-                            const maxQty = getServiceMaxQty(item);
-                            if (maxQty <= 1) return null;
-                            const currentQty =
-                              selectedQuantities[item._id] || 1;
+                            if (item.service_type !== "resource_based")
+                              return null;
+                            // Use remaining available units at this slot, not total capacity
+                            const maxAvailable =
+                              slotsData?.slot_remaining?.[selectedSlot] ??
+                              getServiceMaxQty(item);
+                            if (maxAvailable <= 0) return null;
+                            const currentQty = Math.min(
+                              selectedQuantities[item._id] || 1,
+                              maxAvailable,
+                            );
                             return (
                               <div
                                 key={item._id}
@@ -778,7 +793,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                                   </span>
                                   <span className="text-[10px] text-slate-400 flex items-center gap-1">
                                     <Layers className="w-3 h-3 text-slate-400" />{" "}
-                                    Max: {maxQty}
+                                    Available: {maxAvailable}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -788,7 +803,11 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                                       currentQty <= 1 || isMutationLoading
                                     }
                                     onClick={() =>
-                                      handleUpdateQuantity(item._id, -1, maxQty)
+                                      handleUpdateQuantity(
+                                        item._id,
+                                        -1,
+                                        maxAvailable,
+                                      )
                                     }
                                     className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
                                     <Minus className="w-3 h-3" />
@@ -799,10 +818,15 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                                   <button
                                     type="button"
                                     disabled={
-                                      currentQty >= maxQty || isMutationLoading
+                                      currentQty >= maxAvailable ||
+                                      isMutationLoading
                                     }
                                     onClick={() =>
-                                      handleUpdateQuantity(item._id, 1, maxQty)
+                                      handleUpdateQuantity(
+                                        item._id,
+                                        1,
+                                        maxAvailable,
+                                      )
                                     }
                                     className="w-7 h-7 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40">
                                     <Plus className="w-3 h-3" />
@@ -817,19 +841,63 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                 )}
               </div>
 
-              <Button
-                variant="ghost"
-                disabled={isMutationLoading}
-                onClick={handleGlobalWizardReset}
-                className="text-xs text-slate-400 hover:text-slate-600 mt-4 justify-start w-fit p-0 h-auto font-medium disabled:opacity-40">
-                Cancel Registration
-              </Button>
+              <div className="space-y-3">
+                {/* Mobile-only: price + proceed CTA (desktop has the right sidebar) */}
+                <div className="md:hidden pt-4 border-t border-slate-100 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-xs text-slate-900">
+                      Subtotal Balance
+                    </span>
+                    <span className="font-black text-lg text-slate-900">
+                      AUD {finalPrice}
+                    </span>
+                  </div>
+                  <Button
+                    disabled={
+                      selectedServices.length === 0 ||
+                      (currentStep === "time" && !selectedSlot) ||
+                      isMutationLoading
+                    }
+                    onClick={handleNextStep}
+                    className={cn(
+                      "w-full font-bold text-xs h-12 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all",
+                      currentStep === "time"
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                        : "bg-black hover:bg-slate-900 text-white",
+                    )}>
+                    {isMutationLoading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        <span>Securing hold...</span>
+                      </div>
+                    ) : currentStep === "time" ? (
+                      <>
+                        <CreditCard className="w-4 h-4" />
+                        <span>Pay Now & Confirm</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Continue</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  disabled={isMutationLoading}
+                  onClick={handleGlobalWizardReset}
+                  className="text-xs text-slate-400 hover:text-slate-600 justify-start w-fit p-0 h-auto font-medium disabled:opacity-40">
+                  Cancel Registration
+                </Button>
+              </div>
             </div>
           )}
 
           {/* Right Sidebar Summary Panel */}
           {!isPaymentModalOpen && !activeLockId && !checkoutSummary && (
-            <div className="w-full md:w-[340px] bg-white border-t md:border-t-0 md:border-l border-slate-100 p-6 flex flex-col justify-between">
+            <div className="hidden md:flex md:w-85 bg-white md:border-l border-slate-100 p-6 flex-col justify-between">
               <div className="space-y-6">
                 {/* Business Header */}
                 <div className="flex gap-3 items-center pb-4 border-b border-slate-100">
