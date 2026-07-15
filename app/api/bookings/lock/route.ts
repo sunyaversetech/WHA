@@ -164,8 +164,8 @@ export async function POST(request: Request) {
         validated_data.timezone,
       );
 
-      const day_start = new Date(`${local_date_str}T00:00:00Z`);
-      const day_end = new Date(`${local_date_str}T23:59:59.999Z`);
+      const day_start = to_utc(local_date_str, "00:00", validated_data.timezone);
+      const day_end = new Date(day_start.getTime() + 24 * 60 * 60 * 1000);
 
       // ─── FORK A: RESOURCE BASED LOGIC ───
       if (

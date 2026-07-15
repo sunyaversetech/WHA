@@ -180,8 +180,16 @@ export async function GET(request: Request) {
     );
   }
 
-  const today = new Date().toISOString().split("T")[0];
-  if (params.date < today) {
+  // Compute "today" in the user's local timezone, not server UTC
+  const now_for_today = new Date();
+  const local_today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: params.timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now_for_today);
+
+  if (params.date < local_today) {
     return NextResponse.json(
       {
         success: false,
@@ -211,8 +219,10 @@ export async function GET(request: Request) {
 
     const day_name = get_local_day_name(params.date, params.timezone);
     const day_short = get_local_day_short(params.date, params.timezone);
-    const start_of_day = new Date(`${params.date}T00:00:00Z`);
-    const end_of_day = new Date(`${params.date}T23:59:59.999Z`);
+    // Use local midnight boundaries so conflict checks cover the full local day,
+    // not just the UTC calendar day (which drifts by the timezone offset).
+    const start_of_day = to_utc(params.date, "00:00", params.timezone);
+    const end_of_day = new Date(start_of_day.getTime() + 24 * 60 * 60 * 1000);
     const now = new Date();
 
     const step_minutes: number = SLOT_STEP_MINUTES; // 10-min intervals for all service types
@@ -277,7 +287,7 @@ export async function GET(request: Request) {
       ]);
 
       let runner =
-        params.date === today
+        params.date === local_today
           ? new Date(Math.max(now.getTime(), open_time.getTime()))
           : open_time;
       // Snap to step boundary relative to open_time (not epoch) so slots stay
@@ -386,7 +396,7 @@ export async function GET(request: Request) {
             slot.start_time,
             params.timezone,
           );
-          if (params.date === today && slot_start <= now) continue;
+          if (params.date === local_today && slot_start <= now) continue;
           const capacity = Number(slot.capacity) || 1;
           const taken =
             group_bookings.filter(
@@ -413,7 +423,7 @@ export async function GET(request: Request) {
         const max_capacity = Number(service.max_bookings_per_slot) || 1;
 
         let runner =
-          params.date === today
+          params.date === local_today
             ? new Date(Math.max(now.getTime(), open_time.getTime()))
             : open_time;
         const grp_snap = (runner.getTime() - open_time.getTime()) % step_ms;
@@ -520,7 +530,7 @@ export async function GET(request: Request) {
     }
 
     let runner =
-      params.date === today
+      params.date === local_today
         ? new Date(Math.max(now.getTime(), earliest_shift_start.getTime()))
         : earliest_shift_start;
     // Snap to step boundary relative to the earliest shift start.

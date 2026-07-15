@@ -666,7 +666,9 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                             const currentMult =
                               selectedMultipliers[item._id] || 1;
                             return (
-                              <div key={item._id} className="grid grid-cols-4 gap-1.5">
+                              <div
+                                key={item._id}
+                                className="grid grid-cols-4 gap-1.5">
                                 {[1, 2, 3, 4].map((multiplierValue) => {
                                   const calculatedMins =
                                     item.base_duration * multiplierValue;
