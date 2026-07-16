@@ -7,7 +7,11 @@ export default function BusinessLoginPage() {
       heading="WHA for Business"
       subheading="Log in to manage your bookings, services and team."
       backHref="/auth">
-      <LoginPage showGoogle={false} signupHref="/auth/business/signup" />
+      <LoginPage
+        loginType="business"
+        showGoogle={true}
+        signupHref="/auth/business/signup"
+      />
     </AuthShell>
   );
 }

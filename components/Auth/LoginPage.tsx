@@ -44,9 +44,11 @@ export const INPUT: React.CSSProperties = {
 export default function LoginPage({
   showGoogle = true,
   signupHref,
+  loginType = "user",
 }: {
   showGoogle?: boolean;
   signupHref?: string;
+  loginType?: "user" | "business";
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -63,7 +65,7 @@ export default function LoginPage({
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setLoading(true);
-    const result = await signIn("credentials", {
+    const result = await signIn(`${loginType}-credentials`, {
       email: values.email.toLowerCase().trim(),
       password: values.password,
       redirect: false,

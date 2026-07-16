@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useSingup } from "@/services/Auth/auth.service";
+import { useUserSignup } from "@/services/Auth/auth.service";
 import { useState } from "react";
 import { ChevronLeft, Eye, EyeOff, MoveLeft } from "lucide-react";
 import Image from "next/image";
@@ -59,7 +59,7 @@ const ERR: React.CSSProperties = { fontSize: 13, color: "#ef4444" };
 
 export default function SignupPage() {
   const router = useRouter();
-  const { mutate, isPending } = useSingup();
+  const { mutate, isPending } = useUserSignup();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 

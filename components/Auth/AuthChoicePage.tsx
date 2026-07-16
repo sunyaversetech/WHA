@@ -73,7 +73,7 @@ export default function AuthChoicePage() {
             icon={<Briefcase size={26} strokeWidth={1.6} />}
             title="WHA for Business"
             description="List your services, manage bookings and grow your customer base."
-            accent="#7c3aed"
+            accent="#0f172a"
             onClick={() => router.push("/auth/business/login")}
           />
         </div>

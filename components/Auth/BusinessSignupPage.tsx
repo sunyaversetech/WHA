@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useSingup } from "@/services/Auth/auth.service";
+import { useBusinessSignup } from "@/services/Auth/auth.service";
 import {
   ChevronLeft,
   Eye,
@@ -17,14 +17,9 @@ import {
   Check,
   ArrowRight,
   Upload,
-  Users,
-  Package,
   MoveLeft,
 } from "lucide-react";
-import {
-  EMPLOYEE_CATEGORIES,
-  ITEM_CATEGORIES,
-} from "@/lib/data/business-categories";
+import { BUSINESS_CATEGORIES } from "@/lib/data/business-categories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,7 +64,6 @@ const CITIES = [
 ];
 
 const COMMUNITIES = [
-  "Not Specified",
   "Nepali",
   "Indian",
   "Bhutanese",
@@ -82,6 +76,7 @@ const COMMUNITIES = [
   "European",
   "Latin American",
 ];
+const NOT_SPECIFIED = "Not Specified";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -112,7 +107,7 @@ const DEFAULT_SCHEDULE: WeekSchedule = DAY_KEYS.reduce(
   {} as WeekSchedule,
 );
 
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 8;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -124,9 +119,7 @@ export const signupSchema = z
       .string()
       .min(10, "Valid phone number required")
       .max(10, "Valid phone number required"),
-    business_type: z.enum(["employee_based", "item_based"], {
-      error: "Please select a booking system",
-    }),
+    business_type: z.enum(["employee_based", "item_based"]).optional(),
     business_category: z.string().min(1, "Please select a category"),
     city: z.string().optional(),
     location: z
@@ -154,13 +147,12 @@ export type SingUPFormSchema = z.infer<typeof signupSchema>;
 
 const STEP_FIELDS: Record<number, (keyof SingUPFormSchema)[]> = {
   2: ["business_name", "phone_number"],
-  3: ["business_type"],
-  4: ["business_category"],
-  5: ["city", "location"],
+  3: ["business_category"],
+  4: ["city", "location"],
+  5: [],
   6: [],
   7: [],
-  8: [],
-  9: [
+  8: [
     "name",
     "email",
     "password",
@@ -224,7 +216,7 @@ function Field({
 
 export default function BusinessSignupPage() {
   const router = useRouter();
-  const { mutate, isPending } = useSingup();
+  const { mutate, isPending } = useBusinessSignup();
 
   const [step, setStep] = useState(1);
   const [schedule, setSchedule] = useState<WeekSchedule>(DEFAULT_SCHEDULE);
@@ -265,7 +257,6 @@ export default function BusinessSignupPage() {
     mode: "onChange",
   });
 
-  const businessType = watch("business_type");
   const is24_7 = watch("is24_7");
   const progress = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
 
@@ -275,7 +266,7 @@ export default function BusinessSignupPage() {
       const ok = await trigger(fields);
       if (!ok) return;
     }
-    if (step === 8) {
+    if (step === 7) {
       if (venueImages.length < 3) {
         setImagesError("Please upload at least 3 images (up to 10)");
         return;
@@ -364,15 +355,18 @@ export default function BusinessSignupPage() {
   };
 
   const toggleCommunity = (c: string) =>
-    setCommunity((p) =>
-      p.includes(c) ? p.filter((x) => x !== c) : p.length < 3 ? [...p, c] : p,
-    );
+    setCommunity((p) => {
+      if (p.includes(c)) return p.filter((x) => x !== c);
+      if (c === NOT_SPECIFIED) return [NOT_SPECIFIED];
+      if (p.includes(NOT_SPECIFIED) || p.length >= 3) return p;
+      return [...p, c];
+    });
 
   // ── Submit ──────────────────────────────────────────────────────────────────
   const onSubmit = (data: SingUPFormSchema) => {
     const fd = new FormData();
     fd.append("business_name", data.business_name);
-    fd.append("business_type", data.business_type);
+    if (data.business_type) fd.append("business_type", data.business_type);
     fd.append("business_category", data.business_category);
     if (data.city) {
       fd.append("city", data.city);
@@ -406,13 +400,6 @@ export default function BusinessSignupPage() {
       },
     });
   };
-
-  const categoryList =
-    businessType === "employee_based"
-      ? EMPLOYEE_CATEGORIES
-      : businessType === "item_based"
-        ? ITEM_CATEGORIES
-        : [];
 
   return (
     <div className="h-[70vh] sm:min-h-screen  bg-white">
@@ -470,25 +457,15 @@ export default function BusinessSignupPage() {
               {step === 2 && (
                 <StepEssentials register={register} errors={errors} />
               )}
-              {step === 3 && (
-                <StepBookingSystem control={control} errors={errors} />
-              )}
+              {step === 3 && <StepCategory control={control} errors={errors} />}
               {step === 4 && (
-                <StepCategory
-                  control={control}
-                  categoryList={categoryList}
-                  businessType={businessType}
-                  errors={errors}
-                />
-              )}
-              {step === 5 && (
                 <StepLocation
                   control={control}
                   errors={errors}
                   setValue={setValue}
                 />
               )}
-              {step === 6 && (
+              {step === 5 && (
                 <StepHours
                   schedule={schedule}
                   selectedDay={selectedDay}
@@ -501,10 +478,10 @@ export default function BusinessSignupPage() {
                   setIs24_7={(v) => setValue("is24_7", v)}
                 />
               )}
-              {step === 7 && (
+              {step === 6 && (
                 <StepCommunity community={community} toggle={toggleCommunity} />
               )}
-              {step === 8 && (
+              {step === 7 && (
                 <StepImages
                   previews={venuePreviews}
                   count={venueImages.length}
@@ -514,7 +491,7 @@ export default function BusinessSignupPage() {
                   error={imagesError}
                 />
               )}
-              {step === 9 && (
+              {step === 8 && (
                 <StepLogin
                   register={register}
                   errors={errors}
@@ -654,113 +631,9 @@ function StepEssentials({ register, errors }: any) {
   );
 }
 
-// ─── Step 3: Booking System ───────────────────────────────────────────────────
+// ─── Step 3: Category ─────────────────────────────────────────────────────────
 
-function StepBookingSystem({ control, errors }: any) {
-  const TYPES = [
-    {
-      value: "employee_based",
-      title: "Service Booking",
-      badge: "Appointment-based · Staff performs the service",
-      examples:
-        "Hair Salon, Barber, Massage, Beauty, Physiotherapy, Personal Trainer, Tutor",
-      icon: <Users size={28} strokeWidth={1.5} />,
-    },
-    {
-      value: "item_based",
-      title: "Resource Booking",
-      badge: "Inventory-based · Customers reserve a resource",
-      examples:
-        "Hotel Rooms, Kayaks, Tennis Courts, Meeting Rooms, Cars, Boats",
-      icon: <Package size={28} strokeWidth={1.5} />,
-    },
-  ];
-
-  return (
-    <div>
-      <SectionHeader
-        tag="Account setup"
-        title="Select your booking system"
-        sub="Choose how your customers interact with your business"
-      />
-      <Controller
-        name="business_type"
-        control={control}
-        render={({ field }) => (
-          <div className="flex flex-col gap-4">
-            {TYPES.map((t) => {
-              const active = field.value === t.value;
-              return (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => field.onChange(t.value)}
-                  className={cn(
-                    "text-left w-full border-2 rounded-2xl p-6 cursor-pointer transition-all flex items-start gap-5",
-                    active
-                      ? "border-primary bg-primary/5"
-                      : "border-slate-200 bg-white hover:border-slate-300",
-                  )}>
-                  <div
-                    className={cn(
-                      "w-14 h-14 rounded-2xl shrink-0 flex items-center justify-center",
-                      active
-                        ? "bg-primary/10 text-primary"
-                        : "bg-slate-50 text-slate-500",
-                    )}>
-                    {t.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-1">
-                      <p className="text-[17px] font-bold text-slate-900">
-                        {t.title}
-                      </p>
-                      {active && (
-                        <div className="w-5.5 h-5.5 rounded-full bg-primary flex items-center justify-center shrink-0">
-                          <Check
-                            size={12}
-                            className="text-white"
-                            strokeWidth={3}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-sm text-primary font-semibold mb-2">
-                      {t.badge}
-                    </p>
-                    <p className="text-sm text-slate-500 leading-relaxed">
-                      <span className="font-semibold">Examples: </span>
-                      {t.examples}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      />
-      {errors.business_type && (
-        <p className="text-sm text-red-500 mt-3">
-          {errors.business_type.message}
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ─── Step 4: Category ─────────────────────────────────────────────────────────
-
-function StepCategory({ control, categoryList, businessType, errors }: any) {
-  if (!businessType) {
-    return (
-      <div className="text-center py-20">
-        <p className="text-base text-slate-400">
-          Go back and select a booking system first
-        </p>
-      </div>
-    );
-  }
-
+function StepCategory({ control, errors }: any) {
   return (
     <div>
       <SectionHeader
@@ -773,7 +646,7 @@ function StepCategory({ control, categoryList, businessType, errors }: any) {
         control={control}
         render={({ field }) => (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
-            {categoryList.map((cat: any) => {
+            {BUSINESS_CATEGORIES.map((cat) => {
               const active = field.value === cat.value;
               const Icon = cat.icon;
               return (
@@ -1214,6 +1087,46 @@ function StepHours({
 
 // ─── Step 7: Community ────────────────────────────────────────────────────────
 
+function CommunityButton({
+  c,
+  community,
+  toggle,
+  disabled,
+}: {
+  c: string;
+  community: string[];
+  toggle: (c: string) => void;
+  disabled: boolean;
+}) {
+  const active = community.includes(c);
+  return (
+    <button
+      key={c}
+      type="button"
+      onClick={() => !disabled && toggle(c)}
+      className={cn(
+        "border-2 rounded-xl p-3.5 transition-all flex items-center justify-between gap-2",
+        active
+          ? "border-primary bg-primary/5"
+          : "border-slate-200 bg-white hover:border-slate-300",
+        disabled && "opacity-40 cursor-not-allowed",
+      )}>
+      <span
+        className={cn(
+          "text-sm text-left",
+          active ? "font-bold text-primary" : "font-medium text-slate-900",
+        )}>
+        {c}
+      </span>
+      {active && (
+        <div className="w-4.5 h-4.5 rounded-full bg-primary flex items-center justify-center shrink-0">
+          <Check size={10} className="text-white" strokeWidth={3} />
+        </div>
+      )}
+    </button>
+  );
+}
+
 function StepCommunity({
   community,
   toggle,
@@ -1221,6 +1134,9 @@ function StepCommunity({
   community: string[];
   toggle: (c: string) => void;
 }) {
+  const notSpecifiedSelected = community.includes(NOT_SPECIFIED);
+  const othersSelected = community.some((c) => c !== NOT_SPECIFIED);
+
   return (
     <div>
       <SectionHeader
@@ -1231,39 +1147,34 @@ function StepCommunity({
       <div className="grid grid-cols-[repeat(auto-fill,minmax(168px,1fr))] gap-2.5">
         {COMMUNITIES.map((c) => {
           const active = community.includes(c);
-          const disabled = community.length >= 3 && !active;
+          const disabled =
+            notSpecifiedSelected || (community.length >= 3 && !active);
           return (
-            <button
+            <CommunityButton
               key={c}
-              type="button"
-              onClick={() => !disabled && toggle(c)}
-              className={cn(
-                "border-2 rounded-xl p-3.5 transition-all flex items-center justify-between gap-2",
-                active
-                  ? "border-primary bg-primary/5"
-                  : "border-slate-200 bg-white hover:border-slate-300",
-                disabled && "opacity-40 cursor-not-allowed",
-              )}>
-              <span
-                className={cn(
-                  "text-sm text-left",
-                  active
-                    ? "font-bold text-primary"
-                    : "font-medium text-slate-900",
-                )}>
-                {c}
-              </span>
-              {active && (
-                <div className="w-4.5 h-4.5 rounded-full bg-primary flex items-center justify-center shrink-0">
-                  <Check size={10} className="text-white" strokeWidth={3} />
-                </div>
-              )}
-            </button>
+              c={c}
+              community={community}
+              toggle={toggle}
+              disabled={disabled}
+            />
           );
         })}
       </div>
+
+      <div className="mt-4 border-t border-slate-200 pt-4">
+        <p className="text-xs text-slate-400 mb-2.5 uppercase tracking-widest font-semibold">
+          Or
+        </p>
+        <CommunityButton
+          c={NOT_SPECIFIED}
+          community={community}
+          toggle={toggle}
+          disabled={othersSelected}
+        />
+      </div>
+
       <p className="text-sm text-slate-400 mt-4">
-        {community.length}/3 selected
+        {community.length}/{notSpecifiedSelected ? 1 : 3} selected
       </p>
     </div>
   );
@@ -1542,15 +1453,6 @@ function StepLogin({
           {errors.accpetalltermsandcondition.message}
         </p>
       )}
-
-      <p className="text-sm text-slate-400 mt-5 text-center">
-        Already have an account?{" "}
-        <a
-          href="/auth/business/login"
-          className="text-primary font-semibold hover:underline">
-          Log in
-        </a>
-      </p>
     </div>
   );
 }

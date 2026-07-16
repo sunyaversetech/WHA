@@ -3,41 +3,30 @@ import { useMutation } from "@tanstack/react-query";
 import { ApiResponseType } from "../apitypes";
 import { SingUPFormSchema } from "@/components/Auth/BusinessSignupPage";
 
-// export const useCreateActivity = () => {
-//   return useMutation<
-//     ApiResponseType<ActivityFormValues>,
-//     any,
-//     ActivityFormValues
-//   >({
-//     mutationKey: ["createActivity"],
-//     mutationFn: (data: ActivityFormValues) =>
-//       Post<ActivityFormValues, ApiResponseType<ActivityFormValues>>({
-//         url: data._id
-//           ? `/client_api/activity/edit/${data._id}`
-//           : "/client_api/activity/add",
-//         data: data,
-//       }),
-//   });
-// };
-
-// export const useGetActivity = () => {
-//   return useFetcher<ApiResponseType<ActivityType[]>>(
-//     "activity",
-//     null,
-//     "/client_api/activity",
-//   );
-// };
-
-export const useSingup = () => {
-  return useMutation<ApiResponseType<SingUPFormSchema>, any, FormData>({
-    mutationKey: ["createSignup"],
+export const useUserSignup = () => {
+  return useMutation<ApiResponseType<any>, any, FormData>({
+    mutationKey: ["userSignup"],
     mutationFn: (data: FormData) =>
-      Post<FormData, ApiResponseType<SingUPFormSchema>>({
-        url: "/api/signup",
-        data: data,
+      Post<FormData, ApiResponseType<any>>({
+        url: "/api/auth/user/signup",
+        data,
       }),
   });
 };
+
+export const useBusinessSignup = () => {
+  return useMutation<ApiResponseType<SingUPFormSchema>, any, FormData>({
+    mutationKey: ["businessSignup"],
+    mutationFn: (data: FormData) =>
+      Post<FormData, ApiResponseType<SingUPFormSchema>>({
+        url: "/api/auth/business/signup",
+        data,
+      }),
+  });
+};
+
+/** @deprecated Use useUserSignup or useBusinessSignup */
+export const useSingup = useBusinessSignup;
 
 export const useSendMailRestPassword = () => {
   return useMutation<ApiResponseType<any>, any, any>({
@@ -45,7 +34,7 @@ export const useSendMailRestPassword = () => {
     mutationFn: (data: any) =>
       Post<any, ApiResponseType<any>>({
         url: "/api/reset-password",
-        data: data,
+        data,
       }),
   });
 };
@@ -56,7 +45,7 @@ export const useVerifyCode = () => {
     mutationFn: (data: any) =>
       Post<any, ApiResponseType<any>>({
         url: "/api/auth/verify-code",
-        data: data,
+        data,
       }),
   });
 };
@@ -67,7 +56,7 @@ export const useDeleteProfile = () => {
     mutationFn: (data: any) =>
       Post<any, ApiResponseType<any>>({
         url: "/api/delete-profile",
-        data: data,
+        data,
       }),
   });
 };
@@ -78,7 +67,7 @@ export const useEditProfile = () => {
     mutationFn: (data: any) =>
       Post<any, ApiResponseType<any>>({
         url: "/api/edit-profile",
-        data: data,
+        data,
       }),
   });
 };
