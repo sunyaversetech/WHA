@@ -1,12 +1,12 @@
-﻿"use client";
+"use client";
 
 import { z } from "zod";
-
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   Form,
@@ -20,10 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
-import {
-  useGetSingleDashboardBusiness,
-  useUpadteABN,
-} from "@/services/business.service";
+import { useGetSingleDashboardBusiness } from "@/services/business.service";
 import Loading from "@/app/search/loading";
 
 export const abnFormSchema = z.object({
@@ -38,39 +35,39 @@ export type ABNFormType = z.infer<typeof abnFormSchema>;
 
 export function ABNUpdateForm() {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const { data: businessData, isLoading: isFetching } =
     useGetSingleDashboardBusiness(session?.user?.id || "");
-  const { mutate: updateABN, isPending: isUpdating } = useUpadteABN();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const form = useForm<ABNFormType>({
     resolver: zodResolver(abnFormSchema),
-    defaultValues: {
-      abn_number: "",
-    },
+    defaultValues: { abn_number: "" },
   });
 
   useEffect(() => {
     if (businessData?.data?.abn_number) {
-      form.reset({
-        abn_number: businessData.data.abn_number,
-      });
+      form.reset({ abn_number: businessData.data.abn_number });
     }
   }, [businessData, form]);
 
-  function onSubmit(values: ABNFormType) {
-    updateABN(
-      {
-        abn_number: values.abn_number,
-      },
-      {
-        onSuccess: () => {
-          toast.success("ABN updated successfully");
-        },
-        onError: (err: any) => {
-          toast.error(err?.response?.data?.message || "Failed to update ABN");
-        },
-      },
-    );
+  async function onSubmit(values: ABNFormType) {
+    setIsUpdating(true);
+    try {
+      const fd = new FormData();
+      fd.append("abn_number", values.abn_number);
+      const res = await fetch("/api/business/settings", {
+        method: "PATCH",
+        body: fd,
+      });
+      if (!res.ok) throw new Error((await res.json()).message);
+      toast.success("ABN updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["getbusiness", session?.user?.id] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update ABN");
+    } finally {
+      setIsUpdating(false);
+    }
   }
 
   if (isFetching) return <Loading />;
@@ -79,10 +76,12 @@ export function ABNUpdateForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 max-w-md p-6 border rounded-lg bg-card">
+        className="space-y-4 max-w-md p-6 border rounded-2xl bg-white border-gray-200 shadow-sm">
         <div className="space-y-1">
-          <h3 className="text-lg font-medium">Business Identification</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-base font-semibold text-[#051e3a]">
+            Business Identification
+          </h3>
+          <p className="text-sm text-gray-500">
             Update your 11-digit Australian Business Number.
           </p>
         </div>
@@ -108,7 +107,7 @@ export function ABNUpdateForm() {
 
         <Button
           type="submit"
-          className="w-full bg-[#051e3a] hover:bg-[#082040]"
+          className="w-full bg-[#051e3a] hover:bg-[#082040] text-white"
           disabled={isUpdating || !form.formState.isDirty}>
           {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Update ABN

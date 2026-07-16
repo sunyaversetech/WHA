@@ -8,6 +8,7 @@ import { ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import { useGetSingleDashboardBusiness } from "@/services/business.service";
 import Loading from "@/app/search/loading";
 
@@ -16,6 +17,7 @@ const MAX_SIZE_MB = 5;
 
 export default function VenueImagesSettings() {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const { data: bizData, isLoading } = useGetSingleDashboardBusiness(
     session?.user?.id || "",
   );
@@ -75,7 +77,7 @@ export default function VenueImagesSettings() {
       fd.append("existing_images", JSON.stringify(existingUrls));
       newFiles.forEach((f, i) => fd.append(`venue_image_${i}`, f));
 
-      const res = await fetch("/api/business/venue-images", {
+      const res = await fetch("/api/business/settings", {
         method: "PATCH",
         body: fd,
       });
@@ -83,6 +85,7 @@ export default function VenueImagesSettings() {
       toast.success("Venue photos updated successfully");
       setNewFiles([]);
       setNewPreviews([]);
+      queryClient.invalidateQueries({ queryKey: ["getbusiness", session?.user?.id] });
     } catch (err: any) {
       toast.error(err.message || "Failed to update venue photos");
     } finally {

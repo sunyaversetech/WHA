@@ -1230,7 +1230,6 @@ function StepImages({
         </div>
       </div>
 
-      {/* Count indicator */}
       <div className="flex items-center justify-between mb-3">
         <span
           className={cn(

@@ -10,10 +10,10 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
 
-    const name          = (formData.get("name") as string)?.trim();
-    const email         = (formData.get("email") as string)?.trim().toLowerCase();
-    const password      = formData.get("password") as string;
-    const accepted      = formData.get("accpetalltermsandcondition") === "true";
+    const name = (formData.get("name") as string)?.trim();
+    const email = (formData.get("email") as string)?.trim().toLowerCase();
+    const password = formData.get("password") as string;
+    const accepted = formData.get("accpetalltermsandcondition") === "true";
     const business_name = (formData.get("business_name") as string)?.trim();
 
     if (!name || !email || !password || !business_name) {
@@ -65,27 +65,35 @@ export async function POST(req: NextRequest) {
     }
 
     const business_category = formData.get("business_category") as string;
-    const business_type     = formData.get("business_type") as string | null;
-    const phone_number      = (formData.get("phone_number") as string) || "";
-    const city              = (formData.get("city") as string) || "";
-    const location          = (formData.get("location") as string) || "";
-    const is24_7            = formData.get("is24_7") === "true";
+    const business_type = formData.get("business_type") as string | null;
+    const phone_number = (formData.get("phone_number") as string) || "";
+    const city = (formData.get("city") as string) || "";
+    const location = (formData.get("location") as string) || "";
+    const is24_7 = formData.get("is24_7") === "true";
 
-    const latRaw  = formData.get("latitude");
-    const lngRaw  = formData.get("longitude");
-    const latitude  = latRaw  ? Number(latRaw)  : undefined;
-    const longitude = lngRaw  ? Number(lngRaw)  : undefined;
+    const latRaw = formData.get("latitude");
+    const lngRaw = formData.get("longitude");
+    const latitude = latRaw ? Number(latRaw) : undefined;
+    const longitude = lngRaw ? Number(lngRaw) : undefined;
 
     let community: string[] = [];
     const communityRaw = formData.get("community") as string | null;
     if (communityRaw) {
-      try { community = JSON.parse(communityRaw); } catch { community = []; }
+      try {
+        community = JSON.parse(communityRaw);
+      } catch {
+        community = [];
+      }
     }
 
     let schedule: any = null;
     const scheduleRaw = formData.get("schedule") as string | null;
     if (scheduleRaw) {
-      try { schedule = JSON.parse(scheduleRaw); } catch { schedule = null; }
+      try {
+        schedule = JSON.parse(scheduleRaw);
+      } catch {
+        schedule = null;
+      }
     }
 
     const newBusiness = await User.create({
@@ -111,7 +119,11 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { message: "Business registered successfully", success: true, userId: newBusiness._id },
+      {
+        message: "Business registered successfully",
+        success: true,
+        userId: newBusiness._id,
+      },
       { status: 201 },
     );
   } catch (error: any) {

@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useGetSingleDashboardBusiness } from "@/services/business.service";
 import { BUSINESS_CATEGORIES } from "@/lib/data/business-categories";
 import Loading from "@/app/search/loading";
@@ -40,7 +41,6 @@ const COMMUNITIES = [
 ];
 
 const profileSchema = z.object({
-  email: z.string().email("Valid email required"),
   phone_number: z.string().optional(),
   business_category: z.string().min(1, "Please select a category"),
   community: z.array(z.string()),
@@ -50,6 +50,7 @@ type ProfileForm = z.infer<typeof profileSchema>;
 
 export default function ProfileSettings() {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const { data: bizData, isLoading } = useGetSingleDashboardBusiness(
     session?.user?.id || "",
   );
@@ -69,7 +70,6 @@ export default function ProfileSettings() {
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      email: "",
       phone_number: "",
       business_category: "",
       community: [],
@@ -81,7 +81,6 @@ export default function ProfileSettings() {
   useEffect(() => {
     const biz = bizData?.data;
     if (!biz) return;
-    setValue("email", biz.email ?? "");
     setValue("phone_number", (biz as any).phone_number ?? "");
     setValue("business_category", biz.business_category ?? "");
     setValue("community", biz.community ?? []);
@@ -112,19 +111,19 @@ export default function ProfileSettings() {
     setIsSaving(true);
     try {
       const fd = new FormData();
-      fd.append("email", values.email);
       if (values.phone_number) fd.append("phone_number", values.phone_number);
       fd.append("business_category", values.business_category);
       fd.append("community", JSON.stringify(values.community));
       if (avatarFile) fd.append("image", avatarFile);
 
-      const res = await fetch("/api/business/profile", {
+      const res = await fetch("/api/business/settings", {
         method: "PATCH",
         body: fd,
       });
       if (!res.ok) throw new Error((await res.json()).message);
       toast.success("Profile updated successfully");
       setAvatarFile(null);
+      queryClient.invalidateQueries({ queryKey: ["getbusiness", session?.user?.id] });
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile");
     } finally {
@@ -206,12 +205,14 @@ export default function ProfileSettings() {
             <Input
               id="email"
               type="email"
-              {...register("email")}
-              placeholder="you@business.com"
+              value={bizData?.data?.email ?? ""}
+              disabled
+              readOnly
+              className="bg-gray-50 text-gray-400 cursor-not-allowed"
             />
-            {errors.email && (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
-            )}
+            <p className="text-xs text-gray-400">
+              Email address cannot be changed
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label

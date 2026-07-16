@@ -1,11 +1,30 @@
 "use client";
 import React, { useEffect } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useGetBusinessDashboard } from "@/services/dashboard.service";
-import { useGetDashboardData } from "@/services/dashboard.service";
+import {
+  useGetBusinessDashboard,
+  useGetDashboardData,
+} from "@/services/dashboard.service";
 import { format, parseISO } from "date-fns";
-import { BarChart2, CalendarClock } from "lucide-react";
+import {
+  BarChart2,
+  CalendarClock,
+  History,
+  TrendingUp,
+  MoreVertical,
+} from "lucide-react";
+
+/* ─── helpers ─── */
+function fmtDuration(start: string, end: string) {
+  const mins = Math.round(
+    (new Date(end).getTime() - new Date(start).getTime()) / 60000,
+  );
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? (m > 0 ? `${h}h ${m}min` : `${h}h`) : `${m}min`;
+}
 
 /* ─── SVG line chart ─── */
 function LineChart({
@@ -27,7 +46,8 @@ function LineChart({
   const maxApt = Math.max(...data.map((d) => d.appointments), 1);
   const maxSales = Math.max(...data.map((d) => d.sales), 1);
 
-  const xScale = (i: number) => pad.left + (i / (data.length - 1)) * innerW;
+  const xScale = (i: number) =>
+    pad.left + (i / Math.max(data.length - 1, 1)) * innerW;
   const yScale = (v: number, max: number) =>
     pad.top + innerH - (v / max) * innerH;
 
@@ -149,11 +169,11 @@ function Card({
 function CardHeader({
   title,
   subtitle,
-  action,
+  dots = false,
 }: {
   title: string;
   subtitle?: string;
-  action?: React.ReactNode;
+  dots?: boolean;
 }) {
   return (
     <div
@@ -179,7 +199,18 @@ function CardHeader({
           </p>
         )}
       </div>
-      {action}
+      {dots && (
+        <button
+          style={{
+            background: "none",
+            border: "none",
+            color: "#9ca3af",
+            cursor: "pointer",
+            padding: 2,
+          }}>
+          <MoreVertical size={16} />
+        </button>
+      )}
     </div>
   );
 }
@@ -191,7 +222,7 @@ function EmptyState({
 }: {
   icon: React.ReactNode;
   text: string;
-  sub: string;
+  sub: React.ReactNode;
 }) {
   return (
     <div
@@ -203,11 +234,166 @@ function EmptyState({
         padding: "40px 0",
         gap: 12,
       }}>
-      <div style={{ color: "#d1d5db", fontSize: 48 }}>{icon}</div>
-      <p style={{ fontSize: 15, fontWeight: 600, color: "#6b7280", margin: 0 }}>
+      <div style={{ color: "#d1d5db" }}>{icon}</div>
+      <p
+        style={{
+          fontSize: 15,
+          fontWeight: 600,
+          color: "#6b7280",
+          margin: 0,
+          textAlign: "center",
+        }}>
         {text}
       </p>
-      <p style={{ fontSize: 13, color: "#9ca3af", margin: 0 }}>{sub}</p>
+      <p
+        style={{
+          fontSize: 13,
+          color: "#9ca3af",
+          margin: 0,
+          textAlign: "center",
+          lineHeight: 1.5,
+        }}>
+        {sub}
+      </p>
+    </div>
+  );
+}
+
+const statusStyle: Record<string, React.CSSProperties> = {
+  confirmed: { background: "#d1fae5", color: "#065f46" },
+  cancelled: { background: "#fee2e2", color: "#991b1b" },
+  completed: { background: "#dbeafe", color: "#1e40af" },
+  pending: { background: "#fef3c7", color: "#92400e" },
+  booked: { background: "#ede9fe", color: "#5b21b6" },
+  no_show: { background: "#f3f4f6", color: "#4b5563" },
+  rescheduled: { background: "#fce7f3", color: "#9d174d" },
+};
+
+function StatusPill({ status }: { status: string }) {
+  const s = statusStyle[status?.toLowerCase()] ?? {
+    background: "#f3f4f6",
+    color: "#4b5563",
+  };
+  return (
+    <span
+      style={{
+        fontSize: 11,
+        fontWeight: 700,
+        padding: "2px 9px",
+        borderRadius: 9999,
+        whiteSpace: "nowrap",
+        textTransform: "capitalize",
+        flexShrink: 0,
+        ...s,
+      }}>
+      {status ?? "pending"}
+    </span>
+  );
+}
+
+/* ─── Booking row (shared by activity + today) ─── */
+function BookingRow({
+  b,
+  showFullDate = true,
+}: {
+  b: any;
+  showFullDate?: boolean;
+}) {
+  const dateNum = format(new Date(b.start_time), "d");
+  const dateMon = format(new Date(b.start_time), "MMM");
+  const dateStr = showFullDate
+    ? format(new Date(b.start_time), "EEE, d MMM yyyy HH:mm")
+    : format(new Date(b.start_time), "EEE HH:mm");
+
+  const typeStr = b.booking_type ?? b.type ?? null;
+  const durStr =
+    b.start_time && b.end_time ? fmtDuration(b.start_time, b.end_time) : null;
+  const empName = b.employee_id?.full_name ?? null;
+
+  const subParts = [typeStr, durStr, empName ? `with ${empName}` : null].filter(
+    Boolean,
+  );
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 14,
+        padding: "14px 0",
+        borderBottom: "1px solid #f3f4f6",
+      }}>
+      {/* Date column */}
+      <div
+        style={{
+          width: 30,
+          textAlign: "center",
+          flexShrink: 0,
+          paddingTop: 1,
+        }}>
+        <p
+          style={{
+            fontSize: 18,
+            fontWeight: 800,
+            color: "#111827",
+            margin: 0,
+            lineHeight: 1,
+          }}>
+          {dateNum}
+        </p>
+        <p
+          style={{
+            fontSize: 10,
+            color: "#9ca3af",
+            margin: "2px 0 0",
+            textTransform: "uppercase",
+            letterSpacing: "0.04em",
+          }}>
+          {dateMon}
+        </p>
+      </div>
+
+      {/* Content column */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Line 1: datetime + status pill */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
+            marginBottom: 3,
+          }}>
+          <span style={{ fontSize: 12, color: "#6b7280" }}>{dateStr}</span>
+          <StatusPill status={b.status ?? "pending"} />
+        </div>
+        {/* Line 2: service name */}
+        <p
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            color: "#111827",
+            margin: "0 0 2px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}>
+          {b.service_id?.name ?? "Service"}
+        </p>
+        {/* Line 3: type, duration, employee */}
+        {subParts.length > 0 && (
+          <p
+            style={{
+              fontSize: 12,
+              color: "#9ca3af",
+              margin: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}>
+            {subParts.join(", ")}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -255,7 +441,7 @@ export default function Dashboard() {
       </p>
     );
 
-  /* ── Business dashboard ── */
+  /* ── Business dashboard ─────────────────────────────────────────── */
   if (isBusiness) {
     const stats = bizData?.data?.dailyStats ?? [];
     const totalApt = bizData?.data?.totalAppointments ?? 0;
@@ -264,253 +450,257 @@ export default function Dashboard() {
     const recent = bizData?.data?.recentBookings ?? [];
     const today = bizData?.data?.todayBookings ?? [];
 
+    // Derive top services from recent bookings
+    const serviceCounts = recent.reduce(
+      (acc: Record<string, { name: string; count: number }>, b: any) => {
+        const id = b.service_id?._id ?? b.service_id;
+        const name = b.service_id?.name ?? "Unknown Service";
+        if (!id) return acc;
+        acc[id] = acc[id]
+          ? { ...acc[id], count: acc[id].count + 1 }
+          : { name, count: 1 };
+        return acc;
+      },
+      {},
+    );
+    const topServices = (
+      Object.values(serviceCounts) as { name: string; count: number }[]
+    )
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    // Derive top team members from recent bookings
+    const empCounts = recent.reduce(
+      (acc: Record<string, { name: string; count: number }>, b: any) => {
+        const id = b.employee_id?._id ?? b.employee_id;
+        const name = b.employee_id?.full_name ?? "Unknown";
+        if (!id) return acc;
+        acc[id] = acc[id]
+          ? { ...acc[id], count: acc[id].count + 1 }
+          : { name, count: 1 };
+        return acc;
+      },
+      {},
+    );
+    const topTeam = (
+      Object.values(empCounts) as { name: string; count: number }[]
+    )
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const calendarLink = (
+      <Link
+        href="/dashboard/calendar"
+        style={{ color: "#3b82f6", textDecoration: "none" }}>
+        calendar
+      </Link>
+    );
+
     return (
-      <div>
-        <div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6"
-          style={{ display: "grid", gap: 20 }}>
-          {/* Recent sales */}
+      <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* ── Recent sales ── */}
           <Card>
-            <CardHeader
-              title="Recent sales"
-              subtitle="Last 7 days"
-              action={
-                <button
+            <CardHeader title="Recent sales" subtitle="Last 7 days" dots />
+            {stats.length === 0 ? (
+              <EmptyState
+                icon={<TrendingUp size={48} strokeWidth={1.2} />}
+                text="No Sales Data"
+                sub="Make some appointments for sales data to appear"
+              />
+            ) : (
+              <>
+                <p
                   style={{
-                    background: "none",
-                    border: "none",
-                    color: "#9ca3af",
-                    cursor: "pointer",
-                    fontSize: 18,
+                    fontSize: 28,
+                    fontWeight: 800,
+                    color: "#111827",
+                    margin: "0 0 4px",
                   }}>
-                  ···
-                </button>
-              }
-            />
-            <p
-              style={{
-                fontSize: 28,
-                fontWeight: 800,
-                color: "#111827",
-                margin: "0 0 4px",
-              }}>
-              A$ {totalSales.toFixed(2)}
-            </p>
-            <div style={{ display: "flex", gap: 20, marginBottom: 20 }}>
-              <span style={{ fontSize: 13, color: "#6b7280" }}>
-                Appointments <b style={{ color: "#111827" }}>{totalApt}</b>
-              </span>
-            </div>
-            <LineChart data={stats} />
-            <div style={{ display: "flex", gap: 20, marginTop: 12 }}>
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 12,
-                  color: "#6b7280",
-                }}>
-                <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: "#3771db",
-                    flexShrink: 0,
-                  }}
-                />
-                Sales
-              </span>
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 12,
-                  color: "#6b7280",
-                }}>
-                <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: "#10b981",
-                    flexShrink: 0,
-                  }}
-                />
-                Appointments
-              </span>
-            </div>
+                  A$ {totalSales.toFixed(2)}
+                </p>
+                <div style={{ display: "flex", gap: 20, marginBottom: 20 }}>
+                  <span style={{ fontSize: 13, color: "#6b7280" }}>
+                    Appointments <b style={{ color: "#111827" }}>{totalApt}</b>
+                  </span>
+                </div>
+                <LineChart data={stats} />
+                <div style={{ display: "flex", gap: 20, marginTop: 12 }}>
+                  {[
+                    { color: "#3771db", label: "Sales" },
+                    { color: "#10b981", label: "Appointments" },
+                  ].map(({ color, label }) => (
+                    <span
+                      key={label}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: 12,
+                        color: "#6b7280",
+                      }}>
+                      <span
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: "50%",
+                          background: color,
+                          flexShrink: 0,
+                        }}
+                      />
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
           </Card>
 
-          {/* Upcoming appointments */}
+          {/* ── Upcoming appointments ── */}
           <Card>
             <CardHeader
               title="Upcoming appointments"
               subtitle="Next 7 days"
-              action={
-                <button
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#9ca3af",
-                    cursor: "pointer",
-                    fontSize: 18,
-                  }}>
-                  ···
-                </button>
-              }
+              dots
             />
             {upcoming.length === 0 ? (
               <EmptyState
-                icon={<BarChart2 size={48} strokeWidth={1} />}
+                icon={<BarChart2 size={48} strokeWidth={1.2} />}
                 text="Your schedule is empty"
                 sub="Make some appointments for schedule data to appear"
               />
             ) : (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ display: "flex", flexDirection: "column" }}>
                 {upcoming.slice(0, 6).map((b: any) => (
-                  <div
-                    key={b._id}
-                    style={{
-                      display: "flex",
-                      gap: 12,
-                      alignItems: "flex-start",
-                    }}>
-                    <div
-                      style={{ width: 38, textAlign: "center", flexShrink: 0 }}>
-                      <p
-                        style={{
-                          fontSize: 18,
-                          fontWeight: 800,
-                          color: "#111827",
-                          margin: 0,
-                        }}>
-                        {format(new Date(b.start_time), "d")}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: 10,
-                          color: "#9ca3af",
-                          margin: 0,
-                          textTransform: "uppercase",
-                        }}>
-                        {format(new Date(b.start_time), "MMM")}
-                      </p>
-                    </div>
-                    <div>
-                      <p
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: "#111827",
-                          margin: 0,
-                        }}>
-                        {b.service_id?.name ?? "Service"}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: 12,
-                          color: "#6b7280",
-                          margin: "2px 0 0",
-                        }}>
-                        {format(new Date(b.start_time), "h:mm a")} ·{" "}
-                        {b.user_id?.name ?? "Client"}
-                      </p>
-                    </div>
-                  </div>
+                  <BookingRow key={b._id} b={b} showFullDate={false} />
                 ))}
               </div>
             )}
           </Card>
 
-          {/* Appointments activity */}
+          {/* ── Appointments activity ── */}
           <Card>
             <CardHeader title="Appointments activity" />
             {recent.length === 0 ? (
               <EmptyState
-                icon={<CalendarClock size={48} strokeWidth={1} />}
-                text="No recent appointments"
-                sub="Your booking activity will appear here"
+                icon={<History size={48} strokeWidth={1.2} />}
+                text="No recent activity"
+                sub={
+                  <>Visit the {calendarLink} section to add some appointments</>
+                }
+              />
+            ) : (
+              <>
+                <style>{`.apt-scroll::-webkit-scrollbar{display:none}`}</style>
+                <div
+                  className="apt-scroll"
+                  style={{
+                    maxHeight: 336,
+                    overflowY: "auto",
+                    msOverflowStyle: "none" as any,
+                    scrollbarWidth: "none" as any,
+                  }}>
+                  {recent.map((b: any) => (
+                    <BookingRow key={b._id} b={b} showFullDate />
+                  ))}
+                </div>
+              </>
+            )}
+          </Card>
+
+          {/* ── Today's next appointments ── */}
+          <Card>
+            <CardHeader title="Today's next appointments" />
+            {today.length === 0 ? (
+              <EmptyState
+                icon={<CalendarClock size={48} strokeWidth={1.2} />}
+                text="No Appointments Today"
+                sub={
+                  <>Visit the {calendarLink} section to add some appointments</>
+                }
               />
             ) : (
               <div style={{ display: "flex", flexDirection: "column" }}>
-                {recent.slice(0, 8).map((b: any) => (
-                  <div
-                    key={b._id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "12px 0",
-                      borderBottom: "1px solid #f3f4f6",
-                    }}>
-                    <div
-                      style={{ width: 36, textAlign: "center", flexShrink: 0 }}>
-                      <p
-                        style={{
-                          fontSize: 16,
-                          fontWeight: 800,
-                          color: "#3771db",
-                          margin: 0,
-                        }}>
-                        {format(new Date(b.start_time), "d")}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: 10,
-                          color: "#9ca3af",
-                          margin: 0,
-                          textTransform: "uppercase",
-                        }}>
-                        {format(new Date(b.start_time), "MMM")}
-                      </p>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <p
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: "#111827",
-                          margin: 0,
-                        }}>
-                        {format(
-                          new Date(b.start_time),
-                          "EEE, d MMM yyyy HH:mm",
-                        )}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: 12,
-                          color: "#6b7280",
-                          margin: "2px 0 0",
-                        }}>
-                        {b.service_id?.name ?? "Service"} ·{" "}
-                        {b.user_id?.name ?? "Client"}
-                      </p>
-                    </div>
+                {today.map((b: any) => (
+                  <BookingRow key={b._id} b={b} showFullDate={false} />
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* ── Top services ── */}
+          <Card>
+            <CardHeader title="Top services" />
+            {topServices.length === 0 ? (
+              <EmptyState
+                icon={<TrendingUp size={48} strokeWidth={1.2} />}
+                text="No sales this month"
+                sub="Create some sales for sales data to appear"
+              />
+            ) : (
+              <div>
+                {/* Table header */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 100px 100px",
+                    padding: "0 0 8px",
+                    borderBottom: "1px solid #e5e7eb",
+                    marginBottom: 2,
+                  }}>
+                  {["Service", "This month", "Last month"].map((h) => (
                     <span
+                      key={h}
                       style={{
                         fontSize: 11,
                         fontWeight: 700,
-                        padding: "3px 10px",
-                        borderRadius: 9999,
-                        background:
-                          b.status === "confirmed"
-                            ? "#d1fae5"
-                            : b.status === "cancelled"
-                              ? "#fee2e2"
-                              : "#fef3c7",
-                        color:
-                          b.status === "confirmed"
-                            ? "#065f46"
-                            : b.status === "cancelled"
-                              ? "#991b1b"
-                              : "#92400e",
+                        color: "#9ca3af",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        textAlign: h === "Service" ? "left" : "center",
                       }}>
-                      {b.status ?? "Pending"}
+                      {h}
+                    </span>
+                  ))}
+                </div>
+                {topServices.map((s, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 100px 100px",
+                      padding: "12px 0",
+                      borderBottom:
+                        i < topServices.length - 1
+                          ? "1px solid #f3f4f6"
+                          : "none",
+                      alignItems: "center",
+                    }}>
+                    <p
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: "#111827",
+                        margin: 0,
+                      }}>
+                      {s.name}
+                    </p>
+                    <span
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "#111827",
+                        textAlign: "center",
+                      }}>
+                      {s.count}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 14,
+                        color: "#9ca3af",
+                        textAlign: "center",
+                      }}>
+                      0
                     </span>
                   </div>
                 ))}
@@ -518,41 +708,103 @@ export default function Dashboard() {
             )}
           </Card>
 
-          {/* Today's next appointments */}
           <Card>
-            <CardHeader title="Today's next appointments" />
-            {today.length === 0 ? (
+            <CardHeader title="Top team member" />
+            {topTeam.length === 0 ? (
               <EmptyState
-                icon={<CalendarClock size={48} strokeWidth={1} />}
-                text="No Appointments Today"
-                sub="Check back when you have bookings scheduled"
+                icon={<TrendingUp size={48} strokeWidth={1.2} />}
+                text="No sales this month"
+                sub="Create some sales for sales data to appear"
               />
             ) : (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {today.map((b: any) => (
+              <div>
+                {/* Table header */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 100px 100px",
+                    padding: "0 0 8px",
+                    borderBottom: "1px solid #e5e7eb",
+                    marginBottom: 2,
+                  }}>
+                  {["Team member", "This month", "Last month"].map((h) => (
+                    <span
+                      key={h}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "#9ca3af",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        textAlign: h === "Team member" ? "left" : "center",
+                      }}>
+                      {h}
+                    </span>
+                  ))}
+                </div>
+                {topTeam.map((m, i) => (
                   <div
-                    key={b._id}
+                    key={i}
                     style={{
-                      background: "#f5f3ff",
-                      border: "1px solid #ddd6fe",
-                      borderRadius: 12,
-                      padding: "12px 16px",
+                      display: "grid",
+                      gridTemplateColumns: "1fr 100px 100px",
+                      padding: "10px 0",
+                      borderBottom:
+                        i < topTeam.length - 1 ? "1px solid #f3f4f6" : "none",
+                      alignItems: "center",
                     }}>
-                    <p
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                      }}>
+                      <div
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: "50%",
+                          background: "#dbeafe",
+                          color: "#1d4ed8",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}>
+                        {m.name.charAt(0).toUpperCase()}
+                      </div>
+                      <p
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 500,
+                          color: "#111827",
+                          margin: 0,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}>
+                        {m.name}
+                      </p>
+                    </div>
+                    <span
                       style={{
                         fontSize: 14,
                         fontWeight: 700,
                         color: "#111827",
-                        margin: "0 0 2px",
+                        textAlign: "center",
                       }}>
-                      {b.service_id?.name ?? "Service"}
-                    </p>
-                    <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>
-                      {format(new Date(b.start_time), "h:mm a")} –{" "}
-                      {format(new Date(b.end_time), "h:mm a")} ·{" "}
-                      {b.user_id?.name ?? "Client"}
-                    </p>
+                      {m.count}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 14,
+                        color: "#9ca3af",
+                        textAlign: "center",
+                      }}>
+                      0
+                    </span>
                   </div>
                 ))}
               </div>
@@ -563,12 +815,12 @@ export default function Dashboard() {
     );
   }
 
-  /* ── User dashboard ── */
+  /* ── User dashboard ─────────────────────────────────────────────── */
   const favorite = userData?.data?.favorite ?? [];
   const deals = userData?.data?.deals ?? [];
 
   return (
-    <div style={{ maxWidth: 900 }}>
+    <div className="max-w-5xl mx-auto">
       <h1
         style={{
           fontSize: 22,
@@ -578,7 +830,7 @@ export default function Dashboard() {
         }}>
         Welcome back, {session?.user?.name ?? "there"}
       </h1>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <Card>
           <CardHeader title="Favourites" />
           {favorite.length === 0 ? (

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useGetSingleDashboardBusiness } from "@/services/business.service";
 import Loading from "@/app/search/loading";
 
@@ -33,6 +34,7 @@ type LocationState = {
 
 export default function LocationSettings() {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const { data: bizData, isLoading } = useGetSingleDashboardBusiness(
     session?.user?.id || "",
   );
@@ -125,15 +127,19 @@ export default function LocationSettings() {
     }
     setIsSaving(true);
     try {
-      const res = await fetch("/api/business/location", {
+      const fd = new FormData();
+      fd.append("location", address);
+      fd.append("latitude", String(lat));
+      fd.append("longitude", String(lng));
+      const res = await fetch("/api/business/settings", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ location: address, latitude: lat, longitude: lng }),
+        body: fd,
       });
       if (!res.ok) throw new Error((await res.json()).message);
       toast.success("Location updated successfully");
       setLocalEdits(null);
       setQuery(null);
+      queryClient.invalidateQueries({ queryKey: ["getbusiness", session?.user?.id] });
     } catch (err: any) {
       toast.error(err.message || "Failed to update location");
     } finally {

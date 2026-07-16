@@ -9,8 +9,8 @@ export async function POST(req: NextRequest) {
     await connectToDb();
 
     const formData = await req.formData();
-    const name     = (formData.get("name") as string)?.trim();
-    const email    = (formData.get("email") as string)?.trim().toLowerCase();
+    const name = (formData.get("name") as string)?.trim();
+    const email = (formData.get("email") as string)?.trim().toLowerCase();
     const password = formData.get("password") as string;
     const accepted = formData.get("accpetalltermsandcondition") === "true";
 
@@ -50,7 +50,11 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { message: "Account created successfully", success: true, userId: newUser._id },
+      {
+        message: "Account created successfully",
+        success: true,
+        userId: newUser._id,
+      },
       { status: 201 },
     );
   } catch (error: any) {

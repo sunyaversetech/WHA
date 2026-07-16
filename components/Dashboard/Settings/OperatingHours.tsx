@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useGetSingleDashboardBusiness } from "@/services/business.service";
 import Loading from "@/app/search/loading";
 
@@ -69,6 +70,7 @@ type FormState = { is24_7: boolean; schedule: WeekSchedule };
 /* ── main component ───────────────────────────────────────────────────────── */
 export function BusinessHoursForm() {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const { data: bizData, isLoading } = useGetSingleDashboardBusiness(
     session?.user?.id || "",
   );
@@ -150,14 +152,17 @@ export function BusinessHoursForm() {
   const onSave = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch("/api/business/schedule", {
+      const fd = new FormData();
+      fd.append("is24_7", String(is24_7));
+      fd.append("schedule", JSON.stringify(schedule));
+      const res = await fetch("/api/business/settings", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is24_7, schedule }),
+        body: fd,
       });
       if (!res.ok) throw new Error((await res.json()).message);
       toast.success("Schedule updated successfully");
       setLocalEdits(null);
+      queryClient.invalidateQueries({ queryKey: ["getbusiness", session?.user?.id] });
     } catch (err: any) {
       toast.error(err.message || "Failed to update schedule");
     } finally {
