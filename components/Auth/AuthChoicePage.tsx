@@ -1,16 +1,37 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Users, Briefcase, ChevronRight, MoveLeft } from "lucide-react";
 import Image from "next/image";
 import { Button } from "../ui/button";
+import { useEffect } from "react";
+import { toast } from "sonner";
+
+const ERROR_MESSAGES: Record<string, string> = {
+  AccessDenied:
+    "No account found for this Google sign-in. Please sign up first.",
+  OAuthAccountNotLinked:
+    "This email is already registered with a different sign-in method.",
+  OAuthSignin: "Could not start Google sign-in. Please try again.",
+  OAuthCallback: "Google sign-in failed. Please try again.",
+  Default: "Sign-in failed. Please try again.",
+};
 
 export default function AuthChoicePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error) {
+      const message = ERROR_MESSAGES[error] ?? ERROR_MESSAGES.Default;
+      toast.error(message, { duration: 6000 });
+    }
+  }, [searchParams]);
 
   return (
     <div
-      className="justify-between md:h-[80vh] sm:h-screen w-full overflow-hidden mt-10 sm:mt-0 md:items-center"
+      className="justify-between md:h-[80vh] sm:h-screen w-1/2 overflow-hidden mt-10 sm:mt-0 md:items-center"
       style={{
         background: "#fff",
         display: "flex",
@@ -84,20 +105,19 @@ export default function AuthChoicePage() {
         style={{
           width: "46%",
           flexShrink: 0,
-          position: "sticky",
+          position: "fixed",
           top: 0,
           right: 0,
           height: "100vh",
+          overflow: "hidden",
         }}>
-        <div style={{ position: "relative", width: "100%", height: "100%" }}>
-          <Image
-            src="/wha/wha-auth.png"
-            alt="WH Australia"
-            fill
-            style={{ objectFit: "cover" }}
-            priority
-          />
-        </div>
+        <Image
+          src="/wha/wha-auth.png"
+          alt="WH Australia"
+          fill
+          style={{ objectFit: "cover" }}
+          priority
+        />
       </div>
     </div>
   );

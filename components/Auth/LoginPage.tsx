@@ -5,9 +5,9 @@ import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const loginSchema = z.object({
@@ -51,8 +51,21 @@ export default function LoginPage({
   loginType?: "user" | "business";
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error === "AccessDenied") {
+      toast.error(
+        "No account found for this Google sign-in. Please sign up first.",
+        { duration: 6000 },
+      );
+    } else if (error) {
+      toast.error("Sign-in failed. Please try again.", { duration: 6000 });
+    }
+  }, [searchParams]);
 
   const {
     register,
@@ -94,7 +107,6 @@ export default function LoginPage({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
-      {/* Email */}
       <div style={INPUT_WRAP}>
         <label style={LABEL}>Email</label>
         <input
@@ -112,7 +124,6 @@ export default function LoginPage({
         )}
       </div>
 
-      {/* Password */}
       <div style={{ ...INPUT_WRAP, marginBottom: 8 }}>
         <label style={LABEL}>Password</label>
         <div style={{ position: "relative" }}>
@@ -149,7 +160,6 @@ export default function LoginPage({
         )}
       </div>
 
-      {/* Forgot password */}
       <div style={{ textAlign: "right", marginBottom: 24 }}>
         <a
           href="/forgot-password"
@@ -163,7 +173,6 @@ export default function LoginPage({
         </a>
       </div>
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={loading}
@@ -183,7 +192,6 @@ export default function LoginPage({
         {loading ? "Signing in…" : "Continue"}
       </button>
 
-      {/* Don't have an account? */}
       {signupHref && (
         <p
           style={{
@@ -205,7 +213,6 @@ export default function LoginPage({
         </p>
       )}
 
-      {/* Google — only shown when enabled */}
       {showGoogle && (
         <>
           <div

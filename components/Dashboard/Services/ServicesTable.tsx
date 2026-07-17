@@ -478,7 +478,6 @@ export default function ServicesTable() {
         </div>
       </div>
 
-      {/* ── Controls ── */}
       <div className="flex items-center gap-2 mb-4">
         <div className="relative flex-1">
           <Search
@@ -501,7 +500,9 @@ export default function ServicesTable() {
       </div>
 
       {/* ── Mobile: category tabs (horizontal scroll) ── */}
-      <div className="md:hidden -mx-4 px-4 overflow-x-auto mb-4" style={{ scrollbarWidth: "none" }}>
+      <div
+        className="md:hidden -mx-4 px-4 overflow-x-auto mb-4"
+        style={{ scrollbarWidth: "none" }}>
         <div className="flex gap-2 pb-1" style={{ width: "max-content" }}>
           <button
             onClick={() => setSelectedCatId(null)}
@@ -512,12 +513,20 @@ export default function ServicesTable() {
                 : "text-[#051e3a] border-gray-200 bg-white hover:bg-gray-50",
             )}>
             All
-            <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded-full", !selectedCatId ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500")}>
+            <span
+              className={cn(
+                "text-xs font-bold px-1.5 py-0.5 rounded-full",
+                !selectedCatId
+                  ? "bg-white/20 text-white"
+                  : "bg-gray-100 text-gray-500",
+              )}>
               {allServices.length}
             </span>
           </button>
           {allCategories?.map((cat) => {
-            const count = allServices.filter((s) => s.category_id === cat._id).length;
+            const count = allServices.filter(
+              (s) => s.category_id === cat._id,
+            ).length;
             const active = selectedCatId === cat._id;
             return (
               <button
@@ -530,7 +539,13 @@ export default function ServicesTable() {
                     : "text-[#051e3a] border-gray-200 bg-white hover:bg-gray-50",
                 )}>
                 {cat.name}
-                <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded-full", active ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500")}>
+                <span
+                  className={cn(
+                    "text-xs font-bold px-1.5 py-0.5 rounded-full",
+                    active
+                      ? "bg-white/20 text-white"
+                      : "bg-gray-100 text-gray-500",
+                  )}>
                   {count}
                 </span>
               </button>

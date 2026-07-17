@@ -84,7 +84,9 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         await connectToDb();
-        const existing = await User.findOne({ email: user.email?.toLowerCase() });
+        const existing = await User.findOne({
+          email: user.email?.toLowerCase(),
+        });
 
         // Google is login-only — block if account does not already exist
         if (!existing) return false;
@@ -102,7 +104,9 @@ export const authOptions: NextAuthOptions = {
         (user as any).business_type = existing.business_type;
 
         if (!existing.emailVerified) {
-          await User.findByIdAndUpdate(existing._id, { emailVerified: new Date() });
+          await User.findByIdAndUpdate(existing._id, {
+            emailVerified: new Date(),
+          });
           user.emailVerified = new Date();
         }
       }
@@ -117,19 +121,19 @@ export const authOptions: NextAuthOptions = {
 
     async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.mongodbId       = user.id;
-        token.googleId        = (user as any).googleId ?? null;
-        token.category        = (user as any).category;
-        token.business_name   = (user as any).business_name;
-        token.image           = (user as any).image;
-        token.city_name       = (user as any).city_name;
-        token.community_name  = (user as any).community_name;
-        token.emailVerified   = (user as any).emailVerified ?? "";
-        token.isblocked       = (user as any).isblocked ?? false;
-        token.verified        = (user as any).verified ?? false;
-        token.location        = (user as any).location ?? "";
-        token.phone_number    = (user as any).phone_number ?? "";
-        token.business_type   = (user as any).business_type ?? null;
+        token.mongodbId = user.id;
+        token.googleId = (user as any).googleId ?? null;
+        token.category = (user as any).category;
+        token.business_name = (user as any).business_name;
+        token.image = (user as any).image;
+        token.city_name = (user as any).city_name;
+        token.community_name = (user as any).community_name;
+        token.emailVerified = (user as any).emailVerified ?? "";
+        token.isblocked = (user as any).isblocked ?? false;
+        token.verified = (user as any).verified ?? false;
+        token.location = (user as any).location ?? "";
+        token.phone_number = (user as any).phone_number ?? "";
+        token.business_type = (user as any).business_type ?? null;
       }
 
       if (trigger === "update" && session) {
@@ -139,20 +143,22 @@ export const authOptions: NextAuthOptions = {
       // Re-hydrate from DB on token refresh (keeps profile changes live)
       if (!user && token.email) {
         await connectToDb();
-        const dbUser = await User.findOne({ email: token.email }).lean() as any;
+        const dbUser = (await User.findOne({
+          email: token.email,
+        }).lean()) as any;
         if (dbUser) {
-          token.mongodbId      = dbUser._id.toString();
-          token.category       = dbUser.category;
-          token.business_name  = dbUser.business_name;
-          token.image          = dbUser.image;
-          token.city_name      = dbUser.city_name;
+          token.mongodbId = dbUser._id.toString();
+          token.category = dbUser.category;
+          token.business_name = dbUser.business_name;
+          token.image = dbUser.image;
+          token.city_name = dbUser.city_name;
           token.community_name = dbUser.community_name;
-          token.emailVerified  = dbUser.emailVerified ?? "";
-          token.isblocked      = dbUser.isblocked ?? false;
-          token.verified       = dbUser.verified ?? false;
-          token.location       = dbUser.location ?? "";
-          token.phone_number   = dbUser.phone_number ?? "";
-          token.business_type  = dbUser.business_type ?? null;
+          token.emailVerified = dbUser.emailVerified ?? "";
+          token.isblocked = dbUser.isblocked ?? false;
+          token.verified = dbUser.verified ?? false;
+          token.location = dbUser.location ?? "";
+          token.phone_number = dbUser.phone_number ?? "";
+          token.business_type = dbUser.business_type ?? null;
         }
       }
       return token;
@@ -160,19 +166,19 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id             = token.mongodbId;
-        (session.user as any).googleId       = token.googleId;
-        (session.user as any).category       = token.category;
-        (session.user as any).business_name  = token.business_name;
-        (session.user as any).image          = token.image;
-        (session.user as any).city_name      = token.city_name;
+        (session.user as any).id = token.mongodbId;
+        (session.user as any).googleId = token.googleId;
+        (session.user as any).category = token.category;
+        (session.user as any).business_name = token.business_name;
+        (session.user as any).image = token.image;
+        (session.user as any).city_name = token.city_name;
         (session.user as any).community_name = token.community_name;
-        (session.user as any).emailVerified  = token.emailVerified;
-        (session.user as any).isblocked      = token.isblocked;
-        (session.user as any).verified       = token.verified;
-        (session.user as any).location       = token.location;
-        (session.user as any).phone_number   = token.phone_number;
-        (session.user as any).business_type  = token.business_type;
+        (session.user as any).emailVerified = token.emailVerified;
+        (session.user as any).isblocked = token.isblocked;
+        (session.user as any).verified = token.verified;
+        (session.user as any).location = token.location;
+        (session.user as any).phone_number = token.phone_number;
+        (session.user as any).business_type = token.business_type;
       }
       return session;
     },
