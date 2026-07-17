@@ -84,7 +84,9 @@ export default function LoginPage({
       router.push(
         session?.user?.category === "super-admin"
           ? "/super-admin"
-          : "/dashboard",
+          : session?.user?.category === "business"
+            ? "/dashboard/calendar"
+            : "/dashboard",
       );
       setLoading(false);
     }
@@ -222,7 +224,14 @@ export default function LoginPage({
 
           <button
             type="button"
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            onClick={() =>
+              signIn("google", {
+                callbackUrl:
+                  loginType === "business"
+                    ? "/dashboard/calendar"
+                    : "/dashboard",
+              })
+            }
             style={{
               width: "100%",
               display: "flex",

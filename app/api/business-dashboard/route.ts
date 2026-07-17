@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "../auth/[...nextauth]/route";
 import Booking from "@/server/models/Booking.model";
+import "@/server/models/Service.model";
+import "@/server/models/Auth.model";
+import "@/server/models/Employee.model";
 
 export async function GET() {
   try {

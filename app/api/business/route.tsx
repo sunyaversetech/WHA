@@ -4,12 +4,12 @@ import { Review } from "@/server/models/Review.model";
 import { Service } from "@/server/models/Service.model";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
+import "@/server/models/Service.model";
 
 function escapeRegex(text: string) {
   return text.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
 }
 
-// Strip location phrases so "kayak near me" / "haircut in sydney" → ["kayak"] / ["haircut"]
 const AU_CITY_NAMES = [
   "sydney",
   "melbourne",

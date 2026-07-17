@@ -113,7 +113,11 @@ export default function Navbar() {
         </p>
         <div className="border-t border-border my-2" />
         <Link
-          href={buildPath("/dashboard")}
+          href={buildPath(
+            session?.user?.category === "business"
+              ? "/dashboard/calendar"
+              : "/dashboard",
+          )}
           className="block px-2 py-2 rounded-lg text-sm hover:bg-muted transition-colors">
           Dashboard
         </Link>
