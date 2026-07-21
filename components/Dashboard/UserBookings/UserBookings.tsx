@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import {
@@ -79,16 +79,26 @@ function useAvailableSlots(
 
   useEffect(() => {
     if (!date || !serviceId) return;
-    setSlots([]);
-    setLoading(true);
+    let cancelled = false;
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    fetch(
-      `/api/bookings/available-slots?date=${date}&service_id=${serviceId}&business_id=${businessId}&timezone=${encodeURIComponent(tz)}&duration_minutes=${duration}`,
-    )
-      .then((r) => r.json())
-      .then((d) => setSlots(d.available_slots ?? []))
-      .catch(() => setSlots([]))
-      .finally(() => setLoading(false));
+    (async () => {
+      await Promise.resolve(); // defer past synchronous phase
+      if (cancelled) return;
+      setSlots([]);
+      setLoading(true);
+      try {
+        const r = await fetch(
+          `/api/bookings/available-slots?date=${date}&service_id=${serviceId}&business_id=${businessId}&timezone=${encodeURIComponent(tz)}&duration_minutes=${duration}`,
+        );
+        const d = await r.json();
+        if (!cancelled) setSlots(d.available_slots ?? []);
+      } catch {
+        if (!cancelled) setSlots([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [date, serviceId, businessId, duration]);
 
   return { slots, loading };
@@ -486,21 +496,27 @@ export default function UserBookings() {
   const [rescheduleTarget, setRescheduleTarget] = useState<BookingRecord | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const fetchBookings = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/bookings/user");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to load bookings");
-      setBookings(data.data ?? []);
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refresh = () => setRefreshKey((k) => k + 1);
 
-  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/bookings/user");
+        const data = await res.json();
+        if (cancelled) return;
+        if (!res.ok) throw new Error(data.error ?? "Failed to load bookings");
+        setBookings(data.data ?? []);
+      } catch (e: any) {
+        if (!cancelled) toast.error(e.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [refreshKey]);
 
   const handleCancel = async (b: BookingRecord) => {
     if (!confirm(`Cancel your booking for "${b.service_id?.name}"?`)) return;
@@ -514,7 +530,7 @@ export default function UserBookings() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to cancel");
       toast.success("Booking cancelled");
-      fetchBookings();
+      refresh();
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -616,7 +632,7 @@ export default function UserBookings() {
           onClose={() => setRescheduleTarget(null)}
           onDone={() => {
             setRescheduleTarget(null);
-            fetchBookings();
+            refresh();
           }}
         />
       )}
