@@ -32,7 +32,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
 
-    // ── User portal credentials ──────────────────────────────────────────────
     CredentialsProvider({
       id: "user-credentials",
       name: "User Credentials",
@@ -54,7 +53,6 @@ export const authOptions: NextAuthOptions = {
       },
     }),
 
-    // ── Business portal credentials ──────────────────────────────────────────
     CredentialsProvider({
       id: "business-credentials",
       name: "Business Credentials",

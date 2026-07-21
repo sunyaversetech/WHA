@@ -4,8 +4,8 @@ import {
   LucideIcon,
   User,
   HeartPlus,
-  Ticket,
   TicketCheck,
+  CalendarCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -64,6 +64,13 @@ const UserSidebar = () => {
           link: buildPath("/dashboard/profile"),
           hasDropdown: false,
           active: pathname.startsWith("/dashboard/profile"),
+        },
+        {
+          name: "My Bookings",
+          icon: CalendarCheck,
+          link: buildPath("/dashboard/my-bookings"),
+          hasDropdown: false,
+          active: pathname.startsWith("/dashboard/my-bookings"),
         },
         {
           name: "tickets",

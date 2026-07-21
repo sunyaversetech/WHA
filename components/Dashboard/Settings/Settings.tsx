@@ -56,7 +56,7 @@ export default function Settings() {
   const [active, setActive] = useState<TabId>("profile");
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen max-w-5xl mx-auto">
       <div className="">
         {/* Page header */}
         <div className="mb-8">
@@ -69,7 +69,6 @@ export default function Settings() {
         </div>
 
         <div className="flex gap-6 items-start">
-          {/* ── SIDEBAR NAV (desktop) ── */}
           <aside className="hidden md:flex flex-col w-64 shrink-0 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
