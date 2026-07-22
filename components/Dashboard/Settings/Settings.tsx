@@ -7,6 +7,7 @@ import {
   MapPin,
   Images,
   Building2,
+  Briefcase,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ import BusinessType from "./BusinessType";
 import ProfileSettings from "./ProfileSettings";
 import LocationSettings from "./LocationSettings";
 import VenueImagesSettings from "./VenueImagesSettings";
+import PortfolioSettings from "./PortfolioSettings";
 
 const TABS = [
   {
@@ -47,6 +49,12 @@ const TABS = [
     label: "Business Info",
     icon: Building2,
     desc: "ABN number & booking type",
+  },
+  {
+    id: "portfolio",
+    label: "Portfolio",
+    icon: Briefcase,
+    desc: "Work samples & project photos",
   },
 ] as const;
 
@@ -157,6 +165,7 @@ export default function Settings() {
             )}
             {active === "location" && <LocationSettings />}
             {active === "venue" && <VenueImagesSettings />}
+            {active === "portfolio" && <PortfolioSettings />}
             {active === "business" && (
               <div className="space-y-6">
                 <ABNUpdateForm />

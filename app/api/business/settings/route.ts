@@ -19,8 +19,8 @@ export async function PATCH(req: NextRequest) {
 
     // Fetch current doc once — needed for S3 cleanup
     const currentUser = await User.findById(session.user.id)
-      .select("image venue_images")
-      .lean<{ image?: string; venue_images?: string[] }>();
+      .select("image venue_images portfolio_images")
+      .lean<{ image?: string; venue_images?: string[]; portfolio_images?: string[] }>();
     if (!currentUser) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
@@ -109,6 +109,36 @@ export async function PATCH(req: NextRequest) {
       }
 
       updateData.venue_images = [...keptUrls, ...newUrls];
+    }
+
+    // ── Portfolio images ───────────────────────────────────────────
+    const existingPortfolioRaw = formData.get("existing_portfolio");
+    if (existingPortfolioRaw !== null) {
+      let keptUrls: string[] = [];
+      try {
+        keptUrls = JSON.parse(existingPortfolioRaw as string);
+      } catch {
+        return NextResponse.json({ message: "Invalid portfolio image data" }, { status: 400 });
+      }
+
+      const current = currentUser.portfolio_images ?? [];
+      const removed = current.filter((url) => !keptUrls.includes(url));
+      await Promise.all(removed.map((url) => deleteFromS3(url)));
+
+      const newUrls: string[] = [];
+      for (let i = 0; i < 20; i++) {
+        const file = formData.get(`portfolio_image_${i}`) as File | null;
+        if (!file || file.size === 0) break;
+        try {
+          const buf = Buffer.from(await file.arrayBuffer());
+          const result = await uploadToS3(buf, file.name, file.type);
+          if (result?.Location) newUrls.push(result.Location);
+        } catch {
+          // skip individual upload failures
+        }
+      }
+
+      updateData.portfolio_images = [...keptUrls, ...newUrls];
     }
 
     // ── Business info ──────────────────────────────────────────────

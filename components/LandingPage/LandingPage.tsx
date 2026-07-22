@@ -292,10 +292,10 @@ export default function LandingPage() {
   };
 
   const goCity = (c: string) =>
-    router.push(`/businesses?city=${encodeURIComponent(c)}`);
+    router.push(`/search?city=${encodeURIComponent(c)}`);
   const goService = (s: string) =>
     router.push(
-      `/businesses?service=${encodeURIComponent(s.toLowerCase().replace(/ /g, "-"))}`,
+      `/search?service=${encodeURIComponent(s.toLowerCase().replace(/ /g, "-"))}`,
     );
 
   return (
@@ -993,7 +993,7 @@ export default function LandingPage() {
                     key={lk}
                     onClick={() =>
                       router.push(
-                        `/businesses?service=${encodeURIComponent(lk.toLowerCase().replace(/ /g, "-"))}`,
+                        `/search?service=${encodeURIComponent(lk.toLowerCase().replace(/ /g, "-"))}`,
                       )
                     }
                     style={{

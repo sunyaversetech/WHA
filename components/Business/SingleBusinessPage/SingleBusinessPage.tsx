@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
+  ChevronRight,
+  X,
   BadgeCheck,
   Star,
   Heart,
@@ -377,6 +379,25 @@ export default function BusinessPage() {
   const { data: userFavorites } = useGetUserFavroite();
 
   const [portfolioExpanded, setPortfolioExpanded] = useState(false);
+  const [portfolioImagesExpanded, setPortfolioImagesExpanded] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const allImages = useMemo(() => {
+    const imgs = data?.data?.venue_images ?? [];
+    return imgs.length > 0 ? imgs : [data?.data?.image || "/placeholder.svg"];
+  }, [data]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const len = allImages.length;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") setLightboxIndex((i) => (i - 1 + len) % len);
+      if (e.key === "ArrowRight") setLightboxIndex((i) => (i + 1) % len);
+      if (e.key === "Escape") setLightboxOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxOpen, allImages]);
 
   const isBusinessFavorite = userFavorites?.data?.business?.some(
     (item) => (item._id ?? "").toString() === businessId?.toString(),
@@ -452,10 +473,14 @@ export default function BusinessPage() {
 
   const community: string[] = biz?.community ?? [];
   const venueImages: string[] = biz?.venue_images ?? [];
+  const portfolioImages: string[] = biz?.portfolio_images ?? [];
   const is24_7: boolean = biz?.is24_7 ?? false;
   const newSchedule = biz?.schedule ?? null;
   const businessType: string | null = biz?.business_type ?? null;
-  const allImages = venueImages.length > 0 ? venueImages : [heroImg];
+  const openLightbox = (idx: number) => {
+    setLightboxIndex(idx);
+    setLightboxOpen(true);
+  };
 
   const ratingNum = avgRating ? Number(avgRating.toFixed(1)) : null;
 
@@ -644,22 +669,21 @@ export default function BusinessPage() {
         <BusinessReviewSection reviews={reviews?.data || []} />
       </section>
 
-      {/* VENUE PHOTOS / PORTFOLIO */}
-      <Divider />
-      <section>
-        <SecTitle>
-          {venueImages.length > 0 ? "Venue Photos" : "Portfolio"}
-        </SecTitle>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 4,
-            borderRadius: 16,
-            overflow: "hidden",
-          }}>
-          {venueImages.length > 0
-            ? venueImages
+      {/* VENUE PHOTOS */}
+      {venueImages.length > 0 && (
+        <>
+          <Divider />
+          <section>
+            <SecTitle>Venue Photos</SecTitle>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 4,
+                borderRadius: 16,
+                overflow: "hidden",
+              }}>
+              {venueImages
                 .slice(0, portfolioExpanded ? venueImages.length : 9)
                 .map((src, i) => (
                   <div
@@ -702,53 +726,74 @@ export default function BusinessPage() {
                         </div>
                       )}
                   </div>
-                ))
-            : Array.from({ length: 9 }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    position: "relative",
-                    aspectRatio: "1",
-                    background: T.bg,
-                    overflow: "hidden",
-                  }}>
-                  <Image
-                    fill
-                    src={heroImg}
-                    alt="Portfolio"
+                ))}
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* PORTFOLIO */}
+      {portfolioImages.length > 0 && (
+        <>
+          <Divider />
+          <section>
+            <SecTitle>Portfolio</SecTitle>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 4,
+                borderRadius: 16,
+                overflow: "hidden",
+              }}>
+              {portfolioImages
+                .slice(0, portfolioImagesExpanded ? portfolioImages.length : 9)
+                .map((src, i) => (
+                  <div
+                    key={i}
                     style={{
-                      objectFit: "cover",
-                      filter: i > 0 ? `brightness(${1 - i * 0.04})` : undefined,
-                    }}
-                    sizes="(max-width: 768px) 33vw, 200px"
-                  />
-                  {i === 8 && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        background: "rgba(2,12,26,0.55)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => setPortfolioExpanded(true)}>
-                      <span
-                        style={{
-                          color: T.white,
-                          fontSize: 22,
-                          fontWeight: 800,
-                          letterSpacing: "-0.5px",
-                        }}>
-                        +62
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
-        </div>
-      </section>
+                      position: "relative",
+                      aspectRatio: "1",
+                      background: T.bg,
+                      overflow: "hidden",
+                    }}>
+                    <Image
+                      fill
+                      src={src}
+                      alt="Portfolio"
+                      style={{ objectFit: "cover" }}
+                      sizes="(max-width: 768px) 33vw, 200px"
+                    />
+                    {!portfolioImagesExpanded &&
+                      i === 8 &&
+                      portfolioImages.length > 9 && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            background: "rgba(2,12,26,0.55)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                          }}
+                          onClick={() => setPortfolioImagesExpanded(true)}>
+                          <span
+                            style={{
+                              color: T.white,
+                              fontSize: 22,
+                              fontWeight: 800,
+                            }}>
+                            +{portfolioImages.length - 9}
+                          </span>
+                        </div>
+                      )}
+                  </div>
+                ))}
+            </div>
+          </section>
+        </>
+      )}
 
       {/* OPENING TIMES + ADDITIONAL INFO */}
       <Divider />
@@ -1018,7 +1063,9 @@ export default function BusinessPage() {
       {/* ══════════ MOBILE LAYOUT ══════════ */}
       <div className="md:hidden">
         {/* Full-bleed hero */}
-        <div style={{ position: "relative", height: 300 }}>
+        <div
+          style={{ position: "relative", height: 300, cursor: "pointer" }}
+          onClick={() => openLightbox(0)}>
           <Image
             fill
             src={heroImg}
@@ -1222,7 +1269,13 @@ export default function BusinessPage() {
               height: 448,
             }}>
             {/* Large main image spans both rows */}
-            <div style={{ position: "relative", gridRow: "1 / 3" }}>
+            <div
+              style={{
+                position: "relative",
+                gridRow: "1 / 3",
+                cursor: "pointer",
+              }}
+              onClick={() => openLightbox(0)}>
               <Image
                 fill
                 src={allImages[0]}
@@ -1233,7 +1286,9 @@ export default function BusinessPage() {
               />
             </div>
             {/* Top-right small image */}
-            <div style={{ position: "relative" }}>
+            <div
+              style={{ position: "relative", cursor: "pointer" }}
+              onClick={() => openLightbox(1)}>
               <Image
                 fill
                 src={allImages[1] ?? allImages[0]}
@@ -1243,7 +1298,9 @@ export default function BusinessPage() {
               />
             </div>
             {/* Bottom-right small image + "See all" */}
-            <div style={{ position: "relative" }}>
+            <div
+              style={{ position: "relative", cursor: "pointer" }}
+              onClick={() => openLightbox(2)}>
               <Image
                 fill
                 src={allImages[2] ?? allImages[0]}
@@ -1262,6 +1319,10 @@ export default function BusinessPage() {
                   padding: 14,
                 }}>
                 <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openLightbox(0);
+                  }}
                   style={{
                     background: "rgba(255,255,255,0.95)",
                     border: "none",
@@ -1405,6 +1466,130 @@ export default function BusinessPage() {
           {Sidebar()}
         </div>
       </div>
+
+      {/* ══════════ LIGHTBOX ══════════ */}
+      {lightboxOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(0,0,0,0.93)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setLightboxOpen(false)}>
+          {/* Close */}
+          <button
+            onClick={() => setLightboxOpen(false)}
+            style={{
+              position: "absolute",
+              top: 16,
+              right: 16,
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.12)",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "#fff",
+            }}>
+            <X size={20} />
+          </button>
+
+          {/* Counter */}
+          <div
+            style={{
+              position: "absolute",
+              top: 20,
+              left: "50%",
+              transform: "translateX(-50%)",
+              color: "rgba(255,255,255,0.75)",
+              fontSize: 14,
+              fontWeight: 600,
+              pointerEvents: "none",
+            }}>
+            {lightboxIndex + 1} / {allImages.length}
+          </div>
+
+          {/* Left arrow */}
+          {allImages.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex(
+                  (i) => (i - 1 + allImages.length) % allImages.length,
+                );
+              }}
+              style={{
+                position: "absolute",
+                left: 16,
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.12)",
+                border: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "#fff",
+              }}>
+              <ChevronLeft size={24} />
+            </button>
+          )}
+
+          {/* Image */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "relative",
+              width: "min(90vw, 1100px)",
+              height: "min(85vh, 740px)",
+              borderRadius: 12,
+              overflow: "hidden",
+            }}>
+            <Image
+              key={lightboxIndex}
+              src={allImages[lightboxIndex]}
+              alt={`Photo ${lightboxIndex + 1}`}
+              fill
+              style={{ objectFit: "contain" }}
+              sizes="90vw"
+              priority
+            />
+          </div>
+
+          {/* Right arrow */}
+          {allImages.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex((i) => (i + 1) % allImages.length);
+              }}
+              style={{
+                position: "absolute",
+                right: 16,
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.12)",
+                border: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "#fff",
+              }}>
+              <ChevronRight size={24} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

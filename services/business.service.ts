@@ -23,6 +23,7 @@ export type UserBusinessType = {
   community: string[];
   image: string;
   venue_images?: string[];
+  portfolio_images?: string[];
   longitude?: number;
   latitude?: number;
   geo?: { type: string; coordinates: [number, number] };

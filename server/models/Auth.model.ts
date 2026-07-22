@@ -27,6 +27,7 @@ const UserSchema = new Schema(
     community: { type: [String], default: [] },
     image: { type: String },
     venue_images: { type: [String], default: [] },
+    portfolio_images: { type: [String], default: [] },
     accpetalltermsandcondition: { type: Boolean, default: false },
     password: {
       type: String,
