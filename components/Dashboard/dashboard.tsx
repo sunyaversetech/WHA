@@ -15,6 +15,7 @@ import {
   TrendingUp,
   MoreVertical,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /* ─── helpers ─── */
 function fmtDuration(start: string, end: string) {
@@ -398,41 +399,181 @@ function BookingRow({
   );
 }
 
+/* ─── Skeletons ─── */
+function BizSkeleton() {
+  return (
+    <div className="max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Recent sales */}
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #e5e7eb",
+            borderRadius: 16,
+            padding: 24,
+          }}>
+          <Skeleton className="h-4 w-28 mb-1" />
+          <Skeleton className="h-3 w-20 mb-5" />
+          <Skeleton className="h-8 w-36 mb-3" />
+          <Skeleton className="h-[140px] w-full" />
+        </div>
+        {/* Upcoming appointments */}
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #e5e7eb",
+            borderRadius: 16,
+            padding: 24,
+          }}>
+          <Skeleton className="h-4 w-44 mb-1" />
+          <Skeleton className="h-3 w-20 mb-5" />
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex gap-3 py-3 border-b border-gray-50">
+              <Skeleton className="h-10 w-8 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Appointments activity */}
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #e5e7eb",
+            borderRadius: 16,
+            padding: 24,
+          }}>
+          <Skeleton className="h-4 w-44 mb-5" />
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex gap-3 py-3 border-b border-gray-50">
+              <Skeleton className="h-10 w-8 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3 w-36" />
+                <Skeleton className="h-4 w-52" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Today's next appointments */}
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #e5e7eb",
+            borderRadius: 16,
+            padding: 24,
+          }}>
+          <Skeleton className="h-4 w-52 mb-5" />
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex gap-3 py-3 border-b border-gray-50">
+              <Skeleton className="h-10 w-8 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className="h-4 w-44" />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Top services */}
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #e5e7eb",
+            borderRadius: 16,
+            padding: 24,
+          }}>
+          <Skeleton className="h-4 w-28 mb-5" />
+          <div className="grid grid-cols-3 pb-2 mb-1 border-b border-gray-100">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-3 w-16" />
+            ))}
+          </div>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="grid grid-cols-3 py-3 border-b border-gray-50">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-8 mx-auto" />
+              <Skeleton className="h-4 w-8 mx-auto" />
+            </div>
+          ))}
+        </div>
+        {/* Top team member */}
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #e5e7eb",
+            borderRadius: 16,
+            padding: 24,
+          }}>
+          <Skeleton className="h-4 w-36 mb-5" />
+          <div className="grid grid-cols-3 pb-2 mb-1 border-b border-gray-100">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-3 w-16" />
+            ))}
+          </div>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="grid grid-cols-3 py-3 border-b border-gray-50 items-center">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-7 w-7 rounded-full shrink-0" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+              <Skeleton className="h-4 w-8 mx-auto" />
+              <Skeleton className="h-4 w-8 mx-auto" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UserSkeleton() {
+  return (
+    <div className="max-w-5xl mx-auto">
+      <Skeleton className="h-7 w-56 mb-6" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {[1, 2].map((i) => (
+          <div
+            key={i}
+            style={{
+              background: "#fff",
+              border: "1px solid #e5e7eb",
+              borderRadius: 16,
+              padding: 24,
+            }}>
+            <Skeleton className="h-4 w-28 mb-5" />
+            {[1, 2, 3].map((j) => (
+              <div key={j} className="py-2 border-b border-gray-50">
+                <Skeleton className="h-4 w-48" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main component ─── */
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const isBusiness = session?.user?.category === "business";
 
-  const { data: bizData } = useGetBusinessDashboard();
-  const { data: userData } = useGetDashboardData();
+  const { data: bizData, isPending: bizPending } = useGetBusinessDashboard();
+  const { data: userData, isPending: userPending } = useGetDashboardData();
 
   useEffect(() => {
     if (session?.user?.category === "super-admin") router.push("/super-admin");
   }, [session, router]);
 
-  if (status === "loading")
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "60vh",
-        }}>
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            border: "3px solid #e5e7eb",
-            borderTopColor: "#3771db",
-            animation: "spin 0.8s linear infinite",
-          }}
-        />
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      </div>
-    );
+  if (status === "loading") return <BizSkeleton />;
 
   if (status === "unauthenticated")
     return (
@@ -441,7 +582,9 @@ export default function Dashboard() {
       </p>
     );
 
-  /* ── Business dashboard ─────────────────────────────────────────── */
+  if (isBusiness && bizPending) return <BizSkeleton />;
+  if (!isBusiness && userPending) return <UserSkeleton />;
+
   if (isBusiness) {
     const stats = bizData?.data?.dailyStats ?? [];
     const totalApt = bizData?.data?.totalAppointments ?? 0;

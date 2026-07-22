@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetSingleDashboardBusiness } from "@/services/business.service";
-import Loading from "@/app/search/loading";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const MAX_IMAGES = 10;
 const MAX_SIZE_MB = 5;
@@ -93,7 +93,22 @@ export default function VenueImagesSettings() {
     }
   };
 
-  if (isLoading) return <Loading />;
+  if (isLoading) return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-28 rounded" />
+          <Skeleton className="h-3 w-64 rounded" />
+        </div>
+        <Skeleton className="h-7 w-14 rounded-full shrink-0" />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {[...Array(6)].map((_, i) => (
+          <Skeleton key={i} className="aspect-video w-full rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">

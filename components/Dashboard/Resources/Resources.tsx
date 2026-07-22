@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useGetServices } from "@/services/services.service";
 import {
   useGetResourceOverrides,
@@ -507,12 +508,84 @@ function DayCell({
   );
 }
 
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function ResourcesSkeleton() {
+  return (
+    <>
+      {/* Desktop */}
+      <div className="hidden md:block border border-gray-200 rounded-2xl overflow-hidden bg-white/5">
+        <div className="grid grid-cols-[220px_repeat(7,1fr)] border-b border-gray-200">
+          <div className="px-4 py-3 flex items-center border-r border-gray-200">
+            <span className="text-sm font-semibold text-gray-700">
+              Resource / Service
+            </span>
+          </div>
+          {[...Array(7)].map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                "px-3 py-3 flex items-center justify-center",
+                i < 6 && "border-r border-gray-200",
+              )}>
+              <Skeleton className="h-4 w-20 rounded" />
+            </div>
+          ))}
+        </div>
+        {[...Array(3)].map((_, ri) => (
+          <div
+            key={ri}
+            className={cn(
+              "grid grid-cols-[220px_repeat(7,1fr)]",
+              ri < 2 && "border-b border-gray-200",
+            )}>
+            <div className="px-4 py-4 flex items-center gap-2.5 border-r border-gray-200">
+              <Skeleton className="w-8 h-8 rounded-lg shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 w-28 rounded" />
+                <Skeleton className="h-3 w-16 rounded" />
+              </div>
+            </div>
+            {[...Array(7)].map((_, di) => (
+              <div
+                key={di}
+                className={cn(
+                  "px-2 py-3 flex items-center justify-center",
+                  di < 6 && "border-r border-gray-200",
+                )}>
+                <Skeleton className="w-full h-[52px] rounded-lg" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Mobile */}
+      <div className="md:hidden space-y-3">
+        <Skeleton className="h-3.5 w-44 rounded" />
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-3.5 w-36 rounded" />
+              <Skeleton className="h-3 w-20 rounded" />
+            </div>
+            <Skeleton className="h-3.5 w-16 rounded" />
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Resources() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: svcData } = useGetServices();
+  const { data: svcData, isPending: loadingServices } = useGetServices();
 
   const services = useMemo<any[]>(
     () =>
@@ -721,176 +794,185 @@ export default function Resources() {
         </div>
       </div>
 
-      {/* ── Desktop Table ── */}
-      <div className="hidden md:block border border-gray-200 rounded-2xl overflow-hidden bg-white/5">
-        {/* Header */}
-        <div className="grid grid-cols-[220px_repeat(7,1fr)] border-b border-gray-200">
-          <div className="px-4 py-3 flex items-center border-r border-gray-200">
-            <span className="text-sm font-semibold text-gray-700">
-              Resource / Service
-            </span>
-          </div>
-          {weekDays.map((day, i) => (
-            <div
-              key={i}
-              className={cn(
-                "px-3 py-3 text-center",
-                i < 6 && "border-r border-gray-200",
-                isToday(day) && "bg-[#051e3a]/5",
-              )}>
-              <p
-                className={cn(
-                  "text-sm font-bold",
-                  isToday(day) ? "text-[#051e3a]" : "text-gray-700",
-                )}>
-                {DAY_SHORT[i]}, {fmtShort(day)}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Rows */}
-        {services.length === 0 ? (
-          <div className="px-6 py-12 text-center">
-            <Package size={32} className="text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm font-semibold">
-              No resource or group session services yet
-            </p>
-            <p className="text-gray-600 text-xs mt-1">
-              Add a Resource or Group Session service to manage it here.
-            </p>
-            <button
-              onClick={() => router.push("/dashboard/services/add")}
-              className="mt-4 text-sm font-semibold text-[#051e3a] hover:text-purple-300 transition-colors">
-              + Create service
-            </button>
-          </div>
-        ) : (
-          services.map((svc, si) => (
-            <div
-              key={svc._id}
-              className={cn(
-                "group grid grid-cols-[220px_repeat(7,1fr)]",
-                si < services.length - 1 && "border-b border-gray-200",
-              )}>
-              {/* Service info cell */}
-              <div className="px-4 py-4 flex items-center gap-2.5 border-r border-gray-200 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
-                  <ServiceIcon type={svc.service_type} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-700 truncate">
-                    {svc.name}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {svc.service_type === "resource_based"
-                      ? `${svc.max_concurrent_bookings ?? 1} units`
-                      : "Group session"}
-                  </p>
-                </div>
-                <ServiceActionDropdown
-                  onEdit={() =>
-                    router.push(`/dashboard/services/edit/${svc._id}`)
-                  }
-                />
+      {loadingServices ? (
+        <ResourcesSkeleton />
+      ) : (
+        <>
+          {/* ── Desktop Table ── */}
+          <div className="hidden md:block border border-gray-200 rounded-2xl overflow-hidden bg-white/5">
+            {/* Header */}
+            <div className="grid grid-cols-[220px_repeat(7,1fr)] border-b border-gray-200">
+              <div className="px-4 py-3 flex items-center border-r border-gray-200">
+                <span className="text-sm font-semibold text-gray-700">
+                  Resource / Service
+                </span>
               </div>
-
-              {/* Day cells */}
-              {weekDays.map((dayDate, di) => (
+              {weekDays.map((day, i) => (
                 <div
-                  key={di}
+                  key={i}
                   className={cn(
-                    "px-2 py-3 flex items-center justify-center",
-                    di < 6 && "border-r border-gray-200",
-                    isToday(dayDate) && "bg-[#051e3a]/5",
+                    "px-3 py-3 text-center",
+                    i < 6 && "border-r border-gray-200",
+                    isToday(day) && "bg-[#051e3a]/5",
                   )}>
-                  <DayCell
-                    service={svc}
-                    dayDate={dayDate}
-                    overrides={overrides.filter(
-                      (o) =>
-                        (o.service_id === svc._id ||
-                          o.service_id?.toString() === svc._id?.toString()) &&
-                        o.date === fmtISODate(dayDate),
-                    )}
-                    onOpen={() =>
-                      !isPastDay(dayDate) &&
-                      setOverrideDialog({ service: svc, dayDate })
-                    }
-                  />
+                  <p
+                    className={cn(
+                      "text-sm font-bold",
+                      isToday(day) ? "text-[#051e3a]" : "text-gray-700",
+                    )}>
+                    {DAY_SHORT[i]}, {fmtShort(day)}
+                  </p>
                 </div>
               ))}
             </div>
-          ))
-        )}
-      </div>
 
-      {/* ── Mobile List (single day) ── */}
-      <div className="md:hidden space-y-3">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-          {selectedDayDate.toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          })}
-        </p>
-        {services.length === 0 ? (
-          <div className="py-10 text-center">
-            <p className="text-gray-500 text-sm">No resource services yet.</p>
-            <button
-              onClick={() => router.push("/dashboard/services/add")}
-              className="mt-3 text-sm font-semibold text-[#051e3a]">
-              + Create service
-            </button>
-          </div>
-        ) : (
-          services.map((svc) => {
-            const dayOverride = getOverride(svc, selectedDayDate);
-            const info = getCellInfo(
-              svc,
-              selectedDayDate,
-              [dayOverride].filter(Boolean),
-            );
-            const past = isPastDay(selectedDayDate);
-
-            return (
-              <div
-                key={svc._id}
-                className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
-                  <ServiceIcon type={svc.service_type} size={18} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
-                    {svc.name}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {info.kind === "closed"
-                      ? "Closed"
-                      : info.kind === "no_schedule"
-                        ? "Unavailable"
-                        : info.kind === "resource"
-                          ? `Open · ${info.qty} ${info.qty === 1 ? "unit" : "units"}`
-                          : `${info.slots.length} session${info.slots.length !== 1 ? "s" : ""}`}
-                  </p>
-                </div>
-                {!past && (
-                  <button
-                    onClick={() =>
-                      setOverrideDialog({
-                        service: svc,
-                        dayDate: selectedDayDate,
-                      })
-                    }
-                    className="text-sm font-semibold text-[#051e3a] hover:text-purple-300 transition-colors shrink-0">
-                    Configure
-                  </button>
-                )}
+            {/* Rows */}
+            {services.length === 0 ? (
+              <div className="px-6 py-12 text-center">
+                <Package size={32} className="text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-400 text-sm font-semibold">
+                  No resource or group session services yet
+                </p>
+                <p className="text-gray-600 text-xs mt-1">
+                  Add a Resource or Group Session service to manage it here.
+                </p>
+                <button
+                  onClick={() => router.push("/dashboard/services/add")}
+                  className="mt-4 text-sm font-semibold text-[#051e3a] hover:text-purple-300 transition-colors">
+                  + Create service
+                </button>
               </div>
-            );
-          })
-        )}
-      </div>
+            ) : (
+              services.map((svc, si) => (
+                <div
+                  key={svc._id}
+                  className={cn(
+                    "group grid grid-cols-[220px_repeat(7,1fr)]",
+                    si < services.length - 1 && "border-b border-gray-200",
+                  )}>
+                  {/* Service info cell */}
+                  <div className="px-4 py-4 flex items-center gap-2.5 border-r border-gray-200 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+                      <ServiceIcon type={svc.service_type} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-700 truncate">
+                        {svc.name}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {svc.service_type === "resource_based"
+                          ? `${svc.max_concurrent_bookings ?? 1} units`
+                          : "Group session"}
+                      </p>
+                    </div>
+                    <ServiceActionDropdown
+                      onEdit={() =>
+                        router.push(`/dashboard/services/edit/${svc._id}`)
+                      }
+                    />
+                  </div>
+
+                  {/* Day cells */}
+                  {weekDays.map((dayDate, di) => (
+                    <div
+                      key={di}
+                      className={cn(
+                        "px-2 py-3 flex items-center justify-center",
+                        di < 6 && "border-r border-gray-200",
+                        isToday(dayDate) && "bg-[#051e3a]/5",
+                      )}>
+                      <DayCell
+                        service={svc}
+                        dayDate={dayDate}
+                        overrides={overrides.filter(
+                          (o) =>
+                            (o.service_id === svc._id ||
+                              o.service_id?.toString() ===
+                                svc._id?.toString()) &&
+                            o.date === fmtISODate(dayDate),
+                        )}
+                        onOpen={() =>
+                          !isPastDay(dayDate) &&
+                          setOverrideDialog({ service: svc, dayDate })
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* ── Mobile List (single day) ── */}
+          <div className="md:hidden space-y-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              {selectedDayDate.toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+            {services.length === 0 ? (
+              <div className="py-10 text-center">
+                <p className="text-gray-500 text-sm">
+                  No resource services yet.
+                </p>
+                <button
+                  onClick={() => router.push("/dashboard/services/add")}
+                  className="mt-3 text-sm font-semibold text-[#051e3a]">
+                  + Create service
+                </button>
+              </div>
+            ) : (
+              services.map((svc) => {
+                const dayOverride = getOverride(svc, selectedDayDate);
+                const info = getCellInfo(
+                  svc,
+                  selectedDayDate,
+                  [dayOverride].filter(Boolean),
+                );
+                const past = isPastDay(selectedDayDate);
+
+                return (
+                  <div
+                    key={svc._id}
+                    className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+                      <ServiceIcon type={svc.service_type} size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {svc.name}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {info.kind === "closed"
+                          ? "Closed"
+                          : info.kind === "no_schedule"
+                            ? "Unavailable"
+                            : info.kind === "resource"
+                              ? `Open · ${info.qty} ${info.qty === 1 ? "unit" : "units"}`
+                              : `${info.slots.length} session${info.slots.length !== 1 ? "s" : ""}`}
+                      </p>
+                    </div>
+                    {!past && (
+                      <button
+                        onClick={() =>
+                          setOverrideDialog({
+                            service: svc,
+                            dayDate: selectedDayDate,
+                          })
+                        }
+                        className="text-sm font-semibold text-[#051e3a] hover:text-purple-300 transition-colors shrink-0">
+                        Configure
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>
+      )}
 
       {/* ── Day Override Dialog ── */}
       {overrideDialog && (

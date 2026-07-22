@@ -27,31 +27,44 @@ interface BookingRecord {
   payment_status: string;
   business_id: string;
   notes?: string;
-  service_id: { _id: string; name: string; base_price: number; base_duration: number } | null;
+  service_id: {
+    _id: string;
+    name: string;
+    base_price: number;
+    base_duration: number;
+  } | null;
   employee_id: { _id: string; name: string } | null;
   business: { _id: string; business_name: string; image?: string } | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  pending:     { bg: "#fef9c3", color: "#854d0e", label: "Pending" },
-  confirmed:   { bg: "#dcfce7", color: "#15803d", label: "Confirmed" },
+const STATUS_STYLE: Record<
+  string,
+  { bg: string; color: string; label: string }
+> = {
+  pending: { bg: "#fef9c3", color: "#854d0e", label: "Pending" },
+  confirmed: { bg: "#dcfce7", color: "#15803d", label: "Confirmed" },
   rescheduled: { bg: "#dbeafe", color: "#1d4ed8", label: "Rescheduled" },
-  completed:   { bg: "#f1f5f9", color: "#475569", label: "Completed" },
-  cancelled:   { bg: "#fee2e2", color: "#b91c1c", label: "Cancelled" },
-  no_show:     { bg: "#fef3c7", color: "#92400e", label: "No Show" },
-  refunded:    { bg: "#ede9fe", color: "#5b21b6", label: "Refunded" },
+  completed: { bg: "#f1f5f9", color: "#475569", label: "Completed" },
+  cancelled: { bg: "#fee2e2", color: "#b91c1c", label: "Cancelled" },
+  no_show: { bg: "#fef3c7", color: "#92400e", label: "No Show" },
+  refunded: { bg: "#ede9fe", color: "#5b21b6", label: "Refunded" },
 };
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-AU", {
-    weekday: "short", day: "numeric", month: "short", year: "numeric",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   });
 }
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-AU", {
-    hour: "2-digit", minute: "2-digit", hour12: true,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   });
 }
 function fmtDuration(mins: number) {
@@ -98,7 +111,9 @@ function useAvailableSlots(
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [date, serviceId, businessId, duration]);
 
   return { slots, loading };
@@ -134,15 +149,40 @@ function DatePicker({
   const toISO = (day: number) =>
     `${year}-${String(mo + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-  const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const MONTH_NAMES = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   return (
     <div style={{ userSelect: "none" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 12,
+        }}>
         <button
           type="button"
           onClick={() => setMonth(new Date(year, mo - 1, 1))}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#64748b" }}>
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 4,
+            color: "#64748b",
+          }}>
           <ChevronLeft size={18} />
         </button>
         <span style={{ fontWeight: 600, fontSize: 14, color: "#0f172a" }}>
@@ -151,18 +191,45 @@ function DatePicker({
         <button
           type="button"
           onClick={() => setMonth(new Date(year, mo + 1, 1))}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#64748b" }}>
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 4,
+            color: "#64748b",
+          }}>
           <ChevronRight size={18} />
         </button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 4 }}>
-        {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d) => (
-          <div key={d} style={{ textAlign: "center", fontSize: 11, fontWeight: 600, color: "#94a3b8", padding: "4px 0" }}>{d}</div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          gap: 2,
+          marginBottom: 4,
+        }}>
+        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+          <div
+            key={d}
+            style={{
+              textAlign: "center",
+              fontSize: 11,
+              fontWeight: 600,
+              color: "#94a3b8",
+              padding: "4px 0",
+            }}>
+            {d}
+          </div>
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          gap: 2,
+        }}>
         {cells.map((day, i) => {
           if (!day) return <div key={i} />;
           const iso = toISO(day);
@@ -186,8 +253,13 @@ function DatePicker({
                 fontWeight: selected ? 700 : 400,
                 transition: "background .1s",
               }}
-              onMouseEnter={(e) => { if (!past && !selected) e.currentTarget.style.background = "#f1f5f9"; }}
-              onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = "transparent"; }}>
+              onMouseEnter={(e) => {
+                if (!past && !selected)
+                  e.currentTarget.style.background = "#f1f5f9";
+              }}
+              onMouseLeave={(e) => {
+                if (!selected) e.currentTarget.style.background = "transparent";
+              }}>
               {day}
             </button>
           );
@@ -250,60 +322,149 @@ function RescheduleModal({
   return (
     <div
       style={{
-        position: "fixed", inset: 0, zIndex: 100,
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
         background: "rgba(0,0,0,0.4)",
-        display: "flex", alignItems: "center", justifyContent: "center",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         padding: 16,
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div
         style={{
-          background: "#fff", borderRadius: 20, padding: 28,
-          width: "100%", maxWidth: 680,
-          maxHeight: "90vh", overflowY: "auto",
+          background: "#fff",
+          borderRadius: 20,
+          padding: 28,
+          width: "100%",
+          maxWidth: 680,
+          maxHeight: "90vh",
+          overflowY: "auto",
           boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
         }}>
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20,
+          }}>
           <div>
-            <p style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", margin: 0 }}>Reschedule Booking</p>
+            <p
+              style={{
+                fontSize: 17,
+                fontWeight: 700,
+                color: "#0f172a",
+                margin: 0,
+              }}>
+              Reschedule Booking
+            </p>
             <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0" }}>
               {booking.service_id?.name} · {fmtDuration(duration)}
             </p>
           </div>
-          <button type="button" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#94a3b8",
+            }}>
             <X size={20} />
           </button>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           {/* Calendar */}
           <div>
-            <p style={{ fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Select Date</p>
-            <div style={{ border: "1.5px solid #e2e8f0", borderRadius: 12, padding: 16 }}>
-              <DatePicker value={date} onChange={(d) => { setDate(d); setSelectedSlot(""); }} />
+            <p
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#64748b",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginBottom: 10,
+              }}>
+              Select Date
+            </p>
+            <div
+              style={{
+                border: "1.5px solid #e2e8f0",
+                borderRadius: 12,
+                padding: 16,
+              }}>
+              <DatePicker
+                value={date}
+                onChange={(d) => {
+                  setDate(d);
+                  setSelectedSlot("");
+                }}
+              />
             </div>
           </div>
 
           {/* Slots */}
           <div>
-            <p style={{ fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
+            <p
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#64748b",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginBottom: 10,
+              }}>
               {date ? "Available Times" : "Pick a date first"}
             </p>
             {!date ? (
-              <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <p style={{ color: "#94a3b8", fontSize: 13 }}>Select a date to see available slots</p>
+              <div
+                style={{
+                  height: 200,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                <p style={{ color: "#94a3b8", fontSize: 13 }}>
+                  Select a date to see available slots
+                </p>
               </div>
             ) : loading ? (
-              <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div
+                style={{
+                  height: 200,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
                 <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading slots…</p>
               </div>
             ) : slots.length === 0 ? (
-              <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <p style={{ color: "#94a3b8", fontSize: 13 }}>No available slots for this date</p>
+              <div
+                style={{
+                  height: 200,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                <p style={{ color: "#94a3b8", fontSize: 13 }}>
+                  No available slots for this date
+                </p>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxHeight: 240, overflowY: "auto" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 8,
+                  maxHeight: 240,
+                  overflowY: "auto",
+                }}>
                 {slots.map((slot) => {
                   const selected = slot === selectedSlot;
                   return (
@@ -312,7 +473,9 @@ function RescheduleModal({
                       type="button"
                       onClick={() => setSelectedSlot(slot)}
                       style={{
-                        border: selected ? "2px solid #0f172a" : "1.5px solid #e2e8f0",
+                        border: selected
+                          ? "2px solid #0f172a"
+                          : "1.5px solid #e2e8f0",
                         borderRadius: 8,
                         padding: "10px 8px",
                         fontSize: 13,
@@ -332,13 +495,25 @@ function RescheduleModal({
         </div>
 
         {/* Footer */}
-        <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+        <div
+          style={{
+            marginTop: 24,
+            display: "flex",
+            gap: 12,
+            justifyContent: "flex-end",
+          }}>
           <button
             type="button"
             onClick={onClose}
             style={{
-              padding: "12px 24px", borderRadius: 9999, border: "1.5px solid #e2e8f0",
-              background: "#fff", color: "#0f172a", fontSize: 14, fontWeight: 600, cursor: "pointer",
+              padding: "12px 24px",
+              borderRadius: 9999,
+              border: "1.5px solid #e2e8f0",
+              background: "#fff",
+              color: "#0f172a",
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: "pointer",
             }}>
             Cancel
           </button>
@@ -347,9 +522,13 @@ function RescheduleModal({
             disabled={!selectedSlot || saving}
             onClick={confirm}
             style={{
-              padding: "12px 24px", borderRadius: 9999, border: "none",
+              padding: "12px 24px",
+              borderRadius: 9999,
+              border: "none",
               background: !selectedSlot || saving ? "#94a3b8" : "#0f172a",
-              color: "#fff", fontSize: 14, fontWeight: 600,
+              color: "#fff",
+              fontSize: 14,
+              fontWeight: 600,
               cursor: !selectedSlot || saving ? "not-allowed" : "pointer",
               transition: "background .15s",
             }}>
@@ -387,9 +566,21 @@ function BookingCard({
         gap: 14,
       }}>
       {/* Row 1 — service + status */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 12,
+        }}>
         <div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", margin: 0 }}>
+          <p
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              color: "#0f172a",
+              margin: 0,
+            }}>
             {booking.service_id?.name ?? "Service"}
           </p>
           <p style={{ fontSize: 13, color: "#64748b", margin: "3px 0 0" }}>
@@ -398,9 +589,14 @@ function BookingCard({
         </div>
         <span
           style={{
-            background: style.bg, color: style.color,
-            fontSize: 12, fontWeight: 600, borderRadius: 9999,
-            padding: "4px 10px", whiteSpace: "nowrap", flexShrink: 0,
+            background: style.bg,
+            color: style.color,
+            fontSize: 12,
+            fontWeight: 600,
+            borderRadius: 9999,
+            padding: "4px 10px",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
           }}>
           {style.label}
         </span>
@@ -410,7 +606,9 @@ function BookingCard({
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Calendar size={14} color="#94a3b8" />
-          <span style={{ fontSize: 13, color: "#475569" }}>{fmtDate(booking.start_time)}</span>
+          <span style={{ fontSize: 13, color: "#475569" }}>
+            {fmtDate(booking.start_time)}
+          </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Clock size={14} color="#94a3b8" />
@@ -424,7 +622,12 @@ function BookingCard({
       </div>
 
       {/* Row 3 — employee + price */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}>
         <span style={{ fontSize: 13, color: "#64748b" }}>
           {booking.employee_id?.name ? `with ${booking.employee_id.name}` : ""}
         </span>
@@ -434,20 +637,40 @@ function BookingCard({
       </div>
 
       {/* Row 4 — actions */}
-      <div style={{ display: "flex", gap: 10, borderTop: "1px solid #f1f5f9", paddingTop: 14 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          borderTop: "1px solid #f1f5f9",
+          paddingTop: 14,
+        }}>
         {!past ? (
           <>
             <button
               type="button"
               onClick={onReschedule}
               style={{
-                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                border: "1.5px solid #e2e8f0", borderRadius: 9999, padding: "10px 0",
-                background: "#fff", color: "#0f172a", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                border: "1.5px solid #e2e8f0",
+                borderRadius: 9999,
+                padding: "10px 0",
+                background: "#fff",
+                color: "#0f172a",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
                 transition: "border-color .15s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#0f172a")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e2e8f0")}>
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.borderColor = "#0f172a")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.borderColor = "#e2e8f0")
+              }>
               <RefreshCw size={14} />
               Reschedule
             </button>
@@ -455,12 +678,24 @@ function BookingCard({
               type="button"
               onClick={onCancel}
               style={{
-                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                border: "1.5px solid #fecaca", borderRadius: 9999, padding: "10px 0",
-                background: "#fff", color: "#dc2626", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                border: "1.5px solid #fecaca",
+                borderRadius: 9999,
+                padding: "10px 0",
+                background: "#fff",
+                color: "#dc2626",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
                 transition: "background .15s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#fef2f2")
+              }
               onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}>
               <Ban size={14} />
               Cancel
@@ -470,13 +705,25 @@ function BookingCard({
           <a
             href={`/businesses/${booking.business_id}`}
             style={{
-              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              border: "1.5px solid #e2e8f0", borderRadius: 9999, padding: "10px 0",
-              background: "#0f172a", color: "#fff", fontSize: 13, fontWeight: 600,
-              textDecoration: "none", transition: "background .15s",
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              border: "1.5px solid #e2e8f0",
+              borderRadius: 9999,
+              padding: "10px 0",
+              background: "#0f172a",
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 600,
+              textDecoration: "none",
+              transition: "background .15s",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "#1e293b")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#0f172a")}>
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "#0f172a")
+            }>
             <ExternalLink size={14} />
             Book Again
           </a>
@@ -493,7 +740,8 @@ export default function UserBookings() {
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
-  const [rescheduleTarget, setRescheduleTarget] = useState<BookingRecord | null>(null);
+  const [rescheduleTarget, setRescheduleTarget] =
+    useState<BookingRecord | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const [refreshKey, setRefreshKey] = useState(0);
@@ -515,7 +763,9 @@ export default function UserBookings() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [refreshKey]);
 
   const handleCancel = async (b: BookingRecord) => {
@@ -551,29 +801,55 @@ export default function UserBookings() {
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 0" }}>
       {/* Page title */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", margin: 0 }}>My Bookings</h1>
+        <h1
+          style={{
+            fontSize: 22,
+            fontWeight: 800,
+            color: "#0f172a",
+            margin: 0,
+          }}>
+          My Bookings
+        </h1>
         <p style={{ fontSize: 14, color: "#64748b", margin: "6px 0 0" }}>
           View and manage all your appointments
         </p>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "#f1f5f9", borderRadius: 12, padding: 4 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 4,
+          marginBottom: 24,
+          background: "#f1f5f9",
+          borderRadius: 12,
+          padding: 4,
+        }}>
         {(["upcoming", "past"] as const).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
             style={{
-              flex: 1, padding: "10px 0", borderRadius: 9, border: "none", cursor: "pointer",
+              flex: 1,
+              padding: "10px 0",
+              borderRadius: 9,
+              border: "none",
+              cursor: "pointer",
               background: tab === t ? "#fff" : "transparent",
               color: tab === t ? "#0f172a" : "#64748b",
-              fontWeight: tab === t ? 700 : 500, fontSize: 14,
+              fontWeight: tab === t ? 700 : 500,
+              fontSize: 14,
               boxShadow: tab === t ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
               transition: "all .15s",
             }}>
             {t === "upcoming" ? "Upcoming" : "Past"}{" "}
-            <span style={{ fontWeight: 400, fontSize: 12, color: tab === t ? "#64748b" : "#94a3b8" }}>
+            <span
+              style={{
+                fontWeight: 400,
+                fontSize: 12,
+                color: tab === t ? "#64748b" : "#94a3b8",
+              }}>
               ({t === "upcoming" ? upcoming.length : past.length})
             </span>
           </button>
@@ -587,8 +863,11 @@ export default function UserBookings() {
             <div
               key={i}
               style={{
-                border: "1.5px solid #e2e8f0", borderRadius: 16, height: 160,
-                background: "linear-gradient(90deg, #f8fafc 25%, #f1f5f9 50%, #f8fafc 75%)",
+                border: "1.5px solid #e2e8f0",
+                borderRadius: 16,
+                height: 160,
+                background:
+                  "linear-gradient(90deg, #f8fafc 25%, #f1f5f9 50%, #f8fafc 75%)",
                 backgroundSize: "200% 100%",
                 animation: "shimmer 1.2s infinite",
               }}
@@ -599,11 +878,23 @@ export default function UserBookings() {
       ) : displayed.length === 0 ? (
         <div
           style={{
-            border: "1.5px dashed #e2e8f0", borderRadius: 16, padding: "48px 32px",
+            border: "1.5px dashed #e2e8f0",
+            borderRadius: 16,
+            padding: "48px 32px",
             textAlign: "center",
           }}>
-          <Calendar size={40} color="#e2e8f0" style={{ margin: "0 auto 16px" }} />
-          <p style={{ fontSize: 16, fontWeight: 600, color: "#94a3b8", margin: 0 }}>
+          <Calendar
+            size={40}
+            color="#e2e8f0"
+            style={{ margin: "0 auto 16px" }}
+          />
+          <p
+            style={{
+              fontSize: 16,
+              fontWeight: 600,
+              color: "#94a3b8",
+              margin: 0,
+            }}>
             {tab === "upcoming" ? "No upcoming bookings" : "No past bookings"}
           </p>
           <p style={{ fontSize: 13, color: "#cbd5e1", margin: "8px 0 0" }}>

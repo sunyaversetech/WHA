@@ -58,7 +58,6 @@ export default function Settings() {
   return (
     <div className="min-h-screen max-w-5xl mx-auto">
       <div className="">
-        {/* Page header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#051e3a]">
             Business Settings

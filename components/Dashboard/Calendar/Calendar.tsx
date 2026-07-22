@@ -20,6 +20,7 @@ import {
   Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useGetEmployees } from "@/services/employee.service";
 import { useGetServices } from "@/services/services.service";
 import { useGetCalendarBookings } from "@/services/calendar.service";
@@ -2666,6 +2667,72 @@ function MobileDayTabs({
 
 // ─── Main Calendar ────────────────────────────────────────────────────────────
 
+function CalendarSkeleton() {
+  return (
+    <div className="bg-white text-gray-900">
+      {/* Toolbar */}
+      <div
+        className="sticky bg-white z-30 border-b border-gray-200"
+        style={{ top: DASH_HEADER_H }}>
+        <div
+          className="flex items-center gap-2 px-4"
+          style={{ height: TOOLBAR_H }}>
+          <Skeleton className="h-7 w-16 rounded-full" />
+          <Skeleton className="h-7 w-44 rounded-full" />
+          <Skeleton className="h-7 w-24 rounded-full" />
+          <div className="flex-1" />
+          <Skeleton className="h-7 w-28 rounded-full" />
+          <Skeleton className="h-7 w-7 rounded-full" />
+          <Skeleton className="h-7 w-20 rounded-full" />
+          <Skeleton className="h-7 w-20 rounded-full" />
+        </div>
+      </div>
+
+      {/* Column headers */}
+      <div
+        className="sticky z-20 flex bg-white border-b border-gray-200"
+        style={{ top: COL_HEADER_TOP_MD }}>
+        <div className="w-14 shrink-0" />
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={i}
+            className="flex-1 flex flex-col items-center gap-1.5 py-3 border-l border-gray-200">
+            <Skeleton className="h-9 w-9 rounded-full" />
+            <Skeleton className="h-3 w-20 rounded" />
+          </div>
+        ))}
+      </div>
+
+      {/* Time grid */}
+      <div className="flex">
+        {/* Hour labels */}
+        <div className="w-14 shrink-0 flex flex-col">
+          {[...Array(9)].map((_, i) => (
+            <div
+              key={i}
+              className="flex items-start justify-end pr-2 pt-1"
+              style={{ height: HOUR_H }}>
+              <Skeleton className="h-3 w-8 rounded" />
+            </div>
+          ))}
+        </div>
+        {/* Columns */}
+        {[...Array(4)].map((_, ci) => (
+          <div key={ci} className="flex-1 border-l border-gray-200">
+            {[...Array(9)].map((_, ri) => (
+              <div
+                key={ri}
+                className="border-b border-gray-100"
+                style={{ height: HOUR_H }}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Calendar() {
   const [view, setView] = useState<CalendarView>("day");
   const [mode, setMode] = useState<CalendarMode>("employee");
@@ -2824,6 +2891,8 @@ export default function Calendar() {
       COL_HEADER_TOP_MD + /* col header height approx */ 80 + 6 * HOUR_H - 40;
     window.scrollTo({ top: y, behavior: "auto" });
   }, []);
+
+  if (empLoading && !empData) return <CalendarSkeleton />;
 
   return (
     <div className="bg-white text-gray-900">

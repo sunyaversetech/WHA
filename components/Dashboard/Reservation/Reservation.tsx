@@ -15,6 +15,7 @@ import {
   Ban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Pagination,
   PaginationContent,
@@ -765,10 +766,67 @@ export default function Reservation() {
       {/* ── Table ── */}
       <div className="overflow-x-auto">
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-20">
-            <Loader2 size={18} className="animate-spin text-[#051e3a]" />
-            <span className="text-sm text-gray-400">Loading reservations…</span>
-          </div>
+          <table className="w-full min-w-180">
+            <thead>
+              <tr className="border-b border-gray-200 bg-white">
+                {["Client", "Service", "Employee", "Date & Time", "Duration", "Amount", "Status", "Payment"].map((h) => (
+                  <th key={h} className="text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider px-4 py-3">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[...Array(pageSize)].map((_, i) => (
+                <tr key={i} className="border-b border-gray-200/60 bg-white">
+                  {/* Client */}
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-2.5">
+                      <Skeleton className="w-7 h-7 rounded-full shrink-0" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-3 w-24 rounded" />
+                        <Skeleton className="h-2.5 w-32 rounded" />
+                      </div>
+                    </div>
+                  </td>
+                  {/* Service */}
+                  <td className="px-4 py-3.5">
+                    <Skeleton className="h-3 w-28 rounded" />
+                  </td>
+                  {/* Employee */}
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-1.5">
+                      <Skeleton className="w-5 h-5 rounded-full shrink-0" />
+                      <Skeleton className="h-3 w-20 rounded" />
+                    </div>
+                  </td>
+                  {/* Date & Time */}
+                  <td className="px-4 py-3.5">
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-3 w-16 rounded" />
+                      <Skeleton className="h-2.5 w-24 rounded" />
+                    </div>
+                  </td>
+                  {/* Duration */}
+                  <td className="px-4 py-3.5">
+                    <Skeleton className="h-3 w-12 rounded" />
+                  </td>
+                  {/* Amount */}
+                  <td className="px-4 py-3.5">
+                    <Skeleton className="h-3 w-10 rounded" />
+                  </td>
+                  {/* Status */}
+                  <td className="px-4 py-3.5">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </td>
+                  {/* Payment */}
+                  <td className="px-4 py-3.5">
+                    <Skeleton className="h-5 w-14 rounded-full" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <Ban size={32} className="text-gray-600" />

@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   useGetEmployees,
   useDeleteEmployees,
@@ -662,9 +663,7 @@ export function EmployeeTable() {
         </div>
       </div>
 
-      {/* ── Controls ── */}
       <div className="flex items-center gap-2 md:gap-3 mb-5">
-        {/* Search */}
         <div className="relative flex-1">
           <Search
             size={14}
@@ -679,7 +678,6 @@ export function EmployeeTable() {
           />
         </div>
 
-        {/* Filters */}
         <button
           onClick={() => setFilterOpen(true)}
           className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors shrink-0">
@@ -692,15 +690,12 @@ export function EmployeeTable() {
           )}
         </button>
 
-        {/* Sort */}
         <div className="hidden md:block ml-auto">
           <SortDropdown value={sort} onChange={setSort} />
         </div>
       </div>
 
-      {/* ── Desktop Table ── */}
       <div className="hidden md:block border border-gray-200 rounded-2xl overflow-hidden bg-white">
-        {/* Header row */}
         <div className="grid grid-cols-[44px_1fr_1fr_1fr_160px] px-4 py-3 border-b border-gray-100 bg-gray-50/60">
           <div className="flex items-center">
             <Checkbox checked={allSelected} onChange={toggleSelectAll} />
@@ -726,9 +721,33 @@ export function EmployeeTable() {
 
         {/* Rows */}
         {isLoading ? (
-          <div className="px-6 py-12 text-center text-gray-400 text-sm">
-            Loading…
-          </div>
+          <>
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "grid grid-cols-[44px_1fr_1fr_1fr_160px] px-4 py-4 items-center",
+                  i < 4 && "border-b border-gray-100",
+                )}>
+                <Skeleton className="w-[18px] h-[18px] rounded" />
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3.5 w-32 rounded" />
+                    <Skeleton className="h-3 w-20 rounded" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Skeleton className="h-3 w-36 rounded" />
+                  <Skeleton className="h-3 w-24 rounded" />
+                </div>
+                <div />
+                <div className="flex justify-end">
+                  <Skeleton className="h-7 w-24 rounded-full" />
+                </div>
+              </div>
+            ))}
+          </>
         ) : filteredEmployees.length === 0 ? (
           <div className="px-6 py-12 text-center text-gray-400 text-sm">
             {search
@@ -779,9 +798,23 @@ export function EmployeeTable() {
 
       <div className="md:hidden bg-white rounded-2xl border border-gray-200 overflow-hidden">
         {isLoading ? (
-          <div className="px-5 py-10 text-center text-gray-400 text-sm">
-            Loading…
-          </div>
+          <>
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3.5",
+                  i < 4 && "border-b border-gray-100",
+                )}>
+                <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3.5 w-36 rounded" />
+                  <Skeleton className="h-3 w-28 rounded" />
+                </div>
+                <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+              </div>
+            ))}
+          </>
         ) : filteredEmployees.length === 0 ? (
           <div className="px-5 py-10 text-center text-gray-400 text-sm">
             {search ? `No results for "${search}"` : "No team members found."}

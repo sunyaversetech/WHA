@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 
 import { useGetSingleDashboardBusiness } from "@/services/business.service";
-import Loading from "@/app/search/loading";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const serviceSchema = z.object({
   business_type: z.string().min(1, "Please select a booking model"),
@@ -73,7 +73,16 @@ const BusinessType = () => {
     }
   };
 
-  if (isLoading) return <Loading />;
+  if (isLoading) return (
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <Skeleton className="h-3.5 w-48 rounded" />
+        <Skeleton className="h-9 w-full rounded-md" />
+        <Skeleton className="h-3 w-72 rounded" />
+      </div>
+      <Skeleton className="h-9 w-16 rounded-md" />
+    </div>
+  );
 
   return (
     <Form {...form}>

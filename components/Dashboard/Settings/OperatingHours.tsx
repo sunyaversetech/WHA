@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetSingleDashboardBusiness } from "@/services/business.service";
-import Loading from "@/app/search/loading";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /* ── types ────────────────────────────────────────────────────────────────── */
 type TimeSlot = { from: string; to: string };
@@ -170,7 +170,35 @@ export function BusinessHoursForm() {
     }
   };
 
-  if (isLoading) return <Loading />;
+  if (isLoading) return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between p-4 border-2 border-gray-200 bg-white rounded-xl">
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-24 rounded" />
+          <Skeleton className="h-3 w-52 rounded" />
+        </div>
+        <Skeleton className="h-6 w-11 rounded-full" />
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        {[...Array(7)].map((_, i) => (
+          <Skeleton key={i} className="h-9 w-12 rounded-full" />
+        ))}
+      </div>
+      <div className="border border-gray-200 rounded-xl p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-4 w-20 rounded" />
+          <Skeleton className="h-6 w-11 rounded-full" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-9 w-full rounded-md" />
+          <Skeleton className="h-9 w-full rounded-md" />
+        </div>
+      </div>
+      <div className="flex justify-end">
+        <Skeleton className="h-9 w-32 rounded-md" />
+      </div>
+    </div>
+  );
 
   const day = schedule[selectedDay];
   const dayIdx = DAY_KEYS.indexOf(selectedDay);

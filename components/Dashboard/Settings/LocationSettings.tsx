@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetSingleDashboardBusiness } from "@/services/business.service";
-import Loading from "@/app/search/loading";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const LocationMap = dynamic(() => import("@/components/Auth/LocationMap"), {
   ssr: false,
@@ -147,7 +147,32 @@ export default function LocationSettings() {
     }
   };
 
-  if (isLoading) return <Loading />;
+  if (isLoading) return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
+        <div className="space-y-1">
+          <Skeleton className="h-4 w-36 rounded" />
+          <Skeleton className="h-3 w-72 rounded" />
+        </div>
+        <div className="space-y-1.5">
+          <Skeleton className="h-3.5 w-28 rounded" />
+          <Skeleton className="h-9 w-full rounded-md" />
+        </div>
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="space-y-1.5">
+              <Skeleton className="h-3.5 w-20 rounded" />
+              <Skeleton className="h-9 w-full rounded-md" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex justify-end">
+        <Skeleton className="h-9 w-32 rounded-md" />
+      </div>
+    </div>
+  );
 
   const isDirty = localEdits !== null;
 

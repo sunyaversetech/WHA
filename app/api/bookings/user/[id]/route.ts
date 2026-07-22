@@ -9,9 +9,10 @@ const RESCHEDULABLE = ["pending", "confirmed", "rescheduled"];
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     await connectToDb();
     const session = await getServerSession(authOptions);
     if (!session?.user || session.user.category !== "user") {
@@ -19,7 +20,7 @@ export async function PATCH(
     }
 
     const userId = (session.user as any).id;
-    const booking = await Booking.findOne({ _id: params.id, user_id: userId });
+    const booking = await Booking.findOne({ _id: id, user_id: userId });
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }

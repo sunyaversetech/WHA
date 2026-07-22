@@ -15,6 +15,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   useGetServices,
   useDeleteServices,
@@ -341,6 +342,49 @@ function AddDropdown({
   );
 }
 
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function ServicesTableSkeleton() {
+  return (
+    <div className="space-y-6">
+      {[...Array(2)].map((_, gi) => (
+        <div key={gi}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Skeleton className="w-2.5 h-2.5 rounded-full" />
+              <Skeleton className="h-4 w-36 rounded" />
+            </div>
+            <Skeleton className="h-7 w-20 rounded-full" />
+          </div>
+          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+            {[...Array(3)].map((_, si) => (
+              <div
+                key={si}
+                className={cn(
+                  "flex items-stretch",
+                  si < 2 && "border-b border-gray-100",
+                )}>
+                <div className="w-1 bg-gray-200 shrink-0" />
+                <div className="flex-1 flex items-center justify-between px-4 py-4 gap-2">
+                  <div className="space-y-1.5 min-w-0 flex-1">
+                    <Skeleton className="h-3.5 w-44 rounded" />
+                    <Skeleton className="h-3 w-24 rounded" />
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <Skeleton className="h-3.5 w-14 rounded" />
+                    <Skeleton className="h-5 w-9 rounded-full" />
+                    <Skeleton className="h-7 w-7 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ServicesTable() {
@@ -566,56 +610,64 @@ export default function ServicesTable() {
           <h2 className="text-base font-bold text-[#051e3a] mb-3">
             Categories
           </h2>
-          <div className="space-y-0.5">
-            <button
-              onClick={() => setSelectedCatId(null)}
-              className={cn(
-                "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors",
-                !selectedCatId
-                  ? "bg-[#051e3a] text-white"
-                  : "text-[#051e3a] hover:bg-gray-50",
-              )}>
-              <span>All categories</span>
-              <span
+          {loading ? (
+            <div className="space-y-1">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-9 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-0.5">
+              <button
+                onClick={() => setSelectedCatId(null)}
                 className={cn(
-                  "text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center",
+                  "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors",
                   !selectedCatId
-                    ? "bg-white/20 text-white"
-                    : "bg-gray-100 text-gray-500",
+                    ? "bg-[#051e3a] text-white"
+                    : "text-[#051e3a] hover:bg-gray-50",
                 )}>
-                {allServices.length}
-              </span>
-            </button>
-
-            {allCategories?.map((cat) => {
-              const count = allServices.filter(
-                (s) => s.category_id === cat._id,
-              ).length;
-              const active = selectedCatId === cat._id;
-              return (
-                <button
-                  key={cat._id}
-                  onClick={() => setSelectedCatId(cat._id)}
+                <span>All categories</span>
+                <span
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
-                    active
-                      ? "bg-[#051e3a] text-white"
-                      : "text-[#051e3a] hover:bg-gray-50",
+                    "text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center",
+                    !selectedCatId
+                      ? "bg-white/20 text-white"
+                      : "bg-gray-100 text-gray-500",
                   )}>
-                  <span className="truncate text-left">{cat.name}</span>
-                  <span
+                  {allServices.length}
+                </span>
+              </button>
+
+              {allCategories?.map((cat) => {
+                const count = allServices.filter(
+                  (s) => s.category_id === cat._id,
+                ).length;
+                const active = selectedCatId === cat._id;
+                return (
+                  <button
+                    key={cat._id}
+                    onClick={() => setSelectedCatId(cat._id)}
                     className={cn(
-                      "text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0 ml-1",
+                      "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
                       active
-                        ? "bg-white/20 text-white"
-                        : "bg-gray-100 text-gray-500",
+                        ? "bg-[#051e3a] text-white"
+                        : "text-[#051e3a] hover:bg-gray-50",
                     )}>
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                    <span className="truncate text-left">{cat.name}</span>
+                    <span
+                      className={cn(
+                        "text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0 ml-1",
+                        active
+                          ? "bg-white/20 text-white"
+                          : "bg-gray-100 text-gray-500",
+                      )}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           <button
             onClick={() => setAddCatOpen(true)}
@@ -627,10 +679,7 @@ export default function ServicesTable() {
         {/* Services list */}
         <div className="flex-1 min-w-0 space-y-6">
           {loading ? (
-            <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
-              <div className="w-6 h-6 rounded-full border-2 border-[#051e3a] border-t-transparent animate-spin mr-2" />
-              Loading…
-            </div>
+            <ServicesTableSkeleton />
           ) : grouped.length === 0 ? (
             <div className="bg-white border border-gray-200 rounded-2xl py-16 text-center">
               <p className="text-gray-400 text-sm">

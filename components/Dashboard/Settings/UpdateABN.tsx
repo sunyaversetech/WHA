@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 import { useGetSingleDashboardBusiness } from "@/services/business.service";
-import Loading from "@/app/search/loading";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const abnFormSchema = z.object({
   abn_number: z
@@ -70,7 +70,19 @@ export function ABNUpdateForm() {
     }
   }
 
-  if (isFetching) return <Loading />;
+  if (isFetching) return (
+    <div className="space-y-4 max-w-md p-6 border rounded-2xl bg-white border-gray-200 shadow-sm">
+      <div className="space-y-1">
+        <Skeleton className="h-4 w-44 rounded" />
+        <Skeleton className="h-3 w-64 rounded" />
+      </div>
+      <div className="space-y-1.5">
+        <Skeleton className="h-3.5 w-24 rounded" />
+        <Skeleton className="h-9 w-full rounded-md" />
+      </div>
+      <Skeleton className="h-9 w-full rounded-md" />
+    </div>
+  );
 
   return (
     <Form {...form}>
