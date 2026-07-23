@@ -51,7 +51,7 @@ export interface BookingType {
   total_price: number;
   currency: string;
   payment_status: "unpaid" | "pending" | "paid" | "refunded" | "failed";
-  status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
+  status: "pending" | "confirmed" | "rescheduled" | "arrived" | "completed" | "cancelled" | "no_show" | "refunded";
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -81,7 +81,7 @@ export interface BookingPayload {
   lock_id: string;
   payment_transaction_id: string;
   payment_status: "unpaid" | "pending" | "paid" | "refunded" | "failed";
-  status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
+  status: "pending" | "confirmed" | "rescheduled" | "arrived" | "completed" | "cancelled" | "no_show" | "refunded";
   start_time: string;
 }
 

@@ -271,6 +271,7 @@ export default function ProfileSettings() {
               type="tel"
               {...register("phone_number")}
               placeholder="+61 4XX XXX XXX"
+              className="border-gray-200 focus-visible:ring-0 focus-visible:border-[#051e3a] text-[#051e3a] placeholder:text-gray-400"
             />
           </div>
         </div>
@@ -291,7 +292,7 @@ export default function ProfileSettings() {
           control={control}
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="w-full sm:max-w-xs">
+              <SelectTrigger className="w-full sm:max-w-xs border-gray-200 focus-visible:ring-0 focus-visible:border-[#051e3a] text-[#051e3a]">
                 <SelectValue placeholder="Select a category…" />
               </SelectTrigger>
               <SelectContent>

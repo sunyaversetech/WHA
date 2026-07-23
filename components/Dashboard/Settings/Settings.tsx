@@ -64,7 +64,7 @@ export default function Settings() {
   const [active, setActive] = useState<TabId>("profile");
 
   return (
-    <div className="min-h-screen max-w-5xl mx-auto">
+    <div className="min-h-screen max-w-7xl mx-auto">
       <div className="">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#051e3a]">

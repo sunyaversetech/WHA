@@ -206,25 +206,51 @@ function ServiceMenu({
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
+    if (!open) return;
     const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        btnRef.current &&
+        !btnRef.current.contains(e.target as Node)
+      )
         setOpen(false);
     };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
-  }, []);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    }
+    setOpen((v) => !v);
+  };
 
   return (
-    <div ref={ref} className="relative">
+    <div className="relative">
       <button
-        onClick={() => setOpen((v) => !v)}
+        ref={btnRef}
+        onClick={handleOpen}
         className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#051e3a] transition-colors">
         <MoreVertical size={16} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 min-w-[150px]">
+        <div
+          ref={menuRef}
+          style={{
+            position: "fixed",
+            top: pos.top,
+            right: pos.right,
+            zIndex: 9999,
+          }}
+          className="bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-37.5">
           <button
             onClick={() => {
               onEdit();
@@ -249,7 +275,13 @@ function ServiceMenu({
 
 // ─── Category actions dropdown ────────────────────────────────────────────────
 
-function CategoryActions({ onDelete }: { onDelete: () => void }) {
+function CategoryActions({
+  onDelete,
+  serviceCount,
+}: {
+  onDelete: () => void;
+  serviceCount: number;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -270,14 +302,20 @@ function CategoryActions({ onDelete }: { onDelete: () => void }) {
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 min-w-[160px]">
-          <button
-            onClick={() => {
-              onDelete();
-              setOpen(false);
-            }}
-            className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 text-sm text-red-500 hover:bg-gray-50 transition-colors">
-            <Trash2 size={13} /> Delete category
-          </button>
+          {serviceCount === 0 ? (
+            <button
+              onClick={() => {
+                onDelete();
+                setOpen(false);
+              }}
+              className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 text-sm text-red-500 hover:bg-gray-50 transition-colors">
+              <Trash2 size={13} /> Delete category
+            </button>
+          ) : (
+            <div className="px-4 py-2.5 text-xs text-gray-400">
+              Remove all services first
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -411,6 +449,9 @@ export default function ServicesTable() {
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [addCatOpen, setAddCatOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteCatConfirmId, setDeleteCatConfirmId] = useState<string | null>(
+    null,
+  );
 
   const filteredServices = useMemo(() => {
     let list = [...allServices];
@@ -500,7 +541,7 @@ export default function ServicesTable() {
   const loading = loadingServices || loadingCategories;
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen max-w-7xl mx-auto ">
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-5 gap-3">
         <div className="min-w-0">
@@ -536,14 +577,8 @@ export default function ServicesTable() {
             className="w-full bg-white border border-gray-200 text-[#051e3a] text-sm rounded-full pl-9 pr-4 py-2 outline-none placeholder:text-gray-400 focus:border-[#051e3a] transition-colors"
           />
         </div>
-
-        <button className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-200 text-sm font-semibold text-[#051e3a] hover:bg-gray-50 transition-colors shrink-0">
-          <ArrowUpDown size={13} className="text-gray-400" />
-          <span className="hidden sm:inline">Manage order</span>
-        </button>
       </div>
 
-      {/* ── Mobile: category tabs (horizontal scroll) ── */}
       <div
         className="md:hidden -mx-4 px-4 overflow-x-auto mb-4"
         style={{ scrollbarWidth: "none" }}>
@@ -711,8 +746,9 @@ export default function ServicesTable() {
                     </div>
                     {group.category && (
                       <CategoryActions
+                        serviceCount={group.services.length}
                         onDelete={() =>
-                          handleDeleteCategory(group.category!._id)
+                          setDeleteCatConfirmId(group.category!._id)
                         }
                       />
                     )}
@@ -805,6 +841,41 @@ export default function ServicesTable() {
                 </button>
                 <button
                   onClick={() => handleDeleteService(deleteConfirmId)}
+                  className="px-5 py-2 rounded-full bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {deleteCatConfirmId && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/40"
+            onClick={() => setDeleteCatConfirmId(null)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none">
+            <div className="pointer-events-auto bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-200">
+              <h2 className="text-lg font-bold text-[#051e3a] mb-2">
+                Delete category?
+              </h2>
+              <p className="text-sm text-gray-500 mb-6">
+                This will permanently delete the category. This action cannot be
+                undone.
+              </p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setDeleteCatConfirmId(null)}
+                  className="px-5 py-2 rounded-full border border-gray-200 text-[#051e3a] text-sm font-semibold hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    handleDeleteCategory(deleteCatConfirmId);
+                    setDeleteCatConfirmId(null);
+                  }}
                   className="px-5 py-2 rounded-full bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors">
                   Delete
                 </button>

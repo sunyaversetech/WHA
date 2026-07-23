@@ -36,8 +36,8 @@ const COL_MIN_W = 160; // minimum column width before horizontal scroll
 // Dashboard header: h-[56px] on mobile, h-[60px] on md+
 // Calendar toolbar: h-[52px]
 // Column headers need to stick below both
-const TOOLBAR_H = 52;
-const DASH_HEADER_H = 56; // matches h-[56px] in DashboardLayout
+const TOOLBAR_H = 0;
+const DASH_HEADER_H = 0; // matches h-[56px] in DashboardLayout
 const DASH_HEADER_H_MD = 60; // matches md:h-[60px] in DashboardLayout
 const MOBILE_SECONDARY_H = 44; // secondary row (mode+view+filter) on mobile
 const COL_HEADER_TOP = DASH_HEADER_H + TOOLBAR_H; // 108 — desktop
@@ -425,6 +425,10 @@ const STATUS_STYLES: Record<string, { badge: string; label: string }> = {
     badge: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
     label: "Rescheduled",
   },
+  arrived: {
+    badge: "bg-teal-500/20 text-teal-300 border border-teal-500/30",
+    label: "Arrived",
+  },
   completed: {
     badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
     label: "Completed",
@@ -434,19 +438,43 @@ const STATUS_STYLES: Record<string, { badge: string; label: string }> = {
     label: "Cancelled",
   },
   no_show: {
-    badge: "bg-gray-500/20 text-gray-600 border border-gray-500/30",
+    badge: "bg-gray-500/20 text-gray-400 border border-gray-500/30",
     label: "No Show",
+  },
+  refunded: {
+    badge: "bg-orange-500/20 text-orange-300 border border-orange-500/30",
+    label: "Refunded",
   },
 };
 
-const STATUS_TRANSITIONS: Record<string, string[]> = {
-  pending: ["confirmed", "rescheduled", "cancelled"],
-  confirmed: ["rescheduled", "no_show", "cancelled"],
-  rescheduled: ["confirmed", "cancelled"],
-  completed: [],
-  cancelled: [],
-  no_show: [],
-};
+function getStatusTransitions(
+  status: string,
+  bookingDate: Date,
+): string[] {
+  const today = new Date();
+  const isToday =
+    bookingDate.getFullYear() === today.getFullYear() &&
+    bookingDate.getMonth() === today.getMonth() &&
+    bookingDate.getDate() === today.getDate();
+  const isPast = !isToday && bookingDate < today;
+
+  switch (status) {
+    case "pending":
+      return ["confirmed", "rescheduled", "cancelled"];
+    case "confirmed":
+      if (isToday) return ["arrived", "completed", "rescheduled", "cancelled"];
+      if (isPast) return ["no_show", "cancelled"];
+      return ["rescheduled", "cancelled"];
+    case "rescheduled":
+      return ["confirmed", "cancelled"];
+    case "arrived":
+      if (isToday) return ["completed", "cancelled"];
+      if (isPast) return ["completed", "no_show", "cancelled"];
+      return [];
+    default:
+      return [];
+  }
+}
 
 function BookingDetailPanel({
   booking: initialBooking,
@@ -522,7 +550,7 @@ function BookingDetailPanel({
   const isEmployeeBased =
     !service?.service_type || service.service_type === "employee_based";
 
-  const nextStatuses = STATUS_TRANSITIONS[booking.status] ?? [];
+  const nextStatuses = getStatusTransitions(booking.status, start);
 
   const pad2 = (n: number) => String(n).padStart(2, "0");
   const bookingDateStr = fmtISO(start);
@@ -800,10 +828,11 @@ function BookingDetailPanel({
                   const info = STATUS_STYLES[st];
                   const actionColors: Record<string, string> = {
                     confirmed: "bg-[#051e3a] hover:bg-[#082040] text-white",
-                    rescheduled: "bg-[#051e3a] hover:bg-[#082040] text-white",
-                    cancelled: "bg-[#051e3a] hover:bg-[#082040] text-white",
-                    no_show: "bg-[#051e3a] hover:bg-[#082040] text-white",
-                    completed: "bg-[#051e3a] hover:bg-[#082040] text-white",
+                    rescheduled: "bg-purple-600 hover:bg-purple-700 text-white",
+                    arrived: "bg-teal-600 hover:bg-teal-700 text-white",
+                    completed: "bg-emerald-600 hover:bg-emerald-700 text-white",
+                    no_show: "bg-gray-500 hover:bg-gray-600 text-white",
+                    cancelled: "bg-red-600 hover:bg-red-700 text-white",
                   };
                   return (
                     <button
@@ -1401,10 +1430,10 @@ function DayView({
     <div className="overflow-x-auto">
       {/* Column headers — sticky below toolbar */}
       <div
-        className="flex border-b border-gray-200 bg-white "
+        className="flex border-b border-gray-200 bg-white top-100"
         style={{ position: "sticky", top: colHeaderTop, zIndex: 20 }}>
         <div
-          className="shrink-0 border-r border-gray-200 bg-white"
+          className="shrink-0 border-r border-gray-200 bg-white top-100"
           style={{ position: "sticky", left: 0, zIndex: 21, width: GUTTER_W }}
         />
         {columns.map((col) => {
@@ -1509,6 +1538,7 @@ function WeekView({
   onBookingClick,
   onBlockedTimeClick,
   onSlotClick,
+  colHeaderTop = COL_HEADER_TOP,
 }: {
   weekDays: Date[];
   bookings: any[];
@@ -1517,6 +1547,7 @@ function WeekView({
   onBookingClick: (b: any) => void;
   onBlockedTimeClick: (entry: any) => void;
   onSlotClick?: (slot: SlotClick) => void;
+  colHeaderTop?: number;
 }) {
   const gridH = 24 * HOUR_H;
 
@@ -1549,7 +1580,7 @@ function WeekView({
       {/* Day headers — sticky below toolbar */}
       <div
         className="flex border-b border-gray-200 bg-white"
-        style={{ position: "sticky", top: COL_HEADER_TOP, zIndex: 20 }}>
+        style={{ position: "sticky", top: colHeaderTop, zIndex: 20 }}>
         <div
           className="shrink-0 border-r border-gray-200"
           style={{ width: GUTTER_W }}
@@ -2260,7 +2291,7 @@ function AppointmentWizard({
                             className={cn(
                               "py-2 px-3 rounded-lg text-xs font-semibold border transition-all",
                               sel
-                                ? "bg-[#051e3a] border-[#051e3a] text-gray-900"
+                                ? "bg-[#051e3a] border-[#051e3a] text-white"
                                 : "bg-gray-50 border-gray-200 text-gray-600 hover:border-[#051e3a]/50 hover:bg-gray-50",
                             )}>
                             {fmtTime(new Date(slot))}
@@ -2649,7 +2680,7 @@ function MobileDayTabs({
             className={cn(
               "flex flex-col items-center min-w-[44px] px-2 py-1.5 rounded-xl border text-center transition-colors shrink-0",
               active
-                ? "bg-[#051e3a] border-[#051e3a] text-gray-900"
+                ? "bg-[#051e3a] border-[#051e3a] text-white"
                 : todayFlag
                   ? "bg-[#051e3a]/10 border-[#051e3a]/30 text-[#051e3a]"
                   : "bg-gray-50 border-gray-200 text-gray-400",
@@ -2746,6 +2777,8 @@ export default function Calendar() {
     const day = new Date().getDay();
     return day === 0 ? 6 : day - 1;
   });
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [toolbarH, setToolbarH] = useState(50);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [slotClick, setSlotClick] = useState<SlotClick | null>(null);
   const [openModal, setOpenModal] = useState<
@@ -2885,25 +2918,40 @@ export default function Calendar() {
 
   const mobileDate = weekDays[mobileDayIdx] ?? currentDate;
 
+  useEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const measure = () => setToolbarH(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // colHeaderTop = where the toolbar sticks (50) + toolbar measured height
+  const colHeaderTop = 50 + toolbarH;
+
   // Auto-scroll to 6 AM on mount (window scroll)
   useEffect(() => {
     const y =
-      COL_HEADER_TOP_MD + /* col header height approx */ 80 + 6 * HOUR_H - 40;
+      colHeaderTop + /* col header height approx */ 80 + 6 * HOUR_H - 40;
     window.scrollTo({ top: y, behavior: "auto" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (empLoading && !empData) return <CalendarSkeleton />;
 
   return (
-    <div className="bg-white text-gray-900">
+    <div className="bg-white text-gray-900 mt-2">
       {/* ── Sticky toolbar ── */}
       <div
+        ref={toolbarRef}
         className="sticky bg-white z-30 border-b border-gray-200"
-        style={{ top: DASH_HEADER_H }}>
+        style={{ top: 50 }}>
         {/* ── Primary row (all viewports) ── */}
         <div
-          className="flex max-sm:flex-col max-sm:items-start items-center gap-2 px-3 md:px-4"
-          style={{ height: TOOLBAR_H }}>
+          className="flex max-sm:flex-col max-sm:items-start items-center gap-2 mx-5 px-3 md:px-4"
+          style={{ height: 50 }}>
           {/* Today — desktop only */}
           <button
             onClick={goToday}

@@ -208,7 +208,7 @@ export default function LocationSettings() {
                 fetchSuggestions(e.target.value);
               }}
               placeholder="Start typing an Australian address…"
-              className="pl-9 pr-9"
+              className="pl-9 pr-9 border-gray-200 focus-visible:ring-0 focus-visible:border-[#051e3a] text-[#051e3a] placeholder:text-gray-400"
             />
             {searchLoading ? (
               <Loader2

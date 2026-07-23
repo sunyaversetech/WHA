@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -36,8 +37,8 @@ import {
   ServiceFormValues,
   IService,
   DURATION_OPTIONS,
-  TREATMENT_TYPES,
   PRICE_TYPES,
+  CATEGORY_COLORS,
   DAYS_OF_WEEK,
   TIME_OPTIONS,
   BUFFER_OPTIONS,
@@ -48,7 +49,10 @@ import {
   defaultGroupSchedule,
 } from "./schema";
 import { useCreateOrUpdateService } from "@/services/services.service";
-import { useGetCategories } from "@/services/category.service";
+import {
+  useGetCategories,
+  useCreateCategory,
+} from "@/services/category.service";
 import { useGetEmployees } from "@/services/employee.service";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -151,7 +155,7 @@ function SelectField({
           onChange(opt ? opt.value : e.target.value);
         }}
         className={cn(
-          "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-[#051e3a] outline-none appearance-none focus:border-[#051e3a] transition-colors bg-white",
+          "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-[#051e3a] appearance-none focus-visible:ring-0 focus-visible:border-[#051e3a] transition-colors bg-white",
           className,
         )}>
         {options.map((o) => (
@@ -168,6 +172,126 @@ function SelectField({
   );
 }
 
+// ─── Add Category Dialog ──────────────────────────────────────────────────────
+
+function AddCategoryForm({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { mutate: createCategory, isPending } = useCreateCategory();
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<{ name: string; color: string }>({
+    resolver: zodResolver(
+      z.object({
+        name: z.string().min(1, "Name is required").max(100),
+        color: z.string().min(1),
+      }),
+    ),
+    defaultValues: { name: "", color: "Blue" },
+  });
+  const selectedColor = useWatch({ control, name: "color" }) ?? "Blue";
+  const colorHex =
+    CATEGORY_COLORS.find((c) => c.label === selectedColor)?.hex ?? "#3b82f6";
+
+  const onSubmit = (data: { name: string; color: string }) => {
+    createCategory(
+      { name: data.name, color: data.color },
+      {
+        onSuccess: (res: any) => {
+          if (res?.success) {
+            toast.success("Category added");
+            onClose();
+          } else toast.error(res?.error ?? "Failed to create category");
+        },
+        onError: () => toast.error("Failed to create category"),
+      },
+    );
+  };
+
+  if (!open) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/40" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none">
+        <div className="pointer-events-auto bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-200">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-[#051e3a]">Add category</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <label className="text-sm font-semibold text-[#051e3a] block mb-1.5">
+                Category name
+              </label>
+              <input
+                {...register("name")}
+                placeholder="e.g. Hair Services"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-[#051e3a] placeholder:text-gray-400 outline-none focus:border-[#051e3a] transition-colors"
+              />
+              {errors.name && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.name.message as string}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-[#051e3a] block mb-1.5">
+                Appointment color
+              </label>
+              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2.5">
+                <span
+                  className="w-3.5 h-3.5 rounded-full shrink-0"
+                  style={{ background: colorHex }}
+                />
+                <select
+                  {...register("color")}
+                  className="flex-1 bg-transparent text-sm text-[#051e3a] outline-none appearance-none cursor-pointer">
+                  {CATEGORY_COLORS.map((c) => (
+                    <option key={c.label} value={c.label}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={12}
+                  className="text-gray-400 pointer-events-none shrink-0"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2 rounded-full border border-gray-200 text-[#051e3a] text-sm font-semibold hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isPending}
+                className="px-5 py-2 rounded-full bg-[#051e3a] text-white text-sm font-bold hover:bg-[#082040] disabled:opacity-60 transition-colors">
+                {isPending ? "Adding…" : "Add"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ServiceForm({ initialData }: { initialData?: IService }) {
@@ -180,6 +304,19 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
   const categories = categoriesData?.data ?? [];
   const allEmployees = (empData as any)?.data ?? [];
   const [section, setSection] = useState<Section>("basic");
+  const [catOpen, setCatOpen] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const catRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!catOpen) return;
+    const h = (e: MouseEvent) => {
+      if (catRef.current && !catRef.current.contains(e.target as Node))
+        setCatOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [catOpen]);
 
   const form = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceSchema) as any,
@@ -428,7 +565,7 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* ── Top bar ── */}
-      <div className="sticky top-0 z-10 flex items-center justify-end gap-2 px-5 md:px-8 py-3 border-b border-gray-100 bg-white">
+      <div className="sticky top-14 md:top-15 z-10 flex items-center justify-end gap-2 px-5 md:px-8 py-3 border-b border-gray-100 bg-white">
         <button
           type="button"
           onClick={() => router.push("/dashboard/services")}
@@ -539,57 +676,85 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
                       )}
                     />
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                      <FormField
-                        control={form.control}
-                        name="category_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-semibold text-[#051e3a]">
-                              Menu category{" "}
-                              <span className="text-red-500">*</span>
-                            </FormLabel>
-                            <FormControl>
-                              <SelectField
-                                value={field.value}
-                                onChange={field.onChange}
-                                options={[
-                                  { label: "Select category", value: "" },
-                                  ...categories.map((c) => ({
-                                    label: c.name,
-                                    value: c._id,
-                                  })),
-                                ]}
-                              />
-                            </FormControl>
-                            <p className="text-xs text-gray-400 mt-1">
-                              The category displayed to clients online
-                            </p>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormItem>
-                        <FormLabel className="text-sm font-semibold text-[#051e3a]">
-                          Treatment type
-                        </FormLabel>
-                        <SelectField
-                          value=""
-                          onChange={() => {}}
-                          options={[
-                            { label: "Select treatment type", value: "" },
-                            ...TREATMENT_TYPES.map((t) => ({
-                              label: t,
-                              value: t,
-                            })),
-                          ]}
-                        />
-                        <p className="text-xs text-gray-400 mt-1">
-                          Used to help clients find your service
-                        </p>
-                      </FormItem>
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="category_id"
+                      render={({ field }) => (
+                        <FormItem className="mb-4">
+                          <FormLabel className="text-sm font-semibold text-[#051e3a]">
+                            Menu category{" "}
+                            <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <div ref={catRef} className="relative">
+                              <button
+                                type="button"
+                                onClick={() => setCatOpen((v) => !v)}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm flex items-center justify-between bg-white outline-none focus:border-[#051e3a] transition-colors">
+                                <span
+                                  className={
+                                    field.value
+                                      ? "text-[#051e3a]"
+                                      : "text-gray-400"
+                                  }>
+                                  {categories.find((c) => c._id === field.value)
+                                    ?.name ?? "Select category"}
+                                </span>
+                                <ChevronDown
+                                  size={13}
+                                  className="text-gray-400 shrink-0"
+                                />
+                              </button>
+                              {catOpen && (
+                                <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 w-full max-h-52 overflow-y-auto">
+                                  {categories.length === 0 && (
+                                    <p className="px-4 py-3 text-sm text-gray-400">
+                                      No categories yet
+                                    </p>
+                                  )}
+                                  {categories.map((c) => (
+                                    <button
+                                      key={c._id}
+                                      type="button"
+                                      onClick={() => {
+                                        field.onChange(c._id);
+                                        setCatOpen(false);
+                                      }}
+                                      className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 text-sm text-[#051e3a] hover:bg-gray-50 transition-colors">
+                                      <span
+                                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                                        style={{
+                                          background:
+                                            CATEGORY_COLORS.find(
+                                              (x) => x.label === c.color,
+                                            )?.hex ?? "#94a3b8",
+                                        }}
+                                      />
+                                      {c.name}
+                                    </button>
+                                  ))}
+                                  <div className="border-t border-gray-100 px-4 py-2.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCatOpen(false);
+                                        setShowAddCategory(true);
+                                      }}
+                                      className="flex items-center gap-1.5 text-sm font-semibold text-[#051e3a] hover:text-[#0a3060] transition-colors">
+                                      <Plus size={13} /> Add category
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </FormControl>
+                          <p className="text-xs text-gray-400 mt-1">
+                            The category displayed to clients online
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={form.control}
@@ -613,7 +778,8 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
                               rows={4}
                               maxLength={1000}
                               placeholder="Add a short description"
-                              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-[#051e3a] placeholder:text-gray-400 outline-none focus:border-[#051e3a] transition-colors resize-none"
+                              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-[#051e3a] placeholder:text-gray-400 outline-none 
+                              focus-visible:ring-0 focus-visible:border-[#051e3a] transition-colors resize-none"
                             />
                           </FormControl>
                           <FormMessage />
@@ -641,6 +807,7 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
                               <SelectField
                                 value={field.value}
                                 onChange={field.onChange}
+                                className="border-gray-200 focus-visible:ring-0 focus-visible:border-[#051e3a] text-[#051e3a] placeholder:text-gray-400"
                                 options={PRICE_TYPES.map((t) => ({
                                   label: t,
                                   value: t,
@@ -676,7 +843,7 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
                                         parseFloat(e.target.value) || 0,
                                       )
                                     }
-                                    className="pl-7 border-gray-200 focus-visible:ring-0 focus-visible:border-[#051e3a] text-[#051e3a]"
+                                    className="pl-7 border-gray-200 focus-visible:ring-0 focus-visible:border-[#051e3a] text-[#051e3a] placeholder:text-gray-400"
                                   />
                                 </div>
                               </FormControl>
@@ -698,6 +865,7 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
                               <SelectField
                                 value={field.value}
                                 onChange={(v) => field.onChange(Number(v))}
+                                className="border-gray-200 focus-visible:ring-0 focus-visible:border-[#051e3a] text-[#051e3a] placeholder:text-gray-400"
                                 options={DURATION_OPTIONS.map((d) => ({
                                   label: d.label,
                                   value: d.value,
@@ -1530,6 +1698,11 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
           </Form>
         </div>
       </div>
+
+      <AddCategoryForm
+        open={showAddCategory}
+        onClose={() => setShowAddCategory(false)}
+      />
     </div>
   );
 }

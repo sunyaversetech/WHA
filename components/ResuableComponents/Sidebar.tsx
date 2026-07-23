@@ -17,6 +17,8 @@ import {
   MoreHorizontal,
   LucideIcon,
   Smile,
+  CalendarArrowDown,
+  Cog,
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -38,7 +40,8 @@ const NAV_ITEMS: NavItem[] = [
       {
         items: [
           { label: "Calendar", href: "/dashboard/calendar" },
-          { label: "Reservations", href: "/dashboard/reservations" },
+          { label: "Manage Reservations", href: "/dashboard/reservations" },
+          { label: "Todays Reservations", href: "/dashboard/reservations" },
         ],
       },
     ],
@@ -48,16 +51,22 @@ const NAV_ITEMS: NavItem[] = [
   {
     icon: BookOpen,
     label: "Catalog",
-    children: [
-      {
-        section: "Services",
-        items: [{ label: "Service menu", href: "/dashboard/services" }],
-      },
-      {
-        section: "Inventory",
-        items: [{ label: "Resources", href: "/dashboard/resources" }],
-      },
-    ],
+    href: "/dashboard/services",
+    // children: [
+    //   {
+    //     section: "Services",
+    //     items: [{ label: "Service menu", href: "/dashboard/services" }],
+    //   },
+    //   {
+    //     section: "Inventory",
+    //     items: [{ label: "Resources", href: "/dashboard/resources" }],
+    //   },
+    // ],
+  },
+  {
+    icon: Cog,
+    label: "Catalog",
+    href: "/dashboard/resources",
   },
   { icon: Megaphone, label: "Marketing", href: "/dashboard/events" },
   {

@@ -4,8 +4,9 @@ import { connectToDb } from "@/lib/db";
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending: ["confirmed", "rescheduled", "cancelled"],
-  confirmed: ["completed", "rescheduled", "no_show", "cancelled"],
-  rescheduled: ["confirmed", "cancelled"],
+  confirmed: ["arrived", "completed", "rescheduled", "no_show", "cancelled"],
+  rescheduled: ["confirmed", "arrived", "cancelled"],
+  arrived: ["completed", "no_show", "cancelled"],
   completed: ["refunded"],
   cancelled: [],
   no_show: [],

@@ -110,6 +110,7 @@ export function ABNUpdateForm() {
                   {...field}
                   maxLength={11}
                   disabled={isUpdating}
+                  className="border-gray-200 focus-visible:ring-0 focus-visible:border-[#051e3a] text-[#051e3a] placeholder:text-gray-400"
                 />
               </FormControl>
               <FormMessage />
