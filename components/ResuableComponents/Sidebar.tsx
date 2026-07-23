@@ -41,7 +41,10 @@ const NAV_ITEMS: NavItem[] = [
         items: [
           { label: "Calendar", href: "/dashboard/calendar" },
           { label: "Manage Reservations", href: "/dashboard/reservations" },
-          { label: "Todays Reservations", href: "/dashboard/reservations" },
+          {
+            label: "Todays Reservations",
+            href: "/dashboard/todayreservations",
+          },
         ],
       },
     ],

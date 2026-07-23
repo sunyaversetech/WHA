@@ -10,10 +10,16 @@ import {
   Users,
   Package,
   Loader2,
-  ChevronDown,
-  Calendar,
+  Calendar as CalendarIcon,
   Ban,
 } from "lucide-react";
+import { type DateRange } from "react-day-picker";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -80,9 +86,6 @@ const PAYMENT_META: Record<string, string> = {
   refunded: "bg-gray-100 text-gray-600",
 };
 
-const DATE_PRESETS = ["Today", "This week", "This month", "All time"] as const;
-type DatePreset = (typeof DATE_PRESETS)[number];
-
 function fmtDate(d: Date) {
   return d.toLocaleDateString("en-US", {
     weekday: "short",
@@ -101,28 +104,12 @@ function fmtISO(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function presetRange(
-  preset: DatePreset,
-): { start: string; end: string } | null {
-  const now = new Date();
-  if (preset === "Today") {
-    const s = fmtISO(now);
-    return { start: s, end: s };
-  }
-  if (preset === "This week") {
-    const day = now.getDay();
-    const mon = new Date(now);
-    mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
-    const sun = new Date(mon);
-    sun.setDate(mon.getDate() + 6);
-    return { start: fmtISO(mon), end: fmtISO(sun) };
-  }
-  if (preset === "This month") {
-    const s = new Date(now.getFullYear(), now.getMonth(), 1);
-    const e = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    return { start: fmtISO(s), end: fmtISO(e) };
-  }
-  return null;
+function fmtShort(d: Date) {
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 const DAY_NAMES = [
@@ -568,7 +555,8 @@ export default function Reservation() {
   const [allEmployees, setAllEmployees] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [datePreset, setDatePreset] = useState<DatePreset>("All time");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [calOpen, setCalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -586,7 +574,6 @@ export default function Reservation() {
 
   useEffect(() => {
     let active = true;
-    const range = presetRange(datePreset);
     const params = new URLSearchParams({
       timezone: tz,
       statuses: "",
@@ -594,10 +581,8 @@ export default function Reservation() {
       limit: String(pageSize),
     });
     if (statusFilter !== "all") params.set("status_filter", statusFilter);
-    if (range) {
-      params.set("start_date", range.start);
-      params.set("end_date", range.end);
-    }
+    if (dateRange?.from) params.set("start_date", fmtISO(dateRange.from));
+    if (dateRange?.to) params.set("end_date", fmtISO(dateRange.to));
 
     // setLoading inside .then so it is not a synchronous setState in effect body
     Promise.resolve()
@@ -623,7 +608,7 @@ export default function Reservation() {
     return () => {
       active = false;
     };
-  }, [datePreset, tz, statusFilter, page, pageSize, refreshKey]);
+  }, [dateRange, tz, statusFilter, page, pageSize, refreshKey]);
 
   useEffect(() => {
     fetch("/api/employees")
@@ -670,30 +655,49 @@ export default function Reservation() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Date preset */}
-            <div className="relative">
-              <select
-                value={datePreset}
-                onChange={(e) => {
-                  setDatePreset(e.target.value as DatePreset);
-                  setPage(1);
-                }}
-                className="bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:border-[#051e3a] appearance-none cursor-pointer">
-                {DATE_PRESETS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-              <Calendar
-                size={13}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-              />
-              <ChevronDown
-                size={11}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-              />
-            </div>
+            {/* Date range picker */}
+            <Popover open={calOpen} onOpenChange={setCalOpen}>
+              <PopoverTrigger asChild>
+                <button className="flex items-center gap-2 bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg pl-2.5 pr-2.5 py-2 focus:outline-none hover:border-[#051e3a] transition-colors cursor-pointer whitespace-nowrap">
+                  <CalendarIcon size={13} className="text-gray-400 shrink-0" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <span>
+                        {fmtShort(dateRange.from)} – {fmtShort(dateRange.to)}
+                      </span>
+                    ) : (
+                      <span>{fmtShort(dateRange.from)}</span>
+                    )
+                  ) : (
+                    <span className="text-gray-400">All dates</span>
+                  )}
+                  {dateRange?.from && (
+                    <span
+                      role="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDateRange(undefined);
+                        setPage(1);
+                      }}
+                      className="ml-1 text-gray-400 hover:text-gray-700">
+                      <X size={11} />
+                    </span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={(range) => {
+                    setDateRange(range);
+                    setPage(1);
+                    if (range?.from && range?.to) setCalOpen(false);
+                  }}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
 
             {/* Search */}
             <div className="relative">
@@ -769,8 +773,19 @@ export default function Reservation() {
           <table className="w-full min-w-180">
             <thead>
               <tr className="border-b border-gray-200 bg-white">
-                {["Client", "Service", "Employee", "Date & Time", "Duration", "Amount", "Status", "Payment"].map((h) => (
-                  <th key={h} className="text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider px-4 py-3">
+                {[
+                  "Client",
+                  "Service",
+                  "Employee",
+                  "Date & Time",
+                  "Duration",
+                  "Amount",
+                  "Status",
+                  "Payment",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider px-4 py-3">
                     {h}
                   </th>
                 ))}
