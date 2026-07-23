@@ -34,6 +34,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthModal } from "./use-auth-model";
+import Link from "next/link";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").min(1, "Email is required"),
@@ -103,12 +104,17 @@ const AuthForm = ({
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={loading} className="w-full">
+        <Button type="submit" disabled={loading} className="w-full mb-2">
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {loading ? "Signing In..." : "Sign In"}
         </Button>
       </form>
     </Form>
+    <Link
+      href="/auth"
+      className="text-xs text-muted-foreground underline underline-offset-4 ">
+      Don`t have an account? Sign up
+    </Link>
 
     <div className="relative my-6">
       <div className="absolute inset-0 flex items-center">

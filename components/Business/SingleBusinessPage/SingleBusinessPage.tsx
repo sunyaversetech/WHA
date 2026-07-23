@@ -974,10 +974,10 @@ export default function BusinessPage() {
             </span>
           </div>
         )}
-        <BookNowBtn
+        {/* <BookNowBtn
           full
           onClick={() => router.push(`/bookings?business_id=${businessId}`)}
-        />
+        /> */}
       </div>
 
       <div style={{ height: 1, background: T.border, margin: "20px 24px" }} />
@@ -1179,10 +1179,10 @@ export default function BusinessPage() {
 
           {/* Mobile Book Now */}
           <div style={{ marginTop: 16, marginBottom: 4 }}>
-            <BookNowBtn
+            {/* <BookNowBtn
               full
               onClick={() => router.push(`/bookings?business_id=${businessId}`)}
-            />
+            /> */}
           </div>
         </div>
 
@@ -1436,11 +1436,11 @@ export default function BusinessPage() {
                   {activeServices.length} services available
                 </span>
               )}
-              <BookNowBtn
+              {/* <BookNowBtn
                 onClick={() =>
                   router.push(`/bookings?business_id=${businessId}`)
                 }
-              />
+              /> */}
             </div>
           </div>
 

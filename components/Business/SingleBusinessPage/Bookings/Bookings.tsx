@@ -31,6 +31,8 @@ import {
   useCreateBookingLock,
   useCreateBooking,
 } from "@/services/booking.service";
+import { useSession } from "next-auth/react";
+import { useAuthModal } from "@/components/Auth/DialogLogin/use-auth-model";
 
 const _lockedServiceIdRef = { current: "" };
 const _lockedStartTimeRef = { current: "" };
@@ -61,6 +63,8 @@ function getServiceMaxQty(s: ServiceType): number {
 
 export default function BookingContainer({ services }: BookingContainerProps) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const { onOpen } = useAuthModal();
 
   const [activeTab, setActiveTab] = useState<string>("Featured");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -201,6 +205,9 @@ export default function BookingContainer({ services }: BookingContainerProps) {
   ]);
 
   const handleOpenBookingWizard = (service: ServiceType) => {
+    if (!session) {
+      return onOpen();
+    }
     const hasEmployees =
       service.service_type === "employee_based" &&
       (service.assigned_employees?.length ?? 0) > 0;
