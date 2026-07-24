@@ -35,6 +35,27 @@ export const useUpsertResourceOverride = () => {
   });
 };
 
+export const useUpdateResourceSchedule = () => {
+  return useMutation<
+    ApiResponseType<any>,
+    any,
+    {
+      id: string;
+      availability_type?: string;
+      availability_schedule?: any[];
+      max_concurrent_bookings?: number;
+      group_schedule?: any[];
+    }
+  >({
+    mutationKey: ["updateResourceSchedule"],
+    mutationFn: ({ id, ...data }) =>
+      Post<any, ApiResponseType<any>>({
+        url: `/api/resources/${id}/schedule`,
+        data,
+      }),
+  });
+};
+
 export const useDeleteResourceOverride = () => {
   return useMutation<
     ApiResponseType<any>,

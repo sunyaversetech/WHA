@@ -308,9 +308,15 @@ export default function TodayReservations() {
     let cancelled = false;
     fetch(`/api/bookings/today?date=${todayISO()}`)
       .then((r) => r.json())
-      .then((data) => { if (!cancelled && data.success) setBookings(data.data ?? []); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .then((data) => {
+        if (!cancelled && data.success) setBookings(data.data ?? []);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
