@@ -110,7 +110,12 @@ export const useUpsertShiftOverride = () => {
   return useMutation<
     ApiResponseType<any>,
     any,
-    { employee_id: string; date: string; shifts?: { start: string; end: string }[]; is_day_off?: boolean }
+    {
+      employee_id: string;
+      date: string;
+      shifts?: { start: string; end: string }[];
+      is_day_off?: boolean;
+    }
   >({
     mutationKey: ["upsertShiftOverride"],
     mutationFn: (payload) =>

@@ -25,6 +25,17 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
+import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -152,6 +163,7 @@ function MobileActionsSheet({
           { label: "View calendar", action: onClose },
           { label: "View scheduled shifts", action: onClose },
           { label: "Add time off", action: onClose },
+          { label: "Delete", action: onClose },
         ].map(({ label, action }) => (
           <button
             key={label}
@@ -167,13 +179,14 @@ function MobileActionsSheet({
   );
 }
 
-// ─── Desktop Actions Dropdown ─────────────────────────────────────────────────
-
 function ActionsDropdown({ emp, onEdit }: { emp: any; onEdit: () => void }) {
   const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { mutate: deleteEmp, isPending } = useDeleteEmployees();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
@@ -197,6 +210,21 @@ function ActionsDropdown({ emp, onEdit }: { emp: any; onEdit: () => void }) {
     setOpen((v) => !v);
   };
 
+  const handleDeleteEmployee = () => {
+    deleteEmp(
+      { id: emp._id },
+      {
+        onSuccess: () => {
+          toast.success(`Employee deleted successfully`);
+          queryClient.invalidateQueries({ queryKey: ["employees"] });
+        },
+        onError: (error: any) => {
+          toast.error(error?.message || "Failed to delete employees");
+        },
+      },
+    );
+  };
+
   return (
     <>
       <button
@@ -206,6 +234,29 @@ function ActionsDropdown({ emp, onEdit }: { emp: any; onEdit: () => void }) {
         Actions
         {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
       </button>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Are you sure to delete this employee?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. Are you sure you want to delete
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isPending}
+              onClick={handleDeleteEmployee}
+              className="bg-destructive text-white hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {open &&
         createPortal(
           <div
@@ -228,6 +279,13 @@ function ActionsDropdown({ emp, onEdit }: { emp: any; onEdit: () => void }) {
               { label: "View calendar", action: () => setOpen(false) },
               { label: "View scheduled shifts", action: () => setOpen(false) },
               { label: "Add time off", action: () => setOpen(false) },
+              {
+                label: "Delete",
+                action: () => {
+                  setOpen(false);
+                  setDeleteOpen(true);
+                },
+              },
             ].map(({ label, action }) => (
               <button
                 key={label}
@@ -573,7 +631,6 @@ function FilterPanel({
 export function EmployeeTable() {
   const router = useRouter();
   const { data: empData, isLoading } = useGetEmployees();
-  const { mutate: deleteEmp } = useDeleteEmployees();
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("Custom order");
