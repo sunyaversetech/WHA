@@ -518,7 +518,7 @@ export default function LandingPage() {
       </div>
 
       {/* ═══════ APP DOWNLOAD ═══════ */}
-      <section
+      {/* <section
         style={{
           maxWidth: 1280,
           margin: "60px auto 0",
@@ -544,11 +544,9 @@ export default function LandingPage() {
                 marginBottom: 22,
               }}>
               Available on
-              {/* Apple */}
               <svg width={17} height={17} viewBox="0 0 24 24" fill="#0f2748">
                 <path d="M16 2c.1 1.2-.4 2.4-1.1 3.3-.8.9-2 1.6-3.1 1.5-.1-1.2.4-2.4 1.1-3.2C13.7 2.6 15 2 16 2Zm3.5 7.4c-1.9-.1-3.5 1.1-4.4 1.1-.9 0-2.3-1-3.7-1-1.9 0-3.7 1.1-4.6 2.8-2 3.4-.5 8.5 1.4 11.3.9 1.3 2 2.8 3.4 2.8 1.4-.1 1.9-.9 3.5-.9 1.6 0 2.1.9 3.5.9 1.5 0 2.4-1.4 3.3-2.7.6-.9 1.1-1.9 1.4-3-2.6-1-3.1-4.8-.3-6.3-.9-1.3-2.2-2.1-3.5-2.7Z" />
               </svg>
-              {/* Android */}
               <svg
                 width={17}
                 height={17}
@@ -627,7 +625,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Phone mockups */}
           <div
             className="wha-phones"
             style={{
@@ -664,10 +661,10 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ═══════ REVIEWS ═══════ */}
-      <section
+      {/* <section
         style={{
           maxWidth: 1180,
           margin: "90px auto 0",
@@ -741,10 +738,10 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* ═══════ STATS ═══════ */}
-      <section
+      {/* <section
         style={{
           maxWidth: 1280,
           margin: "96px auto 0",
@@ -809,7 +806,7 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* ═══════ WHA FOR BUSINESS ═══════ */}
       <section
@@ -912,17 +909,23 @@ export default function LandingPage() {
               alignItems: "center",
               justifyContent: "center",
             }}>
-            <div style={{ textAlign: "center", color: "#7c899c" }}>
+            {/* <div style={{ textAlign: "center", color: "#7c899c" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
               <div style={{ fontSize: 15, fontWeight: 600 }}>
                 Dashboard Preview
               </div>
-            </div>
+            </div> */}
+            <Image
+              src="/dashboard-preview.png"
+              alt="Dashboard preview"
+              width={2000}
+              height={2000}
+              className="h-full w-full object-cover"
+            />
           </div>
         </div>
       </section>
 
-      {/* ═══════ BROWSE BY CITY ═══════ */}
       <section
         style={{
           maxWidth: 1280,
