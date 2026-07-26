@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { EmployeeFormValues, employeeSchema, IEmployee } from "./schema";
 import { useCreateOrUpdateEmployee } from "@/services/employee.service";
 import { useGetServices } from "@/services/services.service";
+import { toast } from "sonner";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -581,7 +582,13 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
 
     mutate(fd as any, {
       onSuccess: () => router.push("/dashboard/employees"),
-      onError: (err) => console.error(err),
+      onError: (err) => {
+        const error = JSON.parse(err.message);
+        console.error(error.error);
+        if (error.error.includes("duplicate key error"))
+          toast.error("An employee already exists with this email");
+        else toast.error(err.message || "Failed to save employee");
+      },
     });
   }
 
