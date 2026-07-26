@@ -218,7 +218,6 @@ export function EventForm() {
                           const hasSpecialChars = /[^a-zA-Z0-9\s]/.test(
                             rawValue,
                           );
-
                           if (hasSpecialChars) {
                             form.setError("title", {
                               type: "manual",
