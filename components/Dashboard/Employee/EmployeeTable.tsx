@@ -574,7 +574,6 @@ export function EmployeeTable() {
   const router = useRouter();
   const { data: empData, isLoading } = useGetEmployees();
   const { mutate: deleteEmp } = useDeleteEmployees();
-  const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("Custom order");
