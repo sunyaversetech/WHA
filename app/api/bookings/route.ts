@@ -10,6 +10,9 @@ import Booking from "@/server/models/Booking.model";
 import { BookingLock } from "@/server/models/BookingLock.model";
 import { authOptions } from "../auth/[...nextauth]/route";
 import logger from "@/lib/logger";
+import { sendServiceBookingEmails } from "@/lib/mail";
+import User from "@/server/models/Auth.model";
+import Business from "@/server/models/BusinessCompletion.model";
 
 const create_booking_schema = z.object({
   service_id: z.string().min(1),
@@ -78,6 +81,19 @@ export async function POST(request: Request) {
 
   const db_session = await mongoose.startSession();
 
+  // Context container to pass data outside the transaction block for email delivery
+  let emailContext: {
+    userEmail: string;
+    userName: string;
+    userPhone: string;
+    businessEmail: string;
+    businessName: string;
+    serviceName: string;
+    bookingDate: string;
+    bookingTime: string;
+    bookingId: string;
+  } | null = null;
+
   try {
     let new_booking: any;
 
@@ -110,7 +126,6 @@ export async function POST(request: Request) {
         (i: any) => i.service_id === validated_data.service_id,
       );
 
-      // ✅ FIXED: Look up quantity from items payload structure first, fallback to lock parameters
       const requested_quantity =
         service.service_type === "resource_based" ||
         !service.assigned_employees ||
@@ -161,7 +176,6 @@ export async function POST(request: Request) {
 
       // 4. CONCURRENCY CONTROLS
       if (service.allow_multiple_bookings && employee_id) {
-        // Group/session capacity logic — several customers share the same slot
         const max_capacity = Number(service.max_bookings_per_slot) || 1;
 
         const [slot_bookings, slot_locks] = await Promise.all([
@@ -182,7 +196,6 @@ export async function POST(request: Request) {
         if (occupied >= max_capacity)
           throw new Error("SLOT_TAKEN: This slot is fully booked");
       } else if (employee_id) {
-        // Standard Employee overlap logic
         const potential_overlaps = await Booking.find({
           employee_id,
           status: { $nin: ["cancelled", "no_show", "refunded"] },
@@ -202,10 +215,8 @@ export async function POST(request: Request) {
 
         if (overlap) throw new Error("SLOT_TAKEN: Employee is fully booked");
       } else {
-        // Advanced Inventory allocation logic
         const max_inventory = Number(service.max_concurrent_bookings) || 0;
 
-        // Find all active bookings overlapping our checkout window
         const active_bookings = await Booking.find({
           service_id: service._id,
           status: { $nin: ["cancelled", "no_show", "refunded"] },
@@ -215,16 +226,14 @@ export async function POST(request: Request) {
           .populate("service_id")
           .session(db_session);
 
-        // Find all active temporary checkout locks holding stock items right now
         const active_locks = await BookingLock.find({
-          _id: { $ne: lock._id }, // Exclude our current lock
+          _id: { $ne: lock._id },
           service_id: service._id,
           expires_at: { $gt: new Date() },
           start_time: { $lt: candidate_blocked_end },
           end_time: { $gt: start_date },
         }).session(db_session);
 
-        // Calculate maximum overlapping quantity at peak overlap times
         let peak_allocated_quantity = 0;
         const check_points = Array.from(
           new Set([
@@ -237,7 +246,6 @@ export async function POST(request: Request) {
         for (const time_ms of check_points) {
           const target_time = new Date(time_ms);
 
-          // Sum up bookings covering this timestamp interval
           const booked_at_spot = active_bookings.reduce((sum, b) => {
             const b_buffer = (b.service_id as any)?.buffer_time || 0;
             const b_blocked_end = new Date(
@@ -249,7 +257,6 @@ export async function POST(request: Request) {
             return sum;
           }, 0);
 
-          // Sum up unexpired checkout locks holding down stock at this interval
           const locked_at_spot = active_locks.reduce((sum, l) => {
             const l_blocked_end = new Date(
               l.end_time.getTime() + candidate_buffer * 60_000,
@@ -299,8 +306,6 @@ export async function POST(request: Request) {
         session: db_session,
       });
 
-      // 6. One-time services: once the booking limit is reached, deactivate
-      // the service so it stops showing up for future bookings.
       if (service.is_one_time_booking) {
         const capacity = service.allow_multiple_bookings
           ? Number(service.max_bookings_per_slot) || 1
@@ -319,9 +324,43 @@ export async function POST(request: Request) {
           );
         }
       }
+
+      const [user, business] = await Promise.all([
+        User.findById(user_id).session(db_session),
+        Business.findById(service.business_id).session(db_session),
+      ]);
+
+      if (user && business) {
+        emailContext = {
+          userEmail: user.email,
+          userName: user.name || "Valued Customer",
+          userPhone: user.phone || "N/A",
+          businessEmail: business.email,
+          businessName: business.name || "Service Provider",
+          serviceName: service.title || service.name || "Booked Service",
+          bookingDate: start_date.toLocaleDateString("en-AU", {
+            dateStyle: "full",
+          }),
+          bookingTime: start_date.toLocaleTimeString("en-AU", {
+            timeStyle: "short",
+          }),
+          bookingId: new_booking._id.toString(),
+        };
+      }
     });
 
     logger.info({ booking_id: new_booking._id, user_id }, "Booking created");
+
+    if (emailContext) {
+      try {
+        await sendServiceBookingEmails(emailContext);
+      } catch (err) {
+        logger.error(
+          { err, booking_id: new_booking._id },
+          "Failed sending booking confirmation emails",
+        );
+      }
+    }
 
     return NextResponse.json(
       { success: true, message: "Booking confirmed", data: new_booking },
@@ -340,7 +379,6 @@ export async function POST(request: Request) {
     await db_session.endSession();
   }
 }
-
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {

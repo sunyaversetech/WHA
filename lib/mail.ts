@@ -249,3 +249,184 @@ export const sendEventMultipleTicketEmail = async (
     return { success: false };
   }
 };
+
+const generateUserBookingTemplate = (
+  serviceName: string,
+  bookingDate: string,
+  bookingTime: string,
+  userName: string,
+  businessName: string,
+  bookingId: string,
+) => {
+  return `
+    <div style="font-family: sans-serif; max-width: 640px; margin: 0 auto; border: 2px solid #051e3a; border-radius: 15px; overflow: hidden;">
+      
+      <!-- Header -->
+      <div style="background-color: #051e3a; padding: 28px 20px; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 26px; letter-spacing: 1px;">📅 Booking Confirmed</h1>
+        <p style="color: #a0b4c8; margin: 8px 0 0 0; font-size: 14px;">${businessName}</p>
+      </div>
+
+      <!-- Body -->
+      <div style="padding: 30px; color: #333;">
+        <p style="font-size: 17px; margin: 0 0 6px 0;">Hi <strong>${userName}</strong>,</p>
+        <p style="font-size: 15px; color: #555; margin: 0 0 24px 0;">
+          Your booking request for <strong>${serviceName}</strong> has been successfully placed! Here are your appointment details:
+        </p>
+
+        <!-- Service Details Card -->
+        <div style="background-color: #fafafa; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+            <tr>
+              <td style="padding: 8px 0; color: #666; width: 40%;">Booking ID:</td>
+              <td style="padding: 8px 0; font-weight: bold; color: #051e3a;">#${bookingId}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Service:</td>
+              <td style="padding: 8px 0; font-weight: bold; color: #333;">${serviceName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Date:</td>
+              <td style="padding: 8px 0; font-weight: bold; color: #333;">${bookingDate}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Time:</td>
+              <td style="padding: 8px 0; font-weight: bold; color: #333;">${bookingTime}</td>
+            </tr>
+          </table>
+        </div>
+
+        <p style="font-size: 14px; color: #555;">
+          If you need to make changes or cancel your booking, please reach out to <strong>${businessName}</strong> directly.
+        </p>
+
+        <!-- Note -->
+        <div style="margin-top: 24px; padding: 16px; background-color: #f0f7ff; border-left: 4px solid #051e3a; border-radius: 4px; font-size: 13px; color: #1e3a8a;">
+          ℹ️ <strong>Reminder:</strong> Please arrive 5-10 minutes prior to your scheduled time slot.
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="background-color: #f4f4f4; padding: 16px; text-align: center; font-size: 12px; color: #999;">
+        &copy; ${new Date().getFullYear()} Whats Happening Australia. All rights reserved.
+      </div>
+    </div>
+  `;
+};
+
+// ==========================================
+// 2. BUSINESS OWNER TEMPLATE (New Booking Alert)
+// ==========================================
+const generateBusinessBookingTemplate = (
+  serviceName: string,
+  bookingDate: string,
+  bookingTime: string,
+  userName: string,
+  userEmail: string,
+  userPhone: string,
+  bookingId: string,
+) => {
+  return `
+    <div style="font-family: sans-serif; max-width: 640px; margin: 0 auto; border: 2px solid #2e7d32; border-radius: 15px; overflow: hidden;">
+      
+      <!-- Header -->
+      <div style="background-color: #2e7d32; padding: 28px 20px; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 26px; letter-spacing: 1px;">🔔 New Booking Received</h1>
+        <p style="color: #c8e6c9; margin: 8px 0 0 0; font-size: 14px;">Booking Reference: #${bookingId}</p>
+      </div>
+
+      <!-- Body -->
+      <div style="padding: 30px; color: #333;">
+        <p style="font-size: 17px; margin: 0 0 16px 0;">You have received a new service booking!</p>
+
+        <!-- Customer Info Section -->
+        <h3 style="font-size: 15px; color: #2e7d32; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px;">Customer Details</h3>
+        <div style="background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 20px; font-size: 14px;">
+          <p style="margin: 0 0 8px 0;"><strong>Name:</strong> ${userName}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Email:</strong> <a href="mailto:${userEmail}" style="color: #2e7d32;">${userEmail}</a></p>
+          <p style="margin: 0;"><strong>Phone:</strong> ${userPhone}</p>
+        </div>
+
+        <!-- Appointment Info Section -->
+        <h3 style="font-size: 15px; color: #2e7d32; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px;">Appointment Details</h3>
+        <div style="background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 20px; font-size: 14px;">
+          <p style="margin: 0 0 8px 0;"><strong>Service Requested:</strong> ${serviceName}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Date:</strong> ${bookingDate}</p>
+          <p style="margin: 0;"><strong>Time Slot:</strong> ${bookingTime}</p>
+        </div>
+
+        <!-- Action Callout -->
+        <div style="padding: 16px; background-color: #e8f5e9; border-left: 4px solid #2e7d32; border-radius: 4px; font-size: 13px; color: #1b5e20;">
+          💡 <strong>Action Required:</strong> Log in to your management dashboard if you need to reschedule or contact the customer directly.
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="background-color: #f4f4f4; padding: 16px; text-align: center; font-size: 12px; color: #999;">
+        &copy; ${new Date().getFullYear()} Whats Happening Australia. All rights reserved.
+      </div>
+    </div>
+  `;
+};
+
+// ==========================================
+// 3. SERVICE EMAIL SENDER FUNCTION
+// ==========================================
+export const sendServiceBookingEmails = async (bookingDetails: {
+  userEmail: string;
+  userName: string;
+  userPhone: string;
+  businessEmail: string;
+  businessName: string;
+  serviceName: string;
+  bookingDate: string;
+  bookingTime: string;
+  bookingId: string;
+}) => {
+  const client = new MailtrapClient({ token: process.env.MAIL_TOKEN! });
+  const sender = {
+    email: "no-reply@whaustralia.com",
+    name: "Whats Happening Australia",
+  };
+
+  try {
+    // 1. Send confirmation email to the User
+    const userMailPromise = client.send({
+      from: sender,
+      to: [{ email: bookingDetails.userEmail }],
+      subject: `Booking Confirmed: ${bookingDetails.serviceName} with ${bookingDetails.businessName}`,
+      html: generateUserBookingTemplate(
+        bookingDetails.serviceName,
+        bookingDetails.bookingDate,
+        bookingDetails.bookingTime,
+        bookingDetails.userName,
+        bookingDetails.businessName,
+        bookingDetails.bookingId,
+      ),
+    });
+
+    // 2. Send notification email to the Business Owner
+    const businessMailPromise = client.send({
+      from: sender,
+      to: [{ email: bookingDetails.businessEmail }],
+      subject: `New Booking: ${bookingDetails.serviceName} - ${bookingDetails.userName}`,
+      html: generateBusinessBookingTemplate(
+        bookingDetails.serviceName,
+        bookingDetails.bookingDate,
+        bookingDetails.bookingTime,
+        bookingDetails.userName,
+        bookingDetails.userEmail,
+        bookingDetails.userPhone,
+        bookingDetails.bookingId,
+      ),
+    });
+
+    // Execute both concurrently
+    await Promise.all([userMailPromise, businessMailPromise]);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Service Booking Email Error:", error);
+    return { success: false };
+  }
+};

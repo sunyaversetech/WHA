@@ -364,7 +364,6 @@ function FiltersModal({
           )}
         </div>
 
-        {/* Footer */}
         <div
           style={{
             padding: "16px 32px",
