@@ -13,6 +13,7 @@ import MobileBusinessSearchWithDates from "@/components/ResuableComponents/Mobil
 import { useGetLandingPageData } from "@/services/landing.service";
 import { useFilteredBusinesses } from "@/hooks/use-filtered-data";
 import LandingPageSkeleton from "./LandingPageSkeleton";
+import { EMPLOYEE_CATEGORIES } from "@/lib/data/business-categories";
 
 /* ══════════════════════════════════════
    STATIC DATA
@@ -350,7 +351,7 @@ export default function LandingPage() {
             <MobileBusinessSearchWithDates variant="card" />
           </div>
 
-          <div
+          {/* <div
             style={{
               fontSize: 15,
               fontWeight: 600,
@@ -358,8 +359,8 @@ export default function LandingPage() {
               marginTop: 36,
             }}>
             409,216 appointments booked today
-          </div>
-          <button
+          </div> */}
+          {/* <button
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -376,7 +377,7 @@ export default function LandingPage() {
             }}>
             Get the app
             <Smartphone size={17} strokeWidth={2} />
-          </button>
+          </button> */}
         </div>
       </section>
 
@@ -890,9 +891,9 @@ export default function LandingPage() {
                   </span>
                 ))}
               </div>
-              <div style={{ fontSize: 14, color: "#7c899c", fontWeight: 600 }}>
+              {/* <div style={{ fontSize: 14, color: "#7c899c", fontWeight: 600 }}>
                 Over 1,953 reviews on Trustpilot
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -971,7 +972,7 @@ export default function LandingPage() {
         </div>
 
         {/* City / service columns */}
-        <div
+        {/* <div
           className="wha-city"
           style={{
             display: "grid",
@@ -1011,7 +1012,7 @@ export default function LandingPage() {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
 
         {/* Service chips */}
         <div
@@ -1023,10 +1024,10 @@ export default function LandingPage() {
             paddingTop: 36,
             borderTop: "1px solid #eef1f5",
           }}>
-          {SERVICE_CHIPS.map((chip) => (
+          {EMPLOYEE_CATEGORIES.map((chip) => (
             <button
-              key={chip}
-              onClick={() => goService(chip)}
+              key={chip.label}
+              onClick={() => goService(chip.value)}
               style={{
                 border: "1px solid #e6ebf2",
                 background: "#fff",
@@ -1037,7 +1038,7 @@ export default function LandingPage() {
                 borderRadius: 9999,
                 cursor: "pointer",
               }}>
-              {chip}
+              {chip.label}
             </button>
           ))}
         </div>

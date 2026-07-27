@@ -473,8 +473,8 @@ function ConfirmDeleteShiftsDialog({
         </div>
         <p className="text-sm text-gray-400 mb-6 leading-relaxed">
           This will clear the entire weekly repeating schedule for{" "}
-          <span className="text-gray-900 font-semibold">{emp.full_name}</span>. Any
-          day-specific overrides will remain. This action cannot be undone.
+          <span className="text-gray-900 font-semibold">{emp.full_name}</span>.
+          Any day-specific overrides will remain. This action cannot be undone.
         </p>
         <div className="flex gap-2 justify-end">
           <button
@@ -556,20 +556,20 @@ function SelectField({
   className?: string;
 }) {
   return (
-    <div className="relative text-gray-100">
+    <div className="relative text-blue-950">
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={cn(SEL, className, "text-gray-100")}>
+        className={cn(SEL, className, "text-blue-950")}>
         {options.map((o) => (
-          <option key={o} value={o} className="text-gray-100">
+          <option key={o} value={o} className="text-blue-950">
             {o}
           </option>
         ))}
       </select>
       <ChevronDown
         size={13}
-        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-100 pointer-events-none"
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-blue-950 pointer-events-none"
       />
     </div>
   );
@@ -935,7 +935,9 @@ function TimeOffDialog({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <div>
-            <p className="text-sm font-semibold text-gray-900 mb-2">Team member</p>
+            <p className="text-sm font-semibold text-gray-900 mb-2">
+              Team member
+            </p>
             <div className="relative">
               <select
                 value={empId}
@@ -1317,13 +1319,12 @@ function RepeatingShiftsPanel({
 
           <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex items-start gap-2.5">
             <Info size={14} className="text-gray-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-gray-200 leading-relaxed">
+            <p className="text-xs text-gray-500 leading-relaxed">
               Team members will not be scheduled on business closed periods.
             </p>
           </div>
         </div>
 
-        {/* Day schedule */}
         <div>
           <div className="flex flex-col items-baseline gap-1 mb-5">
             <h2 className="text-lg font-bold text-gray-900">{scheduleLabel}</h2>

@@ -237,7 +237,14 @@ function FiltersModal({
                 <button
                   onClick={() => setSortBy("best")}
                   style={sortBy === "best" ? SORT_SEL : SORT_BASE}>
-                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                  <svg
+                    width={22}
+                    height={22}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round">
                     <circle cx={12} cy={12} r={9} />
                     <circle cx={12} cy={12} r={4.5} />
                   </svg>
@@ -246,7 +253,14 @@ function FiltersModal({
                 <button
                   onClick={() => setSortBy("nearest")}
                   style={sortBy === "nearest" ? SORT_SEL : SORT_BASE}>
-                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                  <svg
+                    width={22}
+                    height={22}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round">
                     <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" />
                     <circle cx={12} cy={10} r={2.5} />
                   </svg>
@@ -255,7 +269,14 @@ function FiltersModal({
                 <button
                   onClick={() => setSortBy("top")}
                   style={sortBy === "top" ? SORT_SEL : SORT_BASE}>
-                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                  <svg
+                    width={22}
+                    height={22}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round">
                     <path d="M12 3.5l2.6 5.6 6 .5-4.5 4 1.3 5.9L12 16.9 6.6 19.5l1.3-5.9-4.5-4 6-.5z" />
                   </svg>
                   Top rated
@@ -270,11 +291,14 @@ function FiltersModal({
                   justifyContent: "space-between",
                   marginBottom: 12,
                 }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: "#0f2748" }}>
+                <span
+                  style={{ fontSize: 16, fontWeight: 700, color: "#0f2748" }}>
                   Max price
                 </span>
-                <span style={{ fontSize: 15, fontWeight: 700, color: "#0f2748" }}>
-                  A${maxPrice}{maxPrice >= 1400 ? "+" : ""}
+                <span
+                  style={{ fontSize: 15, fontWeight: 700, color: "#0f2748" }}>
+                  A${maxPrice}
+                  {maxPrice >= 1400 ? "+" : ""}
                 </span>
               </div>
               <input
@@ -294,7 +318,7 @@ function FiltersModal({
               />
 
               {/* Verified pros */}
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#0f2748", marginBottom: 16 }}>
+              {/* <div style={{ fontSize: 16, fontWeight: 700, color: "#0f2748", marginBottom: 16 }}>
                 Only show
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 14, paddingBottom: 6 }}>
@@ -335,7 +359,7 @@ function FiltersModal({
                     }}
                   />
                 </div>
-              </div>
+              </div> */}
             </>
           )}
         </div>
@@ -426,7 +450,12 @@ export default function BusinessesClientPage() {
 
   const boundsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleBoundsChange = useCallback(
-    (bounds: { swLat: number; swLng: number; neLat: number; neLng: number }) => {
+    (bounds: {
+      swLat: number;
+      swLng: number;
+      neLat: number;
+      neLng: number;
+    }) => {
       if (boundsTimerRef.current) clearTimeout(boundsTimerRef.current);
       boundsTimerRef.current = setTimeout(() => {
         const params = new URLSearchParams(searchParams.toString());
@@ -479,8 +508,7 @@ export default function BusinessesClientPage() {
     // Cap at 1000 km when geo coords are present
     if (userLat !== null && userLng !== null) {
       return sorted.filter(
-        (b: any) =>
-          typeof b.distance !== "number" || b.distance <= 1000 * 1000,
+        (b: any) => typeof b.distance !== "number" || b.distance <= 1000 * 1000,
       );
     }
     return sorted;
