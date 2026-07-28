@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { formatDistanceToNow } from "date-fns";
 
 const PROTECTED_PATHS = [
   "/dashboard/bookings",
@@ -45,32 +46,24 @@ const NOTIF_CATEGORIES: { label: NotifCategory; icon: React.ReactNode }[] = [
   { label: "Actions", icon: <Zap size={18} /> },
 ];
 
-const SAMPLE_NOTIFICATIONS = [
-  {
-    id: 1,
-    category: "Appointments" as NotifCategory,
-    title: "New appointment (DEMO)",
-    time: "5 days ago",
-    body: "12:00 Tue, Jun 30 Blow Dry for Jack booked with Wendy",
-    initials: "J",
-  },
-  {
-    id: 2,
-    category: "Appointments" as NotifCategory,
-    title: "New appointment (DEMO)",
-    time: "5 days ago",
-    body: "13:00 Tue, Jun 30 Hair Color for Jane booked with you",
-    initials: "J",
-  },
-  {
-    id: 3,
-    category: "Appointments" as NotifCategory,
-    title: "New appointment (DEMO)",
-    time: "5 days ago",
-    body: "11:00 Tue, Jun 30 Haircut for John booked with you",
-    initials: "J",
-  },
-];
+type NotifItem = {
+  _id: string;
+  type: "appointment" | "review";
+  title: string;
+  body: string;
+  is_read: boolean;
+  created_at: string;
+};
+
+const TYPE_TO_CATEGORY: Record<NotifItem["type"], NotifCategory> = {
+  appointment: "Appointments",
+  review: "Reviews",
+};
+
+const TYPE_ICON: Record<NotifItem["type"], React.ReactNode> = {
+  appointment: <CalendarDays size={9} className="text-white" />,
+  review: <Star size={9} className="text-white" />,
+};
 
 const SAMPLE_CLIENTS = [
   { id: 1, name: "Jack Doe", email: "jack@example.com" },
@@ -235,12 +228,18 @@ function SearchOverlay({
 function NotificationDrawer({
   open,
   onClose,
+  notifications,
+  onMarkRead,
 }: {
   open: boolean;
   onClose: () => void;
+  notifications: NotifItem[];
+  onMarkRead: (id: string) => void;
 }) {
   const [category, setCategory] = useState<NotifCategory>("Appointments");
-  const filtered = SAMPLE_NOTIFICATIONS.filter((n) => n.category === category);
+  const filtered = notifications.filter(
+    (n) => TYPE_TO_CATEGORY[n.type] === category,
+  );
   if (!open) return null;
   return (
     <>
@@ -304,20 +303,23 @@ function NotificationDrawer({
               </p>
             ) : (
               <div className="space-y-2.5">
-                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest px-1 mb-3">
-                  Read
-                </p>
                 {filtered.map((n) => (
                   <div
-                    key={n.id}
-                    className="flex items-start gap-3 bg-[#1a1a1a] rounded-xl px-4 py-3.5 border border-[#222] cursor-pointer hover:bg-[#1e1e1e] transition-colors">
+                    key={n._id}
+                    onClick={() => !n.is_read && onMarkRead(n._id)}
+                    className={cn(
+                      "flex items-start gap-3 rounded-xl px-4 py-3.5 border cursor-pointer transition-colors",
+                      n.is_read
+                        ? "bg-[#1a1a1a] border-[#222] hover:bg-[#1e1e1e]"
+                        : "bg-[#1a2048] border-[#2a3568] hover:bg-[#202a5c]",
+                    )}>
                     <div className="relative shrink-0">
                       <div className="w-9 h-9 rounded-full bg-[#3a4580] flex items-center justify-center text-sm font-bold text-white">
-                        {n.initials}
+                        {TYPE_ICON[n.type]}
                       </div>
-                      <div className="absolute -bottom-1 -right-1 w-[18px] h-[18px] rounded-full bg-[#4f63d2] border-2 border-[#141414] flex items-center justify-center">
-                        <CalendarDays size={9} className="text-white" />
-                      </div>
+                      {!n.is_read && (
+                        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-[#141414]" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
@@ -325,7 +327,9 @@ function NotificationDrawer({
                           {n.title}
                         </p>
                         <span className="text-[11px] text-gray-500 shrink-0 mt-0.5">
-                          {n.time}
+                          {formatDistanceToNow(new Date(n.created_at), {
+                            addSuffix: true,
+                          })}
                         </span>
                       </div>
                       <p className="text-xs text-gray-400 mt-1 leading-relaxed">
@@ -354,6 +358,8 @@ export default function DashboardLayoutContent({
   const [showProfile, setShowProfile] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [notifications, setNotifications] = useState<NotifItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (session?.user?.isblocked) router.push("/blocked");
@@ -364,6 +370,25 @@ export default function DashboardLayoutContent({
   }, [pathname, session, router]);
 
   const isBusiness = session?.user?.category === "business";
+
+  useEffect(() => {
+    if (!isBusiness) return;
+    fetch("/api/notifications")
+      .then((res) => res.json())
+      .then((json) => {
+        setNotifications(json.data ?? []);
+        setUnreadCount(json.unread_count ?? 0);
+      });
+  }, [isBusiness]);
+
+  const markNotificationRead = async (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n._id === id ? { ...n, is_read: true } : n)),
+    );
+    setUnreadCount((c) => Math.max(0, c - 1));
+    await fetch(`/api/notifications/${id}`, { method: "PATCH" });
+  };
+
   const displayName =
     session?.user?.name ?? (session?.user as any)?.business_name ?? "User";
   const initials = displayName.slice(0, 2).toUpperCase();
@@ -390,9 +415,11 @@ export default function DashboardLayoutContent({
                 <TopBarBtn onClick={() => setShowNotif(true)}>
                   <Bell size={17} />
                 </TopBarBtn>
-                <span className="absolute top-1 right-1 w-[15px] h-[15px] rounded-full bg-red-500 text-[9px] font-bold text-white flex items-center justify-center border-2 border-[#111111] pointer-events-none">
-                  3
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-[15px] h-[15px] rounded-full bg-red-500 text-[9px] font-bold text-white flex items-center justify-center border-2 border-[#111111] pointer-events-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </div>
               <TopBarBtn onClick={() => {}}>
                 <MessageCircle size={17} />
@@ -433,6 +460,8 @@ export default function DashboardLayoutContent({
       <NotificationDrawer
         open={showNotif}
         onClose={() => setShowNotif(false)}
+        notifications={notifications}
+        onMarkRead={markNotificationRead}
       />
     </div>
   );

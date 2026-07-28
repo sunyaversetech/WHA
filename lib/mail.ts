@@ -369,9 +369,6 @@ const generateBusinessBookingTemplate = (
   `;
 };
 
-// ==========================================
-// 3. SERVICE EMAIL SENDER FUNCTION
-// ==========================================
 export const sendServiceBookingEmails = async (bookingDetails: {
   userEmail: string;
   userName: string;
@@ -433,7 +430,9 @@ export const sendServiceBookingEmails = async (bookingDetails: {
   }
 
   return {
-    success: userResult.status === "fulfilled" && businessResult.status === "fulfilled",
+    success:
+      userResult.status === "fulfilled" &&
+      businessResult.status === "fulfilled",
     userSent: userResult.status === "fulfilled",
     businessSent: businessResult.status === "fulfilled",
   };

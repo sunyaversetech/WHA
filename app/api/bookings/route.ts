@@ -12,6 +12,7 @@ import { authOptions } from "../auth/[...nextauth]/route";
 import logger from "@/lib/logger";
 import { sendServiceBookingEmails } from "@/lib/mail";
 import User from "@/server/models/Auth.model";
+import Notification from "@/server/models/Notification.model";
 
 const create_booking_schema = z.object({
   service_id: z.string().min(1),
@@ -349,6 +350,19 @@ export async function POST(request: Request) {
           bookingId: new_booking._id.toString(),
         };
       }
+
+      await Notification.create(
+        [
+          {
+            business_id: service.business_id,
+            type: "appointment",
+            title: "New appointment",
+            body: `${user?.name || "A customer"} booked ${service.title || service.name || "a service"} for ${start_date.toLocaleDateString("en-AU", { dateStyle: "medium" })}`,
+            related_id: new_booking._id,
+          },
+        ],
+        { session: db_session },
+      );
     });
     console.log(emailContext);
     logger.info({ booking_id: new_booking._id, user_id }, "Booking created");
