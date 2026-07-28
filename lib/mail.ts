@@ -389,9 +389,8 @@ export const sendServiceBookingEmails = async (bookingDetails: {
     name: "Whats Happening Australia",
   };
 
-  try {
-    // 1. Send confirmation email to the User
-    const userMailPromise = client.send({
+  const [userResult, businessResult] = await Promise.allSettled([
+    client.send({
       from: sender,
       to: [{ email: bookingDetails.userEmail }],
       subject: `Booking Confirmed: ${bookingDetails.serviceName} with ${bookingDetails.businessName}`,
@@ -403,10 +402,8 @@ export const sendServiceBookingEmails = async (bookingDetails: {
         bookingDetails.businessName,
         bookingDetails.bookingId,
       ),
-    });
-
-    // 2. Send notification email to the Business Owner
-    const businessMailPromise = client.send({
+    }),
+    client.send({
       from: sender,
       to: [{ email: bookingDetails.businessEmail }],
       subject: `New Booking: ${bookingDetails.serviceName} - ${bookingDetails.userName}`,
@@ -419,14 +416,25 @@ export const sendServiceBookingEmails = async (bookingDetails: {
         bookingDetails.userPhone,
         bookingDetails.bookingId,
       ),
-    });
+    }),
+  ]);
 
-    // Execute both concurrently
-    await Promise.all([userMailPromise, businessMailPromise]);
-
-    return { success: true };
-  } catch (error) {
-    console.error("Service Booking Email Error:", error);
-    return { success: false };
+  if (userResult.status === "rejected") {
+    console.error(
+      `Booking email to user (${bookingDetails.userEmail}) failed:`,
+      userResult.reason,
+    );
   }
+  if (businessResult.status === "rejected") {
+    console.error(
+      `Booking email to business (${bookingDetails.businessEmail}) failed:`,
+      businessResult.reason,
+    );
+  }
+
+  return {
+    success: userResult.status === "fulfilled" && businessResult.status === "fulfilled",
+    userSent: userResult.status === "fulfilled",
+    businessSent: businessResult.status === "fulfilled",
+  };
 };

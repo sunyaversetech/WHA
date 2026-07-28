@@ -12,7 +12,6 @@ import { authOptions } from "../auth/[...nextauth]/route";
 import logger from "@/lib/logger";
 import { sendServiceBookingEmails } from "@/lib/mail";
 import User from "@/server/models/Auth.model";
-import Business from "@/server/models/BusinessCompletion.model";
 
 const create_booking_schema = z.object({
   service_id: z.string().min(1),
@@ -327,8 +326,10 @@ export async function POST(request: Request) {
 
       const [user, business] = await Promise.all([
         User.findById(user_id).session(db_session),
-        Business.findById(service.business_id).session(db_session),
+        User.findById(service.business_id).session(db_session),
       ]);
+
+      console.log(user);
 
       if (user && business) {
         emailContext = {
@@ -336,7 +337,8 @@ export async function POST(request: Request) {
           userName: user.name || "Valued Customer",
           userPhone: user.phone || "N/A",
           businessEmail: business.email,
-          businessName: business.name || "Service Provider",
+          businessName:
+            business.business_name || business.name || "Service Provider",
           serviceName: service.title || service.name || "Booked Service",
           bookingDate: start_date.toLocaleDateString("en-AU", {
             dateStyle: "full",
@@ -348,7 +350,7 @@ export async function POST(request: Request) {
         };
       }
     });
-
+    console.log(emailContext);
     logger.info({ booking_id: new_booking._id, user_id }, "Booking created");
 
     if (emailContext) {
