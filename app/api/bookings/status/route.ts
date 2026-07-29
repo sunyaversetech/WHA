@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Booking from "@/server/models/Booking.model";
 import { connectToDb } from "@/lib/db";
+import { notifyBookingChange } from "@/lib/booking-notifications";
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending: ["confirmed", "rescheduled", "cancelled"],
@@ -58,6 +59,10 @@ export async function PATCH(request: Request) {
     }
 
     await booking.save();
+
+    if (newStatus === "cancelled" || newStatus === "rescheduled") {
+      await notifyBookingChange(booking._id.toString(), newStatus, "business");
+    }
 
     return NextResponse.json({
       success: true,

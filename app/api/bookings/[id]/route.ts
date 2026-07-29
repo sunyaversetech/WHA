@@ -4,6 +4,7 @@ import { Employee } from "@/server/models/Employee.model";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "../../auth/[...nextauth]/route";
+import { notifyBookingChange } from "@/lib/booking-notifications";
 
 const VALID_STATUSES = [
   "pending", "confirmed", "rescheduled", "completed", "cancelled", "no_show", "refunded",
@@ -85,6 +86,12 @@ export async function PATCH(
       .populate("employee_id", "full_name calendar_color employee_photo job_title")
       .populate("user_id", "name email")
       .lean();
+
+    if (body.status === "cancelled") {
+      await notifyBookingChange(id, "cancelled", "business");
+    } else if (body.start_time) {
+      await notifyBookingChange(id, "rescheduled", "business");
+    }
 
     return NextResponse.json({ success: true, data: updated });
   } catch (err: any) {

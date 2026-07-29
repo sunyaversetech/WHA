@@ -437,3 +437,135 @@ export const sendServiceBookingEmails = async (bookingDetails: {
     businessSent: businessResult.status === "fulfilled",
   };
 };
+
+// ==========================================
+// 4. RESCHEDULE / CANCELLATION TEMPLATE
+// ==========================================
+const generateBookingChangeTemplate = ({
+  headline,
+  accentColor,
+  message,
+  serviceName,
+  bookingDate,
+  bookingTime,
+  bookingId,
+}: {
+  headline: string;
+  accentColor: string;
+  message: string;
+  serviceName: string;
+  bookingDate: string;
+  bookingTime: string;
+  bookingId: string;
+}) => `
+  <div style="font-family: sans-serif; max-width: 640px; margin: 0 auto; border: 2px solid ${accentColor}; border-radius: 15px; overflow: hidden;">
+    <div style="background-color: ${accentColor}; padding: 28px 20px; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 1px;">${headline}</h1>
+    </div>
+    <div style="padding: 30px; color: #333;">
+      <p style="font-size: 15px; color: #555; margin: 0 0 24px 0;">${message}</p>
+      <div style="background-color: #fafafa; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+          <tr>
+            <td style="padding: 8px 0; color: #666; width: 40%;">Booking ID:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #051e3a;">#${bookingId}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #666;">Service:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #333;">${serviceName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #666;">Date:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #333;">${bookingDate}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #666;">Time:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #333;">${bookingTime}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div style="background-color: #f4f4f4; padding: 16px; text-align: center; font-size: 12px; color: #999;">
+      &copy; ${new Date().getFullYear()} Whats Happening Australia. All rights reserved.
+    </div>
+  </div>
+`;
+
+export const sendBookingChangeEmails = async (
+  change: "rescheduled" | "cancelled",
+  details: {
+    userEmail: string;
+    userName: string;
+    businessEmail: string;
+    businessName: string;
+    serviceName: string;
+    bookingDate: string;
+    bookingTime: string;
+    bookingId: string;
+  },
+) => {
+  const client = new MailtrapClient({ token: process.env.MAIL_TOKEN! });
+  const sender = {
+    email: "no-reply@whaustralia.com",
+    name: "Whats Happening Australia",
+  };
+  const accentColor = change === "cancelled" ? "#b3261e" : "#8a5a00";
+  const headline =
+    change === "cancelled" ? "Booking Cancelled" : "Booking Rescheduled";
+
+  const [userResult, businessResult] = await Promise.allSettled([
+    client.send({
+      from: sender,
+      to: [{ email: details.userEmail }],
+      subject: `${headline}: ${details.serviceName} with ${details.businessName}`,
+      html: generateBookingChangeTemplate({
+        headline,
+        accentColor,
+        message:
+          change === "cancelled"
+            ? `Your booking for <strong>${details.serviceName}</strong> with <strong>${details.businessName}</strong> has been cancelled.`
+            : `Your booking for <strong>${details.serviceName}</strong> with <strong>${details.businessName}</strong> has been rescheduled. Here are the new details:`,
+        serviceName: details.serviceName,
+        bookingDate: details.bookingDate,
+        bookingTime: details.bookingTime,
+        bookingId: details.bookingId,
+      }),
+    }),
+    client.send({
+      from: sender,
+      to: [{ email: details.businessEmail }],
+      subject: `${headline}: ${details.serviceName} - ${details.userName}`,
+      html: generateBookingChangeTemplate({
+        headline,
+        accentColor,
+        message:
+          change === "cancelled"
+            ? `${details.userName}'s booking for <strong>${details.serviceName}</strong> has been cancelled.`
+            : `${details.userName}'s booking for <strong>${details.serviceName}</strong> has been rescheduled. Updated details:`,
+        serviceName: details.serviceName,
+        bookingDate: details.bookingDate,
+        bookingTime: details.bookingTime,
+        bookingId: details.bookingId,
+      }),
+    }),
+  ]);
+
+  if (userResult.status === "rejected") {
+    console.error(
+      `Booking ${change} email to user (${details.userEmail}) failed:`,
+      userResult.reason,
+    );
+  }
+  if (businessResult.status === "rejected") {
+    console.error(
+      `Booking ${change} email to business (${details.businessEmail}) failed:`,
+      businessResult.reason,
+    );
+  }
+
+  return {
+    success:
+      userResult.status === "fulfilled" &&
+      businessResult.status === "fulfilled",
+  };
+};

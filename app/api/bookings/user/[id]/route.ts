@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "../../../auth/[...nextauth]/route";
 import Booking from "@/server/models/Booking.model";
+import { notifyBookingChange } from "@/lib/booking-notifications";
 
 const CANCELLABLE = ["pending", "confirmed", "rescheduled"];
 const RESCHEDULABLE = ["pending", "confirmed", "rescheduled"];
@@ -37,6 +38,7 @@ export async function PATCH(
       }
       booking.status = "cancelled";
       await booking.save();
+      await notifyBookingChange(booking._id.toString(), "cancelled", "user");
       return NextResponse.json({ data: booking });
     }
 
@@ -66,6 +68,7 @@ export async function PATCH(
       booking.duration = duration;
       booking.status = "rescheduled";
       await booking.save();
+      await notifyBookingChange(booking._id.toString(), "rescheduled", "user");
       return NextResponse.json({ data: booking });
     }
 
