@@ -9,6 +9,7 @@ import { authOptions } from "../auth/[...nextauth]/route";
 import "@/server/models/Auth.model";
 import mongoose from "mongoose";
 import Notification from "@/server/models/Notification.model";
+import { resolveBusinessBySlugOrId } from "@/lib/resolve-business";
 
 export const reviewSchema = z.object({
   business_id: z.string().min(1, "Business ID is required"),
@@ -59,13 +60,16 @@ export async function POST(req: NextRequest) {
       comment,
     });
 
-    await Notification.create({
-      business_id,
-      type: "review",
-      title: "New review",
-      body: `${rating}-star review: "${comment.slice(0, 80)}"`,
-      related_id: newReview._id,
-    });
+    const business = await resolveBusinessBySlugOrId(business_id);
+    if (business) {
+      await Notification.create({
+        business_id: business._id.toString(),
+        type: "review",
+        title: "New review",
+        body: `${rating}-star review: "${comment.slice(0, 80)}"`,
+        related_id: newReview._id,
+      });
+    }
 
     return NextResponse.json(
       {

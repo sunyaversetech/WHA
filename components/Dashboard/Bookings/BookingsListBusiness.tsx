@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Eye,
   Calendar,
@@ -121,6 +122,19 @@ export default function BookingsTable({
     null,
   );
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const targetBookingId = searchParams.get("bookingId");
+  const [appliedBookingId, setAppliedBookingId] = useState<string | null>(
+    null,
+  );
+
+  if (targetBookingId && targetBookingId !== appliedBookingId) {
+    const match = bookings.find((b) => b._id === targetBookingId);
+    if (match) {
+      setAppliedBookingId(targetBookingId);
+      setSelectedBooking(match);
+    }
+  }
 
   const { mutate: updateStatus, isPending: isUpdating } =
     useUpdateBookingStatus();

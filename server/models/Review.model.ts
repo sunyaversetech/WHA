@@ -1,10 +1,17 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+export interface IReviewReply {
+  user: mongoose.Types.ObjectId;
+  text: string;
+  created_at: Date;
+}
+
 export interface IReview extends Document {
   business_id: string;
   user: mongoose.Types.ObjectId;
   rating: number;
   comment: string;
+  replies: IReviewReply[];
   created_at: Date;
   updated_at: Date;
 }
@@ -33,6 +40,19 @@ const ReviewSchema: Schema<IReview> = new Schema(
       trim: true,
       minlength: [10, "Comment must be at least 10 characters"],
       maxlength: [500, "Comment cannot exceed 500 characters"],
+    },
+    replies: {
+      type: [
+        new Schema(
+          {
+            user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+            text: { type: String, required: true, maxlength: 500 },
+            created_at: { type: Date, default: Date.now },
+          },
+          { _id: true },
+        ),
+      ],
+      default: [],
     },
   },
   {

@@ -447,10 +447,7 @@ const STATUS_STYLES: Record<string, { badge: string; label: string }> = {
   },
 };
 
-function getStatusTransitions(
-  status: string,
-  bookingDate: Date,
-): string[] {
+function getStatusTransitions(status: string, bookingDate: Date): string[] {
   const today = new Date();
   const isToday =
     bookingDate.getFullYear() === today.getFullYear() &&
@@ -2942,24 +2939,20 @@ export default function Calendar() {
   if (empLoading && !empData) return <CalendarSkeleton />;
 
   return (
-    <div className="bg-white text-gray-900 mt-2">
-      {/* ── Sticky toolbar ── */}
+    <div className="bg-white text-gray-900 mt-5">
       <div
         ref={toolbarRef}
-        className="sticky bg-white z-30 border-b border-gray-200"
-        style={{ top: 50 }}>
-        {/* ── Primary row (all viewports) ── */}
+        className="sticky bg-white z-20 border-b border-gray-200"
+        style={{ top: 60 }}>
         <div
           className="flex max-sm:flex-col max-sm:items-start items-center gap-2 mx-5 px-3 md:px-4"
           style={{ height: 50 }}>
-          {/* Today — desktop only */}
           <button
             onClick={goToday}
             className="hidden sm:block px-3 py-1.5 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-full hover:bg-gray-100 transition-colors shrink-0">
             Today
           </button>
 
-          {/* Date nav */}
           <div className="flex max-sm:mt-2 items-center bg-gray-50 border border-gray-200 rounded-full overflow-hidden shrink-0">
             <button
               onClick={goPrev}
@@ -2976,7 +2969,6 @@ export default function Calendar() {
             </button>
           </div>
 
-          {/* Filter — desktop only */}
           <div className="hidden sm:block shrink-0">
             <TeamFilterDropdown
               employees={allEmployees}
@@ -2989,9 +2981,7 @@ export default function Calendar() {
 
           <div className="flex-1" />
 
-          {/* Desktop right controls */}
           <div className="hidden sm:flex items-center gap-1.5 shrink-0">
-            {/* Mode toggle */}
             <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
               {(["employee", "resource"] as CalendarMode[]).map((m) => (
                 <button
@@ -3017,7 +3007,7 @@ export default function Calendar() {
                 </button>
               ))}
             </div>
-            {/* Refresh */}
+
             <button
               onClick={() => refetch()}
               disabled={bookingLoading}
@@ -3027,7 +3017,7 @@ export default function Calendar() {
                 className={cn(bookingLoading && "animate-spin")}
               />
             </button>
-            {/* View toggle */}
+
             <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
               {(["day", "week"] as CalendarView[]).map((v) => (
                 <button
@@ -3049,7 +3039,6 @@ export default function Calendar() {
             />
           </div>
 
-          {/* Mobile right controls */}
           <div className="sm:hidden flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => refetch()}
@@ -3067,9 +3056,7 @@ export default function Calendar() {
           </div>
         </div>
 
-        {/* ── Secondary row — mobile only ── */}
         <div className="sm:hidden flex mt-14 flex-col items-start gap-2 px-3 pb-2.5">
-          {/* Mode toggle */}
           <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
             {(["employee", "resource"] as CalendarMode[]).map((m) => (
               <button
@@ -3089,7 +3076,7 @@ export default function Calendar() {
               </button>
             ))}
           </div>
-          {/* View toggle */}
+
           <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full p-0.5 gap-0.5">
             {(["day", "week"] as CalendarView[]).map((v) => (
               <button
@@ -3106,7 +3093,7 @@ export default function Calendar() {
             ))}
           </div>
           <div className="flex-1" />
-          {/* Filter */}
+
           <TeamFilterDropdown
             employees={allEmployees}
             services={resourceServices}
@@ -3117,7 +3104,6 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* ── Week mobile day tabs ── */}
       {view === "week" && (
         <MobileDayTabs
           weekDays={weekDays}
@@ -3129,7 +3115,6 @@ export default function Calendar() {
         />
       )}
 
-      {/* ── Loading ── */}
       {(bookingLoading || empLoading) && (
         <div className="flex items-center justify-center py-3 gap-2 border-b border-gray-200">
           <Loader2 size={14} className="animate-spin text-[#051e3a]" />
@@ -3137,7 +3122,6 @@ export default function Calendar() {
         </div>
       )}
 
-      {/* ── Calendar grid — desktop ── */}
       <div className="hidden sm:block">
         {view === "day" ? (
           <DayView
@@ -3163,7 +3147,6 @@ export default function Calendar() {
         )}
       </div>
 
-      {/* ── Calendar grid — mobile (single day always) ── */}
       <div className="sm:hidden">
         <DayView
           date={view === "week" ? mobileDate : currentDate}
@@ -3188,7 +3171,6 @@ export default function Calendar() {
         />
       </div>
 
-      {/* ── Slot context menu ── */}
       {slotClick && (
         <SlotContextMenu
           slot={slotClick}
@@ -3198,7 +3180,6 @@ export default function Calendar() {
         />
       )}
 
-      {/* ── Appointment modal ── */}
       {openModal === "appointment" && (
         <AppointmentWizard
           employees={allEmployees}
@@ -3212,7 +3193,6 @@ export default function Calendar() {
         />
       )}
 
-      {/* ── Blocked time modal ── */}
       {openModal === "blocked_time" && (
         <BlockedTimeModal
           employees={allEmployees}
@@ -3226,7 +3206,6 @@ export default function Calendar() {
         />
       )}
 
-      {/* ── Delete blocked time confirmation ── */}
       {deletingBlock && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -3265,7 +3244,6 @@ export default function Calendar() {
         </div>
       )}
 
-      {/* ── Booking detail ── */}
       {selectedBooking && (
         <BookingDetailPanel
           booking={selectedBooking}

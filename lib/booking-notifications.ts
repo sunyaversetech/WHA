@@ -44,7 +44,8 @@ export async function notifyBookingChange(
       await Notification.create({
         business_id: booking.business_id,
         type: "appointment",
-        title: change === "cancelled" ? "Booking cancelled" : "Booking rescheduled",
+        title:
+          change === "cancelled" ? "Booking cancelled" : "Booking rescheduled",
         body: `${context.userName} ${change} their booking for ${context.serviceName} — ${context.bookingDate} at ${context.bookingTime}`,
         related_id: booking._id,
       });

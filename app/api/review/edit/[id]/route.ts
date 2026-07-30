@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { reviewSchema } from "../../route";
 import z from "zod";
+import Notification from "@/server/models/Notification.model";
+import { resolveBusinessBySlugOrId } from "@/lib/resolve-business";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -43,6 +45,17 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       { $set: validatedData },
       { new: true, runValidators: true },
     );
+
+    const business = await resolveBusinessBySlugOrId(review.business_id);
+    if (business && updatedReview) {
+      await Notification.create({
+        business_id: business._id.toString(),
+        type: "review",
+        title: "Review updated",
+        body: `${updatedReview.rating}-star review was updated: "${updatedReview.comment.slice(0, 80)}"`,
+        related_id: updatedReview._id,
+      });
+    }
 
     return NextResponse.json({
       message: "Review updated successfully",

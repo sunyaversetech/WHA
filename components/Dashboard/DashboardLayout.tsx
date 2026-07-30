@@ -16,12 +16,13 @@ import {
   Zap,
   CalendarDays,
   CalendarX2,
-  UserPlus,
   CircleDollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
+import { useReplyReview } from "@/services/review.service";
+import { toast } from "sonner";
 
 const PROTECTED_PATHS = [
   "/dashboard/bookings",
@@ -41,9 +42,6 @@ type NotifCategory =
 const NOTIF_CATEGORIES: { label: NotifCategory; icon: React.ReactNode }[] = [
   { label: "Appointments", icon: <CalendarDays size={18} /> },
   { label: "Reviews", icon: <Star size={18} /> },
-  { label: "Tips", icon: <CircleDollarSign size={18} /> },
-  { label: "Online sales", icon: <Tag size={18} /> },
-  { label: "Actions", icon: <Zap size={18} /> },
 ];
 
 type NotifItem = {
@@ -53,7 +51,10 @@ type NotifItem = {
   body: string;
   is_read: boolean;
   created_at: string;
+  related_id: string;
 };
+
+const slugify = (s: string) => s?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
 
 const TYPE_TO_CATEGORY: Record<NotifItem["type"], NotifCategory> = {
   appointment: "Appointments",
@@ -98,7 +99,7 @@ function ProfileDropdown({
   const initials = name.slice(0, 2).toUpperCase();
   return (
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-50" onClick={onClose} />
       <div className="absolute right-0 top-11 w-72 bg-[#1c1c1c] rounded-2xl shadow-2xl overflow-hidden z-50 border border-[#2a2a2a]">
         <div className="flex items-center gap-3 px-4 pt-4 pb-3">
           <div className="w-10 h-10 rounded-full bg-[#3d6b8f] flex items-center justify-center text-sm font-bold text-white shrink-0">
@@ -225,22 +226,87 @@ function SearchOverlay({
   );
 }
 
+function ReviewReplyBox({
+  reviewId,
+  onDone,
+}: {
+  reviewId: string;
+  onDone: () => void;
+}) {
+  const [text, setText] = useState("");
+  const { mutate: replyToReview, isPending } = useReplyReview();
+
+  const submit = () => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    replyToReview(
+      { id: reviewId, reply: trimmed },
+      {
+        onSuccess: () => {
+          toast.success("Reply posted");
+          setText("");
+          onDone();
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.error || "Failed to post reply");
+        },
+      },
+    );
+  };
+
+  return (
+    <div className="mt-2.5 space-y-2" onClick={(e) => e.stopPropagation()}>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Write a reply..."
+        rows={2}
+        className="w-full resize-none rounded-lg bg-[#141414] border border-[#2a2a2a] px-3 py-2 text-xs text-white placeholder:text-gray-600 outline-none focus:border-[#3a3a3a]"
+      />
+      <div className="flex justify-end">
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={submit}
+          className="text-[11px] font-semibold text-[#7b97ff] hover:text-[#9cb1ff] disabled:opacity-50 transition-colors">
+          {isPending ? "Posting…" : "Post reply"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function NotificationDrawer({
   open,
   onClose,
   notifications,
   onMarkRead,
+  businessSlug,
 }: {
   open: boolean;
   onClose: () => void;
   notifications: NotifItem[];
   onMarkRead: (id: string) => void;
+  businessSlug: string;
 }) {
+  const router = useRouter();
   const [category, setCategory] = useState<NotifCategory>("Appointments");
+  const [replyOpenId, setReplyOpenId] = useState<string | null>(null);
   const filtered = notifications.filter(
     (n) => TYPE_TO_CATEGORY[n.type] === category,
   );
   if (!open) return null;
+
+  const goToNotification = (n: NotifItem) => {
+    if (!n.is_read) onMarkRead(n._id);
+    if (n.type === "appointment") {
+      onClose();
+      router.push(`/dashboard/bookings?bookingId=${n.related_id}`);
+    } else if (n.type === "review" && businessSlug) {
+      onClose();
+      router.push(`/businesses/${businessSlug}#review-${n.related_id}`);
+    }
+  };
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
@@ -306,35 +372,55 @@ function NotificationDrawer({
                 {filtered.map((n) => (
                   <div
                     key={n._id}
-                    onClick={() => !n.is_read && onMarkRead(n._id)}
+                    onClick={() => goToNotification(n)}
                     className={cn(
-                      "flex items-start gap-3 rounded-xl px-4 py-3.5 border cursor-pointer transition-colors",
+                      "rounded-xl px-4 py-3.5 border cursor-pointer transition-colors",
                       n.is_read
                         ? "bg-[#1a1a1a] border-[#222] hover:bg-[#1e1e1e]"
                         : "bg-[#1a2048] border-[#2a3568] hover:bg-[#202a5c]",
                     )}>
-                    <div className="relative shrink-0">
-                      <div className="w-9 h-9 rounded-full bg-[#3a4580] flex items-center justify-center text-sm font-bold text-white">
-                        {TYPE_ICON[n.type]}
+                    <div className="flex items-start gap-3">
+                      <div className="relative shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-[#3a4580] flex items-center justify-center text-sm font-bold text-white">
+                          {TYPE_ICON[n.type]}
+                        </div>
+                        {!n.is_read && (
+                          <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-[#141414]" />
+                        )}
                       </div>
-                      {!n.is_read && (
-                        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-[#141414]" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-white leading-snug">
-                          {n.title}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-semibold text-white leading-snug">
+                            {n.title}
+                          </p>
+                          <span className="text-[11px] text-gray-500 shrink-0 mt-0.5">
+                            {formatDistanceToNow(new Date(n.created_at), {
+                              addSuffix: true,
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+                          {n.body}
                         </p>
-                        <span className="text-[11px] text-gray-500 shrink-0 mt-0.5">
-                          {formatDistanceToNow(new Date(n.created_at), {
-                            addSuffix: true,
-                          })}
-                        </span>
+
+                        {n.type === "review" &&
+                          (replyOpenId === n._id ? (
+                            <ReviewReplyBox
+                              reviewId={n.related_id}
+                              onDone={() => setReplyOpenId(null)}
+                            />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setReplyOpenId(n._id);
+                              }}
+                              className="mt-2 text-[11px] font-semibold text-gray-500 hover:text-[#7b97ff] transition-colors">
+                              Reply
+                            </button>
+                          ))}
                       </div>
-                      <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                        {n.body}
-                      </p>
                     </div>
                   </div>
                 ))}
@@ -373,12 +459,17 @@ export default function DashboardLayoutContent({
 
   useEffect(() => {
     if (!isBusiness) return;
-    fetch("/api/notifications")
-      .then((res) => res.json())
-      .then((json) => {
-        setNotifications(json.data ?? []);
-        setUnreadCount(json.unread_count ?? 0);
-      });
+    const fetchNotifications = () => {
+      fetch("/api/notifications")
+        .then((res) => res.json())
+        .then((json) => {
+          setNotifications(json.data ?? []);
+          setUnreadCount(json.unread_count ?? 0);
+        });
+    };
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30_000);
+    return () => clearInterval(interval);
   }, [isBusiness]);
 
   const markNotificationRead = async (id: string) => {
@@ -392,6 +483,7 @@ export default function DashboardLayoutContent({
   const displayName =
     session?.user?.name ?? (session?.user as any)?.business_name ?? "User";
   const initials = displayName.slice(0, 2).toUpperCase();
+  const businessSlug = slugify((session?.user as any)?.business_name);
 
   return (
     <div className="min-h-screen ">
@@ -462,6 +554,7 @@ export default function DashboardLayoutContent({
         onClose={() => setShowNotif(false)}
         notifications={notifications}
         onMarkRead={markNotificationRead}
+        businessSlug={businessSlug}
       />
     </div>
   );

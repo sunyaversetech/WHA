@@ -438,9 +438,6 @@ export const sendServiceBookingEmails = async (bookingDetails: {
   };
 };
 
-// ==========================================
-// 4. RESCHEDULE / CANCELLATION TEMPLATE
-// ==========================================
 const generateBookingChangeTemplate = ({
   headline,
   accentColor,

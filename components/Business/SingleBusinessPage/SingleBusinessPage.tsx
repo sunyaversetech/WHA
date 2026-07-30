@@ -666,7 +666,10 @@ export default function BusinessPage() {
             </div>
           </div>
         )}
-        <BusinessReviewSection reviews={reviews?.data || []} />
+        <BusinessReviewSection
+          reviews={reviews?.data || []}
+          businessId={businessId}
+        />
       </section>
 
       {/* VENUE PHOTOS */}

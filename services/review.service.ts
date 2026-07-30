@@ -25,6 +25,18 @@ export type ReviewType = {
   };
   rating: number;
   comment: string;
+  replies: {
+    _id: string;
+    user: {
+      _id: string;
+      name: string;
+      business_name?: string;
+      category: string;
+      image?: string;
+    };
+    text: string;
+    created_at: string;
+  }[];
   created_at: Date;
   updated_at: Date;
 };
@@ -65,6 +77,21 @@ export const useDeleteReview = () => {
 //       }),
 //   });
 // };
+
+export const useReplyReview = () => {
+  return useMutation<
+    ApiResponseType<ReviewType>,
+    any,
+    { id: string; reply: string }
+  >({
+    mutationKey: ["replyReview"],
+    mutationFn: (data: { id: string; reply: string }) =>
+      Post<{ reply: string }, ApiResponseType<ReviewType>>({
+        url: `/api/review/reply/${data.id}`,
+        data: { reply: data.reply },
+      }),
+  });
+};
 
 export const useGetReview = (business_id?: string) => {
   return useFetcher<ApiResponseType<ReviewType[]>>(
