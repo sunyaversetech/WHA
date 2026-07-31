@@ -1,6 +1,6 @@
-import { useCityFilter } from '@/contexts/city-filter-context';
-import { filterByCity } from '@/lib/utils/city-filter';
-import type { Event, Deal, Business } from '@/lib/types';
+import { useCityFilter } from "@/contexts/city-filter-context";
+import { filterByCity } from "@/lib/utils/city-filter";
+import type { Event, Deal, Business } from "@/lib/types";
 
 export function useFilteredEvents(allEvents: Event[]) {
   const { selectedCity } = useCityFilter();
@@ -18,7 +18,7 @@ export function useFilteredBusinesses(allBusinesses: Business[]) {
 }
 
 export function useFilteredData<T extends Event | Deal | Business>(
-  allData: T[]
+  allData: T[],
 ) {
   const { selectedCity } = useCityFilter();
   return filterByCity(allData, selectedCity);

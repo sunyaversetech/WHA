@@ -90,7 +90,11 @@ export default function ProfileSettings() {
   const toggleCommunity = (c: string) => {
     const cur = selectedCommunity ?? [];
     if (cur.includes(c)) {
-      setValue("community", cur.filter((x) => x !== c), { shouldDirty: true });
+      setValue(
+        "community",
+        cur.filter((x) => x !== c),
+        { shouldDirty: true },
+      );
     } else if (cur.length < 3) {
       setValue("community", [...cur, c], { shouldDirty: true });
     }
@@ -123,7 +127,9 @@ export default function ProfileSettings() {
       if (!res.ok) throw new Error((await res.json()).message);
       toast.success("Profile updated successfully");
       setAvatarFile(null);
-      queryClient.invalidateQueries({ queryKey: ["getbusiness", session?.user?.id] });
+      queryClient.invalidateQueries({
+        queryKey: ["getbusiness", session?.user?.id],
+      });
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile");
     } finally {
@@ -131,55 +137,58 @@ export default function ProfileSettings() {
     }
   };
 
-  if (isLoading) return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-        <Skeleton className="h-4 w-28 rounded mb-4" />
-        <div className="flex items-center gap-5">
-          <Skeleton className="w-20 h-20 rounded-full shrink-0" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-36 rounded" />
-            <Skeleton className="h-3 w-44 rounded" />
-            <Skeleton className="h-3 w-24 rounded" />
+  if (isLoading)
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <Skeleton className="h-4 w-28 rounded mb-4" />
+          <div className="flex items-center gap-5">
+            <Skeleton className="w-20 h-20 rounded-full shrink-0" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-36 rounded" />
+              <Skeleton className="h-3 w-44 rounded" />
+              <Skeleton className="h-3 w-24 rounded" />
+            </div>
           </div>
         </div>
-      </div>
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
-        <Skeleton className="h-4 w-32 rounded" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="space-y-1.5">
-              <Skeleton className="h-3.5 w-24 rounded" />
-              <Skeleton className="h-9 w-full rounded-md" />
-            </div>
-          ))}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
+          <Skeleton className="h-4 w-32 rounded" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="space-y-1.5">
+                <Skeleton className="h-3.5 w-24 rounded" />
+                <Skeleton className="h-9 w-full rounded-md" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-3">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-40 rounded" />
+            <Skeleton className="h-3 w-56 rounded" />
+          </div>
+          <Skeleton className="h-9 w-full sm:max-w-xs rounded-md" />
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-3">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-24 rounded" />
+            <Skeleton className="h-3 w-48 rounded" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[...Array(11)].map((_, i) => (
+              <Skeleton key={i} className="h-8 w-20 rounded-full" />
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Skeleton className="h-9 w-32 rounded-md" />
         </div>
       </div>
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-3">
-        <div className="space-y-1">
-          <Skeleton className="h-4 w-40 rounded" />
-          <Skeleton className="h-3 w-56 rounded" />
-        </div>
-        <Skeleton className="h-9 w-full sm:max-w-xs rounded-md" />
-      </div>
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-3">
-        <div className="space-y-1">
-          <Skeleton className="h-4 w-24 rounded" />
-          <Skeleton className="h-3 w-48 rounded" />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {[...Array(11)].map((_, i) => (
-            <Skeleton key={i} className="h-8 w-20 rounded-full" />
-          ))}
-        </div>
-      </div>
-      <div className="flex justify-end">
-        <Skeleton className="h-9 w-32 rounded-md" />
-      </div>
-    </div>
-  );
+    );
 
   const biz = bizData?.data;
+
+  console.log("form errors", errors);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -291,7 +300,10 @@ export default function ProfileSettings() {
           name="business_category"
           control={control}
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select
+              defaultValue={field.value}
+              onValueChange={field.onChange}
+              key={field.value}>
               <SelectTrigger className="w-full sm:max-w-xs border-gray-200 focus-visible:ring-0 focus-visible:border-[#051e3a] text-[#051e3a]">
                 <SelectValue placeholder="Select a category…" />
               </SelectTrigger>

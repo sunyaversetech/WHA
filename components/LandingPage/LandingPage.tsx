@@ -251,7 +251,7 @@ export default function LandingPage() {
   const param = useSearchParams();
   const router = useRouter();
   const city = param.get("city") || "";
-  const businesses = useFilteredBusinesses(data?.data.business || []);
+  const businesses = useFilteredBusinesses(data?.data?.business || []);
   const events = useMemo(() => data?.data.upcomingevents ?? [], [data]);
   const cityLabel = city || "Australia";
 

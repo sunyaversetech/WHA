@@ -12,11 +12,8 @@ import {
   ChevronRight,
   X,
   Star,
-  Tag,
-  Zap,
   CalendarDays,
   CalendarX2,
-  CircleDollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -30,6 +27,7 @@ const PROTECTED_PATHS = [
   "/dashboard/inventory",
   "/dashboard/settings",
   "/dashboard/complete-profile",
+  "/dashboard/clients",
 ];
 
 type NotifCategory =
