@@ -47,8 +47,8 @@ const VerificationTables = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <Card className="w-[250px]">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <Card className="w-full sm:w-62.5">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Verified Coupons

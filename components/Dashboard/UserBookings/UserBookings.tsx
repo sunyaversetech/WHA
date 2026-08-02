@@ -378,8 +378,7 @@ function RescheduleModal({
           </button>
         </div>
 
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Calendar */}
           <div>
             <p

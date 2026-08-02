@@ -95,7 +95,7 @@ function ResourceSection({
 
       {fields.map((item, k) => (
         <Card key={item.id} className="p-4 bg-white shadow-sm">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <FormField
               control={control}
               name={`business_service.${nestIndex}.resources.${k}.name`}
@@ -208,12 +208,12 @@ export default function CompleteProfilePage() {
               />
 
               {role === "user" && (
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <FormField
                     control={form.control}
                     name="country_code"
                     render={({ field }) => (
-                      <FormItem className="w-32">
+                      <FormItem className="w-full sm:w-32">
                         <FormLabel>Country</FormLabel>
                         <Select
                           onValueChange={field.onChange}
@@ -354,7 +354,7 @@ export default function CompleteProfilePage() {
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
                           name={`business_service.${index}.name`}

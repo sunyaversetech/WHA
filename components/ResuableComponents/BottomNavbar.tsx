@@ -26,6 +26,11 @@ export default function BottomNav() {
   const links = NAV_LINKS(!!session);
 
   if (pathname.startsWith("/auth")) return null;
+  // Business accounts already have an always-visible icon-rail nav on
+  // /dashboard routes; a second, customer-oriented bottom bar would
+  // overlap it and confuse the business-specific nav.
+  if (pathname.startsWith("/dashboard") && session?.user?.category === "business")
+    return null;
 
   return (
     <nav

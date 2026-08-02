@@ -489,7 +489,11 @@ export default function DashboardLayoutContent({
       {isBusiness ? <Sidebar /> : <UserSidebar />}
 
       {/* Content — offset from sidebar */}
-      <div className="ml-[48px] md:ml-[48px] flex flex-col min-h-screen ">
+      <div
+        className={cn(
+          "flex flex-col min-h-screen",
+          isBusiness ? "ml-12" : "ml-0 md:ml-56",
+        )}>
         {isBusiness && (
           <header className="h-[56px] md:h-[60px] bg-[#111111] flex items-center justify-end px-4 md:px-5 sticky top-0 z-30 border-b border-[#1e1e1e]">
             {/* Mobile: empty left */}

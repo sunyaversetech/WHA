@@ -784,9 +784,8 @@ export default function Dashboard() {
               <div>
                 {/* Table header */}
                 <div
+                  className="grid grid-cols-[1fr_56px_56px] sm:grid-cols-[1fr_100px_100px]"
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 100px 100px",
                     padding: "0 0 8px",
                     borderBottom: "1px solid #e5e7eb",
                     marginBottom: 2,
@@ -809,9 +808,8 @@ export default function Dashboard() {
                 {topServices.map((s, i) => (
                   <div
                     key={i}
+                    className="grid grid-cols-[1fr_56px_56px] sm:grid-cols-[1fr_100px_100px]"
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 100px 100px",
                       padding: "12px 0",
                       borderBottom:
                         i < topServices.length - 1
@@ -863,9 +861,8 @@ export default function Dashboard() {
               <div>
                 {/* Table header */}
                 <div
+                  className="grid grid-cols-[1fr_56px_56px] sm:grid-cols-[1fr_100px_100px]"
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 100px 100px",
                     padding: "0 0 8px",
                     borderBottom: "1px solid #e5e7eb",
                     marginBottom: 2,
@@ -888,9 +885,8 @@ export default function Dashboard() {
                 {topTeam.map((m, i) => (
                   <div
                     key={i}
+                    className="grid grid-cols-[1fr_56px_56px] sm:grid-cols-[1fr_100px_100px]"
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 100px 100px",
                       padding: "10px 0",
                       borderBottom:
                         i < topTeam.length - 1 ? "1px solid #f3f4f6" : "none",

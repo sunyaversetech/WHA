@@ -344,7 +344,7 @@ function ScheduleEditor({ service }: { service: any }) {
                         </div>
                       </div>
                       {day.is_available && (
-                        <div className="flex items-center gap-3 mt-3 pl-8">
+                        <div className="flex items-center gap-2 sm:gap-3 mt-3 pl-4 sm:pl-8 flex-wrap">
                           <input
                             type="time"
                             value={day.start_time}

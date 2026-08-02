@@ -196,13 +196,13 @@ const ProfilePage = () => {
                     <div className="h-10 w-10 rounded-full  flex items-center justify-center mr-4">
                       <Home className="h-5 w-5 text-gray-400" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-900 text-sm">Home</p>
                       <div className="text-xs flex flex-col  gap-2 text-gray-400 font-medium">
                         {editAddress ? (
                           <ProfileLocationFormField />
                         ) : (
-                          <p className="text-clip-1 truncate w-70">
+                          <p className="text-clip-1 truncate w-full">
                             {session?.user?.location || "No address found"}
                           </p>
                         )}

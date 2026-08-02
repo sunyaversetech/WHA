@@ -28,6 +28,7 @@ import {
   useUpsertShiftOverride,
 } from "@/services/employee.service";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const DAY_KEYS = [
   "monday",
@@ -396,7 +397,12 @@ function EmpActionDropdown({
       return;
     }
     const rect = btnRef.current!.getBoundingClientRect();
-    setPos({ x: rect.left, y: rect.bottom + 6 });
+    const menuWidth = 200; // matches max-w-50 below
+    const x = Math.max(
+      8,
+      Math.min(rect.left, window.innerWidth - menuWidth - 8),
+    );
+    setPos({ x, y: rect.bottom + 6 });
   };
 
   const items: { label: string; action: () => void; danger?: boolean }[] = [
@@ -2057,6 +2063,15 @@ export default function ScheduleShift() {
                       </p>
                     )}
                   </div>
+                  <EmpActionDropdown
+                    emp={emp}
+                    onAssignRepeating={() => setRepeatingPanel({ emp })}
+                    onDeleteAllShifts={() => handleDeleteAllShifts(emp)}
+                    onView={() => router.push(`/dashboard/employees`)}
+                    onEdit={() =>
+                      router.push(`/dashboard/employees/edit/${emp._id}`)
+                    }
+                  />
                   {!locked && !past && !eff.isOutsideSchedule && (
                     <button
                       type="button"
@@ -2072,24 +2087,20 @@ export default function ScheduleShift() {
         )}
       </div>
 
-      {/* ── Footer note ── */}
       <div className="mt-4 flex items-start gap-3 bg-white border border-gray-200 rounded-xl px-5 py-3.5">
         <Info size={16} className="text-gray-500 shrink-0 mt-0.5" />
         <p className="text-sm text-gray-400 leading-relaxed">
           The team roster shows your availability for bookings and is not linked
           to your business standard opening hours. To set your standard opening
           hours,{" "}
-          <a
+          <Link
             href="/dashboard/settings"
             className="text-[#051e3a] hover:underline">
             click here.
-          </a>
+          </Link>
         </p>
       </div>
 
-      {/* ── Overlays ── */}
-
-      {/* Desktop context menu */}
       {ctxMenu && (
         <ShiftContextMenu
           menu={ctxMenu}
