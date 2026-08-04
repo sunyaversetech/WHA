@@ -61,6 +61,15 @@ const UserSchema = new Schema(
     schedule: { type: Schema.Types.Mixed, default: null },
     isblocked: { type: Boolean, default: false },
     abn_number: { type: String },
+    seo_keywords: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: (v: string[]) => v.length <= 10,
+        message: "You can add up to 10 SEO keywords",
+      },
+    },
+    seo_description: { type: String, maxlength: 200, default: "" },
     verified: { type: Boolean, default: false },
     token: { type: String },
     verificationTokenExpire: { type: Date },

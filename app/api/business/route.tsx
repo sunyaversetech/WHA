@@ -127,9 +127,20 @@ export async function GET(request: NextRequest) {
       baseFilter.business_category = category;
     }
 
+    // Independent $or-clauses accumulate here and get AND-ed together at the
+    // end, so the free-text "search" box and the "service" picker can both
+    // be active at once without one clobbering the other's $or.
+    const andClauses: any[] = [];
+
     if (search) {
       const safe = escapeRegex(search);
-      baseFilter.business_name = { $regex: safe, $options: "i" };
+      andClauses.push({
+        $or: [
+          { business_name: { $regex: safe, $options: "i" } },
+          { seo_keywords: { $regex: safe, $options: "i" } },
+          { seo_description: { $regex: safe, $options: "i" } },
+        ],
+      });
     }
 
     if (community) {
@@ -177,11 +188,12 @@ export async function GET(request: NextRequest) {
         // Direct category match — filter by business_category field
         baseFilter.business_category = catValue;
       } else {
-        // Fallback: keyword search through the Service model
+        // Free-text match: business name, SEO keywords/description, and
+        // service name/category/description all count as a hit.
         const keywords = extractKeywords(service);
         const terms = keywords.length > 0 ? keywords : [service.trim()];
 
-        const orClauses = terms.flatMap((tok) => {
+        const serviceOrClauses = terms.flatMap((tok) => {
           const safe = escapeRegex(tok);
           return [
             { name: { $regex: safe, $options: "i" } },
@@ -190,7 +202,9 @@ export async function GET(request: NextRequest) {
           ];
         });
 
-        const matchingServices = await Service.find({ $or: orClauses }).lean();
+        const matchingServices = await Service.find({
+          $or: serviceOrClauses,
+        }).lean();
         const uniqueIds = [
           ...new Set(
             matchingServices
@@ -198,13 +212,6 @@ export async function GET(request: NextRequest) {
               .filter(Boolean),
           ),
         ] as string[];
-
-        if (uniqueIds.length === 0) {
-          return NextResponse.json(
-            { data: [], message: "No businesses found for this service" },
-            { status: 200 },
-          );
-        }
 
         const objectIds = uniqueIds
           .map((id) => {
@@ -216,8 +223,20 @@ export async function GET(request: NextRequest) {
           })
           .filter(Boolean);
 
-        baseFilter._id = { $in: objectIds };
+        const safe = escapeRegex(service.trim());
+        andClauses.push({
+          $or: [
+            { business_name: { $regex: safe, $options: "i" } },
+            { seo_keywords: { $regex: safe, $options: "i" } },
+            { seo_description: { $regex: safe, $options: "i" } },
+            ...(objectIds.length > 0 ? [{ _id: { $in: objectIds } }] : []),
+          ],
+        });
       }
+    }
+
+    if (andClauses.length > 0) {
+      baseFilter.$and = andClauses;
     }
 
     // ── Spatial filter: bounds OR city ───────────────────────────────────────

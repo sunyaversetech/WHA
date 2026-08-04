@@ -148,6 +148,33 @@ export async function PATCH(req: NextRequest) {
     const business_type = formData.get("business_type");
     if (business_type !== null) updateData.business_type = (business_type as string).trim();
 
+    // ── SEO ────────────────────────────────────────────────────────
+    const seoKeywordsRaw = formData.get("seo_keywords");
+    if (seoKeywordsRaw !== null) {
+      let keywords: string[];
+      try {
+        keywords = JSON.parse(seoKeywordsRaw as string);
+      } catch {
+        return NextResponse.json({ message: "Invalid SEO keywords data" }, { status: 400 });
+      }
+      if (!Array.isArray(keywords) || keywords.some((k) => typeof k !== "string")) {
+        return NextResponse.json({ message: "Invalid SEO keywords data" }, { status: 400 });
+      }
+      if (keywords.length > 10) {
+        return NextResponse.json({ message: "You can add up to 10 SEO keywords" }, { status: 400 });
+      }
+      updateData.seo_keywords = keywords.map((k) => k.trim()).filter(Boolean);
+    }
+
+    const seo_description = formData.get("seo_description");
+    if (seo_description !== null) {
+      const desc = (seo_description as string).trim();
+      if (desc.length > 200) {
+        return NextResponse.json({ message: "SEO description must be 200 characters or fewer" }, { status: 400 });
+      }
+      updateData.seo_description = desc;
+    }
+
     // ── Guard ──────────────────────────────────────────────────────
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(

@@ -163,7 +163,6 @@ export default function BusinessSearchWithDates() {
   const [timeSlot, setTimeSlot] = useState("any");
   const [viewY, setViewY] = useState(TODAY.y);
   const [viewM, setViewM] = useState(TODAY.m);
-  const [whatTab, setWhatTab] = useState<"Event" | "services">("services");
 
   const weeks = useMemo(() => buildCalendar(viewY, viewM), [viewY, viewM]);
 
@@ -240,7 +239,6 @@ export default function BusinessSearchWithDates() {
 
   const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
-    if (whatTab === "Event") params.set("tab", "events");
     if (service) params.set("service", service);
     if (geoCoords) {
       params.set("lat", String(geoCoords.lat));
@@ -256,7 +254,7 @@ export default function BusinessSearchWithDates() {
     if (timeSlot !== "any") params.set("time", timeSlot);
     router.push(`/search?${params.toString()}`);
     setActive(null);
-  }, [service, location, geoCoords, selDay, timeSlot, router, whatTab]);
+  }, [service, location, geoCoords, selDay, timeSlot, router]);
 
   const selectCity = (city: string) => {
     setGeoCoords(null);
@@ -550,40 +548,51 @@ export default function BusinessSearchWithDates() {
                   maxHeight: 560,
                   overflowY: "auto",
                 }}>
-                {/* Tabs */}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 9,
-                    padding: "0 14px 18px",
-                    flexWrap: "wrap",
-                  }}>
-                  {(["services", "Event"] as const).map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setWhatTab(tab)}
+                {/* Free-text search */}
+                <div style={{ padding: "0 14px 14px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      border: "1px solid #e6ebf2",
+                      borderRadius: 14,
+                      padding: "11px 14px",
+                      background: "#f8fafc",
+                    }}>
+                    <Search
+                      size={17}
+                      color="#64748b"
+                      style={{ flexShrink: 0 }}
+                    />
+                    <input
+                      autoFocus
+                      value={service}
+                      onChange={(e) => setService(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSearch();
+                      }}
+                      placeholder="Search businesses, services, keywords…"
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        border: "1px solid",
-                        borderColor: whatTab === tab ? "#051e3a" : "#e6ebf2",
-                        borderRadius: 9999,
-                        padding: "9px 16px",
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        background: whatTab === tab ? "#051e3a" : "#fff",
-                        color: whatTab === tab ? "#fff" : "#334155",
-                      }}>
-                      {tab === "Event" ? "Event" : "Services"}
-                    </button>
-                  ))}
+                        flex: 1,
+                        border: "none",
+                        background: "transparent",
+                        outline: "none",
+                        fontSize: 15,
+                        fontWeight: 500,
+                        color: "#1e293b",
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* All services */}
                 <div style={{ padding: "0 6px", marginBottom: 8 }}>
-                  <HoverRow onClick={() => { setService(""); setActive("where"); }}>
+                  <HoverRow
+                    onClick={() => {
+                      setService("");
+                      setActive("where");
+                    }}>
                     <span style={{ ...TILE, background: "#f1f4f9" }}>
                       <Clock size={19} color="#64748b" />
                     </span>
@@ -609,7 +618,10 @@ export default function BusinessSearchWithDates() {
                   {BUSINESS_CATEGORIES.map(({ label, value, icon: Icon }) => (
                     <HoverRow
                       key={value}
-                      onClick={() => { setService(label); setActive("where"); }}>
+                      onClick={() => {
+                        setService(label);
+                        setActive("where");
+                      }}>
                       <span style={TILE}>
                         <Icon size={19} color="#334155" />
                       </span>

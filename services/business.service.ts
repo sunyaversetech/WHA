@@ -34,6 +34,8 @@ export type UserBusinessType = {
   business_category?: string;
   business_type?: "employee_based" | "item_based";
   abn_number?: string;
+  seo_keywords?: string[];
+  seo_description?: string;
   verified: boolean;
   is24_7?: boolean;
   schedule?: Record<string, { open: boolean; slots: { from: string; to: string }[] }> | null;

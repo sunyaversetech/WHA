@@ -8,6 +8,7 @@ import {
   Images,
   Building2,
   Briefcase,
+  Search,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ import ProfileSettings from "./ProfileSettings";
 import LocationSettings from "./LocationSettings";
 import VenueImagesSettings from "./VenueImagesSettings";
 import PortfolioSettings from "./PortfolioSettings";
+import SeoSettings from "./SeoSettings";
 
 const TABS = [
   {
@@ -55,6 +57,12 @@ const TABS = [
     label: "Portfolio",
     icon: Briefcase,
     desc: "Work samples & project photos",
+  },
+  {
+    id: "seo",
+    label: "SEO & Search",
+    icon: Search,
+    desc: "Keywords & description for search",
   },
 ] as const;
 
@@ -166,6 +174,7 @@ export default function Settings() {
             {active === "location" && <LocationSettings />}
             {active === "venue" && <VenueImagesSettings />}
             {active === "portfolio" && <PortfolioSettings />}
+            {active === "seo" && <SeoSettings />}
             {active === "business" && (
               <div className="space-y-6">
                 <ABNUpdateForm />
