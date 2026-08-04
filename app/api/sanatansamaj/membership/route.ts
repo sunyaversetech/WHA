@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       { success: true, message: "Saved successfully" },
       { status: 201, headers: corsHeaders },
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500, headers: corsHeaders },

@@ -3,7 +3,6 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 
 // Fix for missing marker icons

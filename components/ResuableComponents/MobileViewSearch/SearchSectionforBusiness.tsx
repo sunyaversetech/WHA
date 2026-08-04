@@ -117,11 +117,14 @@ export default function MobileBusinessSearchWithDates({
   const [internalOpen, setInternalOpen] = useState(false);
   const controlled = externalOpen !== undefined;
   const open    = controlled ? externalOpen! : internalOpen;
-  const setOpen = (v: boolean | ((prev: boolean) => boolean)) => {
-    const next = typeof v === "function" ? v(open) : v;
-    if (controlled) externalOnOpenChange?.(next);
-    else setInternalOpen(next);
-  };
+  const setOpen = useCallback(
+    (v: boolean | ((prev: boolean) => boolean)) => {
+      const next = typeof v === "function" ? v(open) : v;
+      if (controlled) externalOnOpenChange?.(next);
+      else setInternalOpen(next);
+    },
+    [controlled, externalOnOpenChange, open],
+  );
   const [step, setStep]             = useState<Step>("what");
   const [service, setService]       = useState(searchParams.get("service") || searchParams.get("search") || "");
   const [serviceQuery, setServiceQuery] = useState(service);
@@ -202,7 +205,7 @@ export default function MobileBusinessSearchWithDates({
     if (timeSlot !== "any") params.set("time", timeSlot);
     router.push(`/businesses?${params.toString()}`);
     setOpen(false);
-  }, [service, location, geoCoords, selDay, timeSlot, router]);
+  }, [service, location, geoCoords, selDay, timeSlot, router, setOpen]);
 
   const prevMonth = () => { if (viewM === 0) { setViewY(y => y - 1); setViewM(11); } else setViewM(m => m - 1); };
   const nextMonth = () => { if (viewM === 11) { setViewY(y => y + 1); setViewM(0); } else setViewM(m => m + 1); };

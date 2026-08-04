@@ -5,7 +5,6 @@ import {
   Plus,
   FolderPlus,
   Edit,
-  Trash2,
   Calendar,
   Clock,
   Loader2,
@@ -112,7 +111,7 @@ export default function CategorizedServices() {
   const { mutate } = useCreateService(activeCategoryId ?? "");
   const handleServiceSubmit = async (values: ServicePostTypeSchema) => {
     mutate(values, {
-      onSuccess: (res) => {
+      onSuccess: () => {
         toast.success(editingService ? "Service updated" : "Service added");
         setIsServiceDialogOpen(false);
         queryClient.invalidateQueries({

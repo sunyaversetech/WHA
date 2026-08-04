@@ -81,7 +81,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       ) {
         try {
           rawData[key] = JSON.parse(value);
-        } catch (e) {
+        } catch {
           rawData[key] = value;
         }
       } else {

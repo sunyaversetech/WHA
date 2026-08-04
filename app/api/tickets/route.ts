@@ -9,7 +9,7 @@ import "@/server/models/Event.model";
 import "@/server/models/DealSchema.model";
 import "@/server/models/Auth.model";
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     await connectToDb();
     const session = await getServerSession(authOptions);

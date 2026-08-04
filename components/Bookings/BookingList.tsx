@@ -2,7 +2,6 @@
 
 import React, { useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useAuthModal } from "@/components/Auth/DialogLogin/use-auth-model";
 import {
   useGetBusinessBookings,
@@ -21,7 +20,6 @@ import {
 
 export default function BookingList() {
   const { data: session } = useSession();
-  const router = useRouter();
   const { onOpen: openAuthModal } = useAuthModal();
 
   const {

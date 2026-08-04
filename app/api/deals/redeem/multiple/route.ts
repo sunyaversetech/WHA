@@ -4,7 +4,7 @@ import crypto from "crypto";
 import Stripe from "stripe";
 import { Deal } from "@/server/models/DealSchema.model";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
-import { sendEventMultipleTicketEmail, sendEventTicketEmail } from "@/lib/mail";
+import { sendEventMultipleTicketEmail } from "@/lib/mail";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 

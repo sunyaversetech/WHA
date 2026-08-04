@@ -5,7 +5,6 @@ import {
   Trash2,
   ShieldAlert,
   ShieldCheck,
-  MoreHorizontal,
   BanknoteArrowUp,
   BanknoteArrowDown,
 } from "lucide-react";
@@ -36,7 +35,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
 

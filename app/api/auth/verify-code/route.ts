@@ -24,7 +24,6 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      const isCodeWrong = existingUser.resetPasswordToken !== code;
       const isExpired =
         existingUser.resetPasswordExpire &&
         existingUser.resetPasswordExpire < new Date();

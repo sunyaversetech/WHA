@@ -66,26 +66,6 @@ export default function MobileDealsSearchWithDates({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const getDateDisplay = () => {
-    if (date?.from) {
-      if (date.to)
-        return `${format(date.from, "MMM d")} – ${format(date.to, "MMM d")}`;
-      return format(date.from, "MMM d");
-    }
-    return "";
-  };
-  const now = new Date();
-
-  const handleQuickSelect = (type: "today" | "week" | "month") => {
-    if (type === "today") {
-      setDate({ from: now, to: now });
-    } else if (type === "week") {
-      setDate({ from: now, to: addDays(now, 7) });
-    } else if (type === "month") {
-      setDate({ from: startOfMonth(now), to: endOfMonth(now) });
-    }
-  };
-
   const handleSearch = () => {
     router.push(
       `/deals?search=${inputValue}` +
@@ -388,12 +368,6 @@ export function CalendarSegment({
   onClear,
   segW,
 }: CalendarSegmentProps) {
-  const [ripple, setRipple] = useState<{
-    x: number;
-    y: number;
-    id: number;
-  } | null>(null);
-
   const getDateDisplay = () => {
     if (date?.from) {
       if (date.to)
@@ -411,13 +385,7 @@ export function CalendarSegment({
       setDate({ from: startOfMonth(now), to: endOfMonth(now) });
   };
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setRipple({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-      id: Date.now(),
-    });
+  const handleClick = () => {
     onClick();
   };
 

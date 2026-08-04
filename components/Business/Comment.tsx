@@ -4,19 +4,11 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Star,
-  MessageSquare,
-  User,
-  Loader2,
-  Send,
-  Edit,
-  Trash2,
-} from "lucide-react";
+import { Star, User, Loader2, Send, Edit } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -32,7 +24,6 @@ import {
   ReviewType,
   useCreateReview,
   useDeleteReview,
-  useGetReview,
   useReplyReview,
 } from "@/services/review.service";
 import { useParams, useRouter } from "next/navigation";

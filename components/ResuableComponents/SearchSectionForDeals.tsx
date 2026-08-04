@@ -3,13 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, MapPin, X, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  addDays,
-  endOfMonth,
-  format,
-  formatDate,
-  startOfMonth,
-} from "date-fns";
+import { addDays, endOfMonth, format, startOfMonth } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { useRouter, useSearchParams } from "next/navigation";

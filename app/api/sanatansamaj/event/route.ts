@@ -3,7 +3,6 @@ import Event from "@/server/models/Event.model";
 import { NextResponse } from "next/server";
 
 const ALLOWED_ORIGIN = "http://localhost:3001";
-const ALLOWED_ORIGIN_PROD = "http://localhost:3001";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,

@@ -162,7 +162,7 @@ export default function BookingsTable({
         notes: "Status updated from dashboard table viewport.",
       },
       {
-        onSuccess: (response: any) => {
+        onSuccess: () => {
           toast.success(`Booking status changed to ${newStatus}`);
           queryClient.invalidateQueries({ queryKey: ["businessbookings"] });
 

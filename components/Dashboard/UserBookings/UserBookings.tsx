@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import {
   Calendar,
@@ -735,13 +734,11 @@ function BookingCard({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function UserBookings() {
-  const { data: session } = useSession();
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
   const [rescheduleTarget, setRescheduleTarget] =
     useState<BookingRecord | null>(null);
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const [refreshKey, setRefreshKey] = useState(0);
   const refresh = () => setRefreshKey((k) => k + 1);
@@ -769,7 +766,6 @@ export default function UserBookings() {
 
   const handleCancel = async (b: BookingRecord) => {
     if (!confirm(`Cancel your booking for "${b.service_id?.name}"?`)) return;
-    setCancellingId(b._id);
     try {
       const res = await fetch(`/api/bookings/user/${b._id}`, {
         method: "PATCH",
@@ -782,8 +778,6 @@ export default function UserBookings() {
       refresh();
     } catch (e: any) {
       toast.error(e.message);
-    } finally {
-      setCancellingId(null);
     }
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -106,7 +106,7 @@ function MapRefresher({
           map.invalidateSize();
         }
         map.flyTo(coords, zoom, { duration: 1.5 });
-      } catch (e) {}
+      } catch {}
     }, 520);
 
     return () => clearTimeout(timer);

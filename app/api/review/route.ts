@@ -94,10 +94,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function escapeRegex(text: string) {
-  return text.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-}
-
 export async function GET(req: NextRequest) {
   try {
     await connectToDb();

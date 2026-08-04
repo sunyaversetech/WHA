@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import Image from "next/image";
 import { format, addDays, formatDate } from "date-fns";
 import {
   Clock,
@@ -578,9 +579,11 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                             )}>
                             <div className="flex items-center gap-3">
                               {emp.employee_photo ? (
-                                <img
+                                <Image
                                   src={emp.employee_photo}
                                   alt={emp.full_name}
+                                  width={40}
+                                  height={40}
                                   className="w-10 h-10 rounded-full object-cover"
                                 />
                               ) : (

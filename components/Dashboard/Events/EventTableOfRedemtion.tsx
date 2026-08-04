@@ -12,10 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Ticket, CheckCircle2, ExternalLink } from "lucide-react";
-import {
-  useGetEventRedeem,
-  useGetEventRedeemBusiness,
-} from "@/services/event.service";
+import { useGetEventRedeemBusiness } from "@/services/event.service";
 import { useRouter } from "next/navigation";
 
 interface EventStats {

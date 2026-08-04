@@ -78,7 +78,6 @@ function FiltersModal({
 }) {
   const [sortBy, setSortBy] = useState<SortKey>("best");
   const [maxPrice, setMaxPrice] = useState(1400);
-  const [verified, setVerified] = useState(false);
 
   if (!open) return null;
 
@@ -376,7 +375,6 @@ function FiltersModal({
             onClick={() => {
               setSortBy("best");
               setMaxPrice(1400);
-              setVerified(false);
               onListTypeChange("services");
             }}
             style={{
@@ -943,9 +941,6 @@ export default function BusinessesClientPage() {
         <BusinessMap
           businesses={enrichedBusinesses}
           currentCity={searchParams.get("city") || ""}
-          isVisible
-          isExpanded={false}
-          onToggleExpand={() => {}}
           userLat={userLat ?? undefined}
           userLng={userLng ?? undefined}
           onBoundsChange={handleBoundsChange}

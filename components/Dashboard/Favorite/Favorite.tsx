@@ -1,24 +1,9 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Heart,
-  Calendar,
-  MapPin,
-  ArrowRight,
-  Loader2,
-  ChevronLeft,
-} from "lucide-react";
+import { Heart, ChevronLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  useCreateFavroite,
-  useGetUserFavroite,
-} from "@/services/favroite.service";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useGetUserFavroite } from "@/services/favroite.service";
 import { useRouter } from "next/navigation";
 import EventCard from "@/components/cards/event-card";
 import BusinessCard from "@/components/cards/business-card";
@@ -130,98 +115,6 @@ export default function FavoritesPage() {
         </TabsContent>
       </Tabs>
     </div>
-  );
-}
-
-function FavoriteCard({ item, type }: { item: any; type: string }) {
-  const queryClient = useQueryClient();
-  const { mutate, isPending } = useCreateFavroite();
-  const handleAddRemoveFavorite = () => {
-    mutate(
-      { item_id: item._id, item_type: "Event" },
-      {
-        onSuccess: (msg) => {
-          toast.success(msg.message);
-          queryClient.invalidateQueries({ queryKey: ["single-user-favroite"] });
-        },
-        onError: () => {},
-      },
-    );
-  };
-
-  return (
-    <Card className="group overflow-hidden pt-0 border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white border border-slate-100">
-      <div className="relative  overflow-hidden bg-slate-200">
-        <Image
-          width={500}
-          height={500}
-          src={
-            item.image
-              ? item.image
-              : item.user.image
-                ? item.user.image
-                : "/api/placeholder/400/225"
-          }
-          alt={item.title}
-          style={{ height: "250px" }}
-          className="w-full  object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-        <div className="absolute top-3 right-3">
-          <Badge className="bg-orange-500 p-2 border-none font-bold uppercase text-[10px]">
-            {type}
-          </Badge>
-        </div>
-      </div>
-
-      <CardContent className="p-5 space-y-3">
-        <div className="flex justify-between items-start">
-          <h3 className="font-bold text-lg text-slate-800 line-clamp-1">
-            {item.title}
-          </h3>
-          <Button
-            disabled={isPending}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              handleAddRemoveFavorite();
-            }}
-            variant={"outline"}
-            className=" cursor-pointer">
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
-            ) : (
-              "Remove Favorite"
-            )}
-          </Button>
-        </div>
-
-        <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">
-          {item.description || "No description provided."}
-        </p>
-
-        <div className="flex flex-col gap-2 pt-2 border-t border-slate-50">
-          <div className="flex items-center text-xs text-slate-400 font-medium gap-2">
-            <MapPin size={14} className="text-slate-300" />
-            {item.location || "Online / Global"}
-          </div>
-          {type === "event" && (
-            <div className="flex items-center text-xs text-slate-400 font-medium gap-2">
-              <Calendar size={14} className="text-slate-300" />
-              {new Date(item.date).toLocaleDateString()}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between pt-2">
-          <span className="text-xl font-black text-[#FF6B35]">
-            ${item.price || "Free"}
-          </span>
-          <button className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors uppercase tracking-wider">
-            View Details <ArrowRight size={14} />
-          </button>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 

@@ -63,7 +63,6 @@ export default function EventDetailPage() {
   const { data, isLoading: redeemLoading } = useGetEventRedeem();
   const { onOpen } = useAuthModal();
 
-  const [copied, setCopied] = useState(false);
   const EventId = event?.data?._id;
 
   const averageRating =
@@ -139,9 +138,7 @@ export default function EventDetailPage() {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        setCopied(true);
         toast.success("Event Copied!");
-        setTimeout(() => setCopied(false), 2000);
       }
     } catch (err) {
       console.error("Error sharing:", err);

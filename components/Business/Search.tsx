@@ -16,7 +16,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
 
 export default function WhSearchBar() {
   const [category, setCategory] = useState("Search events or deals");

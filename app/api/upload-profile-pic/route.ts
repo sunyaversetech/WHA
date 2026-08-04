@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const result = await uploadToS3(buffer, file.name, file.type);
 
-    const updatedUser = await User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
       (session.user as any).id,
       { image: result.Location },
       { new: true },

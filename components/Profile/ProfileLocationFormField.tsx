@@ -21,7 +21,7 @@ interface LocationResult {
 }
 
 export function ProfileLocationFormField() {
-  const { control, setValue, watch } = useFormContext();
+  const { control, setValue } = useFormContext();
 
   const [loading, setLoading] = React.useState(false);
   const [isLocating, setIsLocating] = React.useState(false);

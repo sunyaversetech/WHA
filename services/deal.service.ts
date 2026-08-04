@@ -6,15 +6,6 @@ import { UserBusinessType } from "./business.service";
 import { DealFormValues } from "@/components/Dashboard/Deals/DealForm";
 import { useSearchParams } from "next/navigation";
 
-type DealsFormValues = {
-  deal_id?: string;
-  title: string;
-  valid_till: Date;
-  deals_for: string;
-  description: string;
-  terms_for_the_deal: string;
-  deal_code: string;
-};
 export type DealsGetValues = {
   _id: string;
   title: string;

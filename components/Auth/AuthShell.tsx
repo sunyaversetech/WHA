@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ChevronLeft, MoveLeft } from "lucide-react";
+import { MoveLeft } from "lucide-react";
 import Image from "next/image";
 import { Button } from "../ui/button";
 

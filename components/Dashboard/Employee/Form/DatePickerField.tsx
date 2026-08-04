@@ -11,6 +11,7 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function LightDayButton({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- excluded so it isn't spread onto the native <button>
   day,
   modifiers,
   className,

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface HeroBannerProps {
   title: string;
@@ -59,10 +60,12 @@ export default function HeroBanner({
     <div className="relative w-full h-[300px] md:h-[500px] overflow-hidden rounded-lg">
       {/* Background Image */}
       <div className="absolute inset-0 transition-opacity duration-500">
-        <img
+        <Image
           src={images[currentSlide] || "/placeholder.svg"}
           alt={title}
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
+          priority
         />
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
       </div>

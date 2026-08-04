@@ -28,7 +28,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     ) {
       router.push("/dashboard/complete-profile");
     }
-  }, [status, pathname, router, session]);
+  }, [status, pathname, router, session, userCategory]);
 
   if (status === "loading") {
     return <LoadingPage />;

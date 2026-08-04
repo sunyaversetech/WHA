@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Smartphone } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import BusinessCard from "@/components/cards/business-card";
@@ -18,92 +18,6 @@ import { EMPLOYEE_CATEGORIES } from "@/lib/data/business-categories";
 /* ══════════════════════════════════════
    STATIC DATA
 ═══════════════════════════════════════ */
-const REVIEWS = [
-  {
-    id: 1,
-    title: "The best booking system",
-    body: "Great experience, easy to book. Paying for treatments is so convenient — no cash or cards needed.",
-    name: "Lucy",
-    place: "London, UK",
-  },
-  {
-    id: 2,
-    title: "Easy to use & explore",
-    body: "WHA's reminders make life so much easier. I also found a few good local spots I didn't know existed.",
-    name: "Dan",
-    place: "New York, USA",
-  },
-  {
-    id: 3,
-    title: "Great for finding businesses",
-    body: "I've been using WHA for two years and it's by far the best booking platform I've used. Highly recommend it!",
-    name: "Dale",
-    place: "Sydney, Australia",
-  },
-];
-
-const AU_CITY_COLS = [
-  {
-    heading: "Popular",
-    links: [
-      "Beauty Salons",
-      "Eyebrows & Lashes",
-      "Hair Salons",
-      "Massages",
-      "Waxing Salons",
-      "Nail Salons",
-      "Barbers",
-    ],
-  },
-  {
-    heading: "Sydney",
-    links: [
-      "Hair Salons in Sydney",
-      "Nail Salons in Sydney",
-      "Beauty Salons in Sydney",
-      "Barbers in Sydney",
-      "Massages in Sydney",
-      "Eyebrows in Sydney",
-      "Waxing in Sydney",
-    ],
-  },
-  {
-    heading: "Melbourne",
-    links: [
-      "Hair Salons in Melbourne",
-      "Nail Salons in Melbourne",
-      "Beauty Salons in Melbourne",
-      "Barbers in Melbourne",
-      "Massages in Melbourne",
-      "Eyebrows in Melbourne",
-      "Waxing in Melbourne",
-    ],
-  },
-  {
-    heading: "Brisbane",
-    links: [
-      "Hair Salons in Brisbane",
-      "Nail Salons in Brisbane",
-      "Beauty Salons in Brisbane",
-      "Barbers in Brisbane",
-      "Massages in Brisbane",
-      "Eyebrows in Brisbane",
-      "Waxing in Brisbane",
-    ],
-  },
-];
-
-const SERVICE_CHIPS = [
-  "Beauty Salons",
-  "Eyebrows & Lashes",
-  "Nail Salons",
-  "Hair Salons",
-  "Massages",
-  "Waxing Salons",
-  "Medspas",
-  "Barbers",
-];
-
 const FOOTER_COLS = [
   {
     heading: "About WHA",
@@ -145,24 +59,6 @@ const CITY_LINKS = [
 /* ══════════════════════════════════════
    SUB-COMPONENTS
 ═══════════════════════════════════════ */
-
-/* Star row */
-function Stars({ n = 5, size = 18 }: { n?: number; size?: number }) {
-  return (
-    <div style={{ display: "flex", gap: 3 }}>
-      {Array.from({ length: n }).map((_, i) => (
-        <svg
-          key={i}
-          width={size}
-          height={size}
-          viewBox="0 0 24 24"
-          fill="#f5b301">
-          <path d="M12 3.2l2.6 5.6 6 .5-4.5 4 1.3 5.9L12 16.7 6.6 19.2 7.9 13.3 3.4 9.3l6-.5z" />
-        </svg>
-      ))}
-    </div>
-  );
-}
 
 /* Section heading row with chevron nav */
 function SectionHeading({

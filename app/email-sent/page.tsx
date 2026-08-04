@@ -18,7 +18,7 @@ export default function SendEmailPage() {
       mutate({ email: session.user.email });
       hasSent.current = true;
     }
-  }, [session?.user?.email]);
+  }, [session?.user?.email, mutate]);
 
   const handleResend = () => {
     hasSent.current = false; // reset the guard

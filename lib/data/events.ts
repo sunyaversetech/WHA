@@ -1,5 +1,4 @@
 import type { Event } from '../types';
-import Image from 'next/image';
 
 const events: Event[] = [
   {

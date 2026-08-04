@@ -64,7 +64,7 @@ export const sendSimpleMail = async (
     };
 
     const recipients = [{ email }];
-    const response = await client.send({
+    await client.send({
       from: sender,
       to: recipients,
       subject: subject,

@@ -8,9 +8,7 @@ import {
   MoreVertical,
   Plus,
   Search,
-  SlidersHorizontal,
   X,
-  ArrowUpDown,
   Trash2,
   Pencil,
 } from "lucide-react";

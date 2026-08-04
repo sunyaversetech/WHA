@@ -3,7 +3,6 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import {
-  ArrowUpDown,
   Building2,
   ChevronDown,
   ChevronLeft,
@@ -365,13 +364,11 @@ function Avatar({ emp, idx }: { emp: any; idx: number }) {
 // ─── Employee action dropdown ─────────────────────────────────────────────────
 
 function EmpActionDropdown({
-  emp,
   onAssignRepeating,
   onDeleteAllShifts,
   onView,
   onEdit,
 }: {
-  emp: any;
   onAssignRepeating: () => void;
   onDeleteAllShifts: () => void;
   onView: () => void;
@@ -1706,7 +1703,6 @@ export default function ScheduleShift() {
     setMobileSheet({ emp, dayDate });
 
   const selectedDayDate = weekDays[selectedDayIdx];
-  const selectedDayKey = DAY_KEYS[selectedDayIdx];
 
   return (
     <div className="min-h-screen text-gray-700">
@@ -1866,7 +1862,6 @@ export default function ScheduleShift() {
                     </p>
                   </div>
                   <EmpActionDropdown
-                    emp={emp}
                     onAssignRepeating={() => setRepeatingPanel({ emp })}
                     onDeleteAllShifts={() => handleDeleteAllShifts(emp)}
                     onView={() => router.push(`/dashboard/employees`)}
@@ -2064,7 +2059,6 @@ export default function ScheduleShift() {
                     )}
                   </div>
                   <EmpActionDropdown
-                    emp={emp}
                     onAssignRepeating={() => setRepeatingPanel({ emp })}
                     onDeleteAllShifts={() => handleDeleteAllShifts(emp)}
                     onView={() => router.push(`/dashboard/employees`)}

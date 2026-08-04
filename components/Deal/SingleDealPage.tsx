@@ -8,15 +8,12 @@ import {
   ArrowLeft,
   MapPin,
   Loader2,
-  Tag,
   ExternalLink,
-  AlertCircle,
   Clock,
   Ticket,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { QRCodeCanvas } from "qrcode.react";
 import { useSession } from "next-auth/react";
 import { useGetSingleDeal } from "@/services/deal.service";
 import { formatDate } from "date-fns";
@@ -56,7 +53,6 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
   }
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isPreparingPayment, setIsPreparingPayment] = useState(false);
 
   const { data: deal, isLoading } = useGetSingleDeal(unwrappedParams.id);
   const router = useRouter();
@@ -126,9 +122,7 @@ export default function DealDetailPage({ params }: { params: { id: string } }) {
     if (!session?.user) return router.push("/auth");
 
     if (deal?.data.price && deal?.data.price > 0) {
-      setIsPreparingPayment(true);
       setIsModalOpen(true);
-      setIsPreparingPayment(false);
       return;
     }
 

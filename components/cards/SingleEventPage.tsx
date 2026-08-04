@@ -18,7 +18,6 @@ import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { toast } from "sonner";
-import { useState } from "react";
 import LoadingPage from "@/components/ResuableComponents/Loading";
 import { Button } from "../ui/button";
 
@@ -33,8 +32,6 @@ export default function EventDetailPage() {
     iconAnchor: [12, 41],
   });
 
-  const [copied, setCopied] = useState(false);
-
   const handleShare = async () => {
     const shareData = {
       title: "Check out this event!",
@@ -46,9 +43,7 @@ export default function EventDetailPage() {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        setCopied(true);
         toast.success("Event Copied!");
-        setTimeout(() => setCopied(false), 2000);
       }
     } catch (err) {
       console.error("Error sharing:", err);

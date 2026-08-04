@@ -1,6 +1,5 @@
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
-import { Deal } from "@/server/models/DealSchema.model";
 import { NextResponse } from "next/server";
 
 export async function GET() {

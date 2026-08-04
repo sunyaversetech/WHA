@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Search,
   Tag,
   ShoppingBag,
   Utensils,
@@ -11,7 +10,6 @@ import {
   Shirt,
   Globe,
 } from "lucide-react";
-import debounce from "lodash.debounce";
 
 const CATEGORY_ICONS: Record<string, any> = {
   all: Globe,
@@ -36,17 +34,6 @@ export default function DealsHeader() {
   const searchParams = useSearchParams();
 
   const activeCategory = searchParams.get("category") || "all";
-  const currentTab = searchParams.get("view") || "list";
-
-  const [inputValue, setInputValue] = useState(
-    searchParams.get("search") || "",
-  );
-
-  useEffect(() => {
-    setTimeout(() => {
-      setInputValue(searchParams.get("search") || "");
-    }, 0);
-  }, [searchParams]);
 
   const updateQuery = useCallback(
     (updates: Record<string, string | null>) => {
@@ -65,26 +52,8 @@ export default function DealsHeader() {
     [router, searchParams],
   );
 
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((term: string) => {
-        updateQuery({ search: term });
-      }, 500),
-    [updateQuery],
-  );
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
-    debouncedSearch(value);
-  };
-
   const handleCategoryClick = (category: string) => {
     updateQuery({ category });
-  };
-
-  const handleTabChange = (value: string) => {
-    updateQuery({ view: value });
   };
 
   const CATEGORIES = useMemo(() => {

@@ -16,7 +16,6 @@ import { ChevronDown } from "lucide-react";
 import { LogoutDialog } from "../ui/LogoutDialog";
 
 import BusinessSearchWithDates from "./SearchSectionforBusiness";
-import MobileBusinessSearchWithDates from "./MobileViewSearch/SearchSectionforBusiness";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -50,12 +49,6 @@ export default function Navbar() {
   const isHomePage = path === "/";
   const isDashboard = path.startsWith("/dashboard");
   const isBusinessesPage = path === "/businesses";
-  const showMobileSearch = [
-    "/events",
-    "/deals",
-    "/bookings",
-    "/favorites",
-  ].includes(path);
 
   /* ── User dropdown (shared) ── */
   const UserDropdown = ({ pillStyle }: { pillStyle?: boolean }) => (

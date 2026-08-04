@@ -1,4 +1,3 @@
-import DashboardLayoutContent from "@/components/Dashboard/DashboardLayout";
 import SuperAdminLayoutContent from "@/components/SuperAdmin/SuperAdminLayout";
 import type { Metadata } from "next";
 

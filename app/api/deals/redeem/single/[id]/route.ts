@@ -1,6 +1,5 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectToDb } from "@/lib/db";
-import { sendEventTicketEmail } from "@/lib/mail";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";

@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     const expiryDate = new Date();
     expiryDate.setHours(expiryDate.getHours() + 24);
 
-    const user = await User.findOneAndUpdate(
+    await User.findOneAndUpdate(
       { email },
       { token: tokenToUse, verificationTokenExpire: expiryDate },
       { upsert: true },

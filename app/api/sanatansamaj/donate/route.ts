@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       { success: true, message: "Donation entry captured successfully" },
       { status: 201, headers: corsHeaders },
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, message: "Internal Server Processing Error" },
       { status: 500, headers: corsHeaders },

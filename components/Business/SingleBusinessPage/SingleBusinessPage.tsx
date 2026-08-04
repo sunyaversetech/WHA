@@ -136,33 +136,6 @@ function ActionBtn({
   );
 }
 
-function BookNowBtn({
-  full = false,
-  onClick,
-}: {
-  full?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        background: T.navyDark,
-        color: T.white,
-        border: "none",
-        borderRadius: 10,
-        padding: "12px 28px",
-        fontSize: 14,
-        fontWeight: 700,
-        cursor: "pointer",
-        width: full ? "100%" : undefined,
-        whiteSpace: "nowrap",
-      }}>
-      Book now
-    </button>
-  );
-}
-
 function RatingSummary({
   ratingNum,
   totalReviews,

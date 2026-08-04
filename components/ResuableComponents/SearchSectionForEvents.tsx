@@ -1,15 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, X, CalendarDays, ChevronRight, Clock } from "lucide-react";
+import { Search, X, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  addDays,
-  format,
-  startOfMonth,
-  endOfMonth,
-  formatDate,
-} from "date-fns";
+import { addDays, format, startOfMonth, endOfMonth } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { useRouter, useSearchParams } from "next/navigation";

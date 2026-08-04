@@ -39,7 +39,7 @@ export default function VerifyEmailPage() {
           setStatus("error");
           setMessage(data.error || "Verification failed.");
         }
-      } catch (err) {
+      } catch {
         setStatus("error");
         setMessage("Something went wrong. Please try again later.");
       }

@@ -82,7 +82,7 @@ function BoundsUpdater({
         }
         const centre = city ? CITY_COORDS[city.toLowerCase().trim()] : null;
         map.flyTo(centre ?? AU_CENTRE, centre ? 12 : AU_ZOOM, { duration: 1 });
-      } catch (_) {}
+      } catch {}
     }, 500);
     return () => clearTimeout(timer);
   }, [userLocation, city, map]);
@@ -304,18 +304,12 @@ function BusinessPopup({
 export default function BusinessMap({
   businesses,
   currentCity,
-  isVisible,
-  isExpanded,
-  onToggleExpand,
   userLat,
   userLng,
   onBoundsChange,
 }: {
   businesses: any[];
   currentCity: string;
-  isVisible: boolean;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
   userLat?: number;
   userLng?: number;
   onBoundsChange?: (b: { swLat: number; swLng: number; neLat: number; neLng: number }) => void;

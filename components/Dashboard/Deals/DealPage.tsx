@@ -1,7 +1,6 @@
 "use client";
 import { ChevronLeft, PlusCircle, ShieldCheck } from "lucide-react";
 import { DealsTable } from "./DealCard";
-import { toast } from "sonner";
 import Link from "next/link";
 import { useGetDeals } from "@/services/deal.service";
 import { useRouter } from "next/navigation";

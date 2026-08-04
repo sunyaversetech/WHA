@@ -8,12 +8,10 @@ interface MutatorProps<T> extends ApiProps {
   data: T;
 }
 
-const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}`;
-
 export const parseJson = async (value: string) => {
   try {
     return JSON.parse(value);
-  } catch (e) {
+  } catch {
     return value;
   }
 };
@@ -114,7 +112,6 @@ export async function PATCH<PayloadType, ResponseType>({
  * @returns {Promise<any>} The data returned from the API response
  */
 export async function Delete<ResponseType>({
-  data,
   url,
 }: {
   data?: any;

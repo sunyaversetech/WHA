@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, KeyboardEvent } from "react";
+import { useState, KeyboardEvent } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -28,13 +28,14 @@ export default function SeoSettings() {
   const [keywordDraft, setKeywordDraft] = useState("");
   const [description, setDescription] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [seededFor, setSeededFor] = useState<string | null>(null);
 
-  useEffect(() => {
-    const biz = bizData?.data;
-    if (!biz) return;
+  const biz = bizData?.data;
+  if (biz && seededFor !== (biz._id ?? "")) {
+    setSeededFor(biz._id ?? "");
     setKeywords(biz.seo_keywords ?? []);
     setDescription(biz.seo_description ?? "");
-  }, [bizData]);
+  }
 
   const addKeyword = () => {
     const value = keywordDraft.trim();

@@ -156,6 +156,7 @@ export default function CompleteProfilePage() {
     },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() isn't safely memoizable by the React Compiler
   const role = form.watch("role");
 
   const { fields, append, remove } = useFieldArray({

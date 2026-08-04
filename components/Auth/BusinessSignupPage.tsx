@@ -52,17 +52,6 @@ type WeekSchedule = Record<string, DaySchedule>;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CITIES = [
-  "Sydney",
-  "Melbourne",
-  "Brisbane",
-  "Perth",
-  "Adelaide",
-  "Hobart",
-  "Canberra",
-  "Darwin",
-];
-
 const COMMUNITIES = [
   "Nepali",
   "Indian",
@@ -257,6 +246,7 @@ export default function BusinessSignupPage() {
     mode: "onChange",
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() isn't safely memoizable by the React Compiler
   const is24_7 = watch("is24_7");
   const progress = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
 
@@ -459,11 +449,7 @@ export default function BusinessSignupPage() {
               )}
               {step === 3 && <StepCategory control={control} errors={errors} />}
               {step === 4 && (
-                <StepLocation
-                  control={control}
-                  errors={errors}
-                  setValue={setValue}
-                />
+                <StepLocation errors={errors} setValue={setValue} />
               )}
               {step === 5 && (
                 <StepHours
@@ -694,11 +680,9 @@ function StepCategory({ control, errors }: any) {
 // ─── Step 5: Location & City ──────────────────────────────────────────────────
 
 function StepLocation({
-  control,
   errors,
   setValue,
 }: {
-  control: any;
   errors: any;
   setValue: any;
 }) {

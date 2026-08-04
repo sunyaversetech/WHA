@@ -9,7 +9,7 @@ import {
   Elements,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { Loader2, ShieldCheck, X, Clock, User, Calendar } from "lucide-react";
+import { Loader2, ShieldCheck, Clock, User, Calendar } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { getBookingPaymentIntent } from "@/app/actions/bookingstripe";
@@ -91,7 +91,6 @@ export default function BookingCheckout({
   isConfirming,
 }: BookingCheckoutProps) {
   const [clientSecret, setClientSecret] = useState<string>("");
-  const [paymentIntentId, setPaymentIntentId] = useState<string>("");
   const [initializing, setInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
   const [elementsKey, setElementsKey] = useState(0);
@@ -118,7 +117,6 @@ export default function BookingCheckout({
         );
         if (!cancelled) {
           setClientSecret(res.clientSecret);
-          setPaymentIntentId(res.paymentIntentId);
           setElementsKey((k) => k + 1);
         }
       } catch (err: any) {

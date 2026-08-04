@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Trash2, Tag, Calendar, Users } from "lucide-react";
+import { Trash2, Calendar, Users } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 

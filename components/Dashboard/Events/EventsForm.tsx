@@ -238,6 +238,7 @@ export function EventForm() {
                 <FormField
                   control={form.control}
                   name="image"
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- value excluded so it isn't spread onto the file input
                   render={({ field: { value, onChange, ...fieldProps } }) => (
                     <FormItem>
                       <FormLabel>Event Image</FormLabel>
@@ -254,6 +255,7 @@ export function EventForm() {
                   )}
                 />
 
+                {/* eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() isn't safely memoizable by the React Compiler */}
                 {form.watch("image") && (
                   <div className="mt-2">
                     <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md bg-transparent border-slate-200 w-fit max-w-[250px]">

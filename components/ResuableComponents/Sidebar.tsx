@@ -17,7 +17,6 @@ import {
   MoreHorizontal,
   LucideIcon,
   Smile,
-  CalendarArrowDown,
   Cog,
 } from "lucide-react";
 import Image from "next/image";

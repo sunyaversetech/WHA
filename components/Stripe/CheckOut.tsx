@@ -53,7 +53,6 @@ export default function StripeCheckout({
   const [initializing, setInitializing] = useState(true);
   const [updatingTotal, setUpdatingTotal] = useState(false);
   const [invoiceNumber] = useState(() => generateInvoiceNumber());
-  const [paymentIntentId, setPaymentIntentId] = useState("");
   const [elementsKey, setElementsKey] = useState(0);
 
   const elementsMountedRef = useRef(false);
@@ -63,7 +62,6 @@ export default function StripeCheckout({
       try {
         const res = await getPaymentIntentForQuantity(dealId, quantity);
         setClientSecret(res.clientSecret as string);
-        setPaymentIntentId(res.paymentIntentId);
         setFees(computeFees(price, quantity));
         elementsMountedRef.current = true;
       } catch (err) {
@@ -73,6 +71,7 @@ export default function StripeCheckout({
       }
     }
     initIntent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount-only; quantity changes are handled separately by onQuantityChange
   }, []);
 
   const onQuantityChange = useCallback(
@@ -82,7 +81,6 @@ export default function StripeCheckout({
       try {
         const res = await getPaymentIntentForQuantity(dealId, newQty);
         setClientSecret(res.clientSecret as string);
-        setPaymentIntentId(res.paymentIntentId);
         setFees(computeFees(price, newQty));
         setElementsKey((prev) => prev + 1);
       } catch (err) {

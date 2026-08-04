@@ -2,7 +2,7 @@
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Loader2, CheckCircle2, Calendar, Clock } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
 
 export default function BookingSuccessPage() {
   const params = useSearchParams();

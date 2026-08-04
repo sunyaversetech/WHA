@@ -1,35 +1,6 @@
 ﻿"use client";
 
-import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  User,
-  Settings,
-  LogOut,
-  MapPin,
-  ChevronRight,
-  Bell,
-  BadgeCheck,
-} from "lucide-react";
-import { usePathname } from "next/navigation";
-import Image from "next/image";
-import { Button } from "../ui/button";
-import LiveDateTime from "../ui/date-time";
-import { LogoutDialog } from "../ui/LogoutDialog";
-
 export default function DashboardNavbar() {
-  const { data: session } = useSession();
-  const pathname = usePathname();
-
   return (
     <nav>
       {/* <div className="flex items-center gap-4">

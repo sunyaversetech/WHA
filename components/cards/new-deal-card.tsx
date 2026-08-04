@@ -3,14 +3,12 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Heart, Tag } from "lucide-react";
-import { format } from "date-fns";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from "@/components/ui/card"; // Assuming shadcn card structure
-import { Button } from "@/components/ui/button";
 import type { DealsGetValues } from "@/services/deal.service";
 import {
   useCreateFavroite,

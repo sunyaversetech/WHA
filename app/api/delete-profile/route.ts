@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
@@ -7,7 +7,7 @@ import Event from "@/server/models/Event.model";
 import { Deal } from "@/server/models/DealSchema.model";
 import { Review } from "@/server/models/Review.model";
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   const session = await getServerSession(authOptions);
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

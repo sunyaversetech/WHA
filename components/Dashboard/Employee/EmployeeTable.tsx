@@ -25,7 +25,6 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
-import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -684,13 +683,15 @@ export function EmployeeTable() {
   const toggleSelect = (id: string) =>
     setSelectedIds((prev) => {
       const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
       return n;
     });
   const toggleType = (type: string) =>
     setSelectedTypes((prev) => {
       const n = new Set(prev);
-      n.has(type) ? n.delete(type) : n.add(type);
+      if (n.has(type)) n.delete(type);
+      else n.add(type);
       return n;
     });
   const activeFilterCount =

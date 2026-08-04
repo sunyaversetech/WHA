@@ -1,12 +1,11 @@
 "use client";
 
 import React from "react";
-import { Trash2, ShieldAlert, ShieldCheck, MoreHorizontal } from "lucide-react";
+import { Trash2, ShieldAlert, ShieldCheck } from "lucide-react";
 import { UserBusinessType } from "@/services/business.service";
 import {
   useBlockBusinessOrUser,
   useDeleteBusinessOrUser,
-  useVerifyBusiness,
 } from "@/services/super-admin.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -20,15 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
 

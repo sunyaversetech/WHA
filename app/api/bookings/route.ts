@@ -1,5 +1,5 @@
 // app/api/bookings/route.ts
-import { z, ZodError } from "zod";
+import { ZodError } from "zod";
 import mongoose from "mongoose";
 import { connectToDb } from "@/lib/db";
 import { NextResponse } from "next/server";
@@ -13,15 +13,6 @@ import logger from "@/lib/logger";
 import { sendServiceBookingEmails } from "@/lib/mail";
 import User from "@/server/models/Auth.model";
 import Notification from "@/server/models/Notification.model";
-
-const create_booking_schema = z.object({
-  service_id: z.string().min(1),
-  employee_id: z.string().nullable().optional(),
-  start_time: z.string().datetime(),
-  lock_id: z.string().min(1),
-  idempotency_key: z.string().uuid().optional(),
-  inventory: z.number().min(0).optional(),
-});
 
 function toClientError(error: unknown): { message: string; code: string } {
   if (error instanceof ZodError) {

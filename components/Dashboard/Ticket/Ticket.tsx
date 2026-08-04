@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import { useState } from "react";
 import { useGetTickets } from "@/services/dashboard.service";
 import { QRCodeCanvas } from "qrcode.react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -185,79 +185,6 @@ const TicketCard = ({ item, onClick }: { item: any; onClick: () => void }) => {
           {isEvent ? "Tap to view QR pass" : "Tap to view voucher"}
         </p>
       </div>
-    </div>
-  );
-};
-
-const MobileSlider = ({
-  tickets,
-  onCardClick,
-}: {
-  tickets: any[];
-  onCardClick: (item: any) => void;
-}) => {
-  const [current, setCurrent] = useState(0);
-  const touchStartX = useRef<number | null>(null);
-
-  const prev = () => setCurrent((c) => Math.max(0, c - 1));
-  const next = () => setCurrent((c) => Math.min(tickets.length - 1, c + 1));
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const delta = touchStartX.current - e.changedTouches[0].clientX;
-    if (delta > 50) next();
-    else if (delta < -50) prev();
-    touchStartX.current = null;
-  };
-
-  if (tickets.length === 0) return <EmptyState />;
-
-  return (
-    <div className="relative w-full">
-      <div
-        className="overflow-hidden w-full"
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}>
-        <div
-          className="flex transition-transform duration-300 ease-in-out"
-          style={{ transform: `translateX(-${current * 100}%)` }}>
-          {tickets.map((item) => (
-            <div key={item._id} className="min-w-full px-1">
-              <TicketCard item={item} onClick={() => onCardClick(item)} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex justify-center gap-2 mt-4">
-        {tickets.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            className={`h-2 rounded-full transition-all duration-200 ${
-              i === current ? "bg-indigo-400 w-5" : "bg-white/30 w-2"
-            }`}
-          />
-        ))}
-      </div>
-
-      {current > 0 && (
-        <button
-          onClick={prev}
-          className="absolute left-0 top-[45%] w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center text-xl backdrop-blur">
-          ‹
-        </button>
-      )}
-      {current < tickets.length - 1 && (
-        <button
-          onClick={next}
-          className="absolute right-0 top-[45%] w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center text-xl backdrop-blur">
-          ›
-        </button>
-      )}
     </div>
   );
 };
