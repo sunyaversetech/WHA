@@ -7,8 +7,6 @@ import UserSidebar from "../ResuableComponents/User-Sidebar";
 import {
   Search,
   Bell,
-  BarChart2,
-  MessageCircle,
   ChevronRight,
   X,
   Star,
@@ -63,12 +61,6 @@ const TYPE_ICON: Record<NotifItem["type"], React.ReactNode> = {
   appointment: <CalendarDays size={9} className="text-white" />,
   review: <Star size={9} className="text-white" />,
 };
-
-const SAMPLE_CLIENTS = [
-  { id: 1, name: "Jack Doe", email: "jack@example.com" },
-  { id: 2, name: "Jane Doe", email: "jane@example.com" },
-  { id: 3, name: "John Doe", email: "john@example.com" },
-];
 
 function TopBarBtn({
   onClick,
@@ -149,6 +141,22 @@ function ProfileDropdown({
   );
 }
 
+type SearchAppointment = {
+  _id: string;
+  start_time: string;
+  status: string;
+  service_id?: { name: string } | null;
+  user_id?: { name: string; email: string; phone_number?: string } | null;
+};
+
+type SearchClient = {
+  user_id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  image?: string;
+};
+
 function SearchOverlay({
   open,
   onClose,
@@ -156,11 +164,17 @@ function SearchOverlay({
   open: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
+  const [appointments, setAppointments] = useState<SearchAppointment[]>([]);
+  const [clients, setClients] = useState<SearchClient[]>([]);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 30);
   }, [open]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -168,6 +182,31 @@ function SearchOverlay({
     if (open) document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = setTimeout(() => {
+      setLoading(true);
+      fetch(`/api/dashboard/search?q=${encodeURIComponent(query)}`)
+        .then((res) => res.json())
+        .then((json) => {
+          setAppointments(json.data?.appointments ?? []);
+          setClients(json.data?.clients ?? []);
+        })
+        .finally(() => setLoading(false));
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [open, query]);
+
+  const goToAppointment = (id: string) => {
+    onClose();
+    router.push(`/dashboard/bookings?bookingId=${id}`);
+  };
+  const goToClient = () => {
+    onClose();
+    router.push(`/dashboard/clients`);
+  };
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 bg-[#0d0d0d] flex flex-col">
@@ -195,28 +234,70 @@ function SearchOverlay({
             <h3 className="text-sm font-semibold text-gray-300 mb-4">
               Upcoming appointments
             </h3>
-            <p className="text-sm text-gray-500">None found</p>
+            {loading ? (
+              <p className="text-sm text-gray-500">Searching…</p>
+            ) : appointments.length === 0 ? (
+              <p className="text-sm text-gray-500">None found</p>
+            ) : (
+              <div className="space-y-4">
+                {appointments.map((a) => (
+                  <button
+                    key={a._id}
+                    type="button"
+                    onClick={() => goToAppointment(a._id)}
+                    className="flex items-center gap-3 w-full hover:opacity-75 transition-opacity text-left">
+                    <div className="w-10 h-10 rounded-full bg-[#4f63d2] flex items-center justify-center text-sm font-bold text-white shrink-0">
+                      {(a.user_id?.name || "?")[0]}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">
+                        {a.service_id?.name || "Service"} —{" "}
+                        {a.user_id?.name || "Unknown"}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(a.start_time).toLocaleString("en-AU", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-300 mb-4">
-              Clients (recently added)
+              {query ? "Clients" : "Clients (recently added)"}
             </h3>
-            <div className="space-y-4">
-              {SAMPLE_CLIENTS.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className="flex items-center gap-3 w-full hover:opacity-75 transition-opacity text-left">
-                  <div className="w-10 h-10 rounded-full bg-[#3a4580] flex items-center justify-center text-sm font-bold text-white shrink-0">
-                    {c.name[0]}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-white">{c.name}</p>
-                    <p className="text-xs text-gray-400">{c.email}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
+            {loading ? (
+              <p className="text-sm text-gray-500">Searching…</p>
+            ) : clients.length === 0 ? (
+              <p className="text-sm text-gray-500">None found</p>
+            ) : (
+              <div className="space-y-4">
+                {clients.map((c) => (
+                  <button
+                    key={c.user_id}
+                    type="button"
+                    onClick={goToClient}
+                    className="flex items-center gap-3 w-full hover:opacity-75 transition-opacity text-left">
+                    <div className="w-10 h-10 rounded-full bg-[#3a4580] flex items-center justify-center text-sm font-bold text-white shrink-0">
+                      {(c.name || "?")[0]}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">
+                        {c.name}
+                      </p>
+                      <p className="text-xs text-gray-400 truncate">
+                        {c.email}
+                        {c.phone ? ` · ${c.phone}` : ""}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -485,10 +566,7 @@ export default function DashboardLayoutContent({
 
   return (
     <div className="min-h-screen ">
-      {/* Sidebar — always visible, fixed */}
       {isBusiness ? <Sidebar /> : <UserSidebar />}
-
-      {/* Content — offset from sidebar */}
       <div
         className={cn(
           "flex flex-col min-h-screen",
@@ -496,15 +574,12 @@ export default function DashboardLayoutContent({
         )}>
         {isBusiness && (
           <header className="h-[56px] md:h-[60px] bg-[#111111] flex items-center justify-end px-4 md:px-5 sticky top-0 z-30 border-b border-[#1e1e1e]">
-            {/* Mobile: empty left */}
             <div className="md:hidden" />
             <div className="flex items-center gap-0.5">
               <TopBarBtn onClick={() => setShowSearch(true)}>
                 <Search size={17} />
               </TopBarBtn>
-              <TopBarBtn onClick={() => {}}>
-                <BarChart2 size={17} />
-              </TopBarBtn>
+
               <div className="relative">
                 <TopBarBtn onClick={() => setShowNotif(true)}>
                   <Bell size={17} />
@@ -515,9 +590,7 @@ export default function DashboardLayoutContent({
                   </span>
                 )}
               </div>
-              <TopBarBtn onClick={() => {}}>
-                <MessageCircle size={17} />
-              </TopBarBtn>
+
               <div className="relative ml-1">
                 <button
                   type="button"
@@ -545,7 +618,6 @@ export default function DashboardLayoutContent({
         <main className="flex-1 p-4 ">{children}</main>
       </div>
 
-      {/* Overlays */}
       <SearchOverlay
         key={String(showSearch)}
         open={showSearch}

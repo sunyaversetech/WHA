@@ -287,7 +287,6 @@ export default function BusinessSearchWithDates() {
           maxWidth: 880,
           zIndex: active ? 100 : "auto",
         }}>
-        {/* ── Pill ── */}
         <div
           style={{
             display: "flex",
@@ -298,7 +297,6 @@ export default function BusinessSearchWithDates() {
             padding: "5px 5px 5px 6px",
             boxShadow: "0 6px 28px rgba(2,12,26,0.05)",
           }}>
-          {/* WHAT */}
           <div style={{ position: "relative", flex: 1.35 }}>
             {active === "what" && (
               <div
@@ -361,7 +359,6 @@ export default function BusinessSearchWithDates() {
             </div>
           </div>
 
-          {/* Divider */}
           <div
             style={{
               width: 1,
@@ -434,7 +431,6 @@ export default function BusinessSearchWithDates() {
             </div>
           </div>
 
-          {/* Divider */}
           <div
             style={{
               width: 1,
