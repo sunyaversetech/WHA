@@ -11,6 +11,7 @@ import { Eye, EyeOff, MoveLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "../ui/button";
+import EmailVerifyGate from "./EmailVerifyGate";
 
 const signupSchema = z
   .object({
@@ -62,10 +63,12 @@ export default function SignupPage() {
   const { mutate, isPending } = useUserSignup();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
@@ -79,7 +82,15 @@ export default function SignupPage() {
     },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() isn't safely memoizable by the React Compiler
+  const email = watch("email");
+  const isEmailVerified = !!verifiedEmail && verifiedEmail === email;
+
   const onSubmit = (values: z.infer<typeof signupSchema>) => {
+    if (!isEmailVerified) {
+      toast.error("Please verify your email address first");
+      return;
+    }
     const formData = new FormData();
     Object.entries(values).forEach(([k, v]) => {
       if (v !== undefined && v !== null) formData.append(k, String(v));
@@ -176,6 +187,13 @@ export default function SignupPage() {
                 />
                 {errors.email && (
                   <span style={ERR}>{errors.email.message}</span>
+                )}
+                {!errors.email && email && (
+                  <EmailVerifyGate
+                    email={email}
+                    verified={isEmailVerified}
+                    onVerified={() => setVerifiedEmail(email)}
+                  />
                 )}
               </div>
 
@@ -321,20 +339,25 @@ export default function SignupPage() {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || !isEmailVerified}
                 style={{
                   width: "100%",
-                  background: isPending ? "#334155" : "#0f172a",
+                  background:
+                    isPending || !isEmailVerified ? "#334155" : "#0f172a",
                   color: "#fff",
                   border: "none",
                   borderRadius: 9999,
                   padding: "16px",
                   fontSize: 16,
                   fontWeight: 700,
-                  cursor: isPending ? "not-allowed" : "pointer",
+                  cursor: isPending || !isEmailVerified ? "not-allowed" : "pointer",
                   transition: "background .15s",
                 }}>
-                {isPending ? "Creating account…" : "Create account"}
+                {isPending
+                  ? "Creating account…"
+                  : isEmailVerified
+                    ? "Create account"
+                    : "Verify your email to continue"}
               </button>
             </form>
           </div>

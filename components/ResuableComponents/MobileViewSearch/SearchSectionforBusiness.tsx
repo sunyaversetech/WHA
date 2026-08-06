@@ -195,17 +195,39 @@ export default function MobileBusinessSearchWithDates({
   const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
     if (service) params.set("service", service);
+
+    let sameLocation = false;
     if (geoCoords) {
       params.set("lat", String(geoCoords.lat));
       params.set("lng", String(geoCoords.lng));
+      sameLocation =
+        searchParams.get("lat") === String(geoCoords.lat) &&
+        searchParams.get("lng") === String(geoCoords.lng);
     } else if (location) {
       params.set("city", location);
+      sameLocation = searchParams.get("city") === location;
     }
+
+    // Only carry the map viewport over if the city/location is unchanged —
+    // otherwise the old bounds would point at the wrong place.
+    if (sameLocation) {
+      const swLat = searchParams.get("swLat");
+      const swLng = searchParams.get("swLng");
+      const neLat = searchParams.get("neLat");
+      const neLng = searchParams.get("neLng");
+      if (swLat && swLng && neLat && neLng) {
+        params.set("swLat", swLat);
+        params.set("swLng", swLng);
+        params.set("neLat", neLat);
+        params.set("neLng", neLng);
+      }
+    }
+
     if (selDay) params.set("date", `${selDay.y}-${String(selDay.m + 1).padStart(2, "0")}-${String(selDay.d).padStart(2, "0")}`);
     if (timeSlot !== "any") params.set("time", timeSlot);
     router.push(`/businesses?${params.toString()}`);
     setOpen(false);
-  }, [service, location, geoCoords, selDay, timeSlot, router, setOpen]);
+  }, [service, location, geoCoords, selDay, timeSlot, router, setOpen, searchParams]);
 
   const prevMonth = () => { if (viewM === 0) { setViewY(y => y - 1); setViewM(11); } else setViewM(m => m - 1); };
   const nextMonth = () => { if (viewM === 11) { setViewY(y => y + 1); setViewM(0); } else setViewM(m => m + 1); };

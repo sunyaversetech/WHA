@@ -27,6 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { INPUT } from "./LoginPage";
+import EmailVerifyGate from "./EmailVerifyGate";
 
 const LocationMap = dynamic(() => import("./LocationMap"), {
   ssr: false,
@@ -208,6 +209,7 @@ export default function BusinessSignupPage() {
   const { mutate, isPending } = useBusinessSignup();
 
   const [step, setStep] = useState(1);
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
   const [schedule, setSchedule] = useState<WeekSchedule>(DEFAULT_SCHEDULE);
   const [selectedDay, setSelectedDay] = useState("mon");
   const [community, setCommunity] = useState<string[]>([]);
@@ -248,6 +250,8 @@ export default function BusinessSignupPage() {
 
   // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() isn't safely memoizable by the React Compiler
   const is24_7 = watch("is24_7");
+  const email = watch("email");
+  const isEmailVerified = !!verifiedEmail && verifiedEmail === email;
   const progress = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
 
   const goNext = async () => {
@@ -354,6 +358,10 @@ export default function BusinessSignupPage() {
 
   // ── Submit ──────────────────────────────────────────────────────────────────
   const onSubmit = (data: SingUPFormSchema) => {
+    if (!isEmailVerified) {
+      toast.error("Please verify your email address first");
+      return;
+    }
     const fd = new FormData();
     fd.append("business_name", data.business_name);
     if (data.business_type) fd.append("business_type", data.business_type);
@@ -433,10 +441,14 @@ export default function BusinessSignupPage() {
             ) : (
               <Button
                 onClick={handleSubmit(onSubmit)}
-                disabled={isPending}
+                disabled={isPending || !isEmailVerified}
                 className="gap-2">
-                {isPending ? "Submitting…" : "Complete setup"}
-                {!isPending && <ArrowRight size={15} />}
+                {isPending
+                  ? "Submitting…"
+                  : isEmailVerified
+                    ? "Complete setup"
+                    : "Verify your email"}
+                {!isPending && isEmailVerified && <ArrowRight size={15} />}
               </Button>
             )}
           </div>
@@ -486,6 +498,9 @@ export default function BusinessSignupPage() {
                   setShowPw={setShowPw}
                   showCpw={showCpw}
                   setShowCpw={setShowCpw}
+                  email={email}
+                  isEmailVerified={isEmailVerified}
+                  onEmailVerified={() => setVerifiedEmail(email)}
                 />
               )}
             </div>
@@ -1321,6 +1336,9 @@ function StepLogin({
   setShowPw,
   showCpw,
   setShowCpw,
+  email,
+  isEmailVerified,
+  onEmailVerified,
 }: any) {
   return (
     <div>
@@ -1354,6 +1372,13 @@ function StepLogin({
           onFocus={(e) => (e.currentTarget.style.borderColor = "#0f172a")}
           onBlur={(e) => (e.currentTarget.style.borderColor = "#e2e8f0")}
         />
+        {!errors.email && email && (
+          <EmailVerifyGate
+            email={email}
+            verified={isEmailVerified}
+            onVerified={onEmailVerified}
+          />
+        )}
       </Field>
 
       <Field label="Password" error={errors.password?.message}>

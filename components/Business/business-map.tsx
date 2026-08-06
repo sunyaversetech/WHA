@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { X, Star } from "lucide-react";
@@ -26,7 +32,7 @@ const AU_ZOOM = 5;
 function fmtDistance(metres: number): string {
   return metres < 1000
     ? `${Math.round(metres)} m`
-    : `${(metres / 1000).toFixed(1)} km`;
+    : `${(metres / 25000).toFixed(1)} km`;
 }
 
 /* ── Fresha-style dark-pill business marker ── */
@@ -81,7 +87,7 @@ function BoundsUpdater({
           return;
         }
         const centre = city ? CITY_COORDS[city.toLowerCase().trim()] : null;
-        map.flyTo(centre ?? AU_CENTRE, centre ? 12 : AU_ZOOM, { duration: 1 });
+        map.flyTo(centre ?? AU_CENTRE, centre ? 9 : AU_ZOOM, { duration: 1 });
       } catch {}
     }, 500);
     return () => clearTimeout(timer);
@@ -94,19 +100,36 @@ function BoundsUpdater({
 function MapBoundsWatcher({
   onBoundsChange,
 }: {
-  onBoundsChange: (b: { swLat: number; swLng: number; neLat: number; neLng: number }) => void;
+  onBoundsChange: (b: {
+    swLat: number;
+    swLng: number;
+    neLat: number;
+    neLng: number;
+  }) => void;
 }) {
   const cbRef = useRef(onBoundsChange);
-  useEffect(() => { cbRef.current = onBoundsChange; });
+  useEffect(() => {
+    cbRef.current = onBoundsChange;
+  });
 
   useMapEvents({
     moveend(e) {
       const b = e.target.getBounds();
-      cbRef.current({ swLat: b.getSouth(), swLng: b.getWest(), neLat: b.getNorth(), neLng: b.getEast() });
+      cbRef.current({
+        swLat: b.getSouth(),
+        swLng: b.getWest(),
+        neLat: b.getNorth(),
+        neLng: b.getEast(),
+      });
     },
     zoomend(e) {
       const b = e.target.getBounds();
-      cbRef.current({ swLat: b.getSouth(), swLng: b.getWest(), neLat: b.getNorth(), neLng: b.getEast() });
+      cbRef.current({
+        swLat: b.getSouth(),
+        swLng: b.getWest(),
+        neLat: b.getNorth(),
+        neLng: b.getEast(),
+      });
     },
   });
   return null;
@@ -128,21 +151,15 @@ function BusinessPopup({
   const avgRating =
     business.reviews?.length > 0
       ? (
-          business.reviews.reduce(
-            (acc: number, r: any) => acc + r.rating,
-            0,
-          ) / business.reviews.length
+          business.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) /
+          business.reviews.length
         ).toFixed(1)
       : null;
 
   let distText = "";
   if (typeof business.distance === "number") {
     distText = fmtDistance(business.distance);
-  } else if (
-    userLocation &&
-    business.latitude &&
-    business.longitude
-  ) {
+  } else if (userLocation && business.latitude && business.longitude) {
     const R = 6371000;
     const dLat =
       (Number(business.latitude) - userLocation[0]) * (Math.PI / 180);
@@ -170,8 +187,7 @@ function BusinessPopup({
         boxShadow: "0 12px 40px rgba(2,12,26,0.22)",
         overflow: "hidden",
         pointerEvents: "all",
-      }}
-    >
+      }}>
       {/* Close */}
       <button
         onClick={onClose}
@@ -190,15 +206,12 @@ function BusinessPopup({
           justifyContent: "center",
           cursor: "pointer",
           boxShadow: "0 1px 6px rgba(0,0,0,0.14)",
-        }}
-      >
+        }}>
         <X size={15} color="#0f2748" strokeWidth={2.5} />
       </button>
 
       {/* Image */}
-      <div
-        style={{ position: "relative", height: 160, background: "#e9eef2" }}
-      >
+      <div style={{ position: "relative", height: 160, background: "#e9eef2" }}>
         <Image
           fill
           src={business.image || "/placeholder.svg"}
@@ -216,8 +229,7 @@ function BusinessPopup({
             alignItems: "center",
             justifyContent: "space-between",
             gap: 8,
-          }}
-        >
+          }}>
           <span
             style={{
               fontSize: 15,
@@ -226,8 +238,7 @@ function BusinessPopup({
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-            }}
-          >
+            }}>
             {business.business_name}
           </span>
           {avgRating && (
@@ -240,8 +251,7 @@ function BusinessPopup({
                 fontWeight: 700,
                 color: "#0f2748",
                 flexShrink: 0,
-              }}
-            >
+              }}>
               <Star size={13} fill="#f5b301" color="#f5b301" />
               {avgRating}
             </span>
@@ -257,8 +267,7 @@ function BusinessPopup({
             gap: 4,
             flexWrap: "wrap",
             alignItems: "center",
-          }}
-        >
+          }}>
           {distText && <span>{distText}</span>}
           {distText && business.business_category && (
             <span style={{ color: "#dde3ec" }}>·</span>
@@ -289,8 +298,7 @@ function BusinessPopup({
             fontSize: 14,
             fontWeight: 700,
             textDecoration: "none",
-          }}
-        >
+          }}>
           View profile
         </Link>
       </div>
@@ -312,7 +320,12 @@ export default function BusinessMap({
   currentCity: string;
   userLat?: number;
   userLng?: number;
-  onBoundsChange?: (b: { swLat: number; swLng: number; neLat: number; neLng: number }) => void;
+  onBoundsChange?: (b: {
+    swLat: number;
+    swLng: number;
+    neLat: number;
+    neLng: number;
+  }) => void;
 }) {
   const userLocation: [number, number] | null =
     userLat != null && userLng != null ? [userLat, userLng] : null;
@@ -335,8 +348,7 @@ export default function BusinessMap({
         zoom={AU_ZOOM}
         zoomControl={false}
         className="h-full w-full"
-        style={{ height: "100%", width: "100%", position: "absolute" }}
-      >
+        style={{ height: "100%", width: "100%", position: "absolute" }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
@@ -346,9 +358,7 @@ export default function BusinessMap({
         {onBoundsChange && <MapBoundsWatcher onBoundsChange={onBoundsChange} />}
 
         {/* User location blue dot */}
-        {userLocation && (
-          <Marker position={userLocation} icon={userIcon} />
-        )}
+        {userLocation && <Marker position={userLocation} icon={userIcon} />}
 
         {/* Business markers */}
         {businesses.map((business: any) => {
@@ -369,10 +379,7 @@ export default function BusinessMap({
           return (
             <Marker
               key={business._id}
-              position={[
-                Number(business.latitude),
-                Number(business.longitude),
-              ]}
+              position={[Number(business.latitude), Number(business.longitude)]}
               icon={makeMarkerIcon(avgRating, isSelected)}
               zIndexOffset={isSelected ? 1000 : 0}
               eventHandlers={{

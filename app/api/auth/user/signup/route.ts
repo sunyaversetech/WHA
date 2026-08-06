@@ -1,5 +1,6 @@
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
+import EmailVerification from "@/server/models/EmailVerification.model";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { uploadToS3 } from "@/server/lib/function";
@@ -29,6 +30,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const verification = await EmailVerification.findOne({
+      email,
+      verified: true,
+      expires_at: { $gt: new Date() },
+    });
+    if (!verification) {
+      return NextResponse.json(
+        { message: "Please verify your email address before signing up" },
+        { status: 400 },
+      );
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const coverFile = formData.get("image") as File | null;
@@ -47,7 +60,10 @@ export async function POST(req: NextRequest) {
       image: imageUrl || undefined,
       accpetalltermsandcondition: accepted,
       provider: "credentials",
+      emailVerified: new Date(),
     });
+
+    await EmailVerification.deleteOne({ email });
 
     return NextResponse.json(
       {

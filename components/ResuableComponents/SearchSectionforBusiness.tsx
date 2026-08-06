@@ -178,7 +178,7 @@ export default function BusinessSearchWithDates() {
       if (!el) return;
       const rect = el.getBoundingClientRect();
       setAnchor({
-        top: rect.bottom + 16,
+        top: rect.bottom + 5,
         left: rect.left,
         width: rect.width,
         right: window.innerWidth - rect.right,
@@ -240,12 +240,35 @@ export default function BusinessSearchWithDates() {
   const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
     if (service) params.set("service", service);
+
+    let sameLocation = false;
     if (geoCoords) {
       params.set("lat", String(geoCoords.lat));
       params.set("lng", String(geoCoords.lng));
+      sameLocation =
+        searchParams.get("lat") === String(geoCoords.lat) &&
+        searchParams.get("lng") === String(geoCoords.lng);
     } else if (location) {
       params.set("city", location);
+      sameLocation = searchParams.get("city") === location;
     }
+
+    // The map viewport (from panning/zooming on the results page) is only
+    // still meaningful if the city/location hasn't changed — otherwise the
+    // old bounds would point at the wrong place.
+    if (sameLocation) {
+      const swLat = searchParams.get("swLat");
+      const swLng = searchParams.get("swLng");
+      const neLat = searchParams.get("neLat");
+      const neLng = searchParams.get("neLng");
+      if (swLat && swLng && neLat && neLng) {
+        params.set("swLat", swLat);
+        params.set("swLng", swLng);
+        params.set("neLat", neLat);
+        params.set("neLng", neLng);
+      }
+    }
+
     if (selDay)
       params.set(
         "date",
@@ -254,7 +277,7 @@ export default function BusinessSearchWithDates() {
     if (timeSlot !== "any") params.set("time", timeSlot);
     router.push(`/search?${params.toString()}`);
     setActive(null);
-  }, [service, location, geoCoords, selDay, timeSlot, router]);
+  }, [service, location, geoCoords, selDay, timeSlot, router, searchParams]);
 
   const selectCity = (city: string) => {
     setGeoCoords(null);

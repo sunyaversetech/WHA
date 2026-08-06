@@ -383,7 +383,6 @@ export default function BusinessPage() {
 
   const totalReviews = reviews?.data?.length ?? 0;
 
-  /* Extract unique team members from services */
   const teamMembers = useMemo(() => {
     const map = new Map<string, any>();
     data?.data?.services?.forEach((s: any) => {

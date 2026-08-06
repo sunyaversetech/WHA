@@ -566,3 +566,42 @@ export const sendBookingChangeEmails = async (
       businessResult.status === "fulfilled",
   };
 };
+
+// ==========================================
+// 5. SIGNUP EMAIL VERIFICATION CODE
+// ==========================================
+const generateSignupCodeTemplate = (code: string) => `
+  <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; border: 1px solid #e1e1e1; padding: 32px; border-radius: 14px;">
+    <h2 style="color: #051e3a; text-align: center; margin: 0 0 8px;">Verify your email</h2>
+    <p style="font-size: 15px; color: #555; text-align: center; margin: 0 0 28px;">
+      Enter this code to continue creating your account. It expires in 10 minutes.
+    </p>
+    <div style="text-align: center; margin: 0 0 28px;">
+      <span style="display: inline-block; background: #f4f7fb; border: 1px solid #e6ebf2; border-radius: 10px; padding: 16px 28px; font-size: 32px; font-weight: 800; letter-spacing: 10px; color: #051e3a;">
+        ${code}
+      </span>
+    </div>
+    <p style="font-size: 13px; color: #94a3b8; text-align: center; margin: 0;">
+      If you didn't request this, you can safely ignore this email.
+    </p>
+  </div>
+`;
+
+export const sendSignupVerificationCode = async (
+  email: string,
+  code: string,
+) => {
+  const client = new MailtrapClient({ token: process.env.MAIL_TOKEN! });
+  try {
+    await client.send({
+      from: { email: "no-reply@whaustralia.com", name: "Whats Happening Australia" },
+      to: [{ email }],
+      subject: `${code} is your verification code`,
+      html: generateSignupCodeTemplate(code),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Signup verification code email error:", error);
+    return { success: false };
+  }
+};

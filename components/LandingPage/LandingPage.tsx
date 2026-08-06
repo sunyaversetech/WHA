@@ -18,18 +18,32 @@ import { EMPLOYEE_CATEGORIES } from "@/lib/data/business-categories";
 /* ══════════════════════════════════════
    STATIC DATA
 ═══════════════════════════════════════ */
-const FOOTER_COLS = [
+const FOOTER_COLS: { heading: string; links: { label: string; href?: string }[] }[] = [
   {
     heading: "About WHA",
-    links: ["Careers", "Helpdesk support", "Blog", "Sitemap"],
+    links: [
+      { label: "Careers" },
+      { label: "Helpdesk support" },
+      { label: "Blog" },
+      { label: "Sitemap" },
+    ],
   },
   {
     heading: "Legal",
-    links: ["Privacy Policy", "Terms of Service", "Terms of Use"],
+    links: [
+      { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Terms and Conditions", href: "/terms-and-conditions" },
+      { label: "Terms of Service", href: "/terms-of-service" },
+    ],
   },
   {
     heading: "For Business",
-    links: ["List your business", "Pricing", "Payments", "Support"],
+    links: [
+      { label: "List your business" },
+      { label: "Pricing" },
+      { label: "Payments" },
+      { label: "Support" },
+    ],
   },
 ];
 
@@ -996,18 +1010,32 @@ export default function LandingPage() {
                 </div>
                 <div
                   style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-                  {col.links.map((lk) => (
-                    <span
-                      key={lk}
-                      style={{
-                        fontSize: 15,
-                        color: "#5a6a80",
-                        fontWeight: 500,
-                        cursor: "pointer",
-                      }}>
-                      {lk}
-                    </span>
-                  ))}
+                  {col.links.map((lk) =>
+                    lk.href ? (
+                      <Link
+                        key={lk.label}
+                        href={lk.href}
+                        style={{
+                          fontSize: 15,
+                          color: "#5a6a80",
+                          fontWeight: 500,
+                          textDecoration: "none",
+                        }}>
+                        {lk.label}
+                      </Link>
+                    ) : (
+                      <span
+                        key={lk.label}
+                        style={{
+                          fontSize: 15,
+                          color: "#5a6a80",
+                          fontWeight: 500,
+                          cursor: "pointer",
+                        }}>
+                        {lk.label}
+                      </span>
+                    ),
+                  )}
                 </div>
               </div>
             ))}

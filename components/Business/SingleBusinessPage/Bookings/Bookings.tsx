@@ -390,9 +390,13 @@ export default function BookingContainer({ services }: BookingContainerProps) {
         toast.success("Appointment successfully confirmed and saved!");
         setIsPaymentModalOpen(false);
         handleGlobalWizardReset();
-        router.push(
-          `/dashboard/bookings/success?session_id=${paymentIntentId}`,
-        );
+        if (session?.user?.category === "user") {
+          router.push(`/dashboard/my-bookings`);
+        } else {
+          router.push(
+            `/dashboard/bookings/success?session_id=${paymentIntentId}`,
+          );
+        }
       },
       onError: (err: any) => {
         toast.error(
