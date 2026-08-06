@@ -256,7 +256,7 @@ type EventTicketReceipt = {
   surcharge: number;
   totalAmount: number;
   promoCode?: string;
-  paymentIntentId: string;
+  invoiceNumber: string;
 };
 
 type EventTicketLineItemEmail = {
@@ -379,7 +379,7 @@ const generateMultiTierEventTicketTemplate = (
           </table>
         </div>
         <p style="font-size: 12px; color: #999; margin: 0 0 24px 0; font-family: monospace;">
-          Reference: ${receipt.paymentIntentId}
+          Invoice: ${receipt.invoiceNumber}
         </p>
 
         <!-- Ticket Cards -->

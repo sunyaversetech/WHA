@@ -9,7 +9,14 @@ import {
   Elements,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { Loader2, Plus, Minus, ShieldCheck, Check } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Minus,
+  ShieldCheck,
+  Check,
+  Info,
+} from "lucide-react";
 import {
   getEventTicketPaymentIntent,
   type EventTicketPricing,
@@ -120,6 +127,7 @@ export default function EventCheckOut({
         eventId,
         items,
         promo || undefined,
+        pricing?.invoiceNumber,
       );
       setPricing(res);
       setElementsKey((prev) => prev + 1);
@@ -167,19 +175,19 @@ export default function EventCheckOut({
         className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
         style={{ maxHeight: "90vh", overflowY: "auto" }}>
         <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-          <div className="flex justify-between items-center mb-5">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-green-500" />
-              <h3 className="text-xl font-bold" style={{ color: "#051e3a" }}>
-                Secure Checkout
-              </h3>
-            </div>
+          <div className="flex justify-between items-start mb-1">
+            <h3 className="text-xl font-bold" style={{ color: "#051e3a" }}>
+              Complete Payment
+            </h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 text-lg leading-none">
               ✕
             </button>
           </div>
+          {eventTitle && (
+            <p className="text-sm text-gray-500 mb-5">{eventTitle}</p>
+          )}
 
           <StepIndicator step={step} />
         </div>
@@ -212,7 +220,6 @@ export default function EventCheckOut({
               {step === 2 && (
                 <DetailsStep
                   pricing={pricing}
-                  eventTitle={eventTitle}
                   promoInput={promoInput}
                   setPromoInput={setPromoInput}
                   onApplyPromo={handleApplyPromo}
@@ -327,7 +334,6 @@ function TicketsStep({
 
 function DetailsStep({
   pricing,
-  eventTitle,
   promoInput,
   setPromoInput,
   onApplyPromo,
@@ -337,7 +343,6 @@ function DetailsStep({
   onContinue,
 }: {
   pricing: EventTicketPricing;
-  eventTitle?: string;
   promoInput: string;
   setPromoInput: (val: string) => void;
   onApplyPromo: () => void;
@@ -346,33 +351,27 @@ function DetailsStep({
   onBack: () => void;
   onContinue: () => void;
 }) {
+  const orderTotal = pricing.ticketTotal + pricing.serviceFee;
+
   return (
     <div className="space-y-6">
-      {eventTitle && (
-        <div className="text-center">
-          <p className="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">
-            Purchasing tickets for
-          </p>
-          <p className="text-base font-bold text-gray-900">{eventTitle}</p>
-        </div>
-      )}
-
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-600">
+        <label className="text-xs font-bold uppercase tracking-wide text-gray-500">
           Promo code
         </label>
         <div className="flex gap-2">
           <input
             value={promoInput}
             onChange={(e) => setPromoInput(e.target.value)}
-            placeholder="Enter code"
-            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary"
+            placeholder="Promo code"
+            className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm uppercase outline-none focus:border-primary"
           />
           <button
             type="button"
             onClick={onApplyPromo}
             disabled={loadingPricing}
-            className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50">
+            style={{ backgroundColor: "#051e3a" }}
+            className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50">
             {loadingPricing ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -394,33 +393,27 @@ function DetailsStep({
       </div>
 
       <div className="rounded-2xl border border-gray-200 overflow-hidden text-sm">
-        <div
-          className="flex items-center justify-between px-4 py-3"
-          style={{ backgroundColor: "#051e3a" }}>
-          <span className="font-semibold text-white tracking-wide">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <span className="font-bold uppercase tracking-wide text-gray-700 text-xs">
             Order Summary
+          </span>
+          <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700">
+            {pricing.invoiceNumber}
           </span>
         </div>
 
-        <div className="bg-gray-50 divide-y divide-gray-100">
+        <div className="divide-y divide-gray-100">
           {pricing.items.map((item) => (
             <div
               key={item.optionId}
               className="flex justify-between items-center px-4 py-3 text-gray-700">
               <span>
                 {item.name} × {item.quantity}
-                <span className="text-gray-400 ml-1 text-xs">
-                  {item.discounted ? (
-                    <>
-                      <span className="line-through">
-                        ${item.originalPrice.toFixed(2)}
-                      </span>{" "}
-                      ${item.unitPrice.toFixed(2)} each
-                    </>
-                  ) : (
-                    `$${item.unitPrice.toFixed(2)} each`
-                  )}
-                </span>
+                {item.discounted && (
+                  <span className="text-gray-400 ml-1 text-xs line-through">
+                    ${(item.originalPrice * item.quantity).toFixed(2)}
+                  </span>
+                )}
               </span>
               <span className="font-medium">
                 ${(item.unitPrice * item.quantity).toFixed(2)}
@@ -429,27 +422,47 @@ function DetailsStep({
           ))}
 
           <div className="flex justify-between items-center px-4 py-3 text-gray-700">
-            <span>Service charge</span>
+            <span>Service fee</span>
             <span className="font-medium">
               ${pricing.serviceFee.toFixed(2)}
             </span>
           </div>
 
-          <div className="flex justify-between items-center px-4 py-2.5 text-gray-500 bg-gray-50">
-            <span className="flex items-center gap-1">
-              Surcharge
-              <span className="text-xs text-gray-400">(2.5%)</span>
-            </span>
-            <span>${pricing.surcharge.toFixed(2)}</span>
+          <div className="flex justify-between items-center px-4 py-3 font-bold text-gray-900">
+            <span>Order total</span>
+            <span>${orderTotal.toFixed(2)}</span>
           </div>
 
-          <div
-            className="flex justify-between items-center px-4 py-3.5 font-bold text-white text-base"
-            style={{ backgroundColor: "#051e3a" }}>
-            <span>Total to Pay</span>
-            <span>${pricing.totalToPay.toFixed(2)}</span>
+          <div className="px-4 py-2.5 bg-gray-50">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-2">
+              Payment Surcharge
+            </p>
+            <div className="flex justify-between items-center text-gray-600">
+              <span>
+                Card processing surcharge
+                <span className="text-xs text-gray-400"> (2.5%)</span>
+              </span>
+              <span>${pricing.surcharge.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-start px-4 py-3.5">
+            <span className="font-bold text-gray-900">Total to pay</span>
+            <div className="text-right">
+              <span
+                className="font-bold text-lg block"
+                style={{ color: "#051e3a" }}>
+                ${pricing.totalToPay.toFixed(2)}
+              </span>
+              <span className="text-[11px] text-gray-400">Incl. GST</span>
+            </div>
           </div>
         </div>
+      </div>
+
+      <div className="flex items-start gap-2 text-xs text-gray-400">
+        <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+        <span>Service and processing fees are non-refundable.</span>
       </div>
 
       <div className="flex gap-3">
@@ -526,7 +539,12 @@ function CheckoutStep({
   return (
     <form onSubmit={handlePay} className="space-y-6">
       <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-sm">
-        <span className="text-gray-500">Total to pay</span>
+        <span className="text-gray-500">
+          Total to pay{" "}
+          <span className="font-mono text-xs text-gray-400">
+            ({pricing.invoiceNumber})
+          </span>
+        </span>
         <span className="font-bold text-lg" style={{ color: "#051e3a" }}>
           ${pricing.totalToPay.toFixed(2)}
         </span>

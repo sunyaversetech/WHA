@@ -75,12 +75,25 @@ export const eventSchema = z
           close_date: z.string().optional().nullable(),
           price: z.string().optional().nullable(),
           capacity: z.string().optional().nullable(),
-          promo_code: z.string().optional().nullable(),
-          discount_percentage: z.string().optional().nullable(),
         }),
       )
       .max(3, "You can add up to 3 options")
       .optional(),
+    promo_codes: z
+      .array(
+        z.object({
+          _id: z.string().optional(),
+          code: z.string().optional(),
+          discount_percentage: z.string().optional().nullable(),
+          limit: z.string().optional().nullable(),
+        }),
+      )
+      .max(3, "You can add up to 3 promo codes")
+      .optional(),
+    event_rules: z.string().optional(),
+    refund_policy: z.string().optional(),
+    host_name: z.string().optional(),
+    support_details: z.string().optional(),
     description: z
       .string()
       .min(10, "Description must be at least 10 characters"),
@@ -131,8 +144,12 @@ const EMPTY_OPTION = {
   close_date: "",
   price: "",
   capacity: "",
-  promo_code: "",
+};
+
+const EMPTY_PROMO_CODE = {
+  code: "",
   discount_percentage: "",
+  limit: "",
 };
 
 const STEPS: { n: 1 | 2 | 3 | 4; label: string }[] = [
@@ -143,7 +160,15 @@ const STEPS: { n: 1 | 2 | 3 | 4; label: string }[] = [
 ];
 
 const STEP_FIELDS: Record<number, (keyof EventFormValues)[]> = {
-  1: ["title", "image", "category", "category_name", "description"],
+  1: [
+    "title",
+    "image",
+    "category",
+    "category_name",
+    "description",
+    "event_rules",
+    "refund_policy",
+  ],
   2: [
     "dateRange",
     "startTime",
@@ -154,8 +179,8 @@ const STEP_FIELDS: Record<number, (keyof EventFormValues)[]> = {
     "latitude",
     "longitude",
   ],
-  3: ["email", "phone_number", "website_link"],
-  4: ["price_category", "options"],
+  3: ["email", "phone_number", "website_link", "host_name", "support_details"],
+  4: ["price_category", "options", "promo_codes"],
 };
 
 function StepIndicator({ step }: { step: number }) {
@@ -221,6 +246,10 @@ export function EventForm() {
       endTime: data?.endTime ?? "",
       image: data ? data?.image : "",
       description: data?.description ?? "",
+      event_rules: (data as any)?.event_rules ?? "",
+      refund_policy: (data as any)?.refund_policy ?? "",
+      host_name: (data as any)?.host_name ?? "",
+      support_details: (data as any)?.support_details ?? "",
       location_tba: data?.location_tba ?? false,
       location: data?.location ?? "",
       latitude: data?.latitude ?? 0,
@@ -241,13 +270,20 @@ export function EventForm() {
                 : "",
               price: opt.price != null ? String(opt.price) : "",
               capacity: opt.capacity != null ? String(opt.capacity) : "",
-              promo_code: opt.promo_code ?? "",
-              discount_percentage:
-                opt.discount_percentage != null
-                  ? String(opt.discount_percentage)
-                  : "",
             }))
           : [EMPTY_OPTION],
+      promo_codes:
+        (data as any)?.promo_codes && (data as any).promo_codes.length > 0
+          ? (data as any).promo_codes.map((promo: any) => ({
+              _id: promo._id,
+              code: promo.code ?? "",
+              discount_percentage:
+                promo.discount_percentage != null
+                  ? String(promo.discount_percentage)
+                  : "",
+              limit: promo.limit != null ? String(promo.limit) : "",
+            }))
+          : [],
       email: data?.email ?? "",
       phone_number: data?.phone_number ? String(data?.phone_number) : "",
       website_link: data?.website_link ?? "",
@@ -261,6 +297,15 @@ export function EventForm() {
   } = useFieldArray({
     control: form.control,
     name: "options",
+  });
+
+  const {
+    fields: promoFields,
+    append: appendPromo,
+    remove: removePromo,
+  } = useFieldArray({
+    control: form.control,
+    name: "promo_codes",
   });
 
   useEffect(() => {
@@ -277,6 +322,10 @@ export function EventForm() {
         });
       }
       form.setValue("description", data.description);
+      form.setValue("event_rules", (data as any).event_rules ?? "");
+      form.setValue("refund_policy", (data as any).refund_policy ?? "");
+      form.setValue("host_name", (data as any).host_name ?? "");
+      form.setValue("support_details", (data as any).support_details ?? "");
       form.setValue("location_tba", (data as any).location_tba ?? false);
       form.setValue("location", data.location);
       form.setValue("latitude", data.latitude);
@@ -299,11 +348,20 @@ export function EventForm() {
               : "",
             price: opt.price != null ? String(opt.price) : "",
             capacity: opt.capacity != null ? String(opt.capacity) : "",
-            promo_code: opt.promo_code ?? "",
+          })),
+        );
+      }
+      if ((data as any)?.promo_codes && (data as any).promo_codes.length > 0) {
+        form.setValue(
+          "promo_codes",
+          (data as any).promo_codes.map((promo: any) => ({
+            _id: promo._id,
+            code: promo.code ?? "",
             discount_percentage:
-              opt.discount_percentage != null
-                ? String(opt.discount_percentage)
+              promo.discount_percentage != null
+                ? String(promo.discount_percentage)
                 : "",
+            limit: promo.limit != null ? String(promo.limit) : "",
           })),
         );
       }
@@ -350,12 +408,16 @@ export function EventForm() {
             opt.name ||
             opt.price ||
             opt.capacity ||
-            opt.promo_code ||
             opt.release_date ||
-            opt.close_date ||
-            opt.discount_percentage,
+            opt.close_date,
         );
         formData.append(key, JSON.stringify(cleanedOptions));
+      } else if (key === "promo_codes" && Array.isArray(value)) {
+        const cleanedPromoCodes = value.filter(
+          (promo: any) =>
+            promo.code || promo.discount_percentage || promo.limit,
+        );
+        formData.append(key, JSON.stringify(cleanedPromoCodes));
       } else {
         formData.append(key, value as any);
       }
@@ -559,6 +621,32 @@ export function EventForm() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="event_rules"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Rule & Policy</FormLabel>
+                      <FormControl>
+                        <Textarea className="rounded-lg" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="refund_policy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Refund</FormLabel>
+                      <FormControl>
+                        <Textarea className="rounded-lg" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
             )}
 
@@ -703,6 +791,19 @@ export function EventForm() {
                 <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 items-start space-y-4">
                   <FormField
                     control={form.control}
+                    name="host_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Host name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
@@ -748,6 +849,19 @@ export function EventForm() {
                     )}
                   />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="support_details"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Support</FormLabel>
+                      <FormControl>
+                        <Textarea className="rounded-lg" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
             )}
 
@@ -882,12 +996,49 @@ export function EventForm() {
                             </FormItem>
                           )}
                         />
+                      </div>
+                    ))}
+
+                    {form.formState.errors.options && (
+                      <p className="text-sm font-medium text-destructive">
+                        {(form.formState.errors.options as any)?.message ??
+                          (form.formState.errors.options as any)?.root?.message}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {form.watch("price_category") === "paid" && (
+                  <div className="space-y-3 animate-in fade-in slide-in-from-top-1">
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Promo Codes</FormLabel>
+                      {promoFields.length < 3 && (
+                        <button
+                          type="button"
+                          onClick={() => appendPromo(EMPTY_PROMO_CODE)}
+                          className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                          <Plus className="h-4 w-4" />
+                          Add Promo Code
+                        </button>
+                      )}
+                    </div>
+
+                    {promoFields.map((promoField, index) => (
+                      <div
+                        key={promoField.id}
+                        className="relative grid grid-cols-1 sm:grid-cols-3 gap-4 border rounded-lg p-4">
+                        <button
+                          type="button"
+                          onClick={() => removePromo(index)}
+                          className="absolute top-3 right-3 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
 
                         <FormField
-                          name={`options.${index}.promo_code`}
+                          name={`promo_codes.${index}.code`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Promo Code</FormLabel>
+                              <FormLabel>Code</FormLabel>
                               <FormControl>
                                 <Input
                                   placeholder="e.g. EARLYBIRD10"
@@ -898,7 +1049,7 @@ export function EventForm() {
                           )}
                         />
                         <FormField
-                          name={`options.${index}.discount_percentage`}
+                          name={`promo_codes.${index}.discount_percentage`}
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Discount Percentage</FormLabel>
@@ -914,15 +1065,24 @@ export function EventForm() {
                             </FormItem>
                           )}
                         />
+                        <FormField
+                          name={`promo_codes.${index}.limit`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Limit</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  {...field}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
                       </div>
                     ))}
-
-                    {form.formState.errors.options && (
-                      <p className="text-sm font-medium text-destructive">
-                        {(form.formState.errors.options as any)?.message ??
-                          (form.formState.errors.options as any)?.root?.message}
-                      </p>
-                    )}
                   </div>
                 )}
               </div>

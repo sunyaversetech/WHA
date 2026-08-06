@@ -1,6 +1,7 @@
 "use server";
 
 import Stripe from "stripe";
+import crypto from "crypto";
 import { connectToDb } from "@/lib/db";
 import Event from "@/server/models/Event.model";
 
@@ -23,6 +24,7 @@ export type PricedItem = {
 export type EventTicketPricing = {
   clientSecret: string;
   paymentIntentId: string;
+  invoiceNumber: string;
   items: PricedItem[];
   ticketTotal: number;
   serviceFee: number;
@@ -31,10 +33,17 @@ export type EventTicketPricing = {
   promoApplied: boolean;
 };
 
+function generateInvoiceNumber() {
+  const ts = Date.now().toString(36).toUpperCase();
+  const rand = crypto.randomBytes(3).toString("hex").toUpperCase();
+  return `INV-${ts}-${rand}`;
+}
+
 export async function getEventTicketPaymentIntent(
   eventId: string,
   cartItems: CartItemInput[],
   promoCode?: string,
+  existingInvoiceNumber?: string,
 ): Promise<EventTicketPricing> {
   try {
     await connectToDb();
@@ -50,7 +59,21 @@ export async function getEventTicketPaymentIntent(
     const today = new Date().toISOString().split("T")[0];
     const normalizedPromo = promoCode?.trim().toLowerCase() || "";
 
-    let promoApplied = false;
+    let discountPercent = 0;
+    if (normalizedPromo) {
+      const promo = (event.promo_codes || []).find(
+        (p: any) => p.code && p.code.trim().toLowerCase() === normalizedPromo,
+      );
+      if (!promo) {
+        throw new Error("Promo code is not valid");
+      }
+      if (promo.limit != null && (promo.used || 0) >= promo.limit) {
+        throw new Error("Promo code usage limit has been reached");
+      }
+      discountPercent = promo.discount_percentage || 0;
+    }
+    const promoApplied = normalizedPromo.length > 0;
+
     const items: PricedItem[] = cartItems.map(({ optionId, quantity }) => {
       if (quantity < 1) throw new Error("Quantity must be at least 1");
 
@@ -73,14 +96,9 @@ export async function getEventTicketPaymentIntent(
       }
 
       const originalPrice = option.price || 0;
-      const codeMatches =
-        !!normalizedPromo &&
-        !!option.promo_code &&
-        option.promo_code.trim().toLowerCase() === normalizedPromo;
-      const unitPrice = codeMatches
-        ? originalPrice * (1 - (option.discount_percentage || 0) / 100)
+      const unitPrice = promoApplied
+        ? originalPrice * (1 - discountPercent / 100)
         : originalPrice;
-      if (codeMatches) promoApplied = true;
 
       return {
         optionId,
@@ -88,13 +106,9 @@ export async function getEventTicketPaymentIntent(
         quantity,
         unitPrice,
         originalPrice,
-        discounted: codeMatches,
+        discounted: promoApplied,
       };
     });
-
-    if (normalizedPromo && !promoApplied) {
-      throw new Error("Promo code is not valid for the selected tickets");
-    }
 
     const ticketTotal = items.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,
@@ -104,6 +118,7 @@ export async function getEventTicketPaymentIntent(
     const surcharge = orderTotal * SURCHARGE_PERCENT;
     const totalToPay = orderTotal + surcharge;
     const amountInCents = Math.round(totalToPay * 100);
+    const invoiceNumber = existingInvoiceNumber || generateInvoiceNumber();
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
@@ -114,12 +129,14 @@ export async function getEventTicketPaymentIntent(
           items.map((i) => ({ optionId: i.optionId, quantity: i.quantity })),
         ),
         promoCode: normalizedPromo,
+        invoiceNumber,
       },
     });
 
     return {
       clientSecret: paymentIntent.client_secret as string,
       paymentIntentId: paymentIntent.id,
+      invoiceNumber,
       items,
       ticketTotal,
       serviceFee: SERVICE_FEE_FLAT,

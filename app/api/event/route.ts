@@ -34,6 +34,11 @@ export async function POST(req: NextRequest) {
     const ticket_price = formData.get("ticket_price") as string;
     const max_quantity = formData.get("max_quantity") as string;
     const optionsRaw = formData.get("options") as string;
+    const promoCodesRaw = formData.get("promo_codes") as string;
+    const event_rules = formData.get("event_rules") as string;
+    const refund_policy = formData.get("refund_policy") as string;
+    const host_name = formData.get("host_name") as string;
+    const support_details = formData.get("support_details") as string;
     const startTime = formData.get("startTime") as string;
     const endTime = formData.get("endTime") as string;
     const latitude = parseFloat(formData.get("latitude") as string);
@@ -49,6 +54,15 @@ export async function POST(req: NextRequest) {
         options = JSON.parse(optionsRaw);
       } catch (e) {
         console.error("Failed to parse options:", e);
+      }
+    }
+
+    let promo_codes: any[] = [];
+    if (promoCodesRaw) {
+      try {
+        promo_codes = JSON.parse(promoCodesRaw);
+      } catch (e) {
+        console.error("Failed to parse promo_codes:", e);
       }
     }
 
@@ -116,6 +130,12 @@ export async function POST(req: NextRequest) {
       ticket_price: price_category === "paid" ? ticket_price : "0",
       max_quantity: price_category === "paid" ? max_quantity : undefined,
       options: price_category === "paid" ? options : undefined,
+      promo_codes: price_category === "paid" ? promo_codes : undefined,
+
+      event_rules,
+      refund_policy,
+      host_name,
+      support_details,
 
       location,
       location_tba,

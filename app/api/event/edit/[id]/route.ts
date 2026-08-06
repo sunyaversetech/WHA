@@ -56,15 +56,31 @@ export const eventSchema = z.object({
           (val) => (val === "" || val === "undefined" ? 0 : val),
           z.coerce.number().optional(),
         ),
-        promo_code: z.string().optional(),
+      }),
+    )
+    .max(3, "You can add up to 3 options")
+    .optional(),
+  promo_codes: z
+    .array(
+      z.object({
+        _id: z.string().optional(),
+        code: z.string().optional(),
         discount_percentage: z.preprocess(
+          (val) => (val === "" || val === "undefined" ? 0 : val),
+          z.coerce.number().optional(),
+        ),
+        limit: z.preprocess(
           (val) => (val === "" || val === "undefined" ? 0 : val),
           z.coerce.number().optional(),
         ),
       }),
     )
-    .max(3, "You can add up to 3 options")
+    .max(3, "You can add up to 3 promo codes")
     .optional(),
+  event_rules: z.string().optional(),
+  refund_policy: z.string().optional(),
+  host_name: z.string().optional(),
+  support_details: z.string().optional(),
   community: z.string().min(1, "Community is required"),
   community_name: z.string().optional(),
   city: z.string().min(2, "City is required"),
@@ -175,6 +191,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       website_link: "",
       ticket_link: "",
       options: [] as any[],
+      promo_codes: [] as any[],
       category_name: "",
       community_name: "",
       endTime: "",

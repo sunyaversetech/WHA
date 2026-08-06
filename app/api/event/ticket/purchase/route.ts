@@ -16,6 +16,7 @@ const SURCHARGE_PERCENT = 0.025;
 function toTicketResponse(purchase: any) {
   return {
     success: true,
+    invoiceNumber: purchase.invoiceNumber,
     items: purchase.items.map((i: any) => ({
       optionName: i.optionName,
       codes: i.uniqueKeys,
@@ -77,28 +78,55 @@ export async function POST(req: Request) {
       );
     }
     const promoCode = paymentIntent.metadata.promoCode || "";
+    const invoiceNumber = paymentIntent.metadata.invoiceNumber;
+    if (!invoiceNumber) {
+      return NextResponse.json(
+        { error: "Missing invoice reference on this payment" },
+        { status: 400 },
+      );
+    }
 
     const event = await Event.findById(eventId).populate("user");
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 400 });
     }
 
+    const eventNameSlug = (event.title || "event").trim().replace(/\s+/g, "-");
+
     // Re-derive pricing server-side from the current event/options data —
     // never trust client-supplied amounts.
-    let promoApplied = false;
+    let matchedPromo: any = null;
+    if (promoCode) {
+      matchedPromo = (event.promo_codes || []).find(
+        (p: any) => p.code && p.code.trim().toLowerCase() === promoCode,
+      );
+      if (!matchedPromo) {
+        return NextResponse.json(
+          { error: "Promo code is not valid" },
+          { status: 400 },
+        );
+      }
+      if (
+        matchedPromo.limit != null &&
+        (matchedPromo.used || 0) >= matchedPromo.limit
+      ) {
+        return NextResponse.json(
+          { error: "Promo code usage limit has been reached" },
+          { status: 400 },
+        );
+      }
+    }
+    const promoApplied = !!matchedPromo;
+    const discountPercent = matchedPromo?.discount_percentage || 0;
+
     const pricedItems = cartItems.map(({ optionId, quantity }) => {
       const option = event.options?.id(optionId);
       if (!option) throw new Error("Ticket option not found");
 
       const originalPrice = option.price || 0;
-      const codeMatches =
-        !!promoCode &&
-        !!option.promo_code &&
-        option.promo_code.trim().toLowerCase() === promoCode;
-      const unitPrice = codeMatches
-        ? originalPrice * (1 - (option.discount_percentage || 0) / 100)
+      const unitPrice = promoApplied
+        ? originalPrice * (1 - discountPercent / 100)
         : originalPrice;
-      if (codeMatches) promoApplied = true;
 
       return { optionId, unitPrice, quantity };
     });
@@ -152,8 +180,8 @@ export async function POST(req: Request) {
 
           const uniqueKeys = Array.from(
             { length: quantity },
-            (_, i) =>
-              `WHA-EVT-${crypto.randomBytes(4).toString("hex").toUpperCase()}-${i + 1}of${quantity}`,
+            () =>
+              `WHA-${eventNameSlug}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`,
           );
           allKeys.push(...uniqueKeys);
 
@@ -167,6 +195,20 @@ export async function POST(req: Request) {
           });
         }
 
+        if (promoApplied) {
+          const freshPromo = freshEvent.promo_codes?.find(
+            (p: any) => p.code && p.code.trim().toLowerCase() === promoCode,
+          );
+          if (!freshPromo) throw new Error("PROMO_NOT_FOUND");
+          if (
+            freshPromo.limit != null &&
+            (freshPromo.used || 0) >= freshPromo.limit
+          ) {
+            throw new Error("PROMO_LIMIT_REACHED");
+          }
+          freshPromo.used = (freshPromo.used || 0) + 1;
+        }
+
         await freshEvent.save({ session: dbSession });
 
         const created = await EventTicketPurchase.create(
@@ -178,6 +220,7 @@ export async function POST(req: Request) {
               items: itemsForPurchase,
               uniqueKeys: allKeys,
               promoCode: promoApplied ? promoCode : undefined,
+              invoiceNumber,
               ticketTotal,
               serviceFee: SERVICE_FEE_FLAT,
               surcharge,
@@ -204,6 +247,17 @@ export async function POST(req: Request) {
           { status: 400 },
         );
       }
+      if (
+        ["PROMO_NOT_FOUND", "PROMO_LIMIT_REACHED"].includes(txError.message)
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "The promo code is no longer available. Please contact support for a refund.",
+          },
+          { status: 400 },
+        );
+      }
       throw txError;
     } finally {
       await dbSession.endSession();
@@ -225,7 +279,7 @@ export async function POST(req: Request) {
         surcharge: createdPurchase.surcharge,
         totalAmount: createdPurchase.totalAmount,
         promoCode: createdPurchase.promoCode,
-        paymentIntentId: createdPurchase.paymentIntentId,
+        invoiceNumber: createdPurchase.invoiceNumber,
       },
     );
 

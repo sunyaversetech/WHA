@@ -14,8 +14,14 @@ export type EventOptionType = {
   price?: number | null;
   capacity?: number | null;
   sold?: number | null;
-  promo_code?: string | null;
+};
+
+export type EventPromoCodeType = {
+  _id?: string;
+  code?: string;
   discount_percentage?: number | null;
+  limit?: number | null;
+  used?: number | null;
 };
 
 export type EventType = {
@@ -38,6 +44,10 @@ export type EventType = {
   };
   location: string;
   location_tba?: boolean;
+  event_rules?: string;
+  refund_policy?: string;
+  host_name?: string;
+  support_details?: string;
   category_name: string;
   email: string;
   phone_number: string;
@@ -62,6 +72,7 @@ export type EventType = {
   max_quantity: string | null;
   sold_quantity: string | null;
   options?: EventOptionType[];
+  promo_codes?: EventPromoCodeType[];
 };
 
 type RedeemCodeType = {
@@ -91,6 +102,7 @@ type PurchaseTicketType = {
 
 type PurchaseTicketResponseType = {
   success: boolean;
+  invoiceNumber: string;
   items: { optionName: string; codes: string[] }[];
 };
 

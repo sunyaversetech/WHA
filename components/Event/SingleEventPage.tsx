@@ -18,9 +18,7 @@ import {
   useGetSingleEvent,
   useRedeemEventCode,
 } from "@/services/event.service";
-import EventCheckOut, {
-  PurchasableOption,
-} from "../Stripe/EventCheckOut";
+import EventCheckOut, { PurchasableOption } from "../Stripe/EventCheckOut";
 import Image from "next/image";
 import { format, formatDate, parse } from "date-fns";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";

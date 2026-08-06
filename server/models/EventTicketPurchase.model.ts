@@ -16,6 +16,7 @@ export interface IEventTicketPurchase {
   uniqueKeys: string[];
   verifiedKeys: string[];
   promoCode?: string;
+  invoiceNumber: string;
   ticketTotal: number;
   serviceFee: number;
   surcharge: number;
@@ -59,6 +60,7 @@ const EventTicketPurchaseSchema = new Schema<IEventTicketPurchase>(
     },
     verifiedKeys: { type: [String], default: [] },
     promoCode: { type: String },
+    invoiceNumber: { type: String, required: true, unique: true },
     ticketTotal: { type: Number, required: true },
     serviceFee: { type: Number, required: true },
     surcharge: { type: Number, required: true },
