@@ -70,7 +70,6 @@ export default function BusinessCard({ business }: { business: any }) {
       onKeyDown={(e) =>
         e.key === "Enter" && router.push(`/businesses/${slug}`)
       }>
-      {/* ── Image ── */}
       <div
         className="w-full h-35 sm:h-35  lg:h-40 xl:h-45 2xl:h-50"
         style={{

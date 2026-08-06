@@ -13,10 +13,12 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
+  useFinalizeEventTicketPurchase,
   useGetEventRedeem,
   useGetSingleEvent,
   useRedeemEventCode,
 } from "@/services/event.service";
+import EventCheckOut from "../Stripe/EventCheckOut";
 import Image from "next/image";
 import { format, formatDate, parse } from "date-fns";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";
@@ -63,7 +65,28 @@ export default function EventDetailPage() {
   const { data, isLoading: redeemLoading } = useGetEventRedeem();
   const { onOpen } = useAuthModal();
 
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [purchaseResult, setPurchaseResult] = useState<{
+    success: boolean;
+    message: string;
+    codes?: string[];
+  } | null>(null);
+  const { mutate: finalizePurchase } = useFinalizeEventTicketPurchase();
+
   const EventId = event?.data?._id;
+
+  const maxQty = event?.data?.max_quantity
+    ? Number(event.data.max_quantity)
+    : null;
+  const soldQty = event?.data?.sold_quantity
+    ? Number(event.data.sold_quantity)
+    : 0;
+  const remainingQty = maxQty !== null ? Math.max(0, maxQty - soldQty) : null;
+  const isSoldOut = remainingQty !== null && remainingQty <= 0;
+  const unitPrice = event?.data?.ticket_price
+    ? Number(event.data.ticket_price)
+    : 0;
 
   const averageRating =
     event?.data && event.data.reviews.length > 0
@@ -127,6 +150,41 @@ export default function EventDetailPage() {
     );
   };
 
+  const handleBuyTicketsClick = () => {
+    if (!session?.user) {
+      onOpen();
+      toast.error("Please login to buy tickets");
+      return;
+    }
+    setQuantity(1);
+    setIsCheckoutOpen(true);
+  };
+
+  const handlePurchaseSuccess = (paymentIntentId: string, qty: number) => {
+    finalizePurchase(
+      {
+        eventId: event?.data?._id ?? "",
+        quantity: qty,
+        paymentIntentId,
+      },
+      {
+        onSuccess: (responseData) => {
+          setPurchaseResult({
+            success: true,
+            message: "success",
+            codes: responseData.codes,
+          });
+          queryClient.invalidateQueries({ queryKey: ["singleEvent", slug] });
+          toast.success("Payment successful! Your tickets are ready.");
+          setIsCheckoutOpen(false);
+        },
+        onError: (error: any) => {
+          toast.error(error.message || "Payment verification failed");
+        },
+      },
+    );
+  };
+
   const handleShare = async () => {
     const shareData = {
       title: "Check out this event!",
@@ -181,6 +239,17 @@ export default function EventDetailPage() {
         <EventDetailsSkeleton />
       ) : (
         <>
+          {isCheckoutOpen && (
+            <EventCheckOut
+              eventId={event?.data?._id ?? ""}
+              price={unitPrice}
+              maxQuantity={remainingQty}
+              quantity={quantity}
+              setQuantity={setQuantity}
+              onClose={() => setIsCheckoutOpen(false)}
+              onSuccess={handlePurchaseSuccess}
+            />
+          )}
           <div className="flex flex-col md:flex-col">
             <div className=" order-2 md:order-1 mt-4 md:mt-0 mb-4 px-6 md:px-0">
               <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
@@ -335,20 +404,33 @@ export default function EventDetailPage() {
                     <p
                       className="text-sm font-medium text-primary"
                       id="registration-button">
-                      {event?.data?.ticket_link
-                        ? "Ticket Required Event"
+                      {event?.data?.price_category === "paid"
+                        ? `$${unitPrice.toFixed(2)} per ticket${
+                            remainingQty !== null
+                              ? ` · ${remainingQty} left`
+                              : ""
+                          }`
                         : event?.data?.price_category === "free"
                           ? "Free Event"
                           : "Free Event  | Registration Required"}
                     </p>
 
-                    {event?.data?.ticket_link ? (
-                      <Link
-                        href={event?.data?.ticket_link}
-                        target="_blank"
-                        className="w-full block bg-primary text-white rounded-full py-3 text-center font-semibold hover:opacity-90 transition">
-                        Get Tickets
-                      </Link>
+                    {event?.data?.price_category === "paid" ? (
+                      <button
+                        onClick={handleBuyTicketsClick}
+                        disabled={isSoldOut}
+                        className={cn(
+                          "w-full rounded-full py-3 font-semibold transition",
+                          isSoldOut
+                            ? "bg-gray-400 text-white cursor-not-allowed"
+                            : "bg-primary text-white hover:opacity-90",
+                        )}>
+                        {isSoldOut
+                          ? "Sold Out"
+                          : purchaseResult?.success
+                            ? "Buy More Tickets"
+                            : "Buy Tickets"}
+                      </button>
                     ) : event?.data?.price_category === "free" ? (
                       <div className="w-full bg-primary text-white rounded-full py-3 text-center font-semibold">
                         No Ticket Required
@@ -418,24 +500,50 @@ export default function EventDetailPage() {
                       </div>
                     </div>
 
-                    {!event?.data?.ticket_link && redemptionResult?.success && (
-                      <div className="border-t pt-4 flex flex-col items-center text-center">
-                        <p className="text-sm text-gray-500 mb-2">
-                          Your Ticket
-                        </p>
+                    {event?.data?.price_category !== "paid" &&
+                      redemptionResult?.success && (
+                        <div className="border-t pt-4 flex flex-col items-center text-center">
+                          <p className="text-sm text-gray-500 mb-2">
+                            Your Ticket
+                          </p>
 
-                        <div className="bg-white p-3 rounded-lg border mb-3">
-                          <QRCodeCanvas
-                            value={redemptionResult?.code || ""}
-                            size={120}
-                          />
+                          <div className="bg-white p-3 rounded-lg border mb-3">
+                            <QRCodeCanvas
+                              value={redemptionResult?.code || ""}
+                              size={120}
+                            />
+                          </div>
+
+                          <code className="text-lg font-mono font-bold tracking-widest text-gray-800">
+                            {redemptionResult?.code}
+                          </code>
                         </div>
+                      )}
 
-                        <code className="text-lg font-mono font-bold tracking-widest text-gray-800">
-                          {redemptionResult?.code}
-                        </code>
-                      </div>
-                    )}
+                    {event?.data?.price_category === "paid" &&
+                      purchaseResult?.success && (
+                        <div className="border-t pt-4 flex flex-col items-center text-center gap-4">
+                          <p className="text-sm text-gray-500">
+                            Your Ticket
+                            {(purchaseResult.codes?.length ?? 0) > 1 ? "s" : ""}
+                          </p>
+                          {purchaseResult.codes?.map((code) => (
+                            <div
+                              key={code}
+                              className="flex flex-col items-center gap-2">
+                              <div className="bg-white p-3 rounded-lg border">
+                                <QRCodeCanvas value={code} size={110} />
+                              </div>
+                              <code className="text-sm font-mono font-bold tracking-widest text-gray-800">
+                                {code}
+                              </code>
+                            </div>
+                          ))}
+                          <p className="text-xs text-gray-400">
+                            Also emailed to you.
+                          </p>
+                        </div>
+                      )}
                   </div>
                 </div>
               </div>
@@ -576,13 +684,22 @@ export default function EventDetailPage() {
                   ?.toLowerCase()
                   .replace(/\b\w/g, (c) => c.toUpperCase())}
               </p>
-              {event?.data?.ticket_link ? (
-                <Link
-                  href={event.data.ticket_link}
-                  target="_blank"
-                  className="bg-primary text-white px-4 py-2 rounded-full text-base font-semibold hover:opacity-90 transition flex items-center gap-2">
-                  Get Tickets
-                </Link>
+              {event?.data?.price_category === "paid" ? (
+                <button
+                  onClick={handleBuyTicketsClick}
+                  disabled={isSoldOut}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-base font-semibold transition flex items-center gap-2",
+                    isSoldOut
+                      ? "bg-gray-400 text-white cursor-not-allowed"
+                      : "bg-primary text-white hover:opacity-90",
+                  )}>
+                  {isSoldOut
+                    ? "Sold Out"
+                    : purchaseResult?.success
+                      ? "Buy More"
+                      : `Buy · $${unitPrice.toFixed(2)}`}
+                </button>
               ) : event?.data?.price_category === "free" ? (
                 <div className="w-full bg-primary text-white rounded-full py-3 text-center font-semibold">
                   No Ticket Required

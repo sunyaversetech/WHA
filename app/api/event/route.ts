@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
     const price_category = formData.get("price_category") as string;
     const ticket_link = formData.get("ticket_link") as string;
     const ticket_price = formData.get("ticket_price") as string;
+    const max_quantity = formData.get("max_quantity") as string;
     const startTime = formData.get("startTime") as string;
     const endTime = formData.get("endTime") as string;
     const latitude = parseFloat(formData.get("latitude") as string);
@@ -102,6 +103,7 @@ export async function POST(req: NextRequest) {
       price_category,
       ticket_link: price_category === "paid" ? ticket_link : undefined,
       ticket_price: price_category === "paid" ? ticket_price : "0",
+      max_quantity: price_category === "paid" ? max_quantity : undefined,
 
       location,
       latitude,

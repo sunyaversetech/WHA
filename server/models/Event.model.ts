@@ -35,6 +35,8 @@ const EventSchema = new Schema({
   },
   ticket_link: { type: String },
   ticket_price: { type: Number },
+  max_quantity: { type: Number },
+  sold_quantity: { type: Number, default: 0 },
   startTime: { type: String },
   endTime: { type: String },
   community: { type: String },

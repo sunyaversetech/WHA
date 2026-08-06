@@ -46,6 +46,8 @@ export type EventType = {
   distance?: number; // metres from user when geo query is active
   ticket_link: string | null;
   ticket_price: string | null;
+  max_quantity: string | null;
+  sold_quantity: string | null;
 };
 
 type RedeemCodeType = {
@@ -66,6 +68,17 @@ type RedeemCodeResponseType = {
 type RedeemCodeFormResponseType = {
   success: string;
   uniqueKey: string;
+};
+
+type PurchaseTicketType = {
+  eventId: string;
+  quantity: number;
+  paymentIntentId: string;
+};
+
+type PurchaseTicketResponseType = {
+  success: boolean;
+  codes: string[];
 };
 
 export const useCreateEvent = () => {
@@ -184,4 +197,15 @@ export const useGetEventVerifyUsers = (id: string) => {
     null,
     `/api/event/verify/${id}`,
   );
+};
+
+export const useFinalizeEventTicketPurchase = () => {
+  return useMutation<PurchaseTicketResponseType, any, PurchaseTicketType>({
+    mutationKey: ["purchaseEventTicket"],
+    mutationFn: (data: PurchaseTicketType) =>
+      Post<PurchaseTicketType, PurchaseTicketResponseType>({
+        url: "/api/event/ticket/purchase",
+        data: data,
+      }),
+  });
 };

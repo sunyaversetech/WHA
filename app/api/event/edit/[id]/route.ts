@@ -45,6 +45,10 @@ export const eventSchema = z.object({
     (val) => (val === "" || val === "undefined" ? 0 : val),
     z.coerce.number().optional(),
   ),
+  max_quantity: z.preprocess(
+    (val) => (val === "" || val === "undefined" ? 0 : val),
+    z.coerce.number().optional(),
+  ),
   community: z.string().min(1, "Community is required"),
   community_name: z.string().optional(),
   city: z.string().min(2, "City is required"),
@@ -151,6 +155,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       website_link: "",
       ticket_link: "",
       ticket_price: "",
+      max_quantity: "",
       category_name: "",
       community_name: "",
       endTime: "",
@@ -170,6 +175,15 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       updatePayload.ticket_price = 0;
     } else if (updatePayload.ticket_price) {
       updatePayload.ticket_price = Number(updatePayload.ticket_price);
+    }
+
+    if (
+      updatePayload.max_quantity === "" ||
+      updatePayload.max_quantity === "undefined"
+    ) {
+      updatePayload.max_quantity = 0;
+    } else if (updatePayload.max_quantity) {
+      updatePayload.max_quantity = Number(updatePayload.max_quantity);
     }
 
     if (validatedData.title) {

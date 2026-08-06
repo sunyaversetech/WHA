@@ -33,9 +33,8 @@ const QRDialog = ({
   const isEvent = !!item?.event;
   const title = item?.event?.title ?? item?.deal?.title ?? "Ticket";
 
-  const keys = isEvent
-    ? [item.uniqueKey]
-    : item.uniqueKeys && item.uniqueKeys.length > 0
+  const keys =
+    item.uniqueKeys && item.uniqueKeys.length > 0
       ? item.uniqueKeys
       : [item.uniqueKey];
 

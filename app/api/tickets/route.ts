@@ -4,6 +4,7 @@ import { authOptions } from "../auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
 import { EventRedemption } from "@/server/models/EventCodeRemtion.model";
+import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
 
 import "@/server/models/Event.model";
 import "@/server/models/DealSchema.model";
@@ -24,14 +25,21 @@ export async function GET() {
     const eventRedemptions = await EventRedemption.find({
       user: session.user.id,
     }).populate("event");
+    const eventPurchases = await EventTicketPurchase.find({
+      user: session.user.id,
+    }).populate("event");
 
     const validDeals = dealRedemptions.filter((r) => r.deal !== null);
     const validEvents = eventRedemptions.filter((r) => r.event !== null);
+    const validPurchases = eventPurchases.filter((r) => r.event !== null);
 
     const dealIdsToDelete = dealRedemptions
       .filter((r) => r.deal === null)
       .map((r) => r._id);
     const eventIdsToDelete = eventRedemptions
+      .filter((r) => r.event === null)
+      .map((r) => r._id);
+    const purchaseIdsToDelete = eventPurchases
       .filter((r) => r.event === null)
       .map((r) => r._id);
 
@@ -41,8 +49,13 @@ export async function GET() {
     if (eventIdsToDelete.length > 0) {
       await EventRedemption.deleteMany({ _id: { $in: eventIdsToDelete } });
     }
+    if (purchaseIdsToDelete.length > 0) {
+      await EventTicketPurchase.deleteMany({
+        _id: { $in: purchaseIdsToDelete },
+      });
+    }
 
-    const tickets = [...validDeals, ...validEvents];
+    const tickets = [...validDeals, ...validEvents, ...validPurchases];
 
     return NextResponse.json(
       { message: "Tickets fetched successfully", data: tickets },
