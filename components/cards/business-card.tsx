@@ -67,23 +67,24 @@ export default function BusinessCard({ business }: { business: any }) {
       onClick={() => router.push(`/businesses/${slug}`)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && router.push(`/businesses/${slug}`)}
-    >
+      onKeyDown={(e) =>
+        e.key === "Enter" && router.push(`/businesses/${slug}`)
+      }>
       {/* ── Image ── */}
       <div
+        className="w-full h-35 sm:h-35  lg:h-40 xl:h-45 2xl:h-50"
         style={{
-          aspectRatio: "16/11",
           borderRadius: 18,
           position: "relative",
           overflow: "hidden",
           background: "#e9eef2",
-        }}
-      >
+        }}>
         <Image
-          fill
+          height={1000}
+          width={1000}
           src={business.image || "/placeholder.svg"}
           alt={displayName}
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
         />
         <div
@@ -109,8 +110,7 @@ export default function BusinessCard({ business }: { business: any }) {
               padding: "4px 10px",
               borderRadius: 9999,
               letterSpacing: "0.04em",
-            }}
-          >
+            }}>
             Deal
           </span>
         )}
@@ -133,8 +133,7 @@ export default function BusinessCard({ business }: { business: any }) {
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-          }}
-        >
+          }}>
           {isPending ? (
             <Loader2 size={16} className="animate-spin" color="#0f2748" />
           ) : (
@@ -157,16 +156,14 @@ export default function BusinessCard({ business }: { business: any }) {
             justifyContent: "space-between",
             alignItems: "flex-start",
             gap: 8,
-          }}
-        >
+          }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: 5,
               minWidth: 0,
-            }}
-          >
+            }}>
             <span
               style={{
                 fontSize: 18,
@@ -175,8 +172,7 @@ export default function BusinessCard({ business }: { business: any }) {
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-              }}
-            >
+              }}>
               {displayName}
             </span>
 
@@ -198,8 +194,7 @@ export default function BusinessCard({ business }: { business: any }) {
                 fontWeight: 700,
                 color: "#0f172a",
                 flexShrink: 0,
-              }}
-            >
+              }}>
               <Star size={16} fill="#f5b301" color="#f5b301" />
               {avgRating}
             </div>
@@ -215,8 +210,7 @@ export default function BusinessCard({ business }: { business: any }) {
             gap: 6,
             fontSize: 15,
             color: "#6b7280",
-          }}
-        >
+          }}>
           {typeof business.distance === "number" && (
             <>
               <span>
@@ -241,8 +235,7 @@ export default function BusinessCard({ business }: { business: any }) {
             flexWrap: "wrap",
             fontSize: 15,
             color: "#6b7280",
-          }}
-        >
+          }}>
           {category && <span className="capitalize">{category}</span>}
 
           {category && totalReviews > 0 && <span>•</span>}
