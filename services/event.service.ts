@@ -10,8 +10,10 @@ export type EventOptionType = {
   _id?: string;
   name?: string;
   release_date?: string | null;
+  close_date?: string | null;
   price?: number | null;
   capacity?: number | null;
+  sold?: number | null;
   promo_code?: string | null;
   discount_percentage?: number | null;
 };
@@ -84,13 +86,12 @@ type RedeemCodeFormResponseType = {
 
 type PurchaseTicketType = {
   eventId: string;
-  quantity: number;
   paymentIntentId: string;
 };
 
 type PurchaseTicketResponseType = {
   success: boolean;
-  codes: string[];
+  items: { optionName: string; codes: string[] }[];
 };
 
 export const useCreateEvent = () => {

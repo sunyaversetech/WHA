@@ -18,7 +18,9 @@ import {
   useGetSingleEvent,
   useRedeemEventCode,
 } from "@/services/event.service";
-import EventCheckOut from "../Stripe/EventCheckOut";
+import EventCheckOut, {
+  PurchasableOption,
+} from "../Stripe/EventCheckOut";
 import Image from "next/image";
 import { format, formatDate, parse } from "date-fns";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";
@@ -66,26 +68,51 @@ export default function EventDetailPage() {
   const { onOpen } = useAuthModal();
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [quantity, setQuantity] = useState(1);
   const [purchaseResult, setPurchaseResult] = useState<{
     success: boolean;
-    message: string;
-    codes?: string[];
+    items?: { optionName: string; codes: string[] }[];
   } | null>(null);
   const { mutate: finalizePurchase } = useFinalizeEventTicketPurchase();
 
   const EventId = event?.data?._id;
 
-  const maxQty = event?.data?.max_quantity
-    ? Number(event.data.max_quantity)
-    : null;
-  const soldQty = event?.data?.sold_quantity
-    ? Number(event.data.sold_quantity)
-    : 0;
-  const remainingQty = maxQty !== null ? Math.max(0, maxQty - soldQty) : null;
-  const isSoldOut = remainingQty !== null && remainingQty <= 0;
-  const unitPrice = event?.data?.ticket_price
-    ? Number(event.data.ticket_price)
+  const today = new Date().toISOString().split("T")[0];
+
+  const optionsWithStatus = (event?.data?.options ?? []).map((opt) => {
+    const released = !opt.release_date || opt.release_date <= today;
+    const closed = !!opt.close_date && opt.close_date < today;
+    const sold = opt.sold ? Number(opt.sold) : 0;
+    const remaining =
+      opt.capacity != null ? Math.max(0, Number(opt.capacity) - sold) : null;
+    const soldOut = remaining !== null && remaining <= 0;
+
+    let status: "upcoming" | "closed" | "soldout" | "released" = "released";
+    if (!released) status = "upcoming";
+    else if (closed) status = "closed";
+    else if (soldOut) status = "soldout";
+
+    return {
+      optionId: opt._id as string,
+      name: opt.name || "Ticket",
+      price: opt.price != null ? Number(opt.price) : 0,
+      release_date: opt.release_date,
+      remaining,
+      status,
+    };
+  });
+
+  const purchasableOptions: PurchasableOption[] = optionsWithStatus
+    .filter((opt) => opt.status === "released")
+    .map((opt) => ({
+      optionId: opt.optionId,
+      name: opt.name,
+      price: opt.price,
+      remaining: opt.remaining,
+    }));
+
+  const hasPurchasableOptions = purchasableOptions.length > 0;
+  const fromPrice = hasPurchasableOptions
+    ? Math.min(...purchasableOptions.map((opt) => opt.price))
     : 0;
 
   const averageRating =
@@ -156,23 +183,20 @@ export default function EventDetailPage() {
       toast.error("Please login to buy tickets");
       return;
     }
-    setQuantity(1);
     setIsCheckoutOpen(true);
   };
 
-  const handlePurchaseSuccess = (paymentIntentId: string, qty: number) => {
+  const handlePurchaseSuccess = (paymentIntentId: string) => {
     finalizePurchase(
       {
         eventId: event?.data?._id ?? "",
-        quantity: qty,
         paymentIntentId,
       },
       {
         onSuccess: (responseData) => {
           setPurchaseResult({
             success: true,
-            message: "success",
-            codes: responseData.codes,
+            items: responseData.items,
           });
           queryClient.invalidateQueries({ queryKey: ["singleEvent", slug] });
           toast.success("Payment successful! Your tickets are ready.");
@@ -243,10 +267,7 @@ export default function EventDetailPage() {
             <EventCheckOut
               eventId={event?.data?._id ?? ""}
               eventTitle={event?.data?.title}
-              price={unitPrice}
-              maxQuantity={remainingQty}
-              quantity={quantity}
-              setQuantity={setQuantity}
+              options={purchasableOptions}
               onClose={() => setIsCheckoutOpen(false)}
               onSuccess={handlePurchaseSuccess}
             />
@@ -402,31 +423,62 @@ export default function EventDetailPage() {
                         .replace(/\b\w/g, (c) => c.toUpperCase())}
                     </h1>
 
-                    <p
-                      className="text-sm font-medium text-primary"
-                      id="registration-button">
-                      {event?.data?.price_category === "paid"
-                        ? `$${unitPrice.toFixed(2)} per ticket${
-                            remainingQty !== null
-                              ? ` · ${remainingQty} left`
-                              : ""
-                          }`
-                        : event?.data?.price_category === "free"
+                    {event?.data?.price_category !== "paid" && (
+                      <p
+                        className="text-sm font-medium text-primary"
+                        id="registration-button">
+                        {event?.data?.price_category === "free"
                           ? "Free Event"
                           : "Free Event  | Registration Required"}
-                    </p>
+                      </p>
+                    )}
+
+                    {event?.data?.price_category === "paid" && (
+                      <div
+                        className="space-y-2 border rounded-xl p-3"
+                        id="registration-button">
+                        {optionsWithStatus.map((opt) => (
+                          <div
+                            key={opt.optionId}
+                            className="flex items-center justify-between text-sm gap-2">
+                            <span className="font-medium text-gray-800 truncate">
+                              {opt.name}
+                            </span>
+                            {opt.status === "released" ? (
+                              <span className="font-semibold text-primary shrink-0">
+                                ${opt.price.toFixed(2)}
+                              </span>
+                            ) : opt.status === "upcoming" ? (
+                              <span className="text-xs text-gray-400 shrink-0">
+                                Coming soon
+                                {opt.release_date &&
+                                  ` · ${formatDate(opt.release_date, "dd MMM")}`}
+                              </span>
+                            ) : opt.status === "closed" ? (
+                              <span className="text-xs text-gray-400 shrink-0">
+                                Closed
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-400 shrink-0">
+                                Sold Out
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     {event?.data?.price_category === "paid" ? (
                       <button
                         onClick={handleBuyTicketsClick}
-                        disabled={isSoldOut}
+                        disabled={!hasPurchasableOptions}
                         className={cn(
                           "w-full rounded-full py-3 font-semibold transition",
-                          isSoldOut
+                          !hasPurchasableOptions
                             ? "bg-gray-400 text-white cursor-not-allowed"
                             : "bg-primary text-white hover:opacity-90",
                         )}>
-                        {isSoldOut
+                        {!hasPurchasableOptions
                           ? "Sold Out"
                           : purchaseResult?.success
                             ? "Buy More Tickets"
@@ -524,20 +576,26 @@ export default function EventDetailPage() {
                     {event?.data?.price_category === "paid" &&
                       purchaseResult?.success && (
                         <div className="border-t pt-4 flex flex-col items-center text-center gap-4">
-                          <p className="text-sm text-gray-500">
-                            Your Ticket
-                            {(purchaseResult.codes?.length ?? 0) > 1 ? "s" : ""}
-                          </p>
-                          {purchaseResult.codes?.map((code) => (
+                          <p className="text-sm text-gray-500">Your Tickets</p>
+                          {purchaseResult.items?.map((item) => (
                             <div
-                              key={code}
-                              className="flex flex-col items-center gap-2">
-                              <div className="bg-white p-3 rounded-lg border">
-                                <QRCodeCanvas value={code} size={110} />
-                              </div>
-                              <code className="text-sm font-mono font-bold tracking-widest text-gray-800">
-                                {code}
-                              </code>
+                              key={item.optionName}
+                              className="flex flex-col items-center gap-3 w-full">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                                {item.optionName}
+                              </p>
+                              {item.codes.map((code) => (
+                                <div
+                                  key={code}
+                                  className="flex flex-col items-center gap-2">
+                                  <div className="bg-white p-3 rounded-lg border">
+                                    <QRCodeCanvas value={code} size={110} />
+                                  </div>
+                                  <code className="text-sm font-mono font-bold tracking-widest text-gray-800">
+                                    {code}
+                                  </code>
+                                </div>
+                              ))}
                             </div>
                           ))}
                           <p className="text-xs text-gray-400">
@@ -688,18 +746,18 @@ export default function EventDetailPage() {
               {event?.data?.price_category === "paid" ? (
                 <button
                   onClick={handleBuyTicketsClick}
-                  disabled={isSoldOut}
+                  disabled={!hasPurchasableOptions}
                   className={cn(
                     "px-4 py-2 rounded-full text-base font-semibold transition flex items-center gap-2",
-                    isSoldOut
+                    !hasPurchasableOptions
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : "bg-primary text-white hover:opacity-90",
                   )}>
-                  {isSoldOut
+                  {!hasPurchasableOptions
                     ? "Sold Out"
                     : purchaseResult?.success
                       ? "Buy More"
-                      : `Buy · $${unitPrice.toFixed(2)}`}
+                      : `Buy · From $${fromPrice.toFixed(2)}`}
                 </button>
               ) : event?.data?.price_category === "free" ? (
                 <div className="w-full bg-primary text-white rounded-full py-3 text-center font-semibold">

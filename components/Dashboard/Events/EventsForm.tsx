@@ -72,6 +72,7 @@ export const eventSchema = z
           _id: z.string().optional(),
           name: z.string().optional(),
           release_date: z.string().optional().nullable(),
+          close_date: z.string().optional().nullable(),
           price: z.string().optional().nullable(),
           capacity: z.string().optional().nullable(),
           promo_code: z.string().optional().nullable(),
@@ -127,6 +128,7 @@ export type EventFormValues = z.infer<typeof eventSchema>;
 const EMPTY_OPTION = {
   name: "",
   release_date: "",
+  close_date: "",
   price: "",
   capacity: "",
   promo_code: "",
@@ -234,6 +236,9 @@ export function EventForm() {
               release_date: opt.release_date
                 ? String(opt.release_date).split("T")[0]
                 : "",
+              close_date: opt.close_date
+                ? String(opt.close_date).split("T")[0]
+                : "",
               price: opt.price != null ? String(opt.price) : "",
               capacity: opt.capacity != null ? String(opt.capacity) : "",
               promo_code: opt.promo_code ?? "",
@@ -288,6 +293,9 @@ export function EventForm() {
             name: opt.name ?? "",
             release_date: opt.release_date
               ? String(opt.release_date).split("T")[0]
+              : "",
+            close_date: opt.close_date
+              ? String(opt.close_date).split("T")[0]
               : "",
             price: opt.price != null ? String(opt.price) : "",
             capacity: opt.capacity != null ? String(opt.capacity) : "",
@@ -344,6 +352,7 @@ export function EventForm() {
             opt.capacity ||
             opt.promo_code ||
             opt.release_date ||
+            opt.close_date ||
             opt.discount_percentage,
         );
         formData.append(key, JSON.stringify(cleanedOptions));
@@ -824,6 +833,17 @@ export function EventForm() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Release Date</FormLabel>
+                              <FormControl>
+                                <Input type="date" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          name={`options.${index}.close_date`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Close Date</FormLabel>
                               <FormControl>
                                 <Input type="date" {...field} />
                               </FormControl>

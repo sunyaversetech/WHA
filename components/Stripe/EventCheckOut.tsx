@@ -1,7 +1,7 @@
 // components/Stripe/EventCheckOut.tsx
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState } from "react";
 import {
   PaymentElement,
   useStripe,
@@ -10,7 +10,10 @@ import {
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { Loader2, Plus, Minus, ShieldCheck, Check } from "lucide-react";
-import { getEventTicketPaymentIntent } from "@/app/actions/eventTicketStripe";
+import {
+  getEventTicketPaymentIntent,
+  type EventTicketPricing,
+} from "@/app/actions/eventTicketStripe";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
@@ -18,28 +21,10 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
 );
 
-const SERVICE_FEE_FLAT = 5.0;
-const SURCHARGE_PERCENT = 0.025;
-
-function generateInvoiceNumber() {
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).substring(2, 5).toUpperCase();
-  return `INV-${ts}-${rand}`;
-}
-
-function computeFees(ticketPrice: number, quantity: number) {
-  const ticketTotal = ticketPrice * quantity;
-  const serviceFee = SERVICE_FEE_FLAT;
-  const orderTotal = ticketTotal + serviceFee;
-  const surcharge = orderTotal * SURCHARGE_PERCENT;
-  const totalToPay = orderTotal + surcharge;
-  return { ticketTotal, serviceFee, surcharge, totalToPay };
-}
-
 type Step = 1 | 2 | 3;
 
 const STEPS: { n: Step; label: string }[] = [
-  { n: 1, label: "Ticket" },
+  { n: 1, label: "Tickets" },
   { n: 2, label: "Details" },
   { n: 3, label: "Checkout" },
 ];
@@ -83,73 +68,98 @@ function StepIndicator({ step }: { step: Step }) {
   );
 }
 
+export type PurchasableOption = {
+  optionId: string;
+  name: string;
+  price: number;
+  remaining: number | null;
+};
+
 type EventCheckOutProps = {
   eventId: string;
   eventTitle?: string;
-  price: number;
-  maxQuantity: number | null;
-  quantity: number;
-  setQuantity: (quantity: number) => void;
-  onSuccess: (paymentIntentId: string, quantity: number) => void;
+  options: PurchasableOption[];
+  onSuccess: (
+    paymentIntentId: string,
+    items: { optionId: string; quantity: number }[],
+  ) => void;
   onClose: () => void;
 };
 
 export default function EventCheckOut({
   eventId,
   eventTitle,
-  price,
-  maxQuantity,
+  options,
   onSuccess,
   onClose,
-  setQuantity,
-  quantity,
 }: EventCheckOutProps) {
   const [step, setStep] = useState<Step>(1);
-  const [clientSecret, setClientSecret] = useState("");
-  const [fees, setFees] = useState(() => computeFees(price, quantity));
-  const [initializing, setInitializing] = useState(true);
-  const [updatingTotal, setUpdatingTotal] = useState(false);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [promoInput, setPromoInput] = useState("");
+  const [pricing, setPricing] = useState<EventTicketPricing | null>(null);
+  const [loadingPricing, setLoadingPricing] = useState(false);
   const [error, setError] = useState("");
-  const [invoiceNumber] = useState(() => generateInvoiceNumber());
+  const [promoMessage, setPromoMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [elementsKey, setElementsKey] = useState(0);
 
-  const elementsMountedRef = useRef(false);
+  const cartItems = Object.entries(quantities)
+    .filter(([, qty]) => qty > 0)
+    .map(([optionId, quantity]) => ({ optionId, quantity }));
 
-  useEffect(() => {
-    async function initIntent() {
-      try {
-        const res = await getEventTicketPaymentIntent(eventId, quantity);
-        setClientSecret(res.clientSecret as string);
-        setFees(computeFees(price, quantity));
-        elementsMountedRef.current = true;
-      } catch (err: any) {
-        setError(err.message || "Failed to initialize payment");
-      } finally {
-        setInitializing(false);
-      }
+  const fetchPricing = async (
+    items: { optionId: string; quantity: number }[],
+    promo: string,
+  ) => {
+    setLoadingPricing(true);
+    setError("");
+    try {
+      const res = await getEventTicketPaymentIntent(
+        eventId,
+        items,
+        promo || undefined,
+      );
+      setPricing(res);
+      setElementsKey((prev) => prev + 1);
+      return res;
+    } catch (err: any) {
+      setError(err.message || "Failed to price your order");
+      throw err;
+    } finally {
+      setLoadingPricing(false);
     }
-    initIntent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount-only; quantity changes are handled separately by onQuantityChange
-  }, []);
+  };
 
-  const onQuantityChange = useCallback(
-    async (newQty: number) => {
-      setUpdatingTotal(true);
-      setError("");
-      try {
-        const res = await getEventTicketPaymentIntent(eventId, newQty);
-        setClientSecret(res.clientSecret as string);
-        setFees(computeFees(price, newQty));
-        setQuantity(newQty);
-        setElementsKey((prev) => prev + 1);
-      } catch (err: any) {
-        setError(err.message || "Failed to update quantity");
-      } finally {
-        setUpdatingTotal(false);
-      }
-    },
-    [eventId, price, setQuantity],
-  );
+  const handleContinueFromTickets = async () => {
+    if (cartItems.length === 0) return;
+    try {
+      await fetchPricing(cartItems, "");
+      setStep(2);
+    } catch {
+      // error already surfaced via `error` state
+    }
+  };
+
+  const handleApplyPromo = async () => {
+    setPromoMessage(null);
+    try {
+      const res = await fetchPricing(cartItems, promoInput);
+      setPromoMessage(
+        promoInput.trim()
+          ? res.promoApplied
+            ? { type: "success", text: "Promo code applied!" }
+            : null
+          : null,
+      );
+    } catch (err: any) {
+      setPromoMessage({
+        type: "error",
+        text: err.message || "Invalid promo code",
+      });
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -181,52 +191,47 @@ export default function EventCheckOut({
             </div>
           )}
 
-          {initializing ? (
-            <div className="h-48 flex flex-col items-center justify-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-              <p className="text-sm text-gray-400">Setting up payment...</p>
-            </div>
-          ) : (
-            clientSecret && (
-              <Elements
-                key={`stripe-elements-singleton-${elementsKey}`}
-                stripe={stripePromise}
-                options={{
-                  clientSecret,
-                  appearance: { theme: "stripe" },
-                }}>
-                {step === 1 && (
-                  <TicketStep
-                    quantity={quantity}
-                    maxQuantity={maxQuantity}
-                    price={price}
-                    updatingTotal={updatingTotal}
-                    onQuantityChange={onQuantityChange}
-                    onContinue={() => setStep(2)}
-                  />
-                )}
-                {step === 2 && (
-                  <DetailsStep
-                    fees={fees}
-                    quantity={quantity}
-                    price={price}
-                    eventTitle={eventTitle}
-                    invoiceNumber={invoiceNumber}
-                    onBack={() => setStep(1)}
-                    onContinue={() => setStep(3)}
-                  />
-                )}
-                {step === 3 && (
-                  <CheckoutStep
-                    fees={fees}
-                    quantity={quantity}
-                    invoiceNumber={invoiceNumber}
-                    onBack={() => setStep(2)}
-                    onSuccess={onSuccess}
-                  />
-                )}
-              </Elements>
-            )
+          {step === 1 && (
+            <TicketsStep
+              options={options}
+              quantities={quantities}
+              setQuantities={setQuantities}
+              onContinue={handleContinueFromTickets}
+              loading={loadingPricing}
+            />
+          )}
+
+          {step > 1 && pricing && (
+            <Elements
+              key={`stripe-elements-singleton-${elementsKey}`}
+              stripe={stripePromise}
+              options={{
+                clientSecret: pricing.clientSecret,
+                appearance: { theme: "stripe" },
+              }}>
+              {step === 2 && (
+                <DetailsStep
+                  pricing={pricing}
+                  eventTitle={eventTitle}
+                  promoInput={promoInput}
+                  setPromoInput={setPromoInput}
+                  onApplyPromo={handleApplyPromo}
+                  promoMessage={promoMessage}
+                  loadingPricing={loadingPricing}
+                  onBack={() => setStep(1)}
+                  onContinue={() => setStep(3)}
+                />
+              )}
+              {step === 3 && (
+                <CheckoutStep
+                  pricing={pricing}
+                  onBack={() => setStep(2)}
+                  onSuccess={(paymentIntentId) =>
+                    onSuccess(paymentIntentId, cartItems)
+                  }
+                />
+              )}
+            </Elements>
           )}
         </div>
       </div>
@@ -234,66 +239,83 @@ export default function EventCheckOut({
   );
 }
 
-function TicketStep({
-  quantity,
-  maxQuantity,
-  price,
-  updatingTotal,
-  onQuantityChange,
+function TicketsStep({
+  options,
+  quantities,
+  setQuantities,
   onContinue,
+  loading,
 }: {
-  quantity: number;
-  maxQuantity: number | null;
-  price: number;
-  updatingTotal: boolean;
-  onQuantityChange: (quantity: number) => void;
+  options: PurchasableOption[];
+  quantities: Record<string, number>;
+  setQuantities: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   onContinue: () => void;
+  loading: boolean;
 }) {
-  const atMax = maxQuantity !== null && quantity >= maxQuantity;
+  const setQty = (optionId: string, qty: number) => {
+    setQuantities((prev) => ({ ...prev, [optionId]: qty }));
+  };
+
+  const totalQty = Object.values(quantities).reduce((sum, q) => sum + q, 0);
+  const subtotal = options.reduce(
+    (sum, opt) => sum + opt.price * (quantities[opt.optionId] ?? 0),
+    0,
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
-        <span className="text-sm font-medium text-gray-500 ml-2">
-          Number of Tickets
-          {maxQuantity !== null && (
-            <span className="block text-xs text-gray-400 mt-0.5">
-              {Math.max(maxQuantity, 0)} available
-            </span>
-          )}
-        </span>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => quantity > 1 && onQuantityChange(quantity - 1)}
-            disabled={quantity <= 1 || updatingTotal}
-            className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition disabled:opacity-40">
-            <Minus className="h-4 w-4" />
-          </button>
-          <span className="text-lg font-bold w-4 text-center">
-            {quantity}
-          </span>
-          <button
-            onClick={() => !atMax && onQuantityChange(quantity + 1)}
-            disabled={atMax || updatingTotal}
-            className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition disabled:opacity-40">
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
+    <div className="space-y-4">
+      {options.map((opt) => {
+        const qty = quantities[opt.optionId] ?? 0;
+        const atMax = opt.remaining !== null && qty >= opt.remaining;
+        return (
+          <div
+            key={opt.optionId}
+            className="flex items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-800 truncate">
+                {opt.name}
+              </p>
+              <p className="text-xs text-gray-400">
+                ${opt.price.toFixed(2)} each
+                {opt.remaining !== null && ` · ${opt.remaining} left`}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => qty > 0 && setQty(opt.optionId, qty - 1)}
+                disabled={qty <= 0}
+                className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition disabled:opacity-40">
+                <Minus className="h-4 w-4" />
+              </button>
+              <span className="text-base font-bold w-4 text-center">
+                {qty}
+              </span>
+              <button
+                type="button"
+                onClick={() => !atMax && setQty(opt.optionId, qty + 1)}
+                disabled={atMax}
+                className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition disabled:opacity-40">
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        );
+      })}
 
-      <div className="flex justify-between items-center px-1 text-sm text-gray-600">
-        <span>Price per ticket</span>
+      <div className="flex justify-between items-center px-1 text-sm text-gray-600 pt-2 border-t border-gray-100">
+        <span>Subtotal</span>
         <span className="font-semibold text-gray-900">
-          ${price.toFixed(2)}
+          ${subtotal.toFixed(2)}
         </span>
       </div>
 
       <button
         onClick={onContinue}
-        disabled={updatingTotal}
+        disabled={totalQty === 0 || loading}
         style={{ backgroundColor: "#051e3a" }}
         className="w-full text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:opacity-95 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2">
-        {updatingTotal ? (
+        {loading ? (
           <Loader2 className="animate-spin h-5 w-5" />
         ) : (
           "Continue"
@@ -304,19 +326,23 @@ function TicketStep({
 }
 
 function DetailsStep({
-  fees,
-  quantity,
-  price,
+  pricing,
   eventTitle,
-  invoiceNumber,
+  promoInput,
+  setPromoInput,
+  onApplyPromo,
+  promoMessage,
+  loadingPricing,
   onBack,
   onContinue,
 }: {
-  fees: ReturnType<typeof computeFees>;
-  quantity: number;
-  price: number;
+  pricing: EventTicketPricing;
   eventTitle?: string;
-  invoiceNumber: string;
+  promoInput: string;
+  setPromoInput: (val: string) => void;
+  onApplyPromo: () => void;
+  promoMessage: { type: "success" | "error"; text: string } | null;
+  loadingPricing: boolean;
   onBack: () => void;
   onContinue: () => void;
 }) {
@@ -331,6 +357,42 @@ function DetailsStep({
         </div>
       )}
 
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-600">
+          Promo code
+        </label>
+        <div className="flex gap-2">
+          <input
+            value={promoInput}
+            onChange={(e) => setPromoInput(e.target.value)}
+            placeholder="Enter code"
+            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+          <button
+            type="button"
+            onClick={onApplyPromo}
+            disabled={loadingPricing}
+            className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50">
+            {loadingPricing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Apply"
+            )}
+          </button>
+        </div>
+        {promoMessage && (
+          <p
+            className={cn(
+              "text-xs font-medium",
+              promoMessage.type === "success"
+                ? "text-emerald-600"
+                : "text-red-500",
+            )}>
+            {promoMessage.text}
+          </p>
+        )}
+      </div>
+
       <div className="rounded-2xl border border-gray-200 overflow-hidden text-sm">
         <div
           className="flex items-center justify-between px-4 py-3"
@@ -338,25 +400,39 @@ function DetailsStep({
           <span className="font-semibold text-white tracking-wide">
             Order Summary
           </span>
-          <span className="text-xs text-blue-200 font-mono">
-            {invoiceNumber}
-          </span>
         </div>
 
         <div className="bg-gray-50 divide-y divide-gray-100">
-          <div className="flex justify-between items-center px-4 py-3 text-gray-700">
-            <span>
-              Ticket × {quantity}
-              <span className="text-gray-400 ml-1 text-xs">
-                (${price.toFixed(2)} each)
+          {pricing.items.map((item) => (
+            <div
+              key={item.optionId}
+              className="flex justify-between items-center px-4 py-3 text-gray-700">
+              <span>
+                {item.name} × {item.quantity}
+                <span className="text-gray-400 ml-1 text-xs">
+                  {item.discounted ? (
+                    <>
+                      <span className="line-through">
+                        ${item.originalPrice.toFixed(2)}
+                      </span>{" "}
+                      ${item.unitPrice.toFixed(2)} each
+                    </>
+                  ) : (
+                    `$${item.unitPrice.toFixed(2)} each`
+                  )}
+                </span>
               </span>
-            </span>
-            <span className="font-medium">${fees.ticketTotal.toFixed(2)}</span>
-          </div>
+              <span className="font-medium">
+                ${(item.unitPrice * item.quantity).toFixed(2)}
+              </span>
+            </div>
+          ))}
 
           <div className="flex justify-between items-center px-4 py-3 text-gray-700">
             <span>Service charge</span>
-            <span className="font-medium">${fees.serviceFee.toFixed(2)}</span>
+            <span className="font-medium">
+              ${pricing.serviceFee.toFixed(2)}
+            </span>
           </div>
 
           <div className="flex justify-between items-center px-4 py-2.5 text-gray-500 bg-gray-50">
@@ -364,14 +440,14 @@ function DetailsStep({
               Surcharge
               <span className="text-xs text-gray-400">(2.5%)</span>
             </span>
-            <span>${fees.surcharge.toFixed(2)}</span>
+            <span>${pricing.surcharge.toFixed(2)}</span>
           </div>
 
           <div
             className="flex justify-between items-center px-4 py-3.5 font-bold text-white text-base"
             style={{ backgroundColor: "#051e3a" }}>
             <span>Total to Pay</span>
-            <span>${fees.totalToPay.toFixed(2)}</span>
+            <span>${pricing.totalToPay.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -394,17 +470,13 @@ function DetailsStep({
 }
 
 function CheckoutStep({
-  fees,
-  quantity,
-  invoiceNumber,
+  pricing,
   onBack,
   onSuccess,
 }: {
-  fees: ReturnType<typeof computeFees>;
-  quantity: number;
-  invoiceNumber: string;
+  pricing: EventTicketPricing;
   onBack: () => void;
-  onSuccess: (paymentIntentId: string, quantity: number) => void;
+  onSuccess: (paymentIntentId: string) => void;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -443,7 +515,7 @@ function CheckoutStep({
         alert(confirmError.message);
         setIsPaying(false);
       } else if (paymentIntent?.status === "succeeded") {
-        onSuccess(paymentIntent.id, quantity);
+        onSuccess(paymentIntent.id);
       }
     } catch (err) {
       console.error(err);
@@ -454,14 +526,9 @@ function CheckoutStep({
   return (
     <form onSubmit={handlePay} className="space-y-6">
       <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-sm">
-        <span className="text-gray-500">
-          Total to pay{" "}
-          <span className="font-mono text-xs text-gray-400">
-            ({invoiceNumber})
-          </span>
-        </span>
+        <span className="text-gray-500">Total to pay</span>
         <span className="font-bold text-lg" style={{ color: "#051e3a" }}>
-          ${fees.totalToPay.toFixed(2)}
+          ${pricing.totalToPay.toFixed(2)}
         </span>
       </div>
 
@@ -498,7 +565,7 @@ function CheckoutStep({
           {isPaying ? (
             <Loader2 className="animate-spin" />
           ) : (
-            `Pay $${fees.totalToPay.toFixed(2)}`
+            `Pay $${pricing.totalToPay.toFixed(2)}`
           )}
         </button>
       </div>

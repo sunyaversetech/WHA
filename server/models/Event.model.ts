@@ -43,8 +43,10 @@ const EventSchema = new Schema({
       {
         name: { type: String },
         release_date: { type: String },
+        close_date: { type: String },
         price: { type: Number },
         capacity: { type: Number },
+        sold: { type: Number, default: 0 },
         promo_code: { type: String },
         discount_percentage: { type: Number },
       },

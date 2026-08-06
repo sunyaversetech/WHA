@@ -47,6 +47,7 @@ export const eventSchema = z.object({
         _id: z.string().optional(),
         name: z.string().optional(),
         release_date: z.string().optional(),
+        close_date: z.string().optional(),
         price: z.preprocess(
           (val) => (val === "" || val === "undefined" ? 0 : val),
           z.coerce.number().optional(),

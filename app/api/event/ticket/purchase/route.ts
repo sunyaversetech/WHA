@@ -5,13 +5,23 @@ import crypto from "crypto";
 import Stripe from "stripe";
 import Event from "@/server/models/Event.model";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
-import { sendEventMultipleTicketEmail } from "@/lib/mail";
+import { sendMultiTierEventTicketEmail } from "@/lib/mail";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const SERVICE_FEE_FLAT = 5.0;
 const SURCHARGE_PERCENT = 0.025;
+
+function toTicketResponse(purchase: any) {
+  return {
+    success: true,
+    items: purchase.items.map((i: any) => ({
+      optionName: i.optionName,
+      codes: i.uniqueKeys,
+    })),
+  };
+}
 
 export async function POST(req: Request) {
   let paymentIntentId: string | undefined;
@@ -24,25 +34,22 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { eventId, quantity } = body;
+    const { eventId } = body;
     paymentIntentId = body.paymentIntentId;
 
-    if (!eventId || !quantity || !paymentIntentId) {
+    if (!eventId || !paymentIntentId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
-    // Idempotency: if this payment was already finalized, return the same codes.
+    // Idempotency: if this payment was already finalized, return the same tickets.
     const existingPurchase = await EventTicketPurchase.findOne({
       paymentIntentId,
     });
     if (existingPurchase) {
-      return NextResponse.json({
-        success: true,
-        codes: existingPurchase.uniqueKeys,
-      });
+      return NextResponse.json(toTicketResponse(existingPurchase));
     }
 
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
@@ -53,21 +60,53 @@ export async function POST(req: Request) {
       );
     }
 
-    const paidQuantity = parseInt(paymentIntent.metadata.quantity || "0");
-    if (paidQuantity !== quantity) {
+    if (paymentIntent.metadata.eventId !== eventId) {
+      return NextResponse.json({ error: "Event mismatch" }, { status: 400 });
+    }
+
+    let cartItems: { optionId: string; quantity: number }[] = [];
+    try {
+      cartItems = JSON.parse(paymentIntent.metadata.items || "[]");
+    } catch {
+      cartItems = [];
+    }
+    if (!cartItems.length) {
       return NextResponse.json(
-        { error: "Quantity mismatch - payment verification failed" },
+        { error: "No tickets found on this payment" },
         { status: 400 },
       );
     }
+    const promoCode = paymentIntent.metadata.promoCode || "";
 
     const event = await Event.findById(eventId).populate("user");
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 400 });
     }
 
-    const unitPrice = event.ticket_price || 0;
-    const ticketTotal = unitPrice * paidQuantity;
+    // Re-derive pricing server-side from the current event/options data —
+    // never trust client-supplied amounts.
+    let promoApplied = false;
+    const pricedItems = cartItems.map(({ optionId, quantity }) => {
+      const option = event.options?.id(optionId);
+      if (!option) throw new Error("Ticket option not found");
+
+      const originalPrice = option.price || 0;
+      const codeMatches =
+        !!promoCode &&
+        !!option.promo_code &&
+        option.promo_code.trim().toLowerCase() === promoCode;
+      const unitPrice = codeMatches
+        ? originalPrice * (1 - (option.discount_percentage || 0) / 100)
+        : originalPrice;
+      if (codeMatches) promoApplied = true;
+
+      return { optionId, unitPrice, quantity };
+    });
+
+    const ticketTotal = pricedItems.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
     const orderTotal = ticketTotal + SERVICE_FEE_FLAT;
     const surcharge = orderTotal * SURCHARGE_PERCENT;
     const expectedAmount = Math.round((orderTotal + surcharge) * 100);
@@ -78,37 +117,57 @@ export async function POST(req: Request) {
       );
     }
 
-    const uniqueKeys = Array.from(
-      { length: paidQuantity },
-      (_, i) =>
-        `WHA-EVT-${crypto.randomBytes(4).toString("hex").toUpperCase()}-${i + 1}of${paidQuantity}`,
-    );
+    const today = new Date().toISOString().split("T")[0];
 
-    // Reserve stock and create the purchase record atomically, so a failure
-    // partway through can never leak inventory or leave an orphaned purchase.
-    let createdPurchase;
+    // Reserve per-option stock and create the purchase record atomically, so
+    // a failure partway through can never leak inventory or leave an orphan.
+    let createdPurchase: any;
     const dbSession = await mongoose.startSession();
     try {
       await dbSession.withTransaction(async () => {
-        if (event.max_quantity) {
-          const updatedEvent = await Event.findOneAndUpdate(
-            {
-              _id: eventId,
-              sold_quantity: { $lte: event.max_quantity - paidQuantity },
-            },
-            { $inc: { sold_quantity: paidQuantity } },
-            { new: true, session: dbSession },
-          );
-          if (!updatedEvent) {
+        const freshEvent = await Event.findById(eventId).session(dbSession);
+        const itemsForPurchase: any[] = [];
+        const allKeys: string[] = [];
+
+        for (const { optionId, quantity } of cartItems) {
+          const option = freshEvent.options?.id(optionId);
+          if (!option) throw new Error("OPTION_NOT_FOUND");
+
+          if (option.release_date && option.release_date > today) {
+            throw new Error("NOT_RELEASED");
+          }
+          if (option.close_date && option.close_date < today) {
+            throw new Error("CLOSED");
+          }
+
+          const remaining =
+            option.capacity != null
+              ? option.capacity - (option.sold || 0)
+              : null;
+          if (remaining !== null && quantity > remaining) {
             throw new Error("SOLD_OUT");
           }
-        } else {
-          await Event.findByIdAndUpdate(
-            eventId,
-            { $inc: { sold_quantity: paidQuantity } },
-            { session: dbSession },
+
+          option.sold = (option.sold || 0) + quantity;
+
+          const uniqueKeys = Array.from(
+            { length: quantity },
+            (_, i) =>
+              `WHA-EVT-${crypto.randomBytes(4).toString("hex").toUpperCase()}-${i + 1}of${quantity}`,
           );
+          allKeys.push(...uniqueKeys);
+
+          const priced = pricedItems.find((p) => p.optionId === optionId)!;
+          itemsForPurchase.push({
+            optionId,
+            optionName: option.name,
+            quantity,
+            unitPrice: priced.unitPrice,
+            uniqueKeys,
+          });
         }
+
+        await freshEvent.save({ session: dbSession });
 
         const created = await EventTicketPurchase.create(
           [
@@ -116,12 +175,13 @@ export async function POST(req: Request) {
               event: eventId,
               user: session.user.id,
               business: event.user._id,
-              quantity: paidQuantity,
-              unitPrice,
+              items: itemsForPurchase,
+              uniqueKeys: allKeys,
+              promoCode: promoApplied ? promoCode : undefined,
+              ticketTotal,
               serviceFee: SERVICE_FEE_FLAT,
               surcharge,
               totalAmount: paymentIntent.amount / 100,
-              uniqueKeys,
               paymentIntentId,
               status: "pending",
             },
@@ -131,11 +191,15 @@ export async function POST(req: Request) {
         createdPurchase = created[0];
       });
     } catch (txError: any) {
-      if (txError.message === "SOLD_OUT") {
+      if (
+        ["OPTION_NOT_FOUND", "NOT_RELEASED", "CLOSED", "SOLD_OUT"].includes(
+          txError.message,
+        )
+      ) {
         return NextResponse.json(
           {
             error:
-              "Not enough tickets left. Please contact support for a refund.",
+              "One or more selected tickets are no longer available. Please contact support for a refund.",
           },
           { status: 400 },
         );
@@ -145,25 +209,32 @@ export async function POST(req: Request) {
       await dbSession.endSession();
     }
 
-    await sendEventMultipleTicketEmail(
+    await sendMultiTierEventTicketEmail(
       session.user.email!,
       event.title,
-      uniqueKeys,
+      createdPurchase.items.map((i: any) => ({
+        optionName: i.optionName,
+        codes: i.uniqueKeys,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+      })),
       session.user.name!,
+      {
+        ticketTotal: createdPurchase.ticketTotal,
+        serviceFee: createdPurchase.serviceFee,
+        surcharge: createdPurchase.surcharge,
+        totalAmount: createdPurchase.totalAmount,
+        promoCode: createdPurchase.promoCode,
+        paymentIntentId: createdPurchase.paymentIntentId,
+      },
     );
 
-    return NextResponse.json({
-      success: true,
-      codes: createdPurchase!.uniqueKeys,
-    });
+    return NextResponse.json(toTicketResponse(createdPurchase));
   } catch (error: any) {
     if (error.code === 11000 && paymentIntentId) {
       const existing = await EventTicketPurchase.findOne({ paymentIntentId });
       if (existing) {
-        return NextResponse.json({
-          success: true,
-          codes: existing.uniqueKeys,
-        });
+        return NextResponse.json(toTicketResponse(existing));
       }
     }
     return NextResponse.json({ error: error.message }, { status: 500 });

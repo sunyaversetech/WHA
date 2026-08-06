@@ -250,6 +250,195 @@ export const sendEventMultipleTicketEmail = async (
   }
 };
 
+type EventTicketReceipt = {
+  ticketTotal: number;
+  serviceFee: number;
+  surcharge: number;
+  totalAmount: number;
+  promoCode?: string;
+  paymentIntentId: string;
+};
+
+type EventTicketLineItemEmail = {
+  optionName: string;
+  codes: string[];
+  quantity: number;
+  unitPrice: number;
+};
+
+const generateMultiTierEventTicketTemplate = (
+  eventName: string,
+  items: EventTicketLineItemEmail[],
+  userName: string,
+  receipt: EventTicketReceipt,
+) => {
+  const totalCodes = items.reduce((sum, item) => sum + item.codes.length, 0);
+
+  const receiptRowsHtml = items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding: 8px 0; color: #666;">${item.optionName} × ${item.quantity}</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #333;">$${(item.unitPrice * item.quantity).toFixed(2)}</td>
+        </tr>
+      `,
+    )
+    .join("");
+
+  const ticketsHtml = items
+    .map((item) => {
+      const cardsHtml = item.codes
+        .map((code, index) => {
+          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${code}`;
+          return `
+            <div style="
+              border: 2px dashed #051e3a;
+              border-radius: 12px;
+              padding: 24px;
+              margin: 16px 0;
+              text-align: center;
+              background-color: #fafafa;
+            ">
+              <p style="
+                font-size: 13px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                color: #888;
+                margin: 0 0 12px 0;
+              ">
+                ${item.optionName} — Ticket ${index + 1} of ${item.codes.length}
+              </p>
+
+              <img
+                src="${qrUrl}"
+                alt="QR Code for ${item.optionName} ticket ${index + 1}"
+                style="border: 8px solid #eee; border-radius: 8px; display: block; margin: 0 auto;"
+              />
+
+              <p style="
+                font-family: monospace;
+                font-size: 20px;
+                font-weight: bold;
+                letter-spacing: 4px;
+                margin: 14px 0 0 0;
+                color: #051e3a;
+              ">
+                ${code}
+              </p>
+            </div>
+          `;
+        })
+        .join("");
+      return cardsHtml;
+    })
+    .join("");
+
+  return `
+    <div style="font-family: sans-serif; max-width: 640px; margin: 0 auto; border: 2px solid #051e3a; border-radius: 15px; overflow: hidden;">
+
+      <!-- Header -->
+      <div style="background-color: #051e3a; padding: 28px 20px; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 26px; letter-spacing: 1px;">🎟 Your Tickets</h1>
+        <p style="color: #a0b4c8; margin: 8px 0 0 0; font-size: 14px;">${eventName}</p>
+      </div>
+
+      <!-- Body -->
+      <div style="padding: 30px; color: #333;">
+        <p style="font-size: 17px; margin: 0 0 6px 0;">Hi <strong>${userName}</strong>,</p>
+        <p style="font-size: 15px; color: #555; margin: 0 0 24px 0;">
+          Your purchase is confirmed! You have <strong>${totalCodes} ticket${totalCodes > 1 ? "s" : ""}</strong>
+          for <strong>${eventName}</strong>. Each ticket has a unique QR code — present them individually at the entrance.
+        </p>
+
+        <!-- Receipt -->
+        <h3 style="font-size: 15px; color: #051e3a; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px;">Receipt</h3>
+        <div style="background-color: #fafafa; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 8px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+            ${receiptRowsHtml}
+            <tr>
+              <td style="padding: 8px 0; color: #666; border-top: 1px solid #e2e8f0;">Service charge</td>
+              <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #333; border-top: 1px solid #e2e8f0;">$${receipt.serviceFee.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Surcharge (2.5%)</td>
+              <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #333;">$${receipt.surcharge.toFixed(2)}</td>
+            </tr>
+            ${
+              receipt.promoCode
+                ? `<tr>
+                    <td style="padding: 8px 0; color: #2e7d32;">Promo code applied</td>
+                    <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #2e7d32;">${receipt.promoCode.toUpperCase()}</td>
+                  </tr>`
+                : ""
+            }
+            <tr>
+              <td style="padding: 10px 0 0 0; color: #051e3a; font-weight: bold; border-top: 2px solid #051e3a;">Total Paid</td>
+              <td style="padding: 10px 0 0 0; text-align: right; color: #051e3a; font-weight: bold; font-size: 16px; border-top: 2px solid #051e3a;">$${receipt.totalAmount.toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
+        <p style="font-size: 12px; color: #999; margin: 0 0 24px 0; font-family: monospace;">
+          Reference: ${receipt.paymentIntentId}
+        </p>
+
+        <!-- Ticket Cards -->
+        ${ticketsHtml}
+
+        <!-- Note -->
+        <div style="
+          margin-top: 28px;
+          padding: 16px;
+          background-color: #fffbea;
+          border-left: 4px solid #f5a623;
+          border-radius: 4px;
+          font-size: 13px;
+          color: #7a6000;
+        ">
+          ⚠️ <strong>Important:</strong> Each QR code is valid for one person only.
+          Do not share or duplicate these codes — each will be verified individually at entry.
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="background-color: #f4f4f4; padding: 16px; text-align: center; font-size: 12px; color: #999;">
+        &copy; ${new Date().getFullYear()} Whats Happening Australia. All rights reserved.
+      </div>
+    </div>
+  `;
+};
+
+export const sendMultiTierEventTicketEmail = async (
+  email: string,
+  eventName: string,
+  items: EventTicketLineItemEmail[],
+  userName: string,
+  receipt: EventTicketReceipt,
+) => {
+  const client = new MailtrapClient({ token: process.env.MAIL_TOKEN! });
+  const totalCodes = items.reduce((sum, item) => sum + item.codes.length, 0);
+  try {
+    await client.send({
+      from: {
+        email: "no-reply@whaustralia.com",
+        name: "Whats Happening Australia",
+      },
+      to: [{ email }],
+      subject: `Your ${totalCodes} Ticket${totalCodes > 1 ? "s" : ""} for ${eventName}`,
+      html: generateMultiTierEventTicketTemplate(
+        eventName,
+        items,
+        userName,
+        receipt,
+      ),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Email Error:", error);
+    return { success: false };
+  }
+};
+
 const generateUserBookingTemplate = (
   serviceName: string,
   bookingDate: string,

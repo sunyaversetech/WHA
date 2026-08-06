@@ -81,6 +81,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const matchedItem = purchase.items.find((item: any) =>
+      item.uniqueKeys.includes(uniqueKey),
+    );
+
     purchase.verifiedKeys.push(uniqueKey);
     purchase.verifiedAt = new Date();
     if (purchase.verifiedKeys.length >= purchase.uniqueKeys.length) {
@@ -94,6 +98,7 @@ export async function POST(request: NextRequest) {
         message: "Ticket verified successfully!",
         data: {
           attendee: (purchase.user as any)?.name,
+          ticketType: matchedItem?.optionName,
           verifiedAt: purchase.verifiedAt,
         },
       },
