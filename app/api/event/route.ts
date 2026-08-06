@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
     const community = formData.get("community") as string;
     const category = formData.get("category") as string;
     const location = formData.get("location") as string;
+    const location_tba = formData.get("location_tba") === "true";
     const email = formData.get("email") as string;
     const phone_number = formData.get("phone_number") as string;
     const website_link = formData.get("website_link") as string;
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
     const ticket_link = formData.get("ticket_link") as string;
     const ticket_price = formData.get("ticket_price") as string;
     const max_quantity = formData.get("max_quantity") as string;
+    const optionsRaw = formData.get("options") as string;
     const startTime = formData.get("startTime") as string;
     const endTime = formData.get("endTime") as string;
     const latitude = parseFloat(formData.get("latitude") as string);
@@ -40,6 +42,15 @@ export async function POST(req: NextRequest) {
     const slug = generateSlug(title);
 
     const file = formData.get("image") as File;
+
+    let options: any[] = [];
+    if (optionsRaw) {
+      try {
+        options = JSON.parse(optionsRaw);
+      } catch (e) {
+        console.error("Failed to parse options:", e);
+      }
+    }
 
     const formattedDates: { dateFrom?: string; dateTo?: string } = {};
 
@@ -104,8 +115,10 @@ export async function POST(req: NextRequest) {
       ticket_link: price_category === "paid" ? ticket_link : undefined,
       ticket_price: price_category === "paid" ? ticket_price : "0",
       max_quantity: price_category === "paid" ? max_quantity : undefined,
+      options: price_category === "paid" ? options : undefined,
 
       location,
+      location_tba,
       latitude,
       longitude,
 

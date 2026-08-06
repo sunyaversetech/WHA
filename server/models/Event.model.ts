@@ -13,6 +13,7 @@ const EventSchema = new Schema({
   phone_number: { type: String, required: false },
   website_link: { type: String, required: false },
   location: { type: String },
+  location_tba: { type: Boolean, default: false },
   price_category: { type: String },
   venue: { type: String },
   category: { type: String },
@@ -37,6 +38,19 @@ const EventSchema = new Schema({
   ticket_price: { type: Number },
   max_quantity: { type: Number },
   sold_quantity: { type: Number, default: 0 },
+  options: {
+    type: [
+      {
+        name: { type: String },
+        release_date: { type: String },
+        price: { type: Number },
+        capacity: { type: Number },
+        promo_code: { type: String },
+        discount_percentage: { type: Number },
+      },
+    ],
+    default: undefined,
+  },
   startTime: { type: String },
   endTime: { type: String },
   community: { type: String },

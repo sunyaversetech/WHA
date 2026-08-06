@@ -7,6 +7,7 @@ export interface IEventTicketPurchase {
   quantity: number;
   unitPrice: number;
   serviceFee: number;
+  surcharge: number;
   totalAmount: number;
   uniqueKeys: string[];
   verifiedKeys: string[];
@@ -23,6 +24,7 @@ const EventTicketPurchaseSchema = new Schema<IEventTicketPurchase>(
     quantity: { type: Number, required: true },
     unitPrice: { type: Number, required: true },
     serviceFee: { type: Number, required: true },
+    surcharge: { type: Number, required: true },
     totalAmount: { type: Number, required: true },
     uniqueKeys: {
       type: [String],

@@ -10,6 +10,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const SERVICE_FEE_FLAT = 5.0;
 const SURCHARGE_PERCENT = 0.025;
 
 export async function POST(req: Request) {
@@ -66,10 +67,10 @@ export async function POST(req: Request) {
     }
 
     const unitPrice = event.ticket_price || 0;
-    const expectedAmount = Math.round(
-      (unitPrice * paidQuantity + unitPrice * paidQuantity * SURCHARGE_PERCENT) *
-        100,
-    );
+    const ticketTotal = unitPrice * paidQuantity;
+    const orderTotal = ticketTotal + SERVICE_FEE_FLAT;
+    const surcharge = orderTotal * SURCHARGE_PERCENT;
+    const expectedAmount = Math.round((orderTotal + surcharge) * 100);
     if (paymentIntent.amount !== expectedAmount) {
       return NextResponse.json(
         { error: "Payment amount mismatch" },
@@ -117,7 +118,8 @@ export async function POST(req: Request) {
               business: event.user._id,
               quantity: paidQuantity,
               unitPrice,
-              serviceFee: unitPrice * paidQuantity * SURCHARGE_PERCENT,
+              serviceFee: SERVICE_FEE_FLAT,
+              surcharge,
               totalAmount: paymentIntent.amount / 100,
               uniqueKeys,
               paymentIntentId,

@@ -41,21 +41,40 @@ export const eventSchema = z.object({
   category_name: z.string().optional(),
   price_category: z.enum(["free", "paid", "registration"]),
   ticket_link: z.string().optional(),
-  ticket_price: z.preprocess(
-    (val) => (val === "" || val === "undefined" ? 0 : val),
-    z.coerce.number().optional(),
-  ),
-  max_quantity: z.preprocess(
-    (val) => (val === "" || val === "undefined" ? 0 : val),
-    z.coerce.number().optional(),
-  ),
+  options: z
+    .array(
+      z.object({
+        _id: z.string().optional(),
+        name: z.string().optional(),
+        release_date: z.string().optional(),
+        price: z.preprocess(
+          (val) => (val === "" || val === "undefined" ? 0 : val),
+          z.coerce.number().optional(),
+        ),
+        capacity: z.preprocess(
+          (val) => (val === "" || val === "undefined" ? 0 : val),
+          z.coerce.number().optional(),
+        ),
+        promo_code: z.string().optional(),
+        discount_percentage: z.preprocess(
+          (val) => (val === "" || val === "undefined" ? 0 : val),
+          z.coerce.number().optional(),
+        ),
+      }),
+    )
+    .max(3, "You can add up to 3 options")
+    .optional(),
   community: z.string().min(1, "Community is required"),
   community_name: z.string().optional(),
   city: z.string().min(2, "City is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  location: z.string().min(2, "Location is required"),
-  latitude: z.coerce.number(),
-  longitude: z.coerce.number(),
+  location_tba: z.preprocess(
+    (val) => (val === "true" ? true : val === "false" ? false : val),
+    z.boolean().optional(),
+  ),
+  location: z.string().optional(),
+  latitude: z.coerce.number().optional(),
+  longitude: z.coerce.number().optional(),
 });
 
 type RouteContext = {
@@ -154,8 +173,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       phone_number: "",
       website_link: "",
       ticket_link: "",
-      ticket_price: "",
-      max_quantity: "",
+      options: [] as any[],
       category_name: "",
       community_name: "",
       endTime: "",
@@ -167,24 +185,6 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       ...formattedDates,
       image: finalImageUrl,
     };
-
-    if (
-      updatePayload.ticket_price === "" ||
-      updatePayload.ticket_price === "undefined"
-    ) {
-      updatePayload.ticket_price = 0;
-    } else if (updatePayload.ticket_price) {
-      updatePayload.ticket_price = Number(updatePayload.ticket_price);
-    }
-
-    if (
-      updatePayload.max_quantity === "" ||
-      updatePayload.max_quantity === "undefined"
-    ) {
-      updatePayload.max_quantity = 0;
-    } else if (updatePayload.max_quantity) {
-      updatePayload.max_quantity = Number(updatePayload.max_quantity);
-    }
 
     if (validatedData.title) {
       updatePayload.slug = generateSlug(validatedData.title);

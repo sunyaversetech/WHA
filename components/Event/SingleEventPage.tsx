@@ -242,6 +242,7 @@ export default function EventDetailPage() {
           {isCheckoutOpen && (
             <EventCheckOut
               eventId={event?.data?._id ?? ""}
+              eventTitle={event?.data?.title}
               price={unitPrice}
               maxQuantity={remainingQty}
               quantity={quantity}

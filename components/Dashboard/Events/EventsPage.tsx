@@ -143,7 +143,11 @@ export default function EventsBackend() {
                     })}
                 </span>
                 <span className="font-semibold text-[#051e3a]">
-                  {event.ticket_price ? `$${event.ticket_price}` : "Free"}
+                  {event.price_category === "paid"
+                    ? event.options?.[0]?.price
+                      ? `$${event.options[0].price}`
+                      : "Paid"
+                    : "Free"}
                 </span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-gray-100">

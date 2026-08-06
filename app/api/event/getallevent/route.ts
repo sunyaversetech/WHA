@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
         events = await Event.aggregate([
           { $geoNear: geoNearStage },
           { $limit: RESULT_LIMIT },
+          { $unset: "options.promo_code" },
         ]);
       } catch {
         events = [];
@@ -92,6 +93,7 @@ export async function GET(request: NextRequest) {
       // haven't been migrated to have the geo field yet).
       if (events.length === 0) {
         events = await Event.find(baseFilter)
+          .select("-options.promo_code")
           .sort({ "dateRange.from": 1 })
           .limit(RESULT_LIMIT)
           .lean();
@@ -99,6 +101,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Fallback — date / text / city filter (original behaviour)
       events = await Event.find(baseFilter)
+        .select("-options.promo_code")
         .sort({ "dateRange.from": 1 })
         .limit(RESULT_LIMIT)
         .lean();

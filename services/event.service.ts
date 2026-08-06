@@ -6,6 +6,16 @@ import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
 import { useSearchParams } from "next/navigation";
 import { ReviewType } from "./review.service";
 
+export type EventOptionType = {
+  _id?: string;
+  name?: string;
+  release_date?: string | null;
+  price?: number | null;
+  capacity?: number | null;
+  promo_code?: string | null;
+  discount_percentage?: number | null;
+};
+
 export type EventType = {
   _id: string;
   title: string;
@@ -25,6 +35,7 @@ export type EventType = {
     image: string;
   };
   location: string;
+  location_tba?: boolean;
   category_name: string;
   email: string;
   phone_number: string;
@@ -48,6 +59,7 @@ export type EventType = {
   ticket_price: string | null;
   max_quantity: string | null;
   sold_quantity: string | null;
+  options?: EventOptionType[];
 };
 
 type RedeemCodeType = {

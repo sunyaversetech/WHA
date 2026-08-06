@@ -6,6 +6,7 @@ import Event from "@/server/models/Event.model";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
+const SERVICE_FEE_FLAT = 5.0;
 const SURCHARGE_PERCENT = 0.025;
 
 export async function getEventTicketPaymentIntent(
@@ -33,8 +34,9 @@ export async function getEventTicketPaymentIntent(
     }
 
     const ticketTotal = price * quantity;
-    const surcharge = ticketTotal * SURCHARGE_PERCENT;
-    const totalToPay = ticketTotal + surcharge;
+    const orderTotal = ticketTotal + SERVICE_FEE_FLAT;
+    const surcharge = orderTotal * SURCHARGE_PERCENT;
+    const totalToPay = orderTotal + surcharge;
 
     const amountInCents = Math.round(totalToPay * 100);
 
