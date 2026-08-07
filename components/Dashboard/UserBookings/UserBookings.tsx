@@ -733,7 +733,11 @@ function BookingCard({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function UserBookings() {
+export default function UserBookings({
+  hideHeader = false,
+}: {
+  hideHeader?: boolean;
+}) {
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
@@ -791,22 +795,29 @@ export default function UserBookings() {
   const displayed = tab === "upcoming" ? upcoming : past;
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 0" }}>
+    <div
+      style={{
+        maxWidth: 720,
+        margin: "0 auto",
+        padding: hideHeader ? 0 : "32px 0",
+      }}>
       {/* Page title */}
-      <div style={{ marginBottom: 28 }}>
-        <h1
-          style={{
-            fontSize: 22,
-            fontWeight: 800,
-            color: "#0f172a",
-            margin: 0,
-          }}>
-          My Bookings
-        </h1>
-        <p style={{ fontSize: 14, color: "#64748b", margin: "6px 0 0" }}>
-          View and manage all your appointments
-        </p>
-      </div>
+      {!hideHeader && (
+        <div style={{ marginBottom: 28 }}>
+          <h1
+            style={{
+              fontSize: 22,
+              fontWeight: 800,
+              color: "#0f172a",
+              margin: 0,
+            }}>
+            My Bookings
+          </h1>
+          <p style={{ fontSize: 14, color: "#64748b", margin: "6px 0 0" }}>
+            View and manage all your appointments
+          </p>
+        </div>
+      )}
 
       {/* Tabs */}
       <div

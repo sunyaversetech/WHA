@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Home, Calendar, User } from "lucide-react";
+import { Home, Search, Calendar, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 const NAV_LINKS = (isLoggedIn: boolean) => [
-  { name: "Home",     path: "/",                              icon: Home     },
-  { name: "Bookings", path: "/bookings",                      icon: Calendar },
-  { name: "Profile",  path: isLoggedIn ? "/dashboard" : "/auth", icon: User },
+  { name: "Home",     path: "/",                                            icon: Home     },
+  { name: "Search",   path: "/search",                                     icon: Search   },
+  { name: "Activity", path: isLoggedIn ? "/activity" : "/auth",            icon: Calendar },
+  { name: "Profile",  path: isLoggedIn ? "/dashboard" : "/auth",           icon: User     },
 ];
 
 export default function BottomNav() {
@@ -49,7 +50,7 @@ export default function BottomNav() {
               href={buildPath(path)}
               aria-label={name}
               aria-current={active ? "page" : undefined}
-              className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5
+              className="relative flex-1 flex flex-col items-center justify-center py-2 gap-0.5
                          min-h-[56px] touch-manipulation
                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-secondary"
             >

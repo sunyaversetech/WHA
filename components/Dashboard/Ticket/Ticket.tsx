@@ -222,7 +222,7 @@ const sortPendingFirst = (arr: any[]) =>
     return 0;
   });
 
-const Ticket = () => {
+const Ticket = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   const { data } = useGetTickets();
   const tickets: any[] = data?.data || [];
 
@@ -243,16 +243,20 @@ const Ticket = () => {
   );
 
   return (
-    <div className="p-6   min-h-screen">
-      <Button variant={"ghost"} onClick={() => router.back()}>
-        <ChevronLeft />
-      </Button>
-      <div className="mb-8">
-        <h1 className="text-4xl font-extrabold tracking-tight">Wallet</h1>
-        <p className="text-muted-foreground mt-1">
-          Your event passes and exclusive rewards.
-        </p>
-      </div>
+    <div className={hideHeader ? "" : "p-6 min-h-screen"}>
+      {!hideHeader && (
+        <>
+          <Button variant={"ghost"} onClick={() => router.back()}>
+            <ChevronLeft />
+          </Button>
+          <div className="mb-8">
+            <h1 className="text-4xl font-extrabold tracking-tight">Wallet</h1>
+            <p className="text-muted-foreground mt-1">
+              Your event passes and exclusive rewards.
+            </p>
+          </div>
+        </>
+      )}
 
       <Tabs defaultValue="upcoming" className="space-y-6">
         <TabsList className="bg-muted/50 p-1 w-full">

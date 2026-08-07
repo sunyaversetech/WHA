@@ -161,7 +161,7 @@ export default function Navbar() {
      MOBILE
   ════════════════════════════════════ */
   const MobileNav = () => (
-    <div className="md:hidden fixed top-0 left-0 w-full z-50" style={navStyle}>
+    <div className="hidden fixed top-0 left-0 w-full z-50" style={navStyle}>
       {/* Logo + auth row — always shown */}
       <div
         className="flex items-center justify-between px-4 py-3"
@@ -272,7 +272,7 @@ export default function Navbar() {
   ════════════════════════════════════ */
   return (
     <>
-      {!isBusinessesPage && MobileNav()}
+      {!isBusinessesPage && !isDashboard && MobileNav()}
       {!isDashboard && (isHomePage ? DesktopHomeNav() : DesktopInnerNav())}
     </>
   );

@@ -3,10 +3,8 @@ import React, { useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import {
-  useGetBusinessDashboard,
-  useGetDashboardData,
-} from "@/services/dashboard.service";
+import { useGetBusinessDashboard } from "@/services/dashboard.service";
+import UserAccountMenu from "./UserAccountMenu";
 import { format, parseISO } from "date-fns";
 import {
   BarChart2,
@@ -533,33 +531,6 @@ function BizSkeleton() {
   );
 }
 
-function UserSkeleton() {
-  return (
-    <div className="max-w-5xl mx-auto">
-      <Skeleton className="h-7 w-56 mb-6" />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {[1, 2].map((i) => (
-          <div
-            key={i}
-            style={{
-              background: "#fff",
-              border: "1px solid #e5e7eb",
-              borderRadius: 16,
-              padding: 24,
-            }}>
-            <Skeleton className="h-4 w-28 mb-5" />
-            {[1, 2, 3].map((j) => (
-              <div key={j} className="py-2 border-b border-gray-50">
-                <Skeleton className="h-4 w-48" />
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /* ─── Main component ─── */
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -567,7 +538,6 @@ export default function Dashboard() {
   const isBusiness = session?.user?.category === "business";
 
   const { data: bizData, isPending: bizPending } = useGetBusinessDashboard();
-  const { data: userData, isPending: userPending } = useGetDashboardData();
 
   useEffect(() => {
     if (session?.user?.category === "super-admin") router.push("/super-admin");
@@ -583,7 +553,7 @@ export default function Dashboard() {
     );
 
   if (isBusiness && bizPending) return <BizSkeleton />;
-  if (!isBusiness && userPending) return <UserSkeleton />;
+  if (!isBusiness) return <UserAccountMenu />;
 
   if (isBusiness) {
     const stats = bizData?.data?.dailyStats ?? [];
@@ -954,77 +924,5 @@ export default function Dashboard() {
     );
   }
 
-  /* ── User dashboard ─────────────────────────────────────────────── */
-  const favorite = userData?.data?.favorite ?? [];
-  const deals = userData?.data?.deals ?? [];
-
-  return (
-    <div className="max-w-5xl mx-auto">
-      <h1
-        style={{
-          fontSize: 22,
-          fontWeight: 700,
-          marginBottom: 24,
-          color: "#111827",
-        }}>
-        Welcome back, {session?.user?.name ?? "there"}
-      </h1>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Card>
-          <CardHeader title="Favourites" />
-          {favorite.length === 0 ? (
-            <p style={{ fontSize: 14, color: "#9ca3af", margin: 0 }}>
-              No saved favourites yet.
-            </p>
-          ) : (
-            favorite.map((item: any) => (
-              <div
-                key={item._id}
-                style={{
-                  padding: "10px 0",
-                  borderBottom: "1px solid #f3f4f6",
-                }}>
-                <p
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "#111827",
-                    margin: 0,
-                  }}>
-                  {item?.item_id?.title}
-                </p>
-              </div>
-            ))
-          )}
-        </Card>
-        <Card>
-          <CardHeader title="Deals to Redeem" />
-          {deals.length === 0 ? (
-            <p style={{ fontSize: 14, color: "#9ca3af", margin: 0 }}>
-              No pending deals.
-            </p>
-          ) : (
-            deals.map((item: any) => (
-              <div
-                key={item._id}
-                style={{
-                  padding: "10px 0",
-                  borderBottom: "1px solid #f3f4f6",
-                }}>
-                <p
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "#111827",
-                    margin: 0,
-                  }}>
-                  {item?.deal?.title}
-                </p>
-              </div>
-            ))
-          )}
-        </Card>
-      </div>
-    </div>
-  );
+  return <UserAccountMenu />;
 }
