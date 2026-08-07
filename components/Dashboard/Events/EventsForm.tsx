@@ -374,7 +374,33 @@ export function EventForm() {
 
   const handleNext = async () => {
     const valid = await form.trigger(STEP_FIELDS[step] as any);
-    if (valid) setStep((s) => (s < 4 ? ((s + 1) as 1 | 2 | 3 | 4) : s));
+
+    // Manual guard for the venue/location cross-field requirement: the
+    // superRefine-based check on the schema doesn't reliably surface on a
+    // scoped form.trigger() call, so enforce it directly here too.
+    let locationValid = true;
+    if (step === 2 && !form.getValues("location_tba")) {
+      const location = form.getValues("location");
+      const venue = form.getValues("venue");
+      if (!location || location.trim().length < 2) {
+        form.setError("location", {
+          type: "manual",
+          message: "Location is required",
+        });
+        locationValid = false;
+      }
+      if (!venue || venue.trim().length < 2) {
+        form.setError("venue", {
+          type: "manual",
+          message: "Venue is required",
+        });
+        locationValid = false;
+      }
+    }
+
+    if (valid && locationValid) {
+      setStep((s) => (s < 4 ? ((s + 1) as 1 | 2 | 3 | 4) : s));
+    }
   };
 
   const handleBack = () => {
@@ -775,8 +801,16 @@ export function EventForm() {
                     />
 
                     <div>
-                      <Label className="mb-2">Pick Location</Label>
+                      <Label
+                        className={`mb-2 ${form.formState.errors.location ? "text-red-500" : "text-black"}`}>
+                        Pick Location
+                      </Label>
                       <MapPicker form={form} />
+                      {form.formState.errors.location && (
+                        <p className="text-sm text-destructive mt-1">
+                          {form.formState.errors.location.message}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}

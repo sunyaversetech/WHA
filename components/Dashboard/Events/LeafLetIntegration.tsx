@@ -98,7 +98,7 @@ export default function MapPicker({ form }: MapPickerProps) {
             placeholder="Search for a location..."
             value={searchQuery}
             onChange={handleInputChange}
-            className="pr-10 rounded-lg"
+            className={`pr-10 rounded-lg ${form.formState.errors.location ? "border-red-500" : "border-gray-200"}`}
           />
           <div className="absolute right-3 top-2.5 text-muted-foreground">
             {isSearching ? (
