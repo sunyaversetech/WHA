@@ -13,8 +13,13 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { EventFormValues } from "../Dashboard/Events/EventsForm";
 import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
+import { Button } from "../ui/button";
 
-const EventCard = memo(function EventCard({ event }: { event: EventFormValues }) {
+const EventCard = memo(function EventCard({
+  event,
+}: {
+  event: EventFormValues;
+}) {
   const router = useRouter();
   const { onOpen } = useAuthModal();
   const { mutate, isPending } = useCreateFavroite();
@@ -75,8 +80,9 @@ const EventCard = memo(function EventCard({ event }: { event: EventFormValues })
       onClick={() => router.push(`/events/${event.slug}`)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && router.push(`/events/${event.slug}`)}>
-
+      onKeyDown={(e) =>
+        e.key === "Enter" && router.push(`/events/${event.slug}`)
+      }>
       {/* Image */}
       <div className="relative h-48 md:h-52 w-full overflow-hidden">
         <Image
@@ -89,7 +95,8 @@ const EventCard = memo(function EventCard({ event }: { event: EventFormValues })
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
         {/* Category badge */}
-        <span className="absolute top-3 left-3 bg-white/20 backdrop-blur-md border border-white/30
+        <span
+          className="absolute top-3 left-3 bg-white/20 backdrop-blur-md border border-white/30
                          text-white text-xs font-semibold px-2.5 py-1 rounded-full">
           {categoryLabel}
         </span>
@@ -102,7 +109,9 @@ const EventCard = memo(function EventCard({ event }: { event: EventFormValues })
             e.preventDefault();
             handleAddRemoveFavorite();
           }}
-          aria-label={isEventFavorite ? "Remove from favourites" : "Add to favourites"}
+          aria-label={
+            isEventFavorite ? "Remove from favourites" : "Add to favourites"
+          }
           className="absolute top-3 right-3 p-2 bg-black/20 backdrop-blur-md border border-white/30
                      rounded-full transition-all duration-150 hover:bg-black/40 disabled:opacity-60
                      focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none">
@@ -128,7 +137,9 @@ const EventCard = memo(function EventCard({ event }: { event: EventFormValues })
           <div className="space-y-1.5 min-w-0">
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-secondary" />
-              <span className="truncate text-xs">{event.venue || "Venue TBA"}</span>
+              <span className="truncate text-xs">
+                {event.venue || "Venue TBA"}
+              </span>
             </div>
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Calendar className="h-3.5 w-3.5 flex-shrink-0 text-secondary" />
@@ -147,19 +158,18 @@ const EventCard = memo(function EventCard({ event }: { event: EventFormValues })
           </div>
 
           {event.price_category === "paid" ? (
-            <a
-              href={event.ticket_link || "#"}
-              target="_blank"
+            <Button
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+              onClick={() => router.push(`/events/${event.slug}`)}
               className="flex items-center gap-1.5 px-3 py-1.5 border border-primary rounded-full
                          text-primary hover:bg-primary hover:text-white
                          transition-colors duration-150 flex-shrink-0">
-              <Ticket className="h-3.5 w-3.5" />
-              <span className="text-xs font-semibold">Ticket</span>
-            </a>
+              <Ticket className="h-3.5 w-3.5 text-white" />
+              <span className="text-xs font-semibold text-white">Paid</span>
+            </Button>
           ) : (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 border border-green-600 rounded-full
+            <span
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-green-600 rounded-full
                             text-green-600 flex-shrink-0">
               <Ticket className="h-3.5 w-3.5" />
               <span className="text-xs font-semibold">FREE</span>

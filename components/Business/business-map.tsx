@@ -26,7 +26,8 @@ const CITY_COORDS: Record<string, [number, number]> = {
   darwin: [-12.4634, 130.8456],
 };
 const AU_CENTRE: [number, number] = [-25.27, 133.77];
-const AU_ZOOM = 5;
+const AU_ZOOM_DESKTOP = 5;
+const AU_ZOOM_MOBILE = 4;
 
 /* ── Helpers ── */
 function fmtDistance(metres: number): string {
@@ -67,9 +68,11 @@ function makeUserIcon(): L.DivIcon {
 function BoundsUpdater({
   userLocation,
   city,
+  auZoom,
 }: {
   userLocation: [number, number] | null;
   city: string;
+  auZoom: number;
 }) {
   const map = useMap();
 
@@ -87,11 +90,11 @@ function BoundsUpdater({
           return;
         }
         const centre = city ? CITY_COORDS[city.toLowerCase().trim()] : null;
-        map.flyTo(centre ?? AU_CENTRE, centre ? 9 : AU_ZOOM, { duration: 1 });
+        map.flyTo(centre ?? AU_CENTRE, centre ? 9 : auZoom, { duration: 1 });
       } catch {}
     }, 500);
     return () => clearTimeout(timer);
-  }, [userLocation, city, map]);
+  }, [userLocation, city, auZoom, map]);
 
   return null;
 }
@@ -332,6 +335,15 @@ export default function BusinessMap({
 
   const [selectedBusiness, setSelectedBusiness] = useState<any | null>(null);
 
+  // Zoomed out further on mobile so the whole of Australia stays visible in
+  // the initial no-city view — the same zoom level shows less area on a
+  // narrow viewport than on desktop.
+  const [auZoom] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth < 768
+      ? AU_ZOOM_MOBILE
+      : AU_ZOOM_DESKTOP,
+  );
+
   // Memoised icons (Leaflet DivIcons are cheap but stable refs prevent re-renders)
   const userIcon = useMemo(() => makeUserIcon(), []);
 
@@ -345,7 +357,7 @@ export default function BusinessMap({
     <div className="h-full w-full relative z-0">
       <MapContainer
         center={AU_CENTRE}
-        zoom={AU_ZOOM}
+        zoom={auZoom}
         zoomControl={false}
         className="h-full w-full"
         style={{ height: "100%", width: "100%", position: "absolute" }}>
@@ -354,7 +366,11 @@ export default function BusinessMap({
           attribution="&copy; OpenStreetMap contributors"
         />
 
-        <BoundsUpdater userLocation={userLocation} city={currentCity} />
+        <BoundsUpdater
+          userLocation={userLocation}
+          city={currentCity}
+          auZoom={auZoom}
+        />
         {onBoundsChange && <MapBoundsWatcher onBoundsChange={onBoundsChange} />}
 
         {/* User location blue dot */}

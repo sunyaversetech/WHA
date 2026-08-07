@@ -598,6 +598,8 @@ export default function MobileBusinessSearchWithDates({
               <input
                 type="text"
                 autoFocus
+                autoComplete="off"
+                className="placeholder:text-gray-400 text-base"
                 value={serviceQuery}
                 onChange={(e) => {
                   setServiceQuery(e.target.value);

@@ -370,7 +370,7 @@ export default function EventDetailPage() {
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-10 md:rounded-2xl"></div>
 
-                <div className="absolute inset-0 z-50 flex items-start justify-between p-3 md:hidden">
+                <div className="absolute inset-0 z-60 flex items-start justify-between p-3 md:hidden">
                   <Button
                     variant={"ghost"}
                     className="p-0 transition-all hover:scale-105 active:scale-95"
@@ -733,7 +733,7 @@ export default function EventDetailPage() {
             </div>
           </div>
 
-          <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t shadow-sm z-[9999]">
+          <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t shadow-sm z-60">
             <div className="flex items-center justify-between px-6 py-3">
               <p className="text-gray-600 text-sm">
                 {" "}
