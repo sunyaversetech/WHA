@@ -51,7 +51,7 @@ const VerificationTables = () => {
         <Card className="w-full sm:w-62.5">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Verified Coupons
+              Total Coupons
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -86,9 +86,12 @@ const VerificationTables = () => {
                     {item.uniqueKey}
                   </TableCell>
                   <TableCell className="text-right">
-                    {new Date(item.verifiedAt).toLocaleDateString()}
+                    {item.verifiedAt
+                      ? new Date(item.verifiedAt).toLocaleDateString()
+                      : "Has not scanned yet"}
                     <span className="ml-2 text-xs text-muted-foreground">
-                      {new Date(item.verifiedAt).toLocaleTimeString()}
+                      {item.verifiedAt &&
+                        new Date(item.verifiedAt).toLocaleTimeString()}
                     </span>
                   </TableCell>
                 </TableRow>

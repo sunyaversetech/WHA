@@ -15,7 +15,7 @@ export async function GET(req: Request, { params }: any) {
 
     const event = await EventRedemption.find({
       event: id,
-      verifiedAt: { $ne: null },
+      // verifiedAt: { $ne: null },
     })
       .populate("user", { _id: 1, name: 1 })
       .lean();
