@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  Search,
   MoreVertical,
   Link2,
   Trash2,
@@ -69,11 +70,21 @@ function getEventStatus(event: EventType): EventStatus {
   return "live";
 }
 
-const STATUS_STYLES: Record<EventStatus, { label: string; className: string }> = {
-  upcoming: { label: "Upcoming", className: "bg-primary/10 text-primary border-primary/20" },
-  live: { label: "Live", className: "bg-green-50 text-green-700 border-green-100" },
-  past: { label: "Past", className: "bg-slate-100 text-slate-500 border-slate-200" },
-};
+const STATUS_STYLES: Record<EventStatus, { label: string; className: string }> =
+  {
+    upcoming: {
+      label: "Upcoming",
+      className: "bg-primary/10 text-primary border-primary/20",
+    },
+    live: {
+      label: "Live",
+      className: "bg-green-50 text-green-700 border-green-100",
+    },
+    past: {
+      label: "Past",
+      className: "bg-slate-100 text-slate-500 border-slate-200",
+    },
+  };
 
 function formatEventDateTime(event: EventType): string {
   if (!event.dateRange?.from) return "Date TBA";
@@ -105,7 +116,11 @@ type NavItem = { key: TabKey; label: string };
 type NavSection = { title: string; icon: React.ElementType; items: NavItem[] };
 
 const NAV_SECTIONS: NavSection[] = [
-  { title: "Orders/Refunds", icon: Receipt, items: [{ key: "orders", label: "Orders" }] },
+  {
+    title: "Orders/Refunds",
+    icon: Receipt,
+    items: [{ key: "orders", label: "Orders" }],
+  },
   {
     title: "Manage attendees",
     icon: Users,
@@ -114,7 +129,11 @@ const NAV_SECTIONS: NavSection[] = [
       { key: "scanning", label: "Scanning count" },
     ],
   },
-  { title: "Reports", icon: BarChart3, items: [{ key: "analytics", label: "Analytics" }] },
+  {
+    title: "Reports",
+    icon: BarChart3,
+    items: [{ key: "analytics", label: "Analytics" }],
+  },
 ];
 
 export default function ManageEventPage() {
@@ -124,8 +143,10 @@ export default function ManageEventPage() {
   const queryClient = useQueryClient();
 
   const { data: eventData, isLoading: eventLoading } = useGetSingleForForm(id);
-  const { data: attendeeData, isLoading: attendeesLoading } = useGetEventVerifyUsers(id);
-  const { data: purchaseData, isLoading: purchasesLoading } = useGetEventTicketPurchase(id);
+  const { data: attendeeData, isLoading: attendeesLoading } =
+    useGetEventVerifyUsers(id);
+  const { data: purchaseData, isLoading: purchasesLoading } =
+    useGetEventTicketPurchase(id);
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
 
   const [tab, setTab] = useState<TabKey>("overview");
@@ -134,10 +155,15 @@ export default function ManageEventPage() {
     "Manage attendees": true,
     Reports: true,
   });
+  const [orderSearch, setOrderSearch] = useState("");
+  const [attendeeSearch, setAttendeeSearch] = useState("");
 
   const event: EventType | undefined = eventData?.data;
   const rows: any[] = useMemo(() => attendeeData?.data || [], [attendeeData]);
-  const purchases: any[] = useMemo(() => purchaseData?.data || [], [purchaseData]);
+  const purchases: any[] = useMemo(
+    () => purchaseData?.data || [],
+    [purchaseData],
+  );
 
   const isPaid = event?.price_category === "paid";
   const capacityTotal = useMemo(
@@ -178,14 +204,33 @@ export default function ManageEventPage() {
     const map: Record<string, number> = {};
     purchases.forEach((p: any) => {
       (p.items || []).forEach((item: any) => {
-        map[item.optionName] = (map[item.optionName] || 0) + item.unitPrice * item.quantity;
+        map[item.optionName] =
+          (map[item.optionName] || 0) + item.unitPrice * item.quantity;
       });
     });
     return map;
   }, [purchases]);
 
+  const filteredPurchases = useMemo(() => {
+    const q = orderSearch.trim().toLowerCase();
+    if (!q) return purchases;
+    return purchases.filter(
+      (p: any) =>
+        p.invoiceNumber?.toLowerCase().includes(q) ||
+        p.user?.name?.toLowerCase().includes(q) ||
+        p.user?.email?.toLowerCase().includes(q),
+    );
+  }, [purchases, orderSearch]);
+
+  const filteredRows = useMemo(() => {
+    const q = attendeeSearch.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r: any) => r.user?.name?.toLowerCase().includes(q));
+  }, [rows, attendeeSearch]);
+
   const handleCopyUrl = () => {
-    if (!event?.slug) return toast.error("This event doesn't have a public link yet");
+    if (!event?.slug)
+      return toast.error("This event doesn't have a public link yet");
     const url = `${window.location.origin}/events/${event.slug}`;
     navigator.clipboard.writeText(url);
     toast.success("Event URL copied to clipboard");
@@ -208,7 +253,9 @@ export default function ManageEventPage() {
     setOpenSections((s) => ({ ...s, [title]: !s[title] }));
 
   if (eventLoading || !event) {
-    return <div className="p-10 text-center text-gray-400">Loading event...</div>;
+    return (
+      <div className="p-10 text-center text-gray-400">Loading event...</div>
+    );
   }
 
   const status = getEventStatus(event);
@@ -286,15 +333,25 @@ export default function ManageEventPage() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3 min-w-0">
             <Avatar className="size-14 rounded-full border border-gray-100 shrink-0">
-              <AvatarImage src={event.image} alt={event.title} className="object-cover" />
+              <AvatarImage
+                src={event.image}
+                alt={event.title}
+                className="object-cover"
+              />
               <AvatarFallback>{event.title?.[0] ?? "E"}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <Badge variant="secondary" className={`mb-1 ${STATUS_STYLES[status].className}`}>
+              <Badge
+                variant="secondary"
+                className={`mb-1 ${STATUS_STYLES[status].className}`}>
                 {STATUS_STYLES[status].label}
               </Badge>
-              <h1 className="text-lg font-bold text-primary truncate">{event.title}</h1>
-              <p className="text-sm text-gray-400 truncate">{formatEventDateTime(event)}</p>
+              <h1 className="text-lg font-bold text-primary truncate">
+                {event.title}
+              </h1>
+              <p className="text-sm text-gray-400 truncate">
+                {formatEventDateTime(event)}
+              </p>
             </div>
           </div>
 
@@ -319,7 +376,9 @@ export default function ManageEventPage() {
                   <Link2 className="h-4 w-4" /> Copy URL
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => router.push(`/dashboard/events/add-event?id=${id}`)}>
+                  onClick={() =>
+                    router.push(`/dashboard/events/add-event?id=${id}`)
+                  }>
                   <Settings className="h-4 w-4" /> Edit event
                 </DropdownMenuItem>
                 <DeleteConfirmDialog
@@ -371,11 +430,15 @@ export default function ManageEventPage() {
                     </div>
                     <div className="bg-gray-50 rounded-xl p-4 text-center">
                       <p className="text-xs text-gray-400">Tickets Sold</p>
-                      <p className="text-xl font-bold text-primary">{soldTotal}</p>
+                      <p className="text-xl font-bold text-primary">
+                        {soldTotal}
+                      </p>
                     </div>
                     <div className="bg-gray-50 rounded-xl p-4 text-center">
                       <p className="text-xs text-gray-400">Orders</p>
-                      <p className="text-xl font-bold text-primary">{purchases.length}</p>
+                      <p className="text-xl font-bold text-primary">
+                        {purchases.length}
+                      </p>
                     </div>
                   </div>
 
@@ -385,14 +448,20 @@ export default function ManageEventPage() {
                       ["Service fee", earnings.serviceFee],
                       ["Surcharge", earnings.surcharge],
                     ].map(([label, val]) => (
-                      <div key={label as string} className="flex justify-between py-2 text-sm">
+                      <div
+                        key={label as string}
+                        className="flex justify-between py-2 text-sm">
                         <span className="text-gray-500">{label}</span>
-                        <span className="font-medium text-primary">{money(val as number)}</span>
+                        <span className="font-medium text-primary">
+                          {money(val as number)}
+                        </span>
                       </div>
                     ))}
                     <div className="flex justify-between py-2 text-sm font-bold">
                       <span className="text-primary">Total earnings</span>
-                      <span className="text-primary">{money(earnings.totalAmount)}</span>
+                      <span className="text-primary">
+                        {money(earnings.totalAmount)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -401,7 +470,9 @@ export default function ManageEventPage() {
               <div className="bg-white border border-gray-200 rounded-2xl p-5">
                 <h2 className="font-bold text-primary mb-3">Registrations</h2>
                 <p className="text-3xl font-bold text-primary">{rows.length}</p>
-                <p className="text-sm text-gray-400 mt-1">Free event — no earnings to track.</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Free event — no earnings to track.
+                </p>
               </div>
             )}
           </div>
@@ -409,8 +480,20 @@ export default function ManageEventPage() {
 
         {tab === "orders" && (
           <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-            <div className="p-4 border-b border-gray-100">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
               <h2 className="font-bold text-primary">Orders</h2>
+              <div className="relative w-full sm:w-64">
+                <Search
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  value={orderSearch}
+                  onChange={(e) => setOrderSearch(e.target.value)}
+                  placeholder="Search invoice or buyer"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-primary/40"
+                />
+              </div>
             </div>
             <div className="overflow-x-auto">
               <Table>
@@ -427,14 +510,18 @@ export default function ManageEventPage() {
                 <TableBody>
                   {purchasesLoading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center text-gray-400">
+                      <TableCell
+                        colSpan={6}
+                        className="h-24 text-center text-gray-400">
                         Loading...
                       </TableCell>
                     </TableRow>
-                  ) : purchases.length > 0 ? (
-                    purchases.map((p: any) => (
+                  ) : filteredPurchases.length > 0 ? (
+                    filteredPurchases.map((p: any) => (
                       <TableRow key={p._id}>
-                        <TableCell className="font-mono text-xs">{p.invoiceNumber}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {p.invoiceNumber}
+                        </TableCell>
                         <TableCell className="font-medium">
                           {p.user?.name || p.user?.email || "N/A"}
                         </TableCell>
@@ -452,20 +539,28 @@ export default function ManageEventPage() {
                               Verified
                             </Badge>
                           ) : (
-                            <Badge variant="secondary" className="bg-slate-50 text-slate-500 border-slate-100">
+                            <Badge
+                              variant="secondary"
+                              className="bg-slate-50 text-slate-500 border-slate-100">
                               Pending
                             </Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-right text-sm text-gray-400">
-                          {p.createdAt ? format(new Date(p.createdAt), "dd MMM yyyy") : "-"}
+                          {p.createdAt
+                            ? format(new Date(p.createdAt), "dd MMM yyyy")
+                            : "-"}
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center text-gray-400">
-                        No orders yet.
+                      <TableCell
+                        colSpan={6}
+                        className="h-24 text-center text-gray-400">
+                        {orderSearch
+                          ? "No orders match your search."
+                          : "No orders yet."}
                       </TableCell>
                     </TableRow>
                   )}
@@ -477,8 +572,22 @@ export default function ManageEventPage() {
 
         {tab === "attendees" && (
           <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-            <div className="p-4 border-b border-gray-100">
-              <h2 className="font-bold text-primary">Attendees ({rows.length})</h2>
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+              <h2 className="font-bold text-primary">
+                Attendees ({filteredRows.length})
+              </h2>
+              <div className="relative w-full sm:w-64">
+                <Search
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  value={attendeeSearch}
+                  onChange={(e) => setAttendeeSearch(e.target.value)}
+                  placeholder="Search by name"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-primary/40"
+                />
+              </div>
             </div>
             <div className="overflow-x-auto">
               <Table>
@@ -494,38 +603,53 @@ export default function ManageEventPage() {
                 <TableBody>
                   {attendeesLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-gray-400">
+                      <TableCell
+                        colSpan={5}
+                        className="h-24 text-center text-gray-400">
                         Loading...
                       </TableCell>
                     </TableRow>
-                  ) : rows.length > 0 ? (
-                    rows.map((item) => (
+                  ) : filteredRows.length > 0 ? (
+                    filteredRows.map((item) => (
                       <TableRow key={item._id}>
-                        <TableCell className="font-medium">{item.user?.name || "N/A"}</TableCell>
+                        <TableCell className="font-medium">
+                          {item.user?.name || "N/A"}
+                        </TableCell>
                         <TableCell className="text-sm text-gray-500">
                           {item.ticketType || "General"}
                         </TableCell>
-                        <TableCell className="font-mono text-xs">{item.uniqueKey}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {item.uniqueKey}
+                        </TableCell>
                         <TableCell>
                           {item.status === "verified" ? (
                             <Badge className="bg-green-50 text-green-700 border-green-100 gap-1">
                               <CheckCircle2 className="h-3 w-3" /> Verified
                             </Badge>
                           ) : (
-                            <Badge variant="secondary" className="bg-slate-50 text-slate-500 border-slate-100 gap-1">
-                              <CircleDashed className="h-3 w-3" /> Not scanned yet
+                            <Badge
+                              variant="secondary"
+                              className="bg-slate-50 text-slate-500 border-slate-100 gap-1">
+                              <CircleDashed className="h-3 w-3" /> Not scanned
+                              yet
                             </Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-right text-sm text-gray-400">
-                          {item.verifiedAt ? format(new Date(item.verifiedAt), "dd MMM yyyy") : "-"}
+                          {item.verifiedAt
+                            ? format(new Date(item.verifiedAt), "dd MMM yyyy")
+                            : "-"}
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-gray-400">
-                        No ticket holders yet.
+                      <TableCell
+                        colSpan={5}
+                        className="h-24 text-center text-gray-400">
+                        {attendeeSearch
+                          ? "No attendees match your search."
+                          : "No ticket holders yet."}
                       </TableCell>
                     </TableRow>
                   )}
@@ -544,11 +668,15 @@ export default function ManageEventPage() {
               </div>
               <div className="bg-white border border-gray-200 rounded-2xl p-4 text-center">
                 <p className="text-xs text-gray-400">Scanned</p>
-                <p className="text-2xl font-bold text-green-600">{scannedCount}</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {scannedCount}
+                </p>
               </div>
               <div className="bg-white border border-gray-200 rounded-2xl p-4 text-center">
                 <p className="text-xs text-gray-400">Not Scanned</p>
-                <p className="text-2xl font-bold text-slate-500">{notScannedCount}</p>
+                <p className="text-2xl font-bold text-slate-500">
+                  {notScannedCount}
+                </p>
               </div>
             </div>
 
@@ -571,7 +699,9 @@ export default function ManageEventPage() {
                       scanningByType.map(([type, stats]) => (
                         <TableRow key={type}>
                           <TableCell className="font-medium">{type}</TableCell>
-                          <TableCell className="text-center">{stats.total}</TableCell>
+                          <TableCell className="text-center">
+                            {stats.total}
+                          </TableCell>
                           <TableCell className="text-center text-green-600 font-semibold">
                             {stats.scanned}
                           </TableCell>
@@ -582,7 +712,9 @@ export default function ManageEventPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center text-gray-400">
+                        <TableCell
+                          colSpan={4}
+                          className="h-24 text-center text-gray-400">
                           No tickets yet.
                         </TableCell>
                       </TableRow>
@@ -598,7 +730,8 @@ export default function ManageEventPage() {
           <div className="bg-white border border-gray-200 rounded-2xl p-4">
             <h2 className="font-bold text-primary mb-1">Verify Tickets</h2>
             <p className="text-sm text-gray-400 mb-4">
-              Only tickets purchased or registered for this event will be accepted.
+              Only tickets purchased or registered for this event will be
+              accepted.
             </p>
             <VerifyEventPage eventId={id} hideHeader />
           </div>
@@ -626,12 +759,22 @@ export default function ManageEventPage() {
                     {(event.options || []).length > 0 ? (
                       (event.options || []).map((o) => (
                         <TableRow key={o._id}>
-                          <TableCell className="font-medium">{o.name}</TableCell>
-                          <TableCell className="text-right">{money(o.price || 0)}</TableCell>
-                          <TableCell className="text-center">{o.capacity ?? "∞"}</TableCell>
-                          <TableCell className="text-center">{o.sold || 0}</TableCell>
+                          <TableCell className="font-medium">
+                            {o.name}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {money(o.price || 0)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {o.capacity ?? "∞"}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {o.sold || 0}
+                          </TableCell>
                           <TableCell className="text-center text-gray-400">
-                            {o.capacity != null ? o.capacity - (o.sold || 0) : "∞"}
+                            {o.capacity != null
+                              ? o.capacity - (o.sold || 0)
+                              : "∞"}
                           </TableCell>
                           <TableCell className="text-right font-semibold text-primary">
                             {money(optionRevenue[o.name || ""] || 0)}
@@ -640,7 +783,9 @@ export default function ManageEventPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center text-gray-400">
+                        <TableCell
+                          colSpan={6}
+                          className="h-24 text-center text-gray-400">
                           No ticket types configured.
                         </TableCell>
                       </TableRow>
@@ -651,7 +796,8 @@ export default function ManageEventPage() {
             ) : (
               <div className="p-5">
                 <p className="text-sm text-gray-500">
-                  Total registrations: <span className="font-bold text-primary">{rows.length}</span>
+                  Total registrations:{" "}
+                  <span className="font-bold text-primary">{rows.length}</span>
                 </p>
               </div>
             )}
