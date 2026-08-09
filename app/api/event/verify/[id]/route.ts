@@ -1,6 +1,7 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectToDb } from "@/lib/db";
 import { EventRedemption } from "@/server/models/EventCodeRemtion.model";
+import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -13,19 +14,44 @@ export async function GET(req: Request, { params }: any) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const event = await EventRedemption.find({
-      event: id,
-      // verifiedAt: { $ne: null },
-    })
+    const redemptions = await EventRedemption.find({ event: id })
       .populate("user", { _id: 1, name: 1 })
       .lean();
 
-    if (!event) {
-      return NextResponse.json({ message: "Event not found" }, { status: 404 });
-    }
+    const purchases = await EventTicketPurchase.find({ event: id })
+      .populate("user", { _id: 1, name: 1 })
+      .lean();
+
+    const freeRows = redemptions.map((r: any) => ({
+      _id: r._id,
+      user: r.user,
+      uniqueKey: r.uniqueKey,
+      ticketType: "General",
+      status: r.status,
+      verifiedAt: r.verifiedAt || null,
+    }));
+
+    const paidRows = (purchases as any[]).flatMap((p) =>
+      (p.items || []).flatMap((item: any) =>
+        (item.uniqueKeys || []).map((code: string) => {
+          const verified = (p.verifiedKeys || []).includes(code);
+          return {
+            _id: `${p._id}-${code}`,
+            user: p.user,
+            uniqueKey: code,
+            ticketType: item.optionName,
+            status: verified ? "verified" : "pending",
+            verifiedAt: verified ? p.verifiedAt || null : null,
+          };
+        }),
+      ),
+    );
+
+    const data = [...freeRows, ...paidRows];
+
     return NextResponse.json({
-      message: "EventRedemption fetched successfully",
-      data: event,
+      message: "Event attendees fetched successfully",
+      data,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -91,7 +91,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Event not found" }, { status: 400 });
     }
 
-    const eventNameSlug = (event.title || "event").trim().replace(/\s+/g, "-");
+    const eventNameSlug = (event.title || "event")
+      .trim()
+      .replace(/\s+/g, "-")
+      .toUpperCase();
 
     // Re-derive pricing server-side from the current event/options data —
     // never trust client-supplied amounts.
@@ -291,6 +294,31 @@ export async function POST(req: Request) {
         return NextResponse.json(toTicketResponse(existing));
       }
     }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    await connectToDb();
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const eventId = searchParams.get("eventId");
+
+    const query: Record<string, string> = { business: session.user.id };
+    if (eventId) query.event = eventId;
+
+    const purchases = await EventTicketPurchase.find(query)
+      .populate("event")
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
+
+    return NextResponse.json({ data: purchases }, { status: 200 });
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

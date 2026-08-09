@@ -13,18 +13,35 @@ export async function POST(request: NextRequest) {
     }
 
     await connectToDb();
-    const { uniqueKey, event } = await request.json();
+    const { uniqueKey: rawUniqueKey, event } = await request.json();
 
-    const redemption = await EventRedemption.findOne({ uniqueKey });
+    if (!rawUniqueKey || typeof rawUniqueKey !== "string") {
+      return NextResponse.json(
+        { message: "Invalid ticket code." },
+        { status: 404 },
+      );
+    }
+
+    // Codes may have been generated with mixed case (from event titles) or
+    // typed by staff with auto-uppercasing — match case-insensitively so
+    // formatting differences never block a valid ticket.
+    const escaped = rawUniqueKey.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const keyRegex = new RegExp(`^${escaped}$`, "i");
+
+    const redemption = await EventRedemption.findOne({ uniqueKey: keyRegex });
 
     if (redemption) {
-      if (
-        redemption.business.toString() !== session.user.id &&
-        event !== redemption.event
-      ) {
+      if (redemption.business.toString() !== session.user.id) {
         return NextResponse.json(
           { message: "Unauthorized for this business." },
           { status: 403 },
+        );
+      }
+
+      if (event && redemption.event.toString() !== event) {
+        return NextResponse.json(
+          { message: "This ticket is not valid for this event." },
+          { status: 400 },
         );
       }
 
@@ -54,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Not a free-registration code — check paid ticket purchases instead.
     const purchase = await EventTicketPurchase.findOne({
-      uniqueKeys: uniqueKey,
+      uniqueKeys: keyRegex,
     }).populate("user", "name");
 
     if (!purchase) {
@@ -64,15 +81,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (
-      purchase.business.toString() !== session.user.id &&
-      event !== purchase.event.toString()
-    ) {
+    if (purchase.business.toString() !== session.user.id) {
       return NextResponse.json(
         { message: "Unauthorized for this business." },
         { status: 403 },
       );
     }
+
+    if (event && purchase.event.toString() !== event) {
+      return NextResponse.json(
+        { message: "This ticket is not valid for this event." },
+        { status: 400 },
+      );
+    }
+
+    // Resolve to the exact stored casing so verifiedKeys/items comparisons
+    // (which are case-sensitive) stay consistent regardless of how the code
+    // was entered.
+    const uniqueKey: string =
+      purchase.uniqueKeys.find((k: string) => keyRegex.test(k)) ||
+      rawUniqueKey;
 
     if (purchase.verifiedKeys.includes(uniqueKey)) {
       return NextResponse.json(

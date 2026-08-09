@@ -12,7 +12,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Ticket, CheckCircle2, ExternalLink } from "lucide-react";
-import { useGetEventRedeemBusiness } from "@/services/event.service";
+import {
+  useGetEventRedeemBusiness,
+  useGetEventTicketPurchase,
+} from "@/services/event.service";
 import { useRouter } from "next/navigation";
 
 interface EventStats {
@@ -24,15 +27,16 @@ interface EventStats {
 
 export default function EventRedemptionTable() {
   const { data, isLoading } = useGetEventRedeemBusiness();
+  const { data: purchaseData, isLoading: isPurchaseLoading } =
+    useGetEventTicketPurchase("");
   const router = useRouter();
 
   const aggregateStats = (): EventStats[] => {
-    if (!data?.data) return [];
-
     const statsMap: Record<string, EventStats> = {};
 
-    data.data.forEach((redemption: any) => {
+    (data?.data || []).forEach((redemption: any) => {
       const eventId = redemption.event?._id || redemption.event;
+      if (!eventId) return;
       const eventName = redemption.event?.title || "Unknown Event";
 
       if (!statsMap[eventId]) {
@@ -50,12 +54,30 @@ export default function EventRedemptionTable() {
       }
     });
 
+    (purchaseData?.data || []).forEach((purchase: any) => {
+      const eventId = purchase.event?._id || purchase.event;
+      if (!eventId) return;
+      const eventName = purchase.event?.title || "Unknown Event";
+
+      if (!statsMap[eventId]) {
+        statsMap[eventId] = {
+          eventId,
+          eventName,
+          totalRedeemed: 0,
+          totalVerified: 0,
+        };
+      }
+
+      statsMap[eventId].totalRedeemed += purchase.uniqueKeys?.length || 0;
+      statsMap[eventId].totalVerified += purchase.verifiedKeys?.length || 0;
+    });
+
     return Object.values(statsMap);
   };
 
   const stats = aggregateStats();
 
-  if (isLoading) {
+  if (isLoading || isPurchaseLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

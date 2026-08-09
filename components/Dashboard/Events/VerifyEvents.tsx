@@ -8,13 +8,28 @@ import { useVerifyEvent } from "@/services/event.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 
-export default function VerifyEventPage() {
+function parseErrorMessage(error: any, fallback: string): string {
+  try {
+    const parsed = JSON.parse(error?.message);
+    return parsed?.message || parsed?.error || fallback;
+  } catch {
+    return error?.message || fallback;
+  }
+}
+
+export default function VerifyEventPage({
+  eventId: eventIdProp,
+  hideHeader = false,
+}: {
+  eventId?: string;
+  hideHeader?: boolean;
+}) {
   const [code, setCode] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const { mutate, isPending } = useVerifyEvent();
   const queryClient = useQueryClient();
   const params = useSearchParams();
-  const eventId = params.get("id") || "";
+  const eventId = eventIdProp || params.get("id") || "";
 
   const handleVerify = async (manualCode?: string) => {
     const codeToVerify = manualCode || code;
@@ -24,20 +39,26 @@ export default function VerifyEventPage() {
       { uniqueKey: codeToVerify, event: eventId },
       {
         onSuccess: () => {
-          toast.success("Event verified successfully!");
-          queryClient.invalidateQueries({ queryKey: ["redeem"] });
+          toast.success("Ticket verified successfully!");
+          setCode("");
+          queryClient.invalidateQueries({ queryKey: ["verify-users"] });
+          queryClient.invalidateQueries({ queryKey: ["ticket-purchase-business"] });
+          queryClient.invalidateQueries({ queryKey: ["redeem-business"] });
         },
-        onError: (error) => toast.error(error.message || "Verification failed"),
+        onError: (error) =>
+          toast.error(parseErrorMessage(error, "Verification failed")),
       },
     );
   };
 
   return (
     <div className="max-w-md mx-auto p-6 space-y-8">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">Verify Event</h1>
-        <p className="text-gray-500">Scan QR or enter the unique code</p>
-      </div>
+      {!hideHeader && (
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Verify Event</h1>
+          <p className="text-gray-500">Scan QR or enter the unique code</p>
+        </div>
+      )}
 
       <div className="bg-white p-4 rounded-xl shadow-sm border">
         {isPending ? (

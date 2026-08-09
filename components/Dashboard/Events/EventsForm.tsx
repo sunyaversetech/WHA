@@ -50,6 +50,10 @@ export const eventSchema = z
         .refine(
           (file) => file instanceof File,
           "Image must be either a string or a file",
+        )
+        .refine(
+          (file) => !(file instanceof File) || file.size <= 3 * 1024 * 1024,
+          "Image must be less than 3MB",
         ),
     ]),
     venue: z.string().optional(),

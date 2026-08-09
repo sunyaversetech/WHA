@@ -1,3 +1,3 @@
-import VerificationTables from "@/components/Dashboard/Events/VerificationTables";
+import ManageEventPage from "@/components/Dashboard/Events/ManageEventPage";
 
-export default VerificationTables;
+export default ManageEventPage;

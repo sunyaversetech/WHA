@@ -73,6 +73,9 @@ export type EventType = {
   sold_quantity: string | null;
   options?: EventOptionType[];
   promo_codes?: EventPromoCodeType[];
+  slug?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 type RedeemCodeType = {
@@ -126,7 +129,7 @@ export const useCreateEvent = () => {
 };
 
 export const useGetEvent = () => {
-  return useFetcher<ApiResponseType<EventFormValues[]>>(
+  return useFetcher<ApiResponseType<EventType[]>>(
     ["event"],
     null,
     `/api/event`,
@@ -147,7 +150,18 @@ export const useGetAllEvents = () => {
   const radius = param.get("radius") || "";
 
   return useFetcher<ApiResponseType<EventFormValues[]>>(
-    ["allEvents", category, search, city, community, from, to, lat, lng, radius],
+    [
+      "allEvents",
+      category,
+      search,
+      city,
+      community,
+      from,
+      to,
+      lat,
+      lng,
+      radius,
+    ],
     null,
     `/api/event/getallevent?category=${category}&search=${search}&city=${city}&community=${community}&from=${from}&to=${to}&lat=${lat}&lng=${lng}&radius=${radius}`,
   );
@@ -216,9 +230,19 @@ export const useGetEventRedeemBusiness = () => {
   );
 };
 
+export const useGetEventTicketPurchase = (eventId?: string) => {
+  return useFetcher<ApiResponseType<any[]>>(
+    ["ticket-purchase-business", eventId || ""],
+    null,
+    eventId
+      ? `/api/event/ticket/purchase?eventId=${eventId}`
+      : `/api/event/ticket/purchase`,
+  );
+};
+
 export const useGetEventVerifyUsers = (id: string) => {
   return useFetcher<ApiResponseType<RedeemCodeResponseType[]>>(
-    "verify-users",
+    ["verify-users", id],
     null,
     `/api/event/verify/${id}`,
   );
