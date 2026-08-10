@@ -8,6 +8,11 @@ export interface IEventTicketLineItem {
   uniqueKeys: string[];
 }
 
+export interface IVerifiedTimestamp {
+  key: string;
+  verifiedAt: Date;
+}
+
 export interface IEventTicketPurchase {
   event: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
@@ -15,6 +20,10 @@ export interface IEventTicketPurchase {
   items: IEventTicketLineItem[];
   uniqueKeys: string[];
   verifiedKeys: string[];
+  // Per-code verification timestamps — verifiedAt below is shared across the
+  // whole purchase and only reflects the most recent scan/status change, so
+  // it can't be used to show each ticket's own checked-in date.
+  verifiedTimestamps: IVerifiedTimestamp[];
   promoCode?: string;
   invoiceNumber: string;
   ticketTotal: number;
@@ -59,6 +68,10 @@ const EventTicketPurchaseSchema = new Schema<IEventTicketPurchase>(
       },
     },
     verifiedKeys: { type: [String], default: [] },
+    verifiedTimestamps: {
+      type: [{ key: String, verifiedAt: Date, _id: false }],
+      default: [],
+    },
     promoCode: { type: String },
     invoiceNumber: { type: String, required: true, unique: true },
     ticketTotal: { type: Number, required: true },

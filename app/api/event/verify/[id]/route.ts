@@ -35,13 +35,19 @@ export async function GET(req: Request, { params }: any) {
       (p.items || []).flatMap((item: any) =>
         (item.uniqueKeys || []).map((code: string) => {
           const verified = (p.verifiedKeys || []).includes(code);
+          // Each ticket has its own recorded check-in time; fall back to the
+          // purchase-level verifiedAt only for legacy records saved before
+          // per-code timestamps existed.
+          const ownTimestamp = (p.verifiedTimestamps || []).find(
+            (vt: any) => vt.key === code,
+          )?.verifiedAt;
           return {
             _id: `${p._id}-${code}`,
             user: p.user,
             uniqueKey: code,
             ticketType: item.optionName,
             status: verified ? "verified" : "pending",
-            verifiedAt: verified ? p.verifiedAt || null : null,
+            verifiedAt: verified ? ownTimestamp || p.verifiedAt || null : null,
           };
         }),
       ),

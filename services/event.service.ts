@@ -253,6 +253,36 @@ export const useGetEventVerifyUsers = (id: string) => {
   );
 };
 
+export const useSetTicketStatus = () => {
+  return useMutation<
+    { success: boolean; status: string },
+    any,
+    { uniqueKey: string; status: "verified" | "pending" }
+  >({
+    mutationKey: ["set-ticket-status"],
+    mutationFn: (data) =>
+      Post<typeof data, { success: boolean; status: string }>({
+        url: "/api/event/verify/manual",
+        data,
+      }),
+  });
+};
+
+export const useSendInvoice = () => {
+  return useMutation<
+    { success: boolean; message: string },
+    any,
+    { purchaseId: string }
+  >({
+    mutationKey: ["send-invoice"],
+    mutationFn: ({ purchaseId }) =>
+      Post<null, { success: boolean; message: string }>({
+        url: `/api/event/ticket/purchase/${purchaseId}/send-invoice`,
+        data: null,
+      }),
+  });
+};
+
 export const useFinalizeEventTicketPurchase = () => {
   return useMutation<PurchaseTicketResponseType, any, PurchaseTicketType>({
     mutationKey: ["purchaseEventTicket"],

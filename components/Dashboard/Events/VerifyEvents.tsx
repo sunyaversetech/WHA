@@ -1,12 +1,19 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { ClipboardCheck, Loader2, Camera } from "lucide-react";
+import {
+  ClipboardCheck,
+  Loader2,
+  Camera,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { useVerifyEvent } from "@/services/event.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 function parseErrorMessage(error: any, fallback: string): string {
   try {
@@ -26,6 +33,10 @@ export default function VerifyEventPage({
 }) {
   const [code, setCode] = useState("");
   const [isScanning, setIsScanning] = useState(false);
+  const [resultMessage, setResultMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const { mutate, isPending } = useVerifyEvent();
   const queryClient = useQueryClient();
   const params = useSearchParams();
@@ -39,14 +50,21 @@ export default function VerifyEventPage({
       { uniqueKey: codeToVerify, event: eventId },
       {
         onSuccess: () => {
+          setResultMessage({
+            type: "success",
+            text: "Ticket verified successfully!",
+          });
           toast.success("Ticket verified successfully!");
           setCode("");
           queryClient.invalidateQueries({ queryKey: ["verify-users"] });
           queryClient.invalidateQueries({ queryKey: ["ticket-purchase-business"] });
           queryClient.invalidateQueries({ queryKey: ["redeem-business"] });
         },
-        onError: (error) =>
-          toast.error(parseErrorMessage(error, "Verification failed")),
+        onError: (error) => {
+          const text = parseErrorMessage(error, "Verification failed");
+          setResultMessage({ type: "error", text });
+          toast.error(text);
+        },
       },
     );
   };
@@ -60,7 +78,24 @@ export default function VerifyEventPage({
         </div>
       )}
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border">
+      {resultMessage && (
+        <div
+          className={cn(
+            "flex items-center gap-2 rounded-xl p-3 text-sm font-medium border",
+            resultMessage.type === "success"
+              ? "bg-green-50 text-green-700 border-green-100"
+              : "bg-red-50 text-red-700 border-red-100",
+          )}>
+          {resultMessage.type === "success" ? (
+            <CheckCircle2 className="h-5 w-5 shrink-0" />
+          ) : (
+            <XCircle className="h-5 w-5 shrink-0" />
+          )}
+          {resultMessage.text}
+        </div>
+      )}
+
+      <div className="bg-white p-4 rounded-xl shadow-sm border relative">
         {isPending ? (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
             <Loader2 className="h-10 w-10 text-white animate-spin mb-2" />

@@ -113,8 +113,29 @@ export async function POST(request: NextRequest) {
       item.uniqueKeys.includes(uniqueKey),
     );
 
+    // One-time backfill: any other ticket in this order that was verified
+    // before per-code timestamps existed is frozen to the legacy shared
+    // verifiedAt now, so it stops shifting when this or other tickets change.
+    const knownKeys = new Set(
+      (purchase.verifiedTimestamps || []).map((vt: any) => vt.key),
+    );
+    const backfilled = (purchase.verifiedKeys || [])
+      .filter((k: string) => !knownKeys.has(k))
+      .map((k: string) => ({
+        key: k,
+        verifiedAt: purchase.verifiedAt || new Date(),
+      }));
+
+    const verifiedAt = new Date();
     purchase.verifiedKeys.push(uniqueKey);
-    purchase.verifiedAt = new Date();
+    purchase.verifiedTimestamps = [
+      ...(purchase.verifiedTimestamps || []).filter(
+        (vt: any) => vt.key !== uniqueKey,
+      ),
+      ...backfilled,
+      { key: uniqueKey, verifiedAt },
+    ];
+    purchase.verifiedAt = verifiedAt;
     if (purchase.verifiedKeys.length >= purchase.uniqueKeys.length) {
       purchase.status = "verified";
     }

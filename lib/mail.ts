@@ -439,6 +439,107 @@ export const sendMultiTierEventTicketEmail = async (
   }
 };
 
+const generateInvoiceEmailTemplate = (
+  eventName: string,
+  userName: string,
+  items: { optionName: string; quantity: number; unitPrice: number }[],
+  receipt: EventTicketReceipt,
+  purchaseDate: string,
+) => {
+  const rowsHtml = items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding: 8px 0; color: #666;">${item.optionName} × ${item.quantity}</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #333;">$${(item.unitPrice * item.quantity).toFixed(2)}</td>
+        </tr>
+      `,
+    )
+    .join("");
+
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 2px solid #051e3a; border-radius: 15px; overflow: hidden;">
+      <div style="background-color: #051e3a; padding: 24px 20px; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 22px;">Invoice</h1>
+        <p style="color: #a0b4c8; margin: 8px 0 0 0; font-size: 14px;">${eventName}</p>
+      </div>
+
+      <div style="padding: 28px; color: #333;">
+        <p style="font-size: 15px; margin: 0 0 4px 0;">Hi <strong>${userName}</strong>,</p>
+        <p style="font-size: 14px; color: #555; margin: 0 0 20px 0;">
+          Here is a copy of your invoice for <strong>${eventName}</strong>.
+        </p>
+
+        <div style="background-color: #fafafa; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+            ${rowsHtml}
+            <tr>
+              <td style="padding: 8px 0; color: #666; border-top: 1px solid #e2e8f0;">Service charge</td>
+              <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #333; border-top: 1px solid #e2e8f0;">$${receipt.serviceFee.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Surcharge (2.5%)</td>
+              <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #333;">$${receipt.surcharge.toFixed(2)}</td>
+            </tr>
+            ${
+              receipt.promoCode
+                ? `<tr>
+                    <td style="padding: 8px 0; color: #2e7d32;">Promo code applied</td>
+                    <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #2e7d32;">${receipt.promoCode.toUpperCase()}</td>
+                  </tr>`
+                : ""
+            }
+            <tr>
+              <td style="padding: 10px 0 0 0; color: #051e3a; font-weight: bold; border-top: 2px solid #051e3a;">Total Paid</td>
+              <td style="padding: 10px 0 0 0; text-align: right; color: #051e3a; font-weight: bold; font-size: 16px; border-top: 2px solid #051e3a;">$${receipt.totalAmount.toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
+
+        <p style="font-size: 12px; color: #999; margin: 16px 0 0 0; font-family: monospace;">
+          Invoice: ${receipt.invoiceNumber} · ${purchaseDate}
+        </p>
+      </div>
+
+      <div style="background-color: #f4f4f4; padding: 16px; text-align: center; font-size: 12px; color: #999;">
+        &copy; ${new Date().getFullYear()} Whats Happening Australia. All rights reserved.
+      </div>
+    </div>
+  `;
+};
+
+export const sendInvoiceEmail = async (
+  email: string,
+  eventName: string,
+  userName: string,
+  items: { optionName: string; quantity: number; unitPrice: number }[],
+  receipt: EventTicketReceipt,
+  purchaseDate: string,
+) => {
+  const client = new MailtrapClient({ token: process.env.MAIL_TOKEN! });
+  try {
+    await client.send({
+      from: {
+        email: "no-reply@whaustralia.com",
+        name: "Whats Happening Australia",
+      },
+      to: [{ email }],
+      subject: `Invoice ${receipt.invoiceNumber} for ${eventName}`,
+      html: generateInvoiceEmailTemplate(
+        eventName,
+        userName,
+        items,
+        receipt,
+        purchaseDate,
+      ),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Email Error:", error);
+    return { success: false };
+  }
+};
+
 const generateUserBookingTemplate = (
   serviceName: string,
   bookingDate: string,

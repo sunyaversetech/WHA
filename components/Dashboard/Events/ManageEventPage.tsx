@@ -21,12 +21,18 @@ import {
   CheckCircle2,
   CircleDashed,
   Settings,
+  Eye,
+  Printer,
+  Send,
+  Loader2,
 } from "lucide-react";
 import {
   useGetSingleForForm,
   useGetEventVerifyUsers,
   useGetEventTicketPurchase,
   useDeleteEvent,
+  useSetTicketStatus,
+  useSendInvoice,
   EventType,
 } from "@/services/event.service";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +50,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -148,6 +170,9 @@ export default function ManageEventPage() {
   const { data: purchaseData, isLoading: purchasesLoading } =
     useGetEventTicketPurchase(id);
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
+  const { mutate: setTicketStatus, isPending: isChangingStatus } =
+    useSetTicketStatus();
+  const { mutate: sendInvoice } = useSendInvoice();
 
   const [tab, setTab] = useState<TabKey>("overview");
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -157,6 +182,12 @@ export default function ManageEventPage() {
   });
   const [orderSearch, setOrderSearch] = useState("");
   const [attendeeSearch, setAttendeeSearch] = useState("");
+  const [viewInvoice, setViewInvoice] = useState<any | null>(null);
+  const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    row: any;
+    status: "verified" | "pending";
+  } | null>(null);
 
   const event: EventType | undefined = eventData?.data;
   const rows: any[] = useMemo(() => attendeeData?.data || [], [attendeeData]);
@@ -229,6 +260,11 @@ export default function ManageEventPage() {
     return rows.filter((r: any) => r.user?.name?.toLowerCase().includes(q));
   }, [rows, attendeeSearch]);
 
+  console.log(
+    "ManageEventPage render",
+    filteredPurchases.length,
+    filteredRows.reduce((acc, r) => acc + (r.status === "verified" ? 1 : 0), 0),
+  );
   const handleCopyUrl = () => {
     if (!event?.slug)
       return toast.error("This event doesn't have a public link yet");
@@ -245,6 +281,99 @@ export default function ManageEventPage() {
           toast.success("Event deleted successfully");
           queryClient.invalidateQueries({ queryKey: ["event"] });
           router.push("/dashboard/events");
+        },
+      },
+    );
+  };
+
+  const handlePrintInvoice = (p: any) => {
+    const win = window.open("", "_blank");
+    if (!win) return;
+
+    const itemsHtml = (p.items || [])
+      .map(
+        (i: any) =>
+          `<tr><td style="padding:8px 0;">${i.optionName} × ${i.quantity}</td><td style="padding:8px 0;text-align:right;">$${(i.unitPrice * i.quantity).toFixed(2)}</td></tr>`,
+      )
+      .join("");
+
+    win.document.write(`
+      <html>
+        <head>
+          <title>Invoice ${p.invoiceNumber}</title>
+          <style>
+            body { font-family: sans-serif; color: #333; padding: 40px; }
+            h1 { color: #051e3a; margin-bottom: 4px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            td { padding: 8px 0; }
+            .total { font-weight: bold; border-top: 2px solid #051e3a; }
+          </style>
+        </head>
+        <body>
+          <h1>Invoice</h1>
+          <p>${event?.title || ""}</p>
+          <p>Buyer: ${p.user?.name || p.user?.email || "N/A"}</p>
+          <p>Invoice #: ${p.invoiceNumber}</p>
+          <p>Date: ${p.createdAt ? format(new Date(p.createdAt), "dd MMM yyyy") : ""}</p>
+          <table>
+            ${itemsHtml}
+            <tr><td>Service fee</td><td style="text-align:right;">$${(p.serviceFee || 0).toFixed(2)}</td></tr>
+            <tr><td>Surcharge</td><td style="text-align:right;">$${(p.surcharge || 0).toFixed(2)}</td></tr>
+            <tr class="total"><td>Total</td><td style="text-align:right;">$${(p.totalAmount || 0).toFixed(2)}</td></tr>
+          </table>
+        </body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 250);
+  };
+
+  const handleSendInvoice = (p: any) => {
+    setSendingInvoiceId(p._id);
+    sendInvoice(
+      { purchaseId: p._id },
+      {
+        onSuccess: () => {
+          toast.success("Invoice sent to buyer");
+          setSendingInvoiceId(null);
+        },
+        onError: (error: any) => {
+          toast.error(error.message || "Failed to send invoice");
+          setSendingInvoiceId(null);
+        },
+      },
+    );
+  };
+
+  const handleRequestStatusChange = (
+    row: any,
+    status: "verified" | "pending",
+  ) => {
+    if (row.status === status) return;
+    setPendingStatusChange({ row, status });
+  };
+
+  const handleConfirmStatusChange = () => {
+    if (!pendingStatusChange) return;
+    const { row, status } = pendingStatusChange;
+    setTicketStatus(
+      { uniqueKey: row.uniqueKey, status },
+      {
+        onSuccess: () => {
+          toast.success(
+            `Status updated to ${status === "verified" ? "Checked In" : "Pending"}`,
+          );
+          queryClient.invalidateQueries({ queryKey: ["verify-users", id] });
+          queryClient.invalidateQueries({
+            queryKey: ["ticket-purchase-business"],
+          });
+          queryClient.invalidateQueries({ queryKey: ["redeem-business"] });
+          setPendingStatusChange(null);
+        },
+        onError: (error: any) => {
+          toast.error(error.message || "Failed to update status");
+          setPendingStatusChange(null);
         },
       },
     );
@@ -420,7 +549,7 @@ export default function ManageEventPage() {
               <>
                 <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
                   <h2 className="font-bold text-primary">
-                    Your earnings: {money(earnings.totalAmount)}
+                    Total Amount: {money(earnings.totalAmount)}
                   </h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div className="bg-gray-50 rounded-xl p-4 text-center">
@@ -445,7 +574,7 @@ export default function ManageEventPage() {
 
                   <div className="divide-y divide-gray-100 border-t border-gray-100 pt-2">
                     {[
-                      ["Ticket sales", earnings.ticketTotal],
+                      ["Your Earnings", earnings.ticketTotal],
                       ["Service fee", earnings.serviceFee],
                       ["Surcharge", earnings.surcharge],
                     ].map(([label, val]) => (
@@ -459,12 +588,36 @@ export default function ManageEventPage() {
                       </div>
                     ))}
                     <div className="flex justify-between py-2 text-sm font-bold">
-                      <span className="text-primary">Total earnings</span>
+                      <span className="text-primary">Total Amount</span>
                       <span className="text-primary">
                         {money(earnings.totalAmount)}
                       </span>
                     </div>
                   </div>
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-3">
+                  <h2 className="font-bold text-primary">
+                    Earnings by Ticket Type
+                  </h2>
+                  {Object.keys(optionRevenue).length > 0 ? (
+                    <div className="divide-y divide-gray-100">
+                      {Object.entries(optionRevenue).map(([name, amount]) => (
+                        <div
+                          key={name}
+                          className="flex justify-between py-2 text-sm">
+                          <span className="text-gray-600">{name}</span>
+                          <span className="font-semibold text-primary">
+                            {money(amount)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400">
+                      No sales yet for any ticket type.
+                    </p>
+                  )}
                 </div>
               </>
             ) : isExternal ? (
@@ -512,17 +665,19 @@ export default function ManageEventPage() {
                   <TableRow>
                     <TableHead>Invoice</TableHead>
                     <TableHead>Buyer</TableHead>
+                    <TableHead>Buyer Email</TableHead>
                     <TableHead>Items</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Date</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {purchasesLoading ? (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
+                        colSpan={8}
                         className="h-24 text-center text-gray-400">
                         Loading...
                       </TableCell>
@@ -536,6 +691,9 @@ export default function ManageEventPage() {
                         <TableCell className="font-medium">
                           {p.user?.name || p.user?.email || "N/A"}
                         </TableCell>
+                        <TableCell className="font-medium">
+                          {p.user?.email}
+                        </TableCell>
                         <TableCell className="text-sm text-gray-500">
                           {(p.items || [])
                             .map((i: any) => `${i.quantity}x ${i.optionName}`)
@@ -547,7 +705,7 @@ export default function ManageEventPage() {
                         <TableCell>
                           {p.status === "verified" ? (
                             <Badge className="bg-green-50 text-green-700 border-green-100">
-                              Verified
+                              Checked In
                             </Badge>
                           ) : (
                             <Badge
@@ -557,17 +715,49 @@ export default function ManageEventPage() {
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-right text-sm text-gray-400">
+                        <TableCell className="text-sm text-gray-400">
                           {p.createdAt
-                            ? format(new Date(p.createdAt), "dd MMM yyyy")
+                            ? format(
+                                new Date(p.createdAt),
+                                "dd MMM yyyy h:mm aa",
+                              )
                             : "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors ml-auto">
+                                <MoreVertical size={15} />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => setViewInvoice(p)}>
+                                <Eye className="h-4 w-4" /> View Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handlePrintInvoice(p)}>
+                                <Printer className="h-4 w-4" /> Print Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                disabled={sendingInvoiceId === p._id}
+                                onClick={() => handleSendInvoice(p)}>
+                                {sendingInvoiceId === p._id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Send className="h-4 w-4" />
+                                )}
+                                Send Invoice
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
+                        colSpan={8}
                         className="h-24 text-center text-gray-400">
                         {orderSearch
                           ? "No orders match your search."
@@ -585,7 +775,15 @@ export default function ManageEventPage() {
           <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
               <h2 className="font-bold text-primary">
-                Attendees ({filteredRows.length})
+                Attendees
+                <p className="text-xs text-gray-400">
+                  checked-In :
+                  {filteredRows.reduce(
+                    (acc, r) => acc + (r.status === "verified" ? 1 : 0),
+                    0,
+                  )}
+                  / {rows.length}
+                </p>
               </h2>
               <div className="relative w-full sm:w-64">
                 <Search
@@ -607,8 +805,10 @@ export default function ManageEventPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Ticket Type</TableHead>
                     <TableHead>Unique Key</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Verified Date</TableHead>
+                    <TableHead>Checked In</TableHead>
+                    <TableHead className="text-right">
+                      Checked In Date
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -633,22 +833,50 @@ export default function ManageEventPage() {
                           {item.uniqueKey}
                         </TableCell>
                         <TableCell>
-                          {item.status === "verified" ? (
-                            <Badge className="bg-green-50 text-green-700 border-green-100 gap-1">
-                              <CheckCircle2 className="h-3 w-3" /> Verified
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="secondary"
-                              className="bg-slate-50 text-slate-500 border-slate-100 gap-1">
-                              <CircleDashed className="h-3 w-3" /> Not scanned
-                              yet
-                            </Badge>
-                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="inline-flex">
+                                {item.status === "verified" ? (
+                                  <Badge className="bg-green-50 text-green-700 border-green-100 gap-1 cursor-pointer">
+                                    <CheckCircle2 className="h-3 w-3" /> Checked
+                                    In
+                                    <ChevronDown className="h-3 w-3" />
+                                  </Badge>
+                                ) : (
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-slate-50 text-slate-500 border-slate-100 gap-1 cursor-pointer">
+                                    <CircleDashed className="h-3 w-3" /> Not
+                                    Checked In yet
+                                    <ChevronDown className="h-3 w-3" />
+                                  </Badge>
+                                )}
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleRequestStatusChange(item, "verified")
+                                }>
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />{" "}
+                                Mark Checked In
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleRequestStatusChange(item, "pending")
+                                }>
+                                <CircleDashed className="h-4 w-4 text-slate-500" />{" "}
+                                Mark Pending
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                         <TableCell className="text-right text-sm text-gray-400">
                           {item.verifiedAt
-                            ? format(new Date(item.verifiedAt), "dd MMM yyyy")
+                            ? format(
+                                new Date(item.verifiedAt),
+                                "dd MMM yyyy h:mm aa",
+                              )
                             : "-"}
                         </TableCell>
                       </TableRow>
@@ -678,13 +906,13 @@ export default function ManageEventPage() {
                 <p className="text-2xl font-bold text-primary">{rows.length}</p>
               </div>
               <div className="bg-white border border-gray-200 rounded-2xl p-4 text-center">
-                <p className="text-xs text-gray-400">Scanned</p>
+                <p className="text-xs text-gray-400">Checked In</p>
                 <p className="text-2xl font-bold text-green-600">
                   {scannedCount}
                 </p>
               </div>
               <div className="bg-white border border-gray-200 rounded-2xl p-4 text-center">
-                <p className="text-xs text-gray-400">Not Scanned</p>
+                <p className="text-xs text-gray-400">Not Checked In Yet</p>
                 <p className="text-2xl font-bold text-slate-500">
                   {notScannedCount}
                 </p>
@@ -701,7 +929,7 @@ export default function ManageEventPage() {
                     <TableRow>
                       <TableHead>Ticket Type</TableHead>
                       <TableHead className="text-center">Total</TableHead>
-                      <TableHead className="text-center">Scanned</TableHead>
+                      <TableHead className="text-center">Checked In</TableHead>
                       <TableHead className="text-right">Remaining</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -821,6 +1049,100 @@ export default function ManageEventPage() {
           </div>
         )}
       </div>
+
+      {/* View invoice dialog */}
+      <Dialog
+        open={!!viewInvoice}
+        onOpenChange={(open) => !open && setViewInvoice(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Invoice {viewInvoice?.invoiceNumber}</DialogTitle>
+          </DialogHeader>
+          {viewInvoice && (
+            <div className="space-y-4 text-sm">
+              <div className="flex justify-between text-gray-500">
+                <span>Buyer</span>
+                <span className="font-medium text-gray-800">
+                  {viewInvoice.user?.name || viewInvoice.user?.email || "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between text-gray-500">
+                <span>Date</span>
+                <span className="font-medium text-gray-800">
+                  {viewInvoice.createdAt
+                    ? format(new Date(viewInvoice.createdAt), "dd MMM yyyy")
+                    : "-"}
+                </span>
+              </div>
+
+              <div className="divide-y divide-gray-100 border-t border-b border-gray-100">
+                {(viewInvoice.items || []).map((i: any) => (
+                  <div key={i.optionName} className="flex justify-between py-2">
+                    <span className="text-gray-600">
+                      {i.optionName} × {i.quantity}
+                    </span>
+                    <span className="font-medium text-gray-800">
+                      {money(i.unitPrice * i.quantity)}
+                    </span>
+                  </div>
+                ))}
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-600">Service fee</span>
+                  <span className="font-medium text-gray-800">
+                    {money(viewInvoice.serviceFee)}
+                  </span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-600">Surcharge</span>
+                  <span className="font-medium text-gray-800">
+                    {money(viewInvoice.surcharge)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-between font-bold text-primary">
+                <span>Total</span>
+                <span>{money(viewInvoice.totalAmount)}</span>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm status change dialog */}
+      <AlertDialog
+        open={!!pendingStatusChange}
+        onOpenChange={(open) => !open && setPendingStatusChange(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change ticket status?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to change status of{" "}
+              <strong>
+                {pendingStatusChange?.row.user?.name || "this buyer"}
+              </strong>{" "}
+              to{" "}
+              <strong>
+                {pendingStatusChange?.status === "verified"
+                  ? "Checked In"
+                  : "Pending"}
+              </strong>
+              ?
+              {pendingStatusChange?.status === "pending" && (
+                <> Their checked-in date will be removed.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isChangingStatus}
+              onClick={handleConfirmStatusChange}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
