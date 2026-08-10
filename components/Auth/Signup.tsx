@@ -115,18 +115,21 @@ export default function SignupPage() {
           flexDirection: "column",
           padding: "0 24px",
           overflowY: "auto",
-        }}>
+        }}
+      >
         <div
           style={{
             flex: 1,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-          }}>
+          }}
+        >
           <Button
             variant={"ghost"}
             className="cursor-pointer w-10 h-10 absolute top-10 left-2 sm:left-10 rounded-full!"
-            onClick={() => router.push("/auth/user/login")}>
+            onClick={() => router.push("/auth/user/login")}
+          >
             <MoveLeft className="cursor-pointer" />
           </Button>
           <div style={{ width: "100%", maxWidth: 400 }}>
@@ -138,7 +141,9 @@ export default function SignupPage() {
                 color: "#0f172a",
                 margin: "0 0 8px",
                 letterSpacing: "-0.3px",
-              }}>
+                textAlign: "center",
+              }}
+            >
               Signup as customers
             </h1>
             <p
@@ -147,7 +152,9 @@ export default function SignupPage() {
                 color: "#64748b",
                 margin: "0 0 32px",
                 lineHeight: 1.5,
-              }}>
+                textAlign: "center",
+              }}
+            >
               Create an account to discover local events and book services near
               you.
             </p>
@@ -227,7 +234,8 @@ export default function SignupPage() {
                       color: "#94a3b8",
                       display: "flex",
                       alignItems: "center",
-                    }}>
+                    }}
+                  >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
@@ -266,7 +274,8 @@ export default function SignupPage() {
                       color: "#94a3b8",
                       display: "flex",
                       alignItems: "center",
-                    }}>
+                    }}
+                  >
                     {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
@@ -283,7 +292,8 @@ export default function SignupPage() {
                   gap: 10,
                   marginBottom: 22,
                   cursor: "pointer",
-                }}>
+                }}
+              >
                 <input
                   {...register("accpetalltermsandcondition")}
                   type="checkbox"
@@ -297,7 +307,8 @@ export default function SignupPage() {
                   }}
                 />
                 <span
-                  style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
+                  style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}
+                >
                   I agree to the{" "}
                   <Link
                     href="/privacy"
@@ -305,7 +316,8 @@ export default function SignupPage() {
                       color: "#3b82f6",
                       textDecoration: "none",
                       fontWeight: 500,
-                    }}>
+                    }}
+                  >
                     Privacy Policy
                   </Link>
                   ,{" "}
@@ -315,7 +327,8 @@ export default function SignupPage() {
                       color: "#3b82f6",
                       textDecoration: "none",
                       fontWeight: 500,
-                    }}>
+                    }}
+                  >
                     Terms of Service
                   </Link>{" "}
                   and{" "}
@@ -325,7 +338,8 @@ export default function SignupPage() {
                       color: "#3b82f6",
                       textDecoration: "none",
                       fontWeight: 500,
-                    }}>
+                    }}
+                  >
                     Terms of Business
                   </Link>
                 </span>
@@ -350,9 +364,11 @@ export default function SignupPage() {
                   padding: "16px",
                   fontSize: 16,
                   fontWeight: 700,
-                  cursor: isPending || !isEmailVerified ? "not-allowed" : "pointer",
+                  cursor:
+                    isPending || !isEmailVerified ? "not-allowed" : "pointer",
                   transition: "background .15s",
-                }}>
+                }}
+              >
                 {isPending
                   ? "Creating account…"
                   : isEmailVerified
@@ -375,7 +391,8 @@ export default function SignupPage() {
               color: "#3b82f6",
               fontWeight: 600,
               textDecoration: "none",
-            }}>
+            }}
+          >
             Log in
           </Link>
         </div>
@@ -389,7 +406,8 @@ export default function SignupPage() {
           top: 0,
           right: 0,
           height: "100vh",
-        }}>
+        }}
+      >
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
           <Image
             src="/wha/wha-auth.png"

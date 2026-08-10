@@ -49,14 +49,16 @@ export default function AuthPage({ type }: { type: "user" | "business" }) {
           flexDirection: "column",
           padding: "0 24px",
           overflowY: "auto",
-        }}>
+        }}
+      >
         <div
           style={{
             flex: 1,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-          }}>
+          }}
+        >
           <div style={{ width: "100%", maxWidth: 400 }}>
             <div style={{ padding: "24px 0 10px" }}>
               <Button onClick={() => router.push("/auth")}>
@@ -71,7 +73,8 @@ export default function AuthPage({ type }: { type: "user" | "business" }) {
                 color: "#0f172a",
                 margin: "0 0 8px",
                 letterSpacing: "-0.3px",
-              }}>
+              }}
+            >
               {heading}
             </h1>
             <p
@@ -80,7 +83,8 @@ export default function AuthPage({ type }: { type: "user" | "business" }) {
                 color: "#64748b",
                 margin: "0 0 32px",
                 lineHeight: 1.5,
-              }}>
+              }}
+            >
               {subheading}
             </p>
 
@@ -122,7 +126,8 @@ export default function AuthPage({ type }: { type: "user" | "business" }) {
               color: "#3b82f6",
               fontWeight: 600,
               textDecoration: "none",
-            }}>
+            }}
+          >
             {switchLinkText}
           </a>
         </div>
@@ -136,7 +141,8 @@ export default function AuthPage({ type }: { type: "user" | "business" }) {
           position: "sticky",
           top: 0,
           height: "100vh",
-        }}>
+        }}
+      >
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
           <Image
             src="/wha/wha-auth.png"
@@ -172,7 +178,8 @@ function TabBtn({
         cursor: "pointer",
         padding: "4px 0",
         borderBottom: active ? "2px solid #0f172a" : "2px solid transparent",
-      }}>
+      }}
+    >
       {label}
     </button>
   );

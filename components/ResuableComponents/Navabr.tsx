@@ -68,8 +68,10 @@ export default function Navbar() {
               padding: "5px 10px 5px 5px",
               cursor: "pointer",
               outline: "none",
-            }}>
-            <Avatar className="h-9 w-9 border-2 border-border">
+              boxShadow: "none",
+            }}
+          >
+            <Avatar className="h-9 w-9 rounded-full">
               <AvatarImage
                 className="object-cover"
                 src={session?.user?.image ?? ""}
@@ -84,7 +86,8 @@ export default function Navbar() {
           /* Compact: just avatar */
           <button
             aria-label="Account menu"
-            className="rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+            className="rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
             <Avatar className="h-9 w-9 border-2 border-border">
               <AvatarImage
                 className="object-cover"
@@ -99,11 +102,10 @@ export default function Navbar() {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-64 p-3 rounded-2xl bg-white shadow-xl border border-border">
+        className="w-64 p-3 rounded-2xl bg-white shadow-xl border border-border outline-none focus:outline-none focus:ring-0"
+      >
         <p className="font-semibold text-sm">{session?.user?.name}</p>
-        <p className="text-xs text-muted-foreground mb-2 truncate">
-          {session?.user?.email}
-        </p>
+
         <div className="border-t border-border my-2" />
         <Link
           href={buildPath(
@@ -111,7 +113,8 @@ export default function Navbar() {
               ? "/dashboard/calendar"
               : "/dashboard",
           )}
-          className="block px-2 py-2 rounded-lg text-sm hover:bg-muted transition-colors">
+          className="block px-2 py-2 rounded-lg text-sm hover:bg-muted transition-colors"
+        >
           Dashboard
         </Link>
         <LogoutDialog />
@@ -169,7 +172,8 @@ export default function Navbar() {
           borderBottom: scrolled
             ? "1px solid rgba(230,235,242,0.8)"
             : "1px solid transparent",
-        }}>
+        }}
+      >
         <Link href={buildPath("/")} aria-label="Home">
           <Image
             src="/wha/logo.png"
@@ -198,10 +202,12 @@ export default function Navbar() {
   const DesktopHomeNav = () => (
     <nav
       className="hidden md:block fixed top-0 left-0 z-50 w-full"
-      style={navStyle}>
+      style={navStyle}
+    >
       <div
         style={{ maxWidth: 1280, margin: "0 auto" }}
-        className="flex items-center justify-between px-6 md:px-14 py-4">
+        className="flex items-center justify-between px-6 md:px-14 py-4"
+      >
         <Link href={buildPath("/")} aria-label="Home" className="flex-shrink-0">
           <Image
             src="/wha/logo.png"
@@ -215,7 +221,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push("/auth")}
+            onClick={() => router.push("/auth/business/login")}
             style={{
               border: "1px solid #d8dfe9",
               background: scrolled
@@ -228,7 +234,8 @@ export default function Navbar() {
               borderRadius: 9999,
               cursor: "pointer",
               transition: "background 0.25s ease",
-            }}>
+            }}
+          >
             List your business
           </button>
           <AuthSection pillAvatar />
@@ -243,7 +250,8 @@ export default function Navbar() {
   const DesktopInnerNav = () => (
     <nav
       className="hidden md:block fixed top-0 left-0 z-50 w-full"
-      style={navStyle}>
+      style={navStyle}
+    >
       <div className="flex items-center gap-6 px-6 py-3">
         <Link href={buildPath("/")} aria-label="Home" className="flex-shrink-0">
           <Image

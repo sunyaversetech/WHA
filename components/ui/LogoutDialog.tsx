@@ -44,8 +44,8 @@ export function LogoutDialog({ children }: LogoutDialogProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 w-full flex cursor-pointer justify-start p-0  text-red-500 hover:text-red-600 hover:bg-red-50">
-            <LogOut size={16} />
+            className="w-full flex cursor-pointer justify-start rounded-lg text-sm hover:bg-muted transition-colors"
+          >
             <span>Logout</span>
           </Button>
         )}
@@ -53,26 +53,26 @@ export function LogoutDialog({ children }: LogoutDialogProps) {
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Ready to leave?</AlertDialogTitle>
+          <AlertDialogTitle>Log out?</AlertDialogTitle>
           <AlertDialogDescription>
-            You will be signed out of your account. You can always log back in
-            later to access your data.
+            Are you sure you want to log out of your account
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>Go back</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleLogout}
             disabled={isLoading}
-            className="bg-red-500 text-white hover:bg-red-600 focus:ring-red-500">
+            className="bg-primary text-white hover:bg-primary/10 focus:ring-primary"
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Signing out...
               </>
             ) : (
-              "Logout"
+              "Confirm"
             )}
           </AlertDialogAction>
         </AlertDialogFooter>
