@@ -72,9 +72,12 @@ function formatEventDateTime(event: EventType): string {
 }
 
 function formatEventPrice(event: EventType): string {
-  if (event.price_category !== "paid") return "Free";
-  const price = event.options?.[0]?.price;
-  return price ? `$${price}` : "Paid";
+  if (event.price_category === "paid") {
+    const price = event.options?.[0]?.price;
+    return price ? `$${price}` : "Paid";
+  }
+  if (event.price_category === "external") return "External";
+  return "Free";
 }
 
 const STATUS_STYLES: Record<EventStatus, { label: string; className: string }> =

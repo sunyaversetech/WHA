@@ -38,6 +38,10 @@ const EventSchema = new Schema({
   ticket_price: { type: Number },
   max_quantity: { type: Number },
   sold_quantity: { type: Number, default: 0 },
+  registration_capacity: { type: Number },
+  registration_sold: { type: Number, default: 0 },
+  max_tickets_per_request: { type: Number, default: 10 },
+  show_remaining_tickets: { type: Boolean, default: true },
   options: {
     type: [
       {
@@ -58,6 +62,7 @@ const EventSchema = new Schema({
         discount_percentage: { type: Number },
         limit: { type: Number },
         used: { type: Number, default: 0 },
+        applicable_options: { type: [String], default: undefined },
       },
     ],
     default: undefined,

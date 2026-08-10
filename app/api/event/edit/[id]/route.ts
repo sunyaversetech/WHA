@@ -39,8 +39,20 @@ export const eventSchema = z.object({
   endTime: z.string().optional(),
   category: z.string().min(1, "Category is required"),
   category_name: z.string().optional(),
-  price_category: z.enum(["free", "paid", "registration"]),
+  price_category: z.enum(["registration", "paid", "external"]),
   ticket_link: z.string().optional(),
+  registration_capacity: z.preprocess(
+    (val) => (val === "" || val === "undefined" ? null : val),
+    z.coerce.number().nullable().optional(),
+  ),
+  max_tickets_per_request: z.preprocess(
+    (val) => (val === "" || val === "undefined" ? 10 : val),
+    z.coerce.number().optional(),
+  ),
+  show_remaining_tickets: z.preprocess(
+    (val) => (val === "true" ? true : val === "false" ? false : val),
+    z.boolean().optional(),
+  ),
   options: z
     .array(
       z.object({
@@ -58,7 +70,7 @@ export const eventSchema = z.object({
         ),
       }),
     )
-    .max(3, "You can add up to 3 options")
+    .max(5, "You can add up to 5 options")
     .optional(),
   promo_codes: z
     .array(
@@ -73,9 +85,10 @@ export const eventSchema = z.object({
           (val) => (val === "" || val === "undefined" ? 0 : val),
           z.coerce.number().optional(),
         ),
+        applicable_options: z.array(z.string()).optional(),
       }),
     )
-    .max(3, "You can add up to 3 promo codes")
+    .max(5, "You can add up to 5 promo codes")
     .optional(),
   event_rules: z.string().optional(),
   refund_policy: z.string().optional(),
@@ -197,9 +210,21 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       endTime: "",
     };
 
+    const effectiveCategory = validatedData.price_category ?? event.price_category;
+    const categoryGatedFields = {
+      ticket_link: effectiveCategory === "external" ? validatedData.ticket_link : "",
+      options: effectiveCategory === "paid" ? validatedData.options : [],
+      promo_codes: effectiveCategory === "paid" ? validatedData.promo_codes : [],
+      registration_capacity:
+        effectiveCategory === "registration"
+          ? validatedData.registration_capacity
+          : null,
+    };
+
     const updatePayload = {
       ...defaultEmptyFields,
       ...validatedData,
+      ...categoryGatedFields,
       ...formattedDates,
       image: finalImageUrl,
     };

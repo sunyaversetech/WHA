@@ -37,6 +37,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (event.registration_capacity != null) {
+      // Atomically reserve a spot only if capacity remains, so concurrent
+      // registrations can never oversell the event.
+      const reserved = await Event.findOneAndUpdate(
+        {
+          _id: eventId,
+          $expr: {
+            $lt: ["$registration_sold", event.registration_capacity],
+          },
+        },
+        { $inc: { registration_sold: 1 } },
+      );
+      if (!reserved) {
+        return NextResponse.json(
+          { message: "This event is fully booked." },
+          { status: 400 },
+        );
+      }
+    }
+
     const uniqueKey = `WHA-EVT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
     const redemption = await EventRedemption.create({

@@ -31,8 +31,6 @@ export async function POST(req: NextRequest) {
     const dateRangeRaw = formData.get("dateRange") as string;
     const price_category = formData.get("price_category") as string;
     const ticket_link = formData.get("ticket_link") as string;
-    const ticket_price = formData.get("ticket_price") as string;
-    const max_quantity = formData.get("max_quantity") as string;
     const optionsRaw = formData.get("options") as string;
     const promoCodesRaw = formData.get("promo_codes") as string;
     const event_rules = formData.get("event_rules") as string;
@@ -43,6 +41,12 @@ export async function POST(req: NextRequest) {
     const endTime = formData.get("endTime") as string;
     const latitude = parseFloat(formData.get("latitude") as string);
     const longitude = parseFloat(formData.get("longitude") as string);
+    const registration_capacity = formData.get("registration_capacity") as string;
+    const max_tickets_per_request = formData.get(
+      "max_tickets_per_request",
+    ) as string;
+    const show_remaining_tickets =
+      formData.get("show_remaining_tickets") !== "false";
 
     const slug = generateSlug(title);
 
@@ -126,11 +130,17 @@ export async function POST(req: NextRequest) {
       endTime,
 
       price_category,
-      ticket_link: price_category === "paid" ? ticket_link : undefined,
-      ticket_price: price_category === "paid" ? ticket_price : "0",
-      max_quantity: price_category === "paid" ? max_quantity : undefined,
+      ticket_link: price_category === "external" ? ticket_link : undefined,
       options: price_category === "paid" ? options : undefined,
       promo_codes: price_category === "paid" ? promo_codes : undefined,
+      registration_capacity:
+        price_category === "registration" && registration_capacity
+          ? Number(registration_capacity)
+          : undefined,
+      max_tickets_per_request: max_tickets_per_request
+        ? Number(max_tickets_per_request)
+        : 10,
+      show_remaining_tickets,
 
       event_rules,
       refund_policy,

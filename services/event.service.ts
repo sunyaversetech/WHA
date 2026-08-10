@@ -22,6 +22,7 @@ export type EventPromoCodeType = {
   discount_percentage?: number | null;
   limit?: number | null;
   used?: number | null;
+  applicable_options?: string[];
 };
 
 export type EventType = {
@@ -53,7 +54,11 @@ export type EventType = {
   phone_number: string;
   website_link: string;
   reviews: ReviewType[];
-  price_category: "free" | "paid";
+  price_category: "registration" | "paid" | "external";
+  registration_capacity?: number | null;
+  registration_sold?: number | null;
+  max_tickets_per_request?: number | null;
+  show_remaining_tickets?: boolean;
   community_name: string;
   city: string;
   community: string;

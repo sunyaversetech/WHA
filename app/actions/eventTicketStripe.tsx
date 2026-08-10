@@ -59,9 +59,18 @@ export async function getEventTicketPaymentIntent(
     const today = new Date().toISOString().split("T")[0];
     const normalizedPromo = promoCode?.trim().toLowerCase() || "";
 
+    const totalQuantity = cartItems.reduce((sum, c) => sum + c.quantity, 0);
+    const maxPerRequest = event.max_tickets_per_request || 10;
+    if (totalQuantity > maxPerRequest) {
+      throw new Error(
+        `You can book a maximum of ${maxPerRequest} tickets per request`,
+      );
+    }
+
     let discountPercent = 0;
+    let promo: any = null;
     if (normalizedPromo) {
-      const promo = (event.promo_codes || []).find(
+      promo = (event.promo_codes || []).find(
         (p: any) => p.code && p.code.trim().toLowerCase() === normalizedPromo,
       );
       if (!promo) {
@@ -72,7 +81,7 @@ export async function getEventTicketPaymentIntent(
       }
       discountPercent = promo.discount_percentage || 0;
     }
-    const promoApplied = normalizedPromo.length > 0;
+    const promoEntered = normalizedPromo.length > 0;
 
     const items: PricedItem[] = cartItems.map(({ optionId, quantity }) => {
       if (quantity < 1) throw new Error("Quantity must be at least 1");
@@ -95,8 +104,15 @@ export async function getEventTicketPaymentIntent(
         );
       }
 
+      // A promo code with no applicable_options discounts every ticket type;
+      // otherwise it only discounts the ticket types it was assigned to.
+      const appliesHere =
+        promoEntered &&
+        (!promo.applicable_options?.length ||
+          promo.applicable_options.includes(option.name));
+
       const originalPrice = option.price || 0;
-      const unitPrice = promoApplied
+      const unitPrice = appliesHere
         ? originalPrice * (1 - discountPercent / 100)
         : originalPrice;
 
@@ -106,9 +122,13 @@ export async function getEventTicketPaymentIntent(
         quantity,
         unitPrice,
         originalPrice,
-        discounted: promoApplied,
+        discounted: appliesHere,
       };
     });
+
+    // Reflects whether the promo actually discounted something in this cart,
+    // not just whether a valid code was entered.
+    const promoApplied = items.some((i) => i.discounted);
 
     const ticketTotal = items.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,

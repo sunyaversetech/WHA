@@ -15,6 +15,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Popover,
   PopoverContent,
@@ -22,12 +24,22 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { CalendarIcon, Plus, Trash2, Check } from "lucide-react";
+import {
+  CalendarIcon,
+  Plus,
+  Trash2,
+  FileText,
+  MapPin,
+  Ticket,
+  Tag,
+  User,
+  Settings as SettingsIcon,
+  ChevronLeft,
+} from "lucide-react";
 import { useCreateEvent, useGetSingleForForm } from "@/services/event.service";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import MapPicker from "./LeafLetIntegration";
-import { ChevronLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
@@ -68,8 +80,11 @@ export const eventSchema = z
     endTime: z.string().optional(),
     category: z.string().min(1, "Category is required"),
     category_name: z.string().optional(),
-    price_category: z.enum(["free", "paid", "registration"]),
+    price_category: z.enum(["registration", "paid", "external"]),
     ticket_link: z.string().optional(),
+    registration_capacity: z.string().optional().nullable(),
+    max_tickets_per_request: z.string().optional().nullable(),
+    show_remaining_tickets: z.boolean().optional(),
     options: z
       .array(
         z.object({
@@ -81,7 +96,7 @@ export const eventSchema = z
           capacity: z.string().optional().nullable(),
         }),
       )
-      .max(3, "You can add up to 3 options")
+      .max(5, "You can add up to 5 options")
       .optional(),
     promo_codes: z
       .array(
@@ -90,9 +105,10 @@ export const eventSchema = z
           code: z.string().optional(),
           discount_percentage: z.string().optional().nullable(),
           limit: z.string().optional().nullable(),
+          applicable_options: z.array(z.string()).optional(),
         }),
       )
-      .max(3, "You can add up to 3 promo codes")
+      .max(5, "You can add up to 5 promo codes")
       .optional(),
     event_rules: z.string().optional(),
     refund_policy: z.string().optional(),
@@ -138,6 +154,16 @@ export const eventSchema = z
         });
       }
     }
+
+    if (data.price_category === "external") {
+      if (!data.ticket_link || data.ticket_link.trim().length < 3) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Ticket link is required for external ticketing",
+          path: ["ticket_link"],
+        });
+      }
+    }
   });
 
 export type EventFormValues = z.infer<typeof eventSchema>;
@@ -154,17 +180,29 @@ const EMPTY_PROMO_CODE = {
   code: "",
   discount_percentage: "",
   limit: "",
+  applicable_options: [] as string[],
 };
 
-const STEPS: { n: 1 | 2 | 3 | 4; label: string }[] = [
-  { n: 1, label: "Basic Info" },
-  { n: 2, label: "Date & Location" },
-  { n: 3, label: "Host Details" },
-  { n: 4, label: "Pricing" },
-];
+type SectionKey =
+  | "basic"
+  | "location"
+  | "pricing"
+  | "promo"
+  | "host"
+  | "settings";
 
-const STEP_FIELDS: Record<number, (keyof EventFormValues)[]> = {
-  1: [
+const SECTIONS: { key: SectionKey; label: string; icon: React.ElementType }[] =
+  [
+    { key: "basic", label: "Basic Info", icon: FileText },
+    { key: "location", label: "Date & Location", icon: MapPin },
+    { key: "pricing", label: "Pricing", icon: Ticket },
+    { key: "promo", label: "Promo Code", icon: Tag },
+    { key: "host", label: "Host Details", icon: User },
+    { key: "settings", label: "Settings", icon: SettingsIcon },
+  ];
+
+const SECTION_FIELDS: Record<SectionKey, string[]> = {
+  basic: [
     "title",
     "image",
     "category",
@@ -173,7 +211,7 @@ const STEP_FIELDS: Record<number, (keyof EventFormValues)[]> = {
     "event_rules",
     "refund_policy",
   ],
-  2: [
+  location: [
     "dateRange",
     "startTime",
     "endTime",
@@ -183,50 +221,22 @@ const STEP_FIELDS: Record<number, (keyof EventFormValues)[]> = {
     "latitude",
     "longitude",
   ],
-  3: ["email", "phone_number", "website_link", "host_name", "support_details"],
-  4: ["price_category", "options", "promo_codes"],
+  pricing: [
+    "price_category",
+    "options",
+    "registration_capacity",
+    "ticket_link",
+  ],
+  promo: ["promo_codes"],
+  host: [
+    "email",
+    "phone_number",
+    "website_link",
+    "host_name",
+    "support_details",
+  ],
+  settings: ["max_tickets_per_request", "show_remaining_tickets"],
 };
-
-function StepIndicator({ step }: { step: number }) {
-  return (
-    <div className="flex items-center w-full">
-      {STEPS.map((s, i) => (
-        <div
-          key={s.n}
-          className={cn("flex items-center", i < STEPS.length - 1 && "flex-1")}>
-          <div className="flex flex-col items-center gap-1 shrink-0">
-            <div
-              className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition",
-                step === s.n
-                  ? "bg-primary border-primary text-primary-foreground"
-                  : step > s.n
-                    ? "bg-emerald-500 border-emerald-500 text-white"
-                    : "bg-white border-gray-300 text-gray-400",
-              )}>
-              {step > s.n ? <Check className="w-4 h-4" /> : s.n}
-            </div>
-            <span
-              className={cn(
-                "text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap",
-                step === s.n ? "text-primary" : "text-gray-400",
-              )}>
-              {s.label}
-            </span>
-          </div>
-          {i < STEPS.length - 1 && (
-            <div
-              className={cn(
-                "flex-1 h-0.5 mx-2 mb-4",
-                step > s.n ? "bg-emerald-500" : "bg-gray-200",
-              )}
-            />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 export function EventForm() {
   const queryClient = useQueryClient();
@@ -238,7 +248,7 @@ export function EventForm() {
 
   const data = singleEventData?.data;
 
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [section, setSection] = useState<SectionKey>("basic");
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
@@ -260,7 +270,17 @@ export function EventForm() {
       longitude: data?.longitude ?? 0,
       category: data?.category ?? "",
       category_name: data?.category_name ?? "",
+      price_category: (data?.price_category as any) ?? "paid",
       ticket_link: data?.ticket_link ?? "",
+      registration_capacity:
+        data?.registration_capacity != null
+          ? String(data.registration_capacity)
+          : "",
+      max_tickets_per_request:
+        data?.max_tickets_per_request != null
+          ? String(data.max_tickets_per_request)
+          : "10",
+      show_remaining_tickets: data?.show_remaining_tickets ?? true,
       options:
         data?.options && data.options.length > 0
           ? data.options.map((opt: any) => ({
@@ -286,6 +306,7 @@ export function EventForm() {
                   ? String(promo.discount_percentage)
                   : "",
               limit: promo.limit != null ? String(promo.limit) : "",
+              applicable_options: promo.applicable_options ?? [],
             }))
           : [],
       email: data?.email ?? "",
@@ -336,8 +357,24 @@ export function EventForm() {
       form.setValue("longitude", data.longitude);
       form.setValue("category", data.category);
       form.setValue("category_name", data.category_name);
-      form.setValue("price_category", data.price_category);
+      form.setValue("price_category", data.price_category as any);
       form.setValue("ticket_link", data.ticket_link ?? "");
+      form.setValue(
+        "registration_capacity",
+        data.registration_capacity != null
+          ? String(data.registration_capacity)
+          : "",
+      );
+      form.setValue(
+        "max_tickets_per_request",
+        data.max_tickets_per_request != null
+          ? String(data.max_tickets_per_request)
+          : "10",
+      );
+      form.setValue(
+        "show_remaining_tickets",
+        data.show_remaining_tickets ?? true,
+      );
       if (data?.options && data.options.length > 0) {
         form.setValue(
           "options",
@@ -366,6 +403,7 @@ export function EventForm() {
                 ? String(promo.discount_percentage)
                 : "",
             limit: promo.limit != null ? String(promo.limit) : "",
+            applicable_options: promo.applicable_options ?? [],
           })),
         );
       }
@@ -375,41 +413,6 @@ export function EventForm() {
       form.setValue("image", data.image);
     }
   }, [data, form]);
-
-  const handleNext = async () => {
-    const valid = await form.trigger(STEP_FIELDS[step] as any);
-
-    // Manual guard for the venue/location cross-field requirement: the
-    // superRefine-based check on the schema doesn't reliably surface on a
-    // scoped form.trigger() call, so enforce it directly here too.
-    let locationValid = true;
-    if (step === 2 && !form.getValues("location_tba")) {
-      const location = form.getValues("location");
-      const venue = form.getValues("venue");
-      if (!location || location.trim().length < 2) {
-        form.setError("location", {
-          type: "manual",
-          message: "Location is required",
-        });
-        locationValid = false;
-      }
-      if (!venue || venue.trim().length < 2) {
-        form.setError("venue", {
-          type: "manual",
-          message: "Venue is required",
-        });
-        locationValid = false;
-      }
-    }
-
-    if (valid && locationValid) {
-      setStep((s) => (s < 4 ? ((s + 1) as 1 | 2 | 3 | 4) : s));
-    }
-  };
-
-  const handleBack = () => {
-    setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3 | 4) : s));
-  };
 
   const onSubmit = (values: EventFormValues) => {
     const formData = new FormData();
@@ -448,6 +451,8 @@ export function EventForm() {
             promo.code || promo.discount_percentage || promo.limit,
         );
         formData.append(key, JSON.stringify(cleanedPromoCodes));
+      } else if (key === "show_remaining_tickets") {
+        formData.append(key, value ? "true" : "false");
       } else {
         formData.append(key, value as any);
       }
@@ -470,9 +475,19 @@ export function EventForm() {
     });
   };
 
+  const onInvalid = (errors: any) => {
+    const erroredFields = Object.keys(errors);
+    const firstSection = SECTIONS.find((s) =>
+      SECTION_FIELDS[s.key].some((f) => erroredFields.includes(f)),
+    );
+    if (firstSection) setSection(firstSection.key);
+    toast.error("Please fix the highlighted errors before saving.");
+  };
+
   // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() isn't safely memoizable by the React Compiler
   const watchedPriceCategory = form.watch("price_category");
   const watchedOptions = form.watch("options");
+  const namedOptions = (watchedOptions ?? []).filter((opt) => opt?.name);
   const hasCompleteTicketOption =
     watchedPriceCategory !== "paid" ||
     (watchedOptions ?? []).some(
@@ -482,320 +497,740 @@ export function EventForm() {
   return (
     <div className="flex-1 h-auto overflow-y-auto mb-20">
       <Form {...form}>
-        <div className="space-y-6 max-w-6xl mx-auto h-full ">
-          <div className="flex items-start justify-start ">
+        <div className="max-w-6xl mx-auto h-full space-y-6">
+          <div className="flex items-center gap-3">
             <ChevronLeft
               onClick={() => router.back()}
-              className="h-10 w-10 cursor-pointer rounded-full  p-1 -ml-2
-               text-[#ODODOD]
-               transition-all hover:scale-105 active:scale-95"
+              className="h-10 w-10 cursor-pointer rounded-full p-1 -ml-2 text-[#0D0D0D] transition-all hover:scale-105 active:scale-95"
             />
+            <h1 className="text-2xl text-[#0D0D0D] font-bold">
+              {data ? "Edit event" : "Add new event"}
+            </h1>
           </div>
-          <h1 className="text-2xl text-[#ODODOD] font-bold mb-4 ">
-            {data ? "Edit event" : "Add new event"}{" "}
-          </h1>
-
-          <StepIndicator step={step} />
 
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-6 py-4">
-            {step === 1 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
-                <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 items-start space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Event Name"
-                            {...field}
-                            onChange={(e) => {
-                              const rawValue = e.target.value;
+            onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+            className="flex flex-col lg:flex-row gap-5">
+            {/* ── Sidebar nav ── */}
+            <aside className="lg:w-64 shrink-0">
+              <div className="lg:sticky lg:top-6 bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                <nav className="p-2 space-y-1">
+                  {SECTIONS.map((s) => {
+                    const hasError = SECTION_FIELDS[s.key].some(
+                      (f) => !!(form.formState.errors as any)[f],
+                    );
+                    return (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => setSection(s.key)}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                          section === s.key
+                            ? "bg-primary/10 text-primary"
+                            : "text-gray-600 hover:bg-gray-50",
+                        )}>
+                        <s.icon className="h-4 w-4" />
+                        <span className="flex-1 text-left">{s.label}</span>
+                        {hasError && (
+                          <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+            </aside>
 
-                              const hasSpecialChars = /[^a-zA-Z0-9\s]/.test(
-                                rawValue,
-                              );
-                              if (hasSpecialChars) {
-                                form.setError("title", {
-                                  type: "manual",
-                                  message: "Special characters are not allowed",
-                                });
-                              } else {
-                                form.clearErrors("title");
-                              }
-                              field.onChange(rawValue);
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex flex-col">
+            {/* ── Main content ── */}
+            <div className="flex-1 min-w-0 space-y-6">
+              {section === "basic" && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 items-start space-y-4">
                     <FormField
                       control={form.control}
-                      name="image"
-                      render={({
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars -- value excluded so it isn't spread onto the file input
-                        field: { value, onChange, ...fieldProps },
-                      }) => (
+                      name="title"
+                      render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Event Image</FormLabel>
+                          <FormLabel>Title</FormLabel>
                           <FormControl>
                             <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => onChange(e.target.files?.[0])}
-                              {...fieldProps}
+                              placeholder="Event Name"
+                              {...field}
+                              onChange={(e) => {
+                                const rawValue = e.target.value;
+
+                                const hasSpecialChars = /[^a-zA-Z0-9\s]/.test(
+                                  rawValue,
+                                );
+                                if (hasSpecialChars) {
+                                  form.setError("title", {
+                                    type: "manual",
+                                    message:
+                                      "Special characters are not allowed",
+                                  });
+                                } else {
+                                  form.clearErrors("title");
+                                }
+                                field.onChange(rawValue);
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                    <div className="flex flex-col">
+                      <FormField
+                        control={form.control}
+                        name="image"
+                        render={({
+                          // eslint-disable-next-line @typescript-eslint/no-unused-vars -- value excluded so it isn't spread onto the file input
+                          field: { value, onChange, ...fieldProps },
+                        }) => (
+                          <FormItem>
+                            <FormLabel>Event Image</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => onChange(e.target.files?.[0])}
+                                {...fieldProps}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    {form.watch("image") && (
-                      <div className="mt-2">
-                        <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md bg-transparent border-slate-200 w-fit max-w-[250px]">
-                          <button
-                            type="button"
-                            className="text-sm text-blue-600 hover:underline truncate cursor-pointer"
-                            onClick={() => {
-                              const file = form.getValues("image");
-                              const url =
-                                typeof file === "string"
-                                  ? file
-                                  : URL.createObjectURL(file);
-                              window.open(url, "_blank");
-                            }}>
-                            {typeof form.watch("image") === "string"
-                              ? form.watch("image").split("/").pop()
-                              : form.watch("image")?.name}
-                          </button>
+                      {form.watch("image") && (
+                        <div className="mt-2">
+                          <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md bg-transparent border-slate-200 w-fit max-w-62.5">
+                            <button
+                              type="button"
+                              className="text-sm text-blue-600 hover:underline truncate cursor-pointer"
+                              onClick={() => {
+                                const file = form.getValues("image");
+                                const url =
+                                  typeof file === "string"
+                                    ? file
+                                    : URL.createObjectURL(file);
+                                window.open(url, "_blank");
+                              }}>
+                              {typeof form.watch("image") === "string"
+                                ? form.watch("image").split("/").pop()
+                                : form.watch("image")?.name}
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => form.setValue("image", undefined)}
-                            className="flex-shrink-0 ml-1 text-slate-400 hover:text-red-500 transition-colors">
-                            <span className="text-lg font-bold leading-none">
-                              &times;
-                            </span>
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => form.setValue("image", undefined)}
+                              className="shrink-0 ml-1 text-slate-400 hover:text-red-500 transition-colors">
+                              <span className="text-lg font-bold leading-none">
+                                &times;
+                              </span>
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <FormControl>
-                        <ToggleGroup
-                          type="single"
-                          value={field.value}
-                          onValueChange={(val) => val && field.onChange(val)}
-                          className="flex flex-wrap w-full gap-2">
-                          {[
-                            "Concert",
-                            "Festival",
-                            "Educational Seminar",
-                            "Cultural Event",
-                            "Food Event",
-                            "Others",
-                          ].map((cat) => (
-                            <ToggleGroupItem
-                              key={cat}
-                              value={cat}
-                              className={toggleItemStyles}>
-                              {cat}
-                            </ToggleGroupItem>
-                          ))}
-                        </ToggleGroup>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {form.watch("category") === "Others" && (
                   <FormField
                     control={form.control}
-                    name="category_name"
+                    name="category"
                     render={({ field }) => (
-                      <FormItem className="mt-1 gap-1 flex flex-col">
-                        <FormLabel>Category Name</FormLabel>
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
                         <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                )}
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea className="rounded-lg" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="event_rules"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event Rule & Policy</FormLabel>
-                      <FormControl>
-                        <Textarea className="rounded-lg" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="refund_policy"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Refund</FormLabel>
-                      <FormControl>
-                        <Textarea className="rounded-lg" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
-                <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 items-start space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="dateRange"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>From and to Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start border rounded-lg">
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value?.from ? (
-                                field.value.to ? (
-                                  `${format(field.value.from, "PP")} - ${format(field.value.to, "PP")}`
-                                ) : (
-                                  format(field.value.from, "PP")
-                                )
-                              ) : (
-                                <span>Pick Dates</span>
-                              )}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="range"
-                              selected={field.value as any}
-                              onSelect={field.onChange}
-                              numberOfMonths={2}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="startTime"
-                    render={({ field }) => (
-                      <FormItem className="mt-1 gap-1 flex flex-col">
-                        <FormLabel>Time From</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="time"
-                            className="rounded-lg"
-                            {...field}
-                          />
+                          <ToggleGroup
+                            type="single"
+                            value={field.value}
+                            onValueChange={(val) => val && field.onChange(val)}
+                            className="flex flex-wrap w-full gap-2">
+                            {[
+                              "Concert",
+                              "Festival",
+                              "Educational Seminar",
+                              "Cultural Event",
+                              "Food Event",
+                              "Others",
+                            ].map((cat) => (
+                              <ToggleGroupItem
+                                key={cat}
+                                value={cat}
+                                className={toggleItemStyles}>
+                                {cat}
+                              </ToggleGroupItem>
+                            ))}
+                          </ToggleGroup>
                         </FormControl>
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="endTime"
-                    render={({ field }) => (
-                      <FormItem className="mt-1 gap-1 flex flex-col">
-                        <FormLabel>Time To</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="time"
-                            className="rounded-lg"
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="location_tba"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <FormControl>
-                        <ToggleGroup
-                          type="single"
-                          value={field.value ? "tba" : "set"}
-                          onValueChange={(val) =>
-                            val && field.onChange(val === "tba")
-                          }
-                          className="flex w-full gap-2">
-                          <ToggleGroupItem
-                            value="set"
-                            className={toggleItemStyles}>
-                            Set Location
-                          </ToggleGroupItem>
-                          <ToggleGroupItem
-                            value="tba"
-                            className={toggleItemStyles}>
-                            To Be Announced
-                          </ToggleGroupItem>
-                        </ToggleGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {!form.watch("location_tba") && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-top-1">
+                  {form.watch("category") === "Others" && (
                     <FormField
                       control={form.control}
-                      name="venue"
+                      name="category_name"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Venue</FormLabel>
+                        <FormItem className="mt-1 gap-1 flex flex-col">
+                          <FormLabel>Category Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea className="rounded-lg" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="event_rules"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Event Rule & Policy</FormLabel>
+                        <FormControl>
+                          <Textarea className="rounded-lg" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="refund_policy"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Refund</FormLabel>
+                        <FormControl>
+                          <Textarea className="rounded-lg" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {section === "location" && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 items-start space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="dateRange"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>From and to Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="w-full justify-start border rounded-lg">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {field.value?.from ? (
+                                  field.value.to ? (
+                                    `${format(field.value.from, "PP")} - ${format(field.value.to, "PP")}`
+                                  ) : (
+                                    format(field.value.from, "PP")
+                                  )
+                                ) : (
+                                  <span>Pick Dates</span>
+                                )}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start">
+                              <Calendar
+                                mode="range"
+                                selected={field.value as any}
+                                onSelect={field.onChange}
+                                numberOfMonths={2}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="startTime"
+                      render={({ field }) => (
+                        <FormItem className="mt-1 gap-1 flex flex-col">
+                          <FormLabel>Time From</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. Grand Ballroom"
+                              type="time"
+                              className="rounded-lg"
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="endTime"
+                      render={({ field }) => (
+                        <FormItem className="mt-1 gap-1 flex flex-col">
+                          <FormLabel>Time To</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="time"
+                              className="rounded-lg"
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="location_tba"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Location</FormLabel>
+                        <FormControl>
+                          <ToggleGroup
+                            type="single"
+                            value={field.value ? "tba" : "set"}
+                            onValueChange={(val) =>
+                              val && field.onChange(val === "tba")
+                            }
+                            className="flex w-full gap-2">
+                            <ToggleGroupItem
+                              value="set"
+                              className={toggleItemStyles}>
+                              Set Location
+                            </ToggleGroupItem>
+                            <ToggleGroupItem
+                              value="tba"
+                              className={toggleItemStyles}>
+                              To Be Announced
+                            </ToggleGroupItem>
+                          </ToggleGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {!form.watch("location_tba") && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-1">
+                      <FormField
+                        control={form.control}
+                        name="venue"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Venue</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g. Grand Ballroom"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div>
+                        <Label
+                          className={`mb-2 ${form.formState.errors.location ? "text-red-500" : "text-black"}`}>
+                          Pick Location
+                        </Label>
+                        <MapPicker form={form} />
+                        {form.formState.errors.location && (
+                          <p className="text-sm text-destructive mt-1">
+                            {form.formState.errors.location.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {section === "pricing" && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
+                  <FormField
+                    control={form.control}
+                    name="price_category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price Category</FormLabel>
+                        <FormControl>
+                          <ToggleGroup
+                            type="single"
+                            value={field.value}
+                            onValueChange={(val) => val && field.onChange(val)}
+                            className="flex w-full gap-2">
+                            <ToggleGroupItem
+                              value="registration"
+                              className={toggleItemStyles}>
+                              Free With Registration
+                            </ToggleGroupItem>
+                            <ToggleGroupItem
+                              value="paid"
+                              className={toggleItemStyles}>
+                              Paid
+                            </ToggleGroupItem>
+                            <ToggleGroupItem
+                              value="external"
+                              className={toggleItemStyles}>
+                              External Ticket
+                            </ToggleGroupItem>
+                          </ToggleGroup>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {watchedPriceCategory === "registration" && (
+                    <FormField
+                      control={form.control}
+                      name="registration_capacity"
+                      render={({ field }) => (
+                        <FormItem className="max-w-xs animate-in fade-in slide-in-from-top-1">
+                          <FormLabel>Capacity</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              placeholder="Leave blank for unlimited"
+                              {...field}
+                              value={field.value ?? ""}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {watchedPriceCategory === "external" && (
+                    <FormField
+                      control={form.control}
+                      name="ticket_link"
+                      render={({ field }) => (
+                        <FormItem className="animate-in fade-in slide-in-from-top-1">
+                          <FormLabel>Ticket Link</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://example.com/tickets"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {watchedPriceCategory === "paid" && (
+                    <div className="space-y-3 animate-in fade-in slide-in-from-top-1">
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Ticket Options</FormLabel>
+                        {optionFields.length < 5 && (
+                          <button
+                            type="button"
+                            onClick={() => appendOption(EMPTY_OPTION)}
+                            className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                            <Plus className="h-4 w-4" />
+                            Add Option
+                          </button>
+                        )}
+                      </div>
+
+                      {optionFields.map((optionField, index) => (
+                        <div
+                          key={optionField.id}
+                          className="relative grid grid-cols-1 sm:grid-cols-2 gap-4 border rounded-lg p-4">
+                          {optionFields.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeOption(index)}
+                              className="absolute top-3 right-3 text-muted-foreground hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+
+                          <FormField
+                            name={`options.${index}.name`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Name</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="e.g. Early Bird"
+                                    {...field}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            name={`options.${index}.release_date`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Release Date</FormLabel>
+                                <FormControl>
+                                  <Input type="date" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            name={`options.${index}.close_date`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Close Date</FormLabel>
+                                <FormControl>
+                                  <Input type="date" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            name={`options.${index}.price`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Price</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    {...field}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            name={`options.${index}.capacity`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Capacity</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    {...field}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      ))}
+
+                      {form.formState.errors.options && (
+                        <p className="text-sm font-medium text-destructive">
+                          {(form.formState.errors.options as any)?.message ??
+                            (form.formState.errors.options as any)?.root
+                              ?.message}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {section === "promo" && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
+                  {watchedPriceCategory !== "paid" ? (
+                    <p className="text-sm text-muted-foreground border rounded-lg p-4">
+                      Promo codes are only available for Paid events.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Promo Codes</FormLabel>
+                        {promoFields.length < 5 && (
+                          <button
+                            type="button"
+                            onClick={() => appendPromo(EMPTY_PROMO_CODE)}
+                            className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                            <Plus className="h-4 w-4" />
+                            Add Promo Code
+                          </button>
+                        )}
+                      </div>
+
+                      {promoFields.map((promoField, index) => (
+                        <div
+                          key={promoField.id}
+                          className="relative grid grid-cols-1 sm:grid-cols-3 gap-4 border rounded-lg p-4">
+                          <button
+                            type="button"
+                            onClick={() => removePromo(index)}
+                            className="absolute top-3 right-3 text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+
+                          <FormField
+                            name={`promo_codes.${index}.code`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Code</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="e.g. EARLYBIRD10"
+                                    {...field}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            name={`promo_codes.${index}.discount_percentage`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Discount Percentage</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="1"
+                                    {...field}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            name={`promo_codes.${index}.limit`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Limit</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    {...field}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`promo_codes.${index}.applicable_options`}
+                            render={({ field }) => (
+                              <FormItem className="sm:col-span-3">
+                                <FormLabel>
+                                  Applies to (leave empty for all tickets)
+                                </FormLabel>
+                                {namedOptions.length > 0 ? (
+                                  <div className="flex flex-wrap gap-3 pt-1">
+                                    {namedOptions.map((opt) => {
+                                      const name = opt?.name as string;
+                                      const checked = (
+                                        field.value ?? []
+                                      ).includes(name);
+                                      return (
+                                        <label
+                                          key={name}
+                                          className="flex items-center gap-2 text-sm cursor-pointer">
+                                          <Checkbox
+                                            checked={checked}
+                                            onCheckedChange={(isChecked) => {
+                                              const current = field.value ?? [];
+                                              field.onChange(
+                                                isChecked
+                                                  ? [...current, name]
+                                                  : current.filter(
+                                                      (n: string) => n !== name,
+                                                    ),
+                                              );
+                                            }}
+                                          />
+                                          {name}
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground">
+                                    Add ticket options in the Pricing tab first.
+                                  </p>
+                                )}
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {section === "host" && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
+                  <h2 className="text-lg font-bold text-[#0D0D0D]">
+                    Host Details
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 items-start space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="host_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Host name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g. hello@gmail.com"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phone_number"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g. +61 234 567 890"
                               {...field}
                             />
                           </FormControl>
@@ -804,346 +1239,83 @@ export function EventForm() {
                       )}
                     />
 
-                    <div>
-                      <Label
-                        className={`mb-2 ${form.formState.errors.location ? "text-red-500" : "text-black"}`}>
-                        Pick Location
-                      </Label>
-                      <MapPicker form={form} />
-                      {form.formState.errors.location && (
-                        <p className="text-sm text-destructive mt-1">
-                          {form.formState.errors.location.message}
-                        </p>
+                    <FormField
+                      control={form.control}
+                      name="website_link"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Website Link</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </div>
+                    />
                   </div>
-                )}
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
-                <h2 className="text-lg font-bold text-[#ODODOD]">
-                  Host Details
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 items-start space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="host_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Host name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g. hello@gmail.com"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="phone_number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g. +61 234 567 890"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
                   <FormField
                     control={form.control}
-                    name="website_link"
+                    name="support_details"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Website Link</FormLabel>
+                        <FormLabel>Support</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. example.com" {...field} />
+                          <Textarea className="rounded-lg" {...field} />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-
-                <FormField
-                  control={form.control}
-                  name="support_details"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Support</FormLabel>
-                      <FormControl>
-                        <Textarea className="rounded-lg" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            {step === 4 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
-                <FormField
-                  control={form.control}
-                  name="price_category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price Category</FormLabel>
-                      <FormControl>
-                        <ToggleGroup
-                          type="single"
-                          value={field.value}
-                          onValueChange={(val) => val && field.onChange(val)}
-                          className="flex w-full gap-2">
-                          <ToggleGroupItem
-                            value="free"
-                            className={toggleItemStyles}>
-                            Free
-                          </ToggleGroupItem>
-                          <ToggleGroupItem
-                            value="paid"
-                            className={toggleItemStyles}>
-                            Paid
-                          </ToggleGroupItem>
-                          <ToggleGroupItem
-                            value="registration"
-                            className={toggleItemStyles}>
-                            Free With Registration
-                          </ToggleGroupItem>
-                        </ToggleGroup>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {form.watch("price_category") === "paid" && (
-                  <div className="space-y-3 animate-in fade-in slide-in-from-top-1">
-                    <div className="flex items-center justify-between">
-                      <FormLabel>Ticket Options</FormLabel>
-                      {optionFields.length < 3 && (
-                        <button
-                          type="button"
-                          onClick={() => appendOption(EMPTY_OPTION)}
-                          className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-                          <Plus className="h-4 w-4" />
-                          Add Option
-                        </button>
-                      )}
-                    </div>
-
-                    {optionFields.map((optionField, index) => (
-                      <div
-                        key={optionField.id}
-                        className="relative grid grid-cols-1 sm:grid-cols-2 gap-4 border rounded-lg p-4">
-                        {optionFields.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeOption(index)}
-                            className="absolute top-3 right-3 text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
-
-                        <FormField
-                          name={`options.${index}.name`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Name</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="e.g. Early Bird"
-                                  {...field}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          name={`options.${index}.release_date`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Release Date</FormLabel>
-                              <FormControl>
-                                <Input type="date" {...field} />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          name={`options.${index}.close_date`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Close Date</FormLabel>
-                              <FormControl>
-                                <Input type="date" {...field} />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          name={`options.${index}.price`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Price</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  {...field}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          name={`options.${index}.capacity`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Capacity</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="1"
-                                  {...field}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    ))}
-
-                    {form.formState.errors.options && (
-                      <p className="text-sm font-medium text-destructive">
-                        {(form.formState.errors.options as any)?.message ??
-                          (form.formState.errors.options as any)?.root?.message}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {form.watch("price_category") === "paid" && (
-                  <div className="space-y-3 animate-in fade-in slide-in-from-top-1">
-                    <div className="flex items-center justify-between">
-                      <FormLabel>Promo Codes</FormLabel>
-                      {promoFields.length < 3 && (
-                        <button
-                          type="button"
-                          onClick={() => appendPromo(EMPTY_PROMO_CODE)}
-                          className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-                          <Plus className="h-4 w-4" />
-                          Add Promo Code
-                        </button>
-                      )}
-                    </div>
-
-                    {promoFields.map((promoField, index) => (
-                      <div
-                        key={promoField.id}
-                        className="relative grid grid-cols-1 sm:grid-cols-3 gap-4 border rounded-lg p-4">
-                        <button
-                          type="button"
-                          onClick={() => removePromo(index)}
-                          className="absolute top-3 right-3 text-muted-foreground hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-
-                        <FormField
-                          name={`promo_codes.${index}.code`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Code</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="e.g. EARLYBIRD10"
-                                  {...field}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          name={`promo_codes.${index}.discount_percentage`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Discount Percentage</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  step="1"
-                                  {...field}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          name={`promo_codes.${index}.limit`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Limit</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="1"
-                                  {...field}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex gap-3 pt-2">
-              {step > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleBack}
-                  className="flex-1 h-12 text-lg rounded-lg">
-                  Back
-                </Button>
               )}
-              {step < 4 ? (
-                <Button
-                  type="button"
-                  onClick={handleNext}
-                  className="flex-1 h-12 text-lg rounded-lg">
-                  Continue
-                </Button>
-              ) : (
+
+              {section === "settings" && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
+                  <FormField
+                    control={form.control}
+                    name="max_tickets_per_request"
+                    render={({ field }) => (
+                      <FormItem className="max-w-xs">
+                        <FormLabel>
+                          Maximum tickets per booking request
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            step="1"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="show_remaining_tickets"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between border rounded-lg p-4 max-w-md">
+                        <div>
+                          <FormLabel>Show remaining tickets</FormLabel>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Display how many tickets are left to buyers.
+                          </p>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value ?? false}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
                 <Button
                   type="submit"
                   className="flex-1 h-12 text-lg rounded-lg"
@@ -1158,7 +1330,7 @@ export function EventForm() {
                       ? "Update Event"
                       : "Create Event"}
                 </Button>
-              )}
+              </div>
             </div>
           </form>
         </div>

@@ -91,6 +91,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Event not found" }, { status: 400 });
     }
 
+    const totalQuantity = cartItems.reduce((sum, c) => sum + c.quantity, 0);
+    const maxPerRequest = event.max_tickets_per_request || 10;
+    if (totalQuantity > maxPerRequest) {
+      return NextResponse.json(
+        {
+          error: `You can book a maximum of ${maxPerRequest} tickets per request`,
+        },
+        { status: 400 },
+      );
+    }
+
     const eventNameSlug = (event.title || "event")
       .trim()
       .replace(/\s+/g, "-")
@@ -119,20 +130,31 @@ export async function POST(req: Request) {
         );
       }
     }
-    const promoApplied = !!matchedPromo;
+    const promoEntered = !!matchedPromo;
     const discountPercent = matchedPromo?.discount_percentage || 0;
 
     const pricedItems = cartItems.map(({ optionId, quantity }) => {
       const option = event.options?.id(optionId);
       if (!option) throw new Error("Ticket option not found");
 
+      // A promo code with no applicable_options discounts every ticket type;
+      // otherwise it only discounts the ticket types it was assigned to.
+      const appliesHere =
+        promoEntered &&
+        (!matchedPromo.applicable_options?.length ||
+          matchedPromo.applicable_options.includes(option.name));
+
       const originalPrice = option.price || 0;
-      const unitPrice = promoApplied
+      const unitPrice = appliesHere
         ? originalPrice * (1 - discountPercent / 100)
         : originalPrice;
 
-      return { optionId, unitPrice, quantity };
+      return { optionId, unitPrice, quantity, discounted: appliesHere };
     });
+
+    // Reflects whether the promo actually discounted something in this cart,
+    // not just whether a valid code was entered.
+    const promoApplied = pricedItems.some((p) => p.discounted);
 
     const ticketTotal = pricedItems.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,

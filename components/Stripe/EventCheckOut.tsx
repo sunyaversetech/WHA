@@ -86,6 +86,7 @@ type EventCheckOutProps = {
   eventId: string;
   eventTitle?: string;
   options: PurchasableOption[];
+  maxTicketsPerRequest?: number;
   onSuccess: (
     paymentIntentId: string,
     items: { optionId: string; quantity: number }[],
@@ -97,6 +98,7 @@ export default function EventCheckOut({
   eventId,
   eventTitle,
   options,
+  maxTicketsPerRequest = 10,
   onSuccess,
   onClose,
 }: EventCheckOutProps) {
@@ -204,6 +206,7 @@ export default function EventCheckOut({
               options={options}
               quantities={quantities}
               setQuantities={setQuantities}
+              maxTicketsPerRequest={maxTicketsPerRequest}
               onContinue={handleContinueFromTickets}
               loading={loadingPricing}
             />
@@ -250,12 +253,14 @@ function TicketsStep({
   options,
   quantities,
   setQuantities,
+  maxTicketsPerRequest,
   onContinue,
   loading,
 }: {
   options: PurchasableOption[];
   quantities: Record<string, number>;
   setQuantities: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  maxTicketsPerRequest: number;
   onContinue: () => void;
   loading: boolean;
 }) {
@@ -264,6 +269,7 @@ function TicketsStep({
   };
 
   const totalQty = Object.values(quantities).reduce((sum, q) => sum + q, 0);
+  const atRequestCap = totalQty >= maxTicketsPerRequest;
   const subtotal = options.reduce(
     (sum, opt) => sum + opt.price * (quantities[opt.optionId] ?? 0),
     0,
@@ -273,7 +279,8 @@ function TicketsStep({
     <div className="space-y-4">
       {options.map((opt) => {
         const qty = quantities[opt.optionId] ?? 0;
-        const atMax = opt.remaining !== null && qty >= opt.remaining;
+        const atMax =
+          (opt.remaining !== null && qty >= opt.remaining) || atRequestCap;
         return (
           <div
             key={opt.optionId}
@@ -316,6 +323,10 @@ function TicketsStep({
           ${subtotal.toFixed(2)}
         </span>
       </div>
+
+      <p className="text-xs text-gray-400 px-1">
+        Maximum {maxTicketsPerRequest} tickets per booking.
+      </p>
 
       <button
         onClick={onContinue}

@@ -113,6 +113,16 @@ export default function EventDetailPage() {
     ? Math.min(...purchasableOptions.map((opt) => opt.price))
     : 0;
 
+  const showRemaining = event?.data?.show_remaining_tickets ?? true;
+  const registrationCapacity = event?.data?.registration_capacity ?? null;
+  const registrationSold = event?.data?.registration_sold ?? 0;
+  const registrationRemaining =
+    registrationCapacity != null
+      ? Math.max(0, registrationCapacity - registrationSold)
+      : null;
+  const registrationFull =
+    registrationRemaining !== null && registrationRemaining <= 0;
+
   const averageRating =
     event?.data && event.data.reviews.length > 0
       ? Math.round(
@@ -266,6 +276,7 @@ export default function EventDetailPage() {
               eventId={event?.data?._id ?? ""}
               eventTitle={event?.data?.title}
               options={purchasableOptions}
+              maxTicketsPerRequest={event?.data?.max_tickets_per_request ?? 10}
               onClose={() => setIsCheckoutOpen(false)}
               onSuccess={handlePurchaseSuccess}
             />
@@ -421,13 +432,19 @@ export default function EventDetailPage() {
                         .replace(/\b\w/g, (c) => c.toUpperCase())}
                     </h1>
 
-                    {event?.data?.price_category !== "paid" && (
+                    {event?.data?.price_category === "registration" && (
                       <p
                         className="text-sm font-medium text-primary"
                         id="registration-button">
-                        {event?.data?.price_category === "free"
-                          ? "Free Event"
-                          : "Free Event  | Registration Required"}
+                        Free Event · Registration Required
+                      </p>
+                    )}
+
+                    {event?.data?.price_category === "external" && (
+                      <p
+                        className="text-sm font-medium text-primary"
+                        id="registration-button">
+                        Tickets via external site
                       </p>
                     )}
 
@@ -445,6 +462,11 @@ export default function EventDetailPage() {
                             {opt.status === "released" ? (
                               <span className="font-semibold text-primary shrink-0">
                                 ${opt.price.toFixed(2)}
+                                {showRemaining && opt.remaining !== null && (
+                                  <span className="text-xs text-gray-400 font-normal ml-1">
+                                    · {opt.remaining} left
+                                  </span>
+                                )}
                               </span>
                             ) : opt.status === "upcoming" ? (
                               <span className="text-xs text-gray-400 shrink-0">
@@ -482,26 +504,44 @@ export default function EventDetailPage() {
                             ? "Buy More Tickets"
                             : "Buy Tickets"}
                       </button>
-                    ) : event?.data?.price_category === "free" ? (
-                      <div className="w-full bg-primary text-white rounded-full py-3 text-center font-semibold">
-                        No Ticket Required
-                      </div>
+                    ) : event?.data?.price_category === "external" ? (
+                      <a
+                        href={event?.data?.ticket_link || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full block text-center rounded-full py-3 font-semibold transition bg-primary text-white hover:opacity-90">
+                        Get Tickets
+                      </a>
                     ) : (
-                      <button
-                        onClick={handleRedeem}
-                        disabled={redeemPending || redemptionResult?.success}
-                        className={cn(
-                          "w-full rounded-full py-3 font-semibold transition",
-                          redemptionResult?.success
-                            ? "bg-gray-400 text-white cursor-not-allowed"
-                            : "bg-primary text-white hover:opacity-90",
-                        )}>
-                        {redemptionResult?.success
-                          ? "Already Registered"
-                          : redeemPending
-                            ? "Processing..."
-                            : "Register"}
-                      </button>
+                      <>
+                        <button
+                          onClick={handleRedeem}
+                          disabled={
+                            redeemPending ||
+                            redemptionResult?.success ||
+                            registrationFull
+                          }
+                          className={cn(
+                            "w-full rounded-full py-3 font-semibold transition",
+                            redemptionResult?.success || registrationFull
+                              ? "bg-gray-400 text-white cursor-not-allowed"
+                              : "bg-primary text-white hover:opacity-90",
+                          )}>
+                          {redemptionResult?.success
+                            ? "Already Registered"
+                            : registrationFull
+                              ? "Fully Booked"
+                              : redeemPending
+                                ? "Processing..."
+                                : "Register"}
+                        </button>
+                        {showRemaining && registrationRemaining !== null && (
+                          <p className="text-xs text-gray-400 text-center">
+                            {registrationRemaining} spot
+                            {registrationRemaining === 1 ? "" : "s"} left
+                          </p>
+                        )}
+                      </>
                     )}
 
                     <div className="border-t pt-4 space-y-3 text-sm text-gray-700">
@@ -551,7 +591,7 @@ export default function EventDetailPage() {
                       </div>
                     </div>
 
-                    {event?.data?.price_category !== "paid" &&
+                    {event?.data?.price_category === "registration" &&
                       redemptionResult?.success && (
                         <div className="border-t pt-4 flex flex-col items-center text-center">
                           <p className="text-sm text-gray-500 mb-2">
@@ -757,24 +797,30 @@ export default function EventDetailPage() {
                       ? "Buy More"
                       : `Buy · From $${fromPrice.toFixed(2)}`}
                 </button>
-              ) : event?.data?.price_category === "free" ? (
-                <div className="w-full bg-primary text-white rounded-full py-3 text-center font-semibold">
-                  No Ticket Required
-                </div>
+              ) : event?.data?.price_category === "external" ? (
+                <a
+                  href={event?.data?.ticket_link || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-full text-base font-semibold transition bg-primary text-white hover:opacity-90">
+                  Get Tickets
+                </a>
               ) : (
                 <Link
                   href={"#registration-button"}
                   className={cn(
                     "w-full rounded-full py-3 text-center font-semibold transition",
-                    redemptionResult?.success
+                    redemptionResult?.success || registrationFull
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : "bg-primary text-white hover:opacity-90",
                   )}>
                   {redemptionResult?.success
                     ? "Already Registered"
-                    : redeemPending
-                      ? "Processing..."
-                      : "Register"}
+                    : registrationFull
+                      ? "Fully Booked"
+                      : redeemPending
+                        ? "Processing..."
+                        : "Register"}
                 </Link>
               )}
             </div>

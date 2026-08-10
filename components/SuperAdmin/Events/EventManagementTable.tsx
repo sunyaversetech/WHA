@@ -138,12 +138,16 @@ const EventManagementTable = ({ data }: { data: EventType[] }) => {
                   </div>
                   <Badge
                     variant={
-                      event.price_category === "free" ? "ghost" : "default"
+                      event.price_category === "paid" ? "default" : "ghost"
                     }
                     className="w-fit text-[10px] text-muted-foreground">
-                    {event.price_category === "free"
-                      ? "FREE"
-                      : `$${event.ticket_price}`}
+                    {event.price_category === "paid"
+                      ? event.options?.[0]?.price
+                        ? `$${event.options[0].price}`
+                        : "PAID"
+                      : event.price_category === "external"
+                        ? "EXTERNAL"
+                        : "FREE"}
                   </Badge>
                 </div>
               </TableCell>

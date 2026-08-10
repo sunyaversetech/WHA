@@ -166,6 +166,7 @@ export default function ManageEventPage() {
   );
 
   const isPaid = event?.price_category === "paid";
+  const isExternal = event?.price_category === "external";
   const capacityTotal = useMemo(
     () => (event?.options || []).reduce((sum, o) => sum + (o.capacity || 0), 0),
     [event],
@@ -466,6 +467,16 @@ export default function ManageEventPage() {
                   </div>
                 </div>
               </>
+            ) : isExternal ? (
+              <div className="bg-white border border-gray-200 rounded-2xl p-5">
+                <h2 className="font-bold text-primary mb-3">
+                  External Ticketing
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Tickets for this event are sold on a third-party site — WHA
+                  does not track sales or earnings for it.
+                </p>
+              </div>
             ) : (
               <div className="bg-white border border-gray-200 rounded-2xl p-5">
                 <h2 className="font-bold text-primary mb-3">Registrations</h2>
@@ -792,6 +803,12 @@ export default function ManageEventPage() {
                     )}
                   </TableBody>
                 </Table>
+              </div>
+            ) : isExternal ? (
+              <div className="p-5">
+                <p className="text-sm text-gray-500">
+                  External ticketing events do not have in-app analytics.
+                </p>
               </div>
             ) : (
               <div className="p-5">

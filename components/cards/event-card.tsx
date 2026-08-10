@@ -167,6 +167,13 @@ const EventCard = memo(function EventCard({
               <Ticket className="h-3.5 w-3.5 text-white" />
               <span className="text-xs font-semibold text-white">Paid</span>
             </Button>
+          ) : event.price_category === "external" ? (
+            <span
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-primary rounded-full
+                            text-primary shrink-0">
+              <Ticket className="h-3.5 w-3.5" />
+              <span className="text-xs font-semibold">TICKETS</span>
+            </span>
           ) : (
             <span
               className="flex items-center gap-1.5 px-3 py-1.5 border border-green-600 rounded-full
