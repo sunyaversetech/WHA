@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import BusinessCard from "@/components/cards/business-card";
@@ -12,11 +12,10 @@ import { useGetAllEvents } from "@/services/event.service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search, X, ChevronLeft } from "lucide-react";
 import MobileBusinessSearchWithDates from "@/components/ResuableComponents/MobileViewSearch/SearchSectionforBusiness";
+import { useSearchLocation } from "@/components/ResuableComponents/LocationSearch/useSearchLocation";
+import { useDistanceEnriched } from "@/components/ResuableComponents/LocationSearch/geo";
 
-const BusinessMap = dynamic(() => import("./business-map"), { ssr: false });
-const EventMap = dynamic(() => import("@/components/Event/Event-map"), {
-  ssr: false,
-});
+const SearchMap = dynamic(() => import("./SearchMap"), { ssr: false });
 
 type ListType = "services" | "events";
 
@@ -409,23 +408,6 @@ function FiltersModal({
   );
 }
 
-function haversineMetres(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number,
-): number {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLng = (lng2 - lng1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * (Math.PI / 180)) *
-      Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
 /* ══════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════ */
@@ -445,80 +427,38 @@ export default function BusinessesClientPage() {
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const boundsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handleBoundsChange = useCallback(
-    (bounds: {
-      swLat: number;
-      swLng: number;
-      neLat: number;
-      neLng: number;
-    }) => {
-      if (boundsTimerRef.current) clearTimeout(boundsTimerRef.current);
-      boundsTimerRef.current = setTimeout(() => {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("swLat", String(bounds.swLat));
-        params.set("swLng", String(bounds.swLng));
-        params.set("neLat", String(bounds.neLat));
-        params.set("neLng", String(bounds.neLng));
-        router.replace(`/search?${params.toString()}`, { scroll: false });
-      }, 600);
-    },
-    [searchParams, router],
-  );
-
   const businesses = useMemo(() => apiResponse?.data || [], [apiResponse]);
   const events = useMemo(() => eventsResponse?.data ?? [], [eventsResponse]);
   const isServices = listType === "services";
-  const data = isServices ? businesses : events;
 
-  const userLat = searchParams.get("lat")
-    ? Number(searchParams.get("lat"))
-    : null;
-  const userLng = searchParams.get("lng")
-    ? Number(searchParams.get("lng"))
-    : null;
+  // Shared location state — GPS auto-request, manual map-area override, and
+  // city selection all live here, driven off the URL params (the single
+  // source of truth shared with the search bar mounted in the Navbar).
+  const {
+    userLat,
+    userLng,
+    searchLocationMode,
+    refLat,
+    refLng,
+    geoDenied,
+    handleBoundsChange,
+  } = useSearchLocation();
 
-  const enrichedBusinesses = useMemo(() => {
-    const withDistance = businesses.map((b: any) => {
-      if (typeof b.distance === "number") return b;
-      if (userLat !== null && userLng !== null && b.latitude && b.longitude) {
-        return {
-          ...b,
-          distance: haversineMetres(
-            userLat,
-            userLng,
-            Number(b.latitude),
-            Number(b.longitude),
-          ),
-        };
-      }
-      return b;
-    });
-    const sorted =
-      userLat !== null && userLng !== null
-        ? [...withDistance].sort((a: any, b: any) => {
-            const da = typeof a.distance === "number" ? a.distance : Infinity;
-            const db = typeof b.distance === "number" ? b.distance : Infinity;
-            return da - db;
-          })
-        : withDistance;
-    // Cap at 1000 km when geo coords are present
-    if (userLat !== null && userLng !== null) {
-      return sorted.filter(
-        (b: any) => typeof b.distance !== "number" || b.distance <= 1000 * 1000,
-      );
-    }
-    return sorted;
-  }, [businesses, userLat, userLng]);
+  const enrichedBusinesses = useDistanceEnriched(businesses, refLat, refLng);
+  const enrichedEvents = useDistanceEnriched(events, refLat, refLng);
+  const data = isServices ? enrichedBusinesses : enrichedEvents;
   const isLoading = isServices ? isLoadingBusinesses : isLoadingEvents;
   const service =
     searchParams.get("service") || searchParams.get("search") || "";
-  const cityLabel = searchParams.get("city") ?? "Australia";
+  const isNearMe =
+    !searchParams.get("city") && refLat !== null && refLng !== null;
+  const nearLabel = searchLocationMode === "mapArea" ? "in this map area" : "near you";
+  const cityLabel = searchParams.get("city") ?? (isNearMe ? "" : "Australia");
   const countText = isLoading
     ? "Loading…"
     : isServices
-      ? `${businesses.length}${businesses.length === 0 ? "" : "+"} services in ${cityLabel}`
-      : `${events.length}${events.length === 0 ? "" : "+"} events in ${cityLabel}`;
+      ? `${businesses.length}${businesses.length === 0 ? "" : "+"} services ${isNearMe ? nearLabel : `in ${cityLabel}`}`
+      : `${events.length}${events.length === 0 ? "" : "+"} events ${isNearMe ? nearLabel : `in ${cityLabel}`}`;
 
   /* ── Segment toggle ── */
   const SEG_BASE: React.CSSProperties = {
@@ -582,7 +522,7 @@ export default function BusinessesClientPage() {
             {service || "All services and events"}
           </div>
           <div style={{ fontSize: 13, color: "#64748b", marginTop: 1 }}>
-            Any time · {cityLabel}
+            Any time · {isNearMe ? "Near you" : cityLabel}
           </div>
         </div>
 
@@ -674,39 +614,28 @@ export default function BusinessesClientPage() {
           </svg>
         </button>
 
-        {/* Venues / Events chip */}
-        <button
-          onClick={() =>
-            setListType(listType === "services" ? "events" : "services")
-          }
+        {/* Services / Events pill — same segmented toggle as desktop, so the
+           choice always reads as "pick one of two", not "tap to flip". */}
+        <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: 5,
-            border: "1px solid #e6ebf2",
             background: "#fff",
-            color: "#0f2748",
+            border: "1px solid #e9edf3",
             borderRadius: 9999,
-            padding: "8px 14px",
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
+            padding: 4,
             flexShrink: 0,
           }}>
-          {listType === "services" ? "Services" : "Events"}
-          <svg
-            width={12}
-            height={12}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2.5}
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
+          <button
+            onClick={() => setListType("services")}
+            style={listType === "services" ? SEG_ACT : SEG_BASE}>
+            Services
+          </button>
+          <button
+            onClick={() => setListType("events")}
+            style={listType === "events" ? SEG_ACT : SEG_BASE}>
+            Events
+          </button>
+        </div>
       </div>
     </>
   );
@@ -913,7 +842,7 @@ export default function BusinessesClientPage() {
           ? enrichedBusinesses.map((b: any) => (
               <BusinessCard key={b._id} business={b} />
             ))
-          : events.map((event: any) => (
+          : enrichedEvents.map((event: any) => (
               <EventCard key={event._id} event={event} />
             ))}
       </div>
@@ -924,9 +853,11 @@ export default function BusinessesClientPage() {
   const MapBox = ({
     height,
     radius = 20,
+    isVisible = true,
   }: {
     height: string | number;
     radius?: number;
+    isVisible?: boolean;
   }) => (
     <div
       style={{
@@ -937,23 +868,17 @@ export default function BusinessesClientPage() {
         background: "#e9eef0",
         border: "1px solid #e2e8ee",
       }}>
-      {isServices ? (
-        <BusinessMap
-          businesses={enrichedBusinesses}
-          currentCity={searchParams.get("city") || ""}
-          userLat={userLat ?? undefined}
-          userLng={userLng ?? undefined}
-          onBoundsChange={handleBoundsChange}
-        />
-      ) : (
-        <EventMap
-          businesses={events}
-          currentCity={searchParams.get("city") || ""}
-          isVisible
-          isExpanded={false}
-          onToggleExpand={() => {}}
-        />
-      )}
+      <SearchMap
+        activeType={listType}
+        businesses={enrichedBusinesses}
+        events={enrichedEvents}
+        currentCity={searchParams.get("city") || ""}
+        userLat={userLat ?? undefined}
+        userLng={userLng ?? undefined}
+        searchLocationMode={searchLocationMode}
+        onBoundsChange={handleBoundsChange}
+        isVisible={isVisible}
+      />
     </div>
   );
 
@@ -965,32 +890,52 @@ export default function BusinessesClientPage() {
       <main
         style={{ maxWidth: 1680, margin: "0 auto", padding: "20px 16px 56px" }}
         className="md:px-10">
+        {geoDenied && userLat === null && (
+          <div
+            style={{
+              background: "#f8fafc",
+              border: "1px solid #e9edf3",
+              borderRadius: 12,
+              padding: "10px 16px",
+              fontSize: 13,
+              color: "#64748b",
+              marginBottom: 16,
+            }}>
+            Location access is disabled. Search for a location manually to
+            see nearby results.
+          </div>
+        )}
+
         {/* ════════════ DESKTOP ════════════ */}
+        {/* The map column always stays mounted — only its width/opacity
+           toggle with showMap — so the underlying map instance (position,
+           zoom, selected marker) survives hiding it, instead of being
+           destroyed and recreated (which would reset it) every time. */}
         <div className="hidden md:block">
-          {showMap ? (
-            /* With map: 2-col card grid + sticky map */
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: showMap ? "minmax(0, 1.04fr) 0.96fr" : "1fr 0px",
+              gap: showMap ? 26 : 0,
+              alignItems: "start",
+            }}>
+            <div style={{ minWidth: 0 }}>
+              {Toolbar()}
+              {CardGrid({ cols: showMap ? 2 : 3 })}
+            </div>
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "minmax(0, 1.04fr) 0.96fr",
-                gap: 26,
-                alignItems: "start",
+                position: "sticky",
+                top: 96,
+                width: showMap ? undefined : 0,
+                height: showMap ? undefined : 0,
+                opacity: showMap ? 1 : 0,
+                overflow: "hidden",
+                pointerEvents: showMap ? "auto" : "none",
               }}>
-              <div style={{ minWidth: 0 }}>
-                {Toolbar()}
-                {CardGrid({ cols: 2 })}
-              </div>
-              <div style={{ position: "sticky", top: 96 }}>
-                {MapBox({ height: "calc(100vh - 168px)" })}
-              </div>
+              {MapBox({ height: "calc(100vh - 168px)", isVisible: showMap })}
             </div>
-          ) : (
-            /* No map: 3-col card grid */
-            <>
-              {Toolbar()}
-              {CardGrid({ cols: 3 })}
-            </>
-          )}
+          </div>
         </div>
 
         {/* ════════════ MOBILE ════════════ */}
@@ -1025,33 +970,36 @@ export default function BusinessesClientPage() {
             </div>
           )}
 
-          {/* Full-screen map overlay */}
-          {mobileMapOpen && (
+          {/* Full-screen map overlay — always mounted, hidden via CSS
+             rather than unmounted, so the map instance (position, zoom,
+             selected marker) survives closing it. */}
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: mobileMapOpen ? 45 : -1,
+              display: "flex",
+              flexDirection: "column",
+              background: "#e9eef0",
+              visibility: mobileMapOpen ? "visible" : "hidden",
+              opacity: mobileMapOpen ? 1 : 0,
+              pointerEvents: mobileMapOpen ? "auto" : "none",
+            }}>
             <div
               style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 45,
-                display: "flex",
-                flexDirection: "column",
-                background: "#e9eef0",
+                background: "#fff",
+                borderBottom: "1px solid #f1f4f8",
+                flexShrink: 0,
               }}>
-              <div
-                style={{
-                  background: "#fff",
-                  borderBottom: "1px solid #f1f4f8",
-                  flexShrink: 0,
-                }}>
-                {MobileSearchHeader()}
-              </div>
-              <div style={{ flex: 1, position: "relative" }}>
-                {MapBox({ height: "100%", radius: 0 })}
-              </div>
+              {MobileSearchHeader()}
             </div>
-          )}
+            <div style={{ flex: 1, position: "relative" }}>
+              {MapBox({ height: "100%", radius: 0, isVisible: mobileMapOpen })}
+            </div>
+          </div>
         </div>
       </main>
 

@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, MapPin, Clock, Navigation } from "lucide-react";
 import { AU_CITIES } from "@/lib/data/services-catalog";
 import { BUSINESS_CATEGORIES } from "@/lib/data/business-categories";
+import { useLocationSearchBar } from "@/components/ResuableComponents/LocationSearch/useLocationSearchBar";
 
 type ActiveSeg = "what" | "where" | "when" | null;
 
@@ -139,22 +140,15 @@ export default function BusinessSearchWithDates() {
   const [service, setService] = useState(
     searchParams.get("service") || searchParams.get("search") || "",
   );
-  const [location, setLocation] = useState(() => {
-    const lat = searchParams.get("lat");
-    const lng = searchParams.get("lng");
-    if (lat && lng) return "Current location";
-    return searchParams.get("city") || "";
-  });
-  const [geoCoords, setGeoCoords] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(() => {
-    const lat = searchParams.get("lat");
-    const lng = searchParams.get("lng");
-    if (lat && lng) return { lat: Number(lat), lng: Number(lng) };
-    return null;
-  });
-  const [locLoading, setLocLoading] = useState(false);
+  const {
+    location,
+    locLoading,
+    requestGeoLocation: requestGeo,
+    selectCity: selectCityLocation,
+    clearLocation,
+    ensureLocationForSearch,
+    applyLocationParams,
+  } = useLocationSearchBar();
   const [selDay, setSelDay] = useState<{
     y: number;
     m: number;
@@ -211,20 +205,7 @@ export default function BusinessSearchWithDates() {
   const toggle = (seg: ActiveSeg) =>
     setActive((prev) => (prev === seg ? null : seg));
 
-  const requestGeoLocation = () => {
-    if (!navigator.geolocation) return;
-    setLocLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setGeoCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocation("Current location");
-        setLocLoading(false);
-        setActive("when");
-      },
-      () => setLocLoading(false),
-      { timeout: 8000 },
-    );
-  };
+  const requestGeoLocation = () => requestGeo(() => setActive("when"));
 
   const whenLabel = () => {
     if (!selDay)
@@ -238,52 +219,26 @@ export default function BusinessSearchWithDates() {
   };
 
   const handleSearch = useCallback(() => {
-    const params = new URLSearchParams();
-    if (service) params.set("service", service);
+    // No active location (e.g. the user cleared it) — fall back to the
+    // user's current GPS position before submitting, rather than searching
+    // with no location context at all.
+    ensureLocationForSearch(() => {
+      const params = new URLSearchParams();
+      if (service) params.set("service", service);
+      applyLocationParams(params);
 
-    let sameLocation = false;
-    if (geoCoords) {
-      params.set("lat", String(geoCoords.lat));
-      params.set("lng", String(geoCoords.lng));
-      sameLocation =
-        searchParams.get("lat") === String(geoCoords.lat) &&
-        searchParams.get("lng") === String(geoCoords.lng);
-    } else if (location) {
-      params.set("city", location);
-      sameLocation = searchParams.get("city") === location;
-    }
+      if (selDay)
+        params.set(
+          "date",
+          `${selDay.y}-${String(selDay.m + 1).padStart(2, "0")}-${String(selDay.d).padStart(2, "0")}`,
+        );
+      if (timeSlot !== "any") params.set("time", timeSlot);
+      router.push(`/search?${params.toString()}`);
+      setActive(null);
+    });
+  }, [ensureLocationForSearch, service, applyLocationParams, selDay, timeSlot, router]);
 
-    // The map viewport (from panning/zooming on the results page) is only
-    // still meaningful if the city/location hasn't changed — otherwise the
-    // old bounds would point at the wrong place.
-    if (sameLocation) {
-      const swLat = searchParams.get("swLat");
-      const swLng = searchParams.get("swLng");
-      const neLat = searchParams.get("neLat");
-      const neLng = searchParams.get("neLng");
-      if (swLat && swLng && neLat && neLng) {
-        params.set("swLat", swLat);
-        params.set("swLng", swLng);
-        params.set("neLat", neLat);
-        params.set("neLng", neLng);
-      }
-    }
-
-    if (selDay)
-      params.set(
-        "date",
-        `${selDay.y}-${String(selDay.m + 1).padStart(2, "0")}-${String(selDay.d).padStart(2, "0")}`,
-      );
-    if (timeSlot !== "any") params.set("time", timeSlot);
-    router.push(`/search?${params.toString()}`);
-    setActive(null);
-  }, [service, location, geoCoords, selDay, timeSlot, router, searchParams]);
-
-  const selectCity = (city: string) => {
-    setGeoCoords(null);
-    setLocation(city);
-    setActive("when");
-  };
+  const selectCity = (city: string) => selectCityLocation(city, () => setActive("when"));
 
   const prevMonth = () => {
     if (viewM === 0) {
@@ -434,7 +389,7 @@ export default function BusinessSearchWithDates() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setLocation("");
+                    clearLocation();
                   }}
                   style={{
                     border: "none",

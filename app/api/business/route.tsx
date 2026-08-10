@@ -5,6 +5,8 @@ import { Service } from "@/server/models/Service.model";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import "@/server/models/Service.model";
+import { resolveCityCoords } from "@/components/ResuableComponents/LocationSearch/city-coords";
+import { buildDistancePipeline } from "@/server/lib/geo-search";
 
 function escapeRegex(text: string) {
   return text.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
@@ -108,7 +110,7 @@ export async function GET(request: NextRequest) {
 
     const lat = rawLat !== null ? parseFloat(rawLat) : null;
     const lng = rawLng !== null ? parseFloat(rawLng) : null;
-    const useGeo =
+    let useGeo =
       lat !== null &&
       lng !== null &&
       !isNaN(lat) &&
@@ -117,6 +119,9 @@ export async function GET(request: NextRequest) {
       lat <= 90 &&
       lng >= -180 &&
       lng <= 180;
+    let geoLat = lat;
+    let geoLng = lng;
+    let geoRadiusKm = rawRadius ? Math.max(1, parseFloat(rawRadius)) : null;
 
     const hasBounds = !!(rawSwLat && rawSwLng && rawNeLat && rawNeLng);
 
@@ -239,58 +244,73 @@ export async function GET(request: NextRequest) {
       baseFilter.$and = andClauses;
     }
 
-    // ── Spatial filter: bounds OR city ───────────────────────────────────────
+    // ── Spatial filter: map area (bounds) OR city — both resolve to a
+    // reference point for a distance-sorted search, not a hard exclusion
+    // filter. The list should keep showing the complete set of nearby
+    // results sorted by distance even when the user has zoomed into a
+    // small area — only the map's own rendering (drawing markers at their
+    // real position) naturally clips to whatever's currently in view.
+    // ───────────────────────────────────────────────────────────────────────
     if (hasBounds) {
-      // Filter by visible map area using the numeric latitude/longitude fields.
-      // $toDouble handles both string and number storage in the DB.
       const swLatF = parseFloat(rawSwLat!);
       const swLngF = parseFloat(rawSwLng!);
-      const neLat_f = parseFloat(rawNeLat!);
+      const neLatF = parseFloat(rawNeLat!);
       const neLngF = parseFloat(rawNeLng!);
-      baseFilter.$expr = {
-        $and: [
-          { $gte: [{ $toDouble: "$latitude" }, swLatF] },
-          { $lte: [{ $toDouble: "$latitude" }, neLat_f] },
-          { $gte: [{ $toDouble: "$longitude" }, swLngF] },
-          { $lte: [{ $toDouble: "$longitude" }, neLngF] },
-        ],
-      };
-    } else if (city && city !== "all") {
-      // Initial city-based search (no bounds yet)
-      baseFilter.city = { $regex: `^${escapeRegex(city)}$`, $options: "i" };
+      useGeo = true;
+      geoLat = (swLatF + neLatF) / 2;
+      geoLng = (swLngF + neLngF) / 2;
+      // No radius cap here — the point is to keep surfacing nearby results
+      // beyond the current viewport, not to exclude them.
+    } else if (city && city !== "all" && !useGeo) {
+      // A selected city is a map/distance reference point, not a database
+      // filter — the stored `city` text field is sparse/inconsistent, so
+      // matching against it (rather than real coordinates) silently
+      // excluded businesses that are genuinely in the area. Resolve the
+      // city's known centroid and run the same distance-based search used
+      // for GPS/"Current location". If the city isn't in our known
+      // coordinate table, no spatial constraint is applied at all — better
+      // to fall through to an unfiltered-by-location result than to
+      // reintroduce a strict, easily-wrong text match.
+      const cityCoords = resolveCityCoords(city);
+      if (cityCoords) {
+        useGeo = true;
+        geoLat = cityCoords[0];
+        geoLng = cityCoords[1];
+        geoRadiusKm = geoRadiusKm ?? 50; // metro-area scope
+      }
     }
 
     // ── Execute query ────────────────────────────────────────────────────────
     let businesses: any[];
 
-    if (useGeo && !hasBounds) {
-      // GPS-based: sort by distance, optional radius cap
-      const geoNearStage: any = {
-        near: { type: "Point", coordinates: [lng!, lat!] },
-        distanceField: "distance",
-        query: baseFilter,
-        spherical: true,
-      };
-      if (rawRadius) {
-        geoNearStage.maxDistance = Math.max(1, parseFloat(rawRadius)) * 1000;
-      }
+    if (useGeo) {
+      // GPS-, city-, or map-area-based: sort by distance, optional radius
+      // cap. Computed from latitude/longitude directly (see
+      // buildDistancePipeline) rather than $geoNear, so businesses missing
+      // the `geo` GeoJSON field still show up. A genuinely empty result
+      // (nothing within range) is left empty — falling back to an
+      // unsorted, unfiltered-by-distance query would defeat the point of a
+      // distance-based search.
       try {
-        businesses = await User.aggregate([
-          { $geoNear: geoNearStage },
-          { $limit: RESULT_LIMIT },
-        ]);
+        businesses = await User.aggregate(
+          buildDistancePipeline(
+            geoLat!,
+            geoLng!,
+            baseFilter,
+            geoRadiusKm,
+            RESULT_LIMIT,
+          ),
+        );
       } catch {
-        businesses = [];
-      }
-      // Fall back if geo index not yet populated
-      if (businesses.length === 0) {
+        // Aggregation itself failed (e.g. transient DB error) — degrade to
+        // an unsorted query rather than a hard failure.
         businesses = await User.find(baseFilter)
           .sort({ createdAt: -1 })
           .limit(RESULT_LIMIT)
           .lean();
       }
     } else {
-      // Bounds / city / text filter
+      // City/text filter only, no resolvable coordinates
       businesses = await User.find(baseFilter)
         .sort({ createdAt: -1 })
         .limit(RESULT_LIMIT)

@@ -1,43 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  useMap,
-  useMapEvents,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 import { X, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-
-/* ── AU city centre lookup ── */
-const CITY_COORDS: Record<string, [number, number]> = {
-  sydney: [-33.8688, 151.2093],
-  melbourne: [-37.8136, 144.9631],
-  brisbane: [-27.4698, 153.0251],
-  perth: [-31.9505, 115.8605],
-  adelaide: [-34.9285, 138.6007],
-  canberra: [-35.2809, 149.13],
-  hobart: [-42.8821, 147.3272],
-  darwin: [-12.4634, 130.8456],
-};
-const AU_CENTRE: [number, number] = [-25.27, 133.77];
-const AU_ZOOM_DESKTOP = 5;
-const AU_ZOOM_MOBILE = 4;
-
-/* ── Helpers ── */
-function fmtDistance(metres: number): string {
-  return metres < 1000
-    ? `${Math.round(metres)} m`
-    : `${(metres / 25000).toFixed(1)} km`;
-}
+import L from "leaflet";
+import LocationMap from "@/components/ResuableComponents/LocationSearch/LocationMap";
+import { fmtDistance, haversineMetres } from "@/components/ResuableComponents/LocationSearch/geo";
+import type { SearchLocationMode, Bounds } from "@/components/ResuableComponents/LocationSearch/useSearchLocation";
 
 /* ── Fresha-style dark-pill business marker ── */
-function makeMarkerIcon(rating: string | null, selected: boolean): L.DivIcon {
+export function makeMarkerIcon(rating: string | null, selected: boolean): L.DivIcon {
   const bg = selected ? "#fff" : "#0f2748";
   const fg = selected ? "#0f2748" : "#fff";
   const border = selected ? "border:2px solid #0f2748;" : "";
@@ -50,96 +22,8 @@ function makeMarkerIcon(rating: string | null, selected: boolean): L.DivIcon {
   });
 }
 
-/* ── Blue pulsing user-location dot ── */
-function makeUserIcon(): L.DivIcon {
-  return L.divIcon({
-    className: "",
-    html: `<div style="position:relative;width:18px;height:18px;">
-      <style>@keyframes wha-pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.6);opacity:0}}</style>
-      <div style="position:absolute;inset:-6px;background:rgba(66,133,244,0.22);border-radius:50%;animation:wha-pulse 1.8s ease-out infinite;"></div>
-      <div style="position:absolute;inset:0;background:#4285f4;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(66,133,244,0.5);"></div>
-    </div>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
-  });
-}
-
-/* ── Fly to city/user on initial load only (does not react to business list) ── */
-function BoundsUpdater({
-  userLocation,
-  city,
-  auZoom,
-}: {
-  userLocation: [number, number] | null;
-  city: string;
-  auZoom: number;
-}) {
-  const map = useMap();
-
-  useEffect(() => {
-    map.invalidateSize();
-    const t = setTimeout(() => map.invalidateSize(), 400);
-    return () => clearTimeout(t);
-  }, [map]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        if (userLocation) {
-          map.flyTo(userLocation, 14, { duration: 1 });
-          return;
-        }
-        const centre = city ? CITY_COORDS[city.toLowerCase().trim()] : null;
-        map.flyTo(centre ?? AU_CENTRE, centre ? 9 : auZoom, { duration: 1 });
-      } catch {}
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [userLocation, city, auZoom, map]);
-
-  return null;
-}
-
-/* ── Fire onBoundsChange whenever the user pans or zooms ── */
-function MapBoundsWatcher({
-  onBoundsChange,
-}: {
-  onBoundsChange: (b: {
-    swLat: number;
-    swLng: number;
-    neLat: number;
-    neLng: number;
-  }) => void;
-}) {
-  const cbRef = useRef(onBoundsChange);
-  useEffect(() => {
-    cbRef.current = onBoundsChange;
-  });
-
-  useMapEvents({
-    moveend(e) {
-      const b = e.target.getBounds();
-      cbRef.current({
-        swLat: b.getSouth(),
-        swLng: b.getWest(),
-        neLat: b.getNorth(),
-        neLng: b.getEast(),
-      });
-    },
-    zoomend(e) {
-      const b = e.target.getBounds();
-      cbRef.current({
-        swLat: b.getSouth(),
-        swLng: b.getWest(),
-        neLat: b.getNorth(),
-        neLng: b.getEast(),
-      });
-    },
-  });
-  return null;
-}
-
 /* ── Business info popup card ── */
-function BusinessPopup({
+export function BusinessPopup({
   business,
   userLocation,
   onClose,
@@ -163,17 +47,14 @@ function BusinessPopup({
   if (typeof business.distance === "number") {
     distText = fmtDistance(business.distance);
   } else if (userLocation && business.latitude && business.longitude) {
-    const R = 6371000;
-    const dLat =
-      (Number(business.latitude) - userLocation[0]) * (Math.PI / 180);
-    const dLng =
-      (Number(business.longitude) - userLocation[1]) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(userLocation[0] * (Math.PI / 180)) *
-        Math.cos(Number(business.latitude) * (Math.PI / 180)) *
-        Math.sin(dLng / 2) ** 2;
-    distText = fmtDistance(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    distText = fmtDistance(
+      haversineMetres(
+        userLocation[0],
+        userLocation[1],
+        Number(business.latitude),
+        Number(business.longitude),
+      ),
+    );
   }
 
   return (
@@ -310,110 +191,57 @@ function BusinessPopup({
 }
 
 /* ══════════════════════════════════════════════
-   MAIN COMPONENT
+   MAIN COMPONENT — thin wrapper around the shared LocationMap engine,
+   supplying only business-specific marker/popup rendering.
 ══════════════════════════════════════════════ */
 export default function BusinessMap({
   businesses,
   currentCity,
   userLat,
   userLng,
+  searchLocationMode = "current",
   onBoundsChange,
 }: {
   businesses: any[];
   currentCity: string;
   userLat?: number;
   userLng?: number;
-  onBoundsChange?: (b: {
-    swLat: number;
-    swLng: number;
-    neLat: number;
-    neLng: number;
-  }) => void;
+  searchLocationMode?: SearchLocationMode;
+  onBoundsChange?: (b: Bounds) => void;
 }) {
-  const userLocation: [number, number] | null =
-    userLat != null && userLng != null ? [userLat, userLng] : null;
-
-  const [selectedBusiness, setSelectedBusiness] = useState<any | null>(null);
-
-  // Zoomed out further on mobile so the whole of Australia stays visible in
-  // the initial no-city view — the same zoom level shows less area on a
-  // narrow viewport than on desktop.
-  const [auZoom] = useState(() =>
-    typeof window !== "undefined" && window.innerWidth < 768
-      ? AU_ZOOM_MOBILE
-      : AU_ZOOM_DESKTOP,
-  );
-
-  // Memoised icons (Leaflet DivIcons are cheap but stable refs prevent re-renders)
-  const userIcon = useMemo(() => makeUserIcon(), []);
-
-  const handleMarkerClick = (business: any) => {
-    setSelectedBusiness((prev: any) =>
-      prev?._id === business._id ? null : business,
-    );
-  };
-
   return (
-    <div className="h-full w-full relative z-0">
-      <MapContainer
-        center={AU_CENTRE}
-        zoom={auZoom}
-        zoomControl={false}
-        className="h-full w-full"
-        style={{ height: "100%", width: "100%", position: "absolute" }}>
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
-
-        <BoundsUpdater
-          userLocation={userLocation}
-          city={currentCity}
-          auZoom={auZoom}
-        />
-        {onBoundsChange && <MapBoundsWatcher onBoundsChange={onBoundsChange} />}
-
-        {/* User location blue dot */}
-        {userLocation && <Marker position={userLocation} icon={userIcon} />}
-
-        {/* Business markers */}
-        {businesses.map((business: any) => {
-          if (!business.latitude || !business.longitude) return null;
-
-          const avgRating =
-            business.reviews?.length > 0
-              ? (
-                  business.reviews.reduce(
-                    (acc: number, r: any) => acc + r.rating,
-                    0,
-                  ) / business.reviews.length
-                ).toFixed(1)
-              : null;
-
-          const isSelected = selectedBusiness?._id === business._id;
-
-          return (
-            <Marker
-              key={business._id}
-              position={[Number(business.latitude), Number(business.longitude)]}
-              icon={makeMarkerIcon(avgRating, isSelected)}
-              zIndexOffset={isSelected ? 1000 : 0}
-              eventHandlers={{
-                click: () => handleMarkerClick(business),
-              }}
-            />
-          );
-        })}
-      </MapContainer>
-
-      {/* Fresha-style business popup card */}
-      {selectedBusiness && (
+    <LocationMap
+      items={businesses}
+      getId={(business: any) => business._id}
+      getPosition={(business: any) =>
+        business.latitude && business.longitude
+          ? [Number(business.latitude), Number(business.longitude)]
+          : null
+      }
+      renderMarkerIcon={(business: any, selected) => {
+        const avgRating =
+          business.reviews?.length > 0
+            ? (
+                business.reviews.reduce(
+                  (acc: number, r: any) => acc + r.rating,
+                  0,
+                ) / business.reviews.length
+              ).toFixed(1)
+            : null;
+        return makeMarkerIcon(avgRating, selected);
+      }}
+      renderPopup={(business, ctx) => (
         <BusinessPopup
-          business={selectedBusiness}
-          userLocation={userLocation}
-          onClose={() => setSelectedBusiness(null)}
+          business={business}
+          userLocation={ctx.userLocation}
+          onClose={ctx.onClose}
         />
       )}
-    </div>
+      currentCity={currentCity}
+      userLat={userLat}
+      userLng={userLng}
+      searchLocationMode={searchLocationMode}
+      onBoundsChange={onBoundsChange}
+    />
   );
 }

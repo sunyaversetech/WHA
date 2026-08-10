@@ -24,6 +24,7 @@ import {
   searchServices,
   type ServiceItem,
 } from "@/lib/data/services-catalog";
+import { useLocationSearchBar } from "@/components/ResuableComponents/LocationSearch/useLocationSearchBar";
 
 /* ── types ── */
 type Step = "what" | "where" | "when";
@@ -202,22 +203,15 @@ export default function MobileBusinessSearchWithDates({
     searchParams.get("service") || searchParams.get("search") || "",
   );
   const [serviceQuery, setServiceQuery] = useState(service);
-  const [location, setLocation] = useState(() => {
-    const lat = searchParams.get("lat");
-    const lng = searchParams.get("lng");
-    if (lat && lng) return "Current location";
-    return searchParams.get("city") || "";
-  });
-  const [geoCoords, setGeoCoords] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(() => {
-    const lat = searchParams.get("lat");
-    const lng = searchParams.get("lng");
-    if (lat && lng) return { lat: Number(lat), lng: Number(lng) };
-    return null;
-  });
-  const [locLoading, setLocLoading] = useState(false);
+  const {
+    location,
+    locLoading,
+    requestGeoLocation: requestGeo,
+    selectCity: selectCityLocation,
+    clearLocation,
+    ensureLocationForSearch,
+    applyLocationParams,
+  } = useLocationSearchBar();
   const [selDay, setSelDay] = useState<{
     y: number;
     m: number;
@@ -262,75 +256,36 @@ export default function MobileBusinessSearchWithDates({
     setStep("where");
   };
 
-  const requestGeoLocation = () => {
-    if (!navigator.geolocation) return;
-    setLocLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setGeoCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocation("Current location");
-        setLocLoading(false);
-        setStep("when");
-      },
-      () => setLocLoading(false),
-      { timeout: 8000 },
-    );
-  };
+  const requestGeoLocation = () => requestGeo(() => setStep("when"));
 
-  const selectCity = (city: string) => {
-    setGeoCoords(null);
-    setLocation(city);
-    setStep("when");
-  };
+  const selectCity = (city: string) => selectCityLocation(city, () => setStep("when"));
 
   const handleSearch = useCallback(() => {
-    const params = new URLSearchParams();
-    if (service) params.set("service", service);
+    // No active location (e.g. the user cleared it) — fall back to the
+    // user's current GPS position before submitting, rather than searching
+    // with no location context at all.
+    ensureLocationForSearch(() => {
+      const params = new URLSearchParams();
+      if (service) params.set("service", service);
+      applyLocationParams(params);
 
-    let sameLocation = false;
-    if (geoCoords) {
-      params.set("lat", String(geoCoords.lat));
-      params.set("lng", String(geoCoords.lng));
-      sameLocation =
-        searchParams.get("lat") === String(geoCoords.lat) &&
-        searchParams.get("lng") === String(geoCoords.lng);
-    } else if (location) {
-      params.set("city", location);
-      sameLocation = searchParams.get("city") === location;
-    }
-
-    // Only carry the map viewport over if the city/location is unchanged —
-    // otherwise the old bounds would point at the wrong place.
-    if (sameLocation) {
-      const swLat = searchParams.get("swLat");
-      const swLng = searchParams.get("swLng");
-      const neLat = searchParams.get("neLat");
-      const neLng = searchParams.get("neLng");
-      if (swLat && swLng && neLat && neLng) {
-        params.set("swLat", swLat);
-        params.set("swLng", swLng);
-        params.set("neLat", neLat);
-        params.set("neLng", neLng);
-      }
-    }
-
-    if (selDay)
-      params.set(
-        "date",
-        `${selDay.y}-${String(selDay.m + 1).padStart(2, "0")}-${String(selDay.d).padStart(2, "0")}`,
-      );
-    if (timeSlot !== "any") params.set("time", timeSlot);
-    router.push(`/search?${params.toString()}`);
-    setOpen(false);
+      if (selDay)
+        params.set(
+          "date",
+          `${selDay.y}-${String(selDay.m + 1).padStart(2, "0")}-${String(selDay.d).padStart(2, "0")}`,
+        );
+      if (timeSlot !== "any") params.set("time", timeSlot);
+      router.push(`/search?${params.toString()}`);
+      setOpen(false);
+    });
   }, [
+    ensureLocationForSearch,
     service,
-    location,
-    geoCoords,
+    applyLocationParams,
     selDay,
     timeSlot,
     router,
     setOpen,
-    searchParams,
   ]);
 
   const prevMonth = () => {
@@ -523,7 +478,7 @@ export default function MobileBusinessSearchWithDates({
                     e.stopPropagation();
                     setService("");
                     setServiceQuery("");
-                    setLocation("");
+                    clearLocation();
                     setSelDay(null);
                     setTimeSlot("any");
                   }}
@@ -655,7 +610,7 @@ export default function MobileBusinessSearchWithDates({
                   if (step === "what") {
                     setService("");
                     setServiceQuery("");
-                  } else if (step === "where") setLocation("");
+                  } else if (step === "where") clearLocation();
                   else {
                     setSelDay(null);
                     setTimeSlot("any");
