@@ -77,6 +77,7 @@ const EventSchema = new Schema({
   community_name: { type: String },
   isSponsor: { type: Boolean, default: false },
   slug: { type: String },
+  archived: { type: Boolean, default: false },
 }, { timestamps: true });
 
 // 2dsphere index enables $geoNear aggregation for location-based queries.

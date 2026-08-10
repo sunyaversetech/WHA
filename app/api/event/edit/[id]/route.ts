@@ -124,7 +124,6 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     const userId = (session.user as any).id;
 
     const formData = await req.formData();
-    const dateRangeRaw = formData.get("dateRange") as string;
 
     const rawData: Record<string, any> = {};
     formData.forEach((value, key) => {
@@ -142,26 +141,6 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       }
     });
 
-    const formattedDates: { dateFrom?: string; dateTo?: string } = {};
-
-    if (dateRangeRaw) {
-      try {
-        const parsedRange = JSON.parse(dateRangeRaw);
-
-        if (parsedRange.from) {
-          const [y, m, d] = parsedRange.from.split("T")[0].split("-");
-          formattedDates.dateFrom = `${d}-${m}-${y}`;
-        }
-
-        if (parsedRange.to) {
-          const [y, m, d] = parsedRange.to.split("T")[0].split("-");
-          formattedDates.dateTo = `${d}-${m}-${y}`;
-        }
-      } catch (e) {
-        console.error("Failed to parse dateRange:", e);
-      }
-    }
-
     const validatedData = eventSchema.partial().parse(rawData);
 
     const event = await Event.findById(eventId);
@@ -176,6 +155,24 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
         { error: "You can only edit your own events" },
         { status: 403 },
       );
+    }
+
+    if (validatedData.dateRange?.to && event.dateRange?.to) {
+      const newEnd = new Date(validatedData.dateRange.to);
+      const currentEnd = new Date(event.dateRange.to);
+      if (
+        !isNaN(newEnd.getTime()) &&
+        !isNaN(currentEnd.getTime()) &&
+        newEnd.getTime() < currentEnd.getTime()
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "End date cannot be set earlier than the event's current end date.",
+          },
+          { status: 400 },
+        );
+      }
     }
 
     const imageField = formData.get("image");
@@ -210,11 +207,32 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       endTime: "",
     };
 
+    // Editing only sends the fields the form actually manages — sold/used
+    // counters are maintained server-side by the purchase/redemption flows,
+    // so they must be carried over from the existing document by _id or a
+    // full-array $set would silently reset them to their schema default.
+    const mergedOptions = (validatedData.options || []).map((opt: any) => {
+      const existing = opt._id
+        ? (event.options || []).find((o: any) => o._id.toString() === opt._id)
+        : null;
+      return { ...opt, sold: existing?.sold || 0 };
+    });
+    const mergedPromoCodes = (validatedData.promo_codes || []).map(
+      (promo: any) => {
+        const existing = promo._id
+          ? (event.promo_codes || []).find(
+              (p: any) => p._id.toString() === promo._id,
+            )
+          : null;
+        return { ...promo, used: existing?.used || 0 };
+      },
+    );
+
     const effectiveCategory = validatedData.price_category ?? event.price_category;
     const categoryGatedFields = {
       ticket_link: effectiveCategory === "external" ? validatedData.ticket_link : "",
-      options: effectiveCategory === "paid" ? validatedData.options : [],
-      promo_codes: effectiveCategory === "paid" ? validatedData.promo_codes : [],
+      options: effectiveCategory === "paid" ? mergedOptions : [],
+      promo_codes: effectiveCategory === "paid" ? mergedPromoCodes : [],
       registration_capacity:
         effectiveCategory === "registration"
           ? validatedData.registration_capacity
@@ -225,7 +243,6 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       ...defaultEmptyFields,
       ...validatedData,
       ...categoryGatedFields,
-      ...formattedDates,
       image: finalImageUrl,
     };
 

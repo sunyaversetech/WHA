@@ -81,6 +81,7 @@ export type EventType = {
   slug?: string;
   createdAt?: string;
   updatedAt?: string;
+  archived?: boolean;
 };
 
 type RedeemCodeType = {
@@ -187,13 +188,24 @@ export const useGetSingleForForm = (id: string) => {
   );
 };
 
-export const useDeleteEvent = () => {
-  return useMutation<ApiResponseType<{ id: string }>, any, { id: string }>({
-    mutationKey: ["deleteEvent"],
-    mutationFn: (data: { id: string }) =>
-      Post<{ id: string }, ApiResponseType<any>>({
-        url: `/api/event/delete/${data.id}`,
-        data: data,
+// export const useDeleteEvent = () => {
+//   return useMutation<ApiResponseType<{ id: string }>, any, { id: string }>({
+//     mutationKey: ["deleteEvent"],
+//     mutationFn: (data: { id: string }) =>
+//       Post<{ id: string }, ApiResponseType<any>>({
+//         url: `/api/event/delete/${data.id}`,
+//         data: data,
+//       }),
+//   });
+// };
+
+export const useArchiveEvent = () => {
+  return useMutation<ApiResponseType<EventType>, any, { id: string }>({
+    mutationKey: ["archiveEvent"],
+    mutationFn: ({ id }: { id: string }) =>
+      Post<null, ApiResponseType<EventType>>({
+        url: `/api/event/archive/${id}`,
+        data: null,
       }),
   });
 };

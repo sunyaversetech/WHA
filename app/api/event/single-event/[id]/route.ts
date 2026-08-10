@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: Props) {
     const { id } = await params;
 
     const event = await Event.findOne({ slug: id })
-      .select("-options.promo_code")
+      .select("-options.promo_code -promo_codes")
       .populate("user", "email business_name city location image")
       .lean();
 

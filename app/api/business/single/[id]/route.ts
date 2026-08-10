@@ -29,7 +29,11 @@ export async function GET(req: NextRequest, { params }: Props) {
     const event = await Event.find({
       user: business._id,
       "dateRange.to": { $gt: new Date().toISOString() },
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .select(
+        "-description -event_rules -refund_policy -support_details -promo_codes -options",
+      );
     const deal = await Deal.find({
       user: business._id,
       "dateRange.to": { $gt: new Date().toISOString() },

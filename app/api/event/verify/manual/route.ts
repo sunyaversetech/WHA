@@ -16,10 +16,7 @@ export async function POST(request: Request) {
     const { uniqueKey, status } = await request.json();
 
     if (!uniqueKey || !["verified", "pending"].includes(status)) {
-      return NextResponse.json(
-        { message: "Invalid request" },
-        { status: 400 },
-      );
+      return NextResponse.json({ message: "Invalid request" }, { status: 400 });
     }
 
     const redemption = await EventRedemption.findOne({ uniqueKey });

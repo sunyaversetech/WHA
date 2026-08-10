@@ -415,6 +415,26 @@ export function EventForm() {
   }, [data, form]);
 
   const onSubmit = (values: EventFormValues) => {
+    if (data?.dateRange?.to && values.dateRange?.to) {
+      const newTo =
+        values.dateRange.to instanceof Date
+          ? values.dateRange.to
+          : new Date(values.dateRange.to);
+      const currentTo = new Date(data.dateRange.to);
+      if (
+        !isNaN(newTo.getTime()) &&
+        !isNaN(currentTo.getTime()) &&
+        newTo.getTime() < currentTo.getTime()
+      ) {
+        const message =
+          "End date cannot be earlier than the event's current end date.";
+        form.setError("dateRange", { type: "manual", message });
+        setSection("location");
+        toast.error(message);
+        return;
+      }
+    }
+
     const formData = new FormData();
 
     Object.entries(values).forEach(([key, value]) => {
@@ -762,6 +782,7 @@ export function EventForm() {
                               />
                             </PopoverContent>
                           </Popover>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />

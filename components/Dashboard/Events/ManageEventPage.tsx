@@ -30,7 +30,7 @@ import {
   useGetSingleForForm,
   useGetEventVerifyUsers,
   useGetEventTicketPurchase,
-  useDeleteEvent,
+  // useDeleteEvent,
   useSetTicketStatus,
   useSendInvoice,
   EventType,
@@ -71,9 +71,11 @@ import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
 import { useQueryClient } from "@tanstack/react-query";
 import VerifyEventPage from "./VerifyEvents";
 
-type EventStatus = "upcoming" | "live" | "past";
+type EventStatus = "upcoming" | "live" | "past" | "archived";
 
 function getEventStatus(event: EventType): EventStatus {
+  if (event.archived) return "archived";
+
   const from = event.dateRange?.from ? new Date(event.dateRange.from) : null;
   if (!from || isNaN(from.getTime())) return "past";
 
@@ -105,6 +107,10 @@ const STATUS_STYLES: Record<EventStatus, { label: string; className: string }> =
     past: {
       label: "Past",
       className: "bg-slate-100 text-slate-500 border-slate-200",
+    },
+    archived: {
+      label: "Archived",
+      className: "bg-amber-50 text-amber-700 border-amber-100",
     },
   };
 
@@ -169,7 +175,7 @@ export default function ManageEventPage() {
     useGetEventVerifyUsers(id);
   const { data: purchaseData, isLoading: purchasesLoading } =
     useGetEventTicketPurchase(id);
-  const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
+  // const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: setTicketStatus, isPending: isChangingStatus } =
     useSetTicketStatus();
   const { mutate: sendInvoice } = useSendInvoice();
@@ -273,18 +279,18 @@ export default function ManageEventPage() {
     toast.success("Event URL copied to clipboard");
   };
 
-  const handleDelete = () => {
-    deleteEvent(
-      { id },
-      {
-        onSuccess: () => {
-          toast.success("Event deleted successfully");
-          queryClient.invalidateQueries({ queryKey: ["event"] });
-          router.push("/dashboard/events");
-        },
-      },
-    );
-  };
+  // const handleDelete = () => {
+  //   deleteEvent(
+  //     { id },
+  //     {
+  //       onSuccess: () => {
+  //         toast.success("Event deleted successfully");
+  //         queryClient.invalidateQueries({ queryKey: ["event"] });
+  //         router.push("/dashboard/events");
+  //       },
+  //     },
+  //   );
+  // };
 
   const handlePrintInvoice = (p: any) => {
     const win = window.open("", "_blank");
@@ -511,7 +517,7 @@ export default function ManageEventPage() {
                   }>
                   <Settings className="h-4 w-4" /> Edit event
                 </DropdownMenuItem>
-                <DeleteConfirmDialog
+                {/* <DeleteConfirmDialog
                   onConfirm={handleDelete}
                   text={event.title}
                   isPending={isDeleting}
@@ -520,7 +526,7 @@ export default function ManageEventPage() {
                       <Trash2 className="h-4 w-4" /> Delete event
                     </div>
                   }
-                />
+                /> */}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

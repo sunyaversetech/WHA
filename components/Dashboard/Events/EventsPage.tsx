@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -20,23 +20,28 @@ import {
   Link2,
   MoreVertical,
   Trash2,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { format, parse } from "date-fns";
 import {
   EventType,
-  useDeleteEvent,
+  // useDeleteEvent,
   useGetEvent,
+  useArchiveEvent,
 } from "@/services/event.service";
 import Link from "next/link";
-import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
+// import { DeleteConfirmDialog } from "@/components/ui/DynamicDeleteButton";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import "@/app/globals.css";
 
-type EventStatus = "upcoming" | "live" | "past";
+type EventStatus = "upcoming" | "live" | "past" | "archived";
 
 function getEventStatus(event: EventType): EventStatus {
+  if (event.archived) return "archived";
+
   const from = event.dateRange?.from ? new Date(event.dateRange.from) : null;
   if (!from || isNaN(from.getTime())) return "past";
 
@@ -55,6 +60,25 @@ function getEventStatus(event: EventType): EventStatus {
   return "live";
 }
 
+function getTicketsTakenCount(event: EventType): number {
+  if (event.price_category === "paid") {
+    return (event.options || []).reduce((sum, o) => sum + (o.sold || 0), 0);
+  }
+  if (event.price_category === "registration") {
+    return event.registration_sold || 0;
+  }
+  return 0;
+}
+
+function parseErrorMessage(error: any, fallback: string): string {
+  try {
+    const parsed = JSON.parse(error?.message);
+    return parsed?.error || parsed?.message || fallback;
+  } catch {
+    return error?.message || fallback;
+  }
+}
+
 function formatEventDateTime(event: EventType): string {
   if (!event.dateRange?.from) return "Date TBA";
   const date = new Date(event.dateRange.from);
@@ -71,42 +95,44 @@ function formatEventDateTime(event: EventType): string {
   return str;
 }
 
-function formatEventPrice(event: EventType): string {
-  if (event.price_category === "paid") {
-    const price = event.options?.[0]?.price;
-    return price ? `$${price}` : "Paid";
-  }
-  if (event.price_category === "external") return "External";
-  return "Free";
-}
+// function formatEventPrice(event: EventType): string {
+//   if (event.price_category === "paid") {
+//     const price = event.options?.[0]?.price;
+//     return price ? `$${price}` : "Paid";
+//   }
+//   if (event.price_category === "external") return "External";
+//   return "Free";
+// }
 
-const STATUS_STYLES: Record<EventStatus, { label: string; className: string }> =
-  {
-    upcoming: {
-      label: "Upcoming",
-      className: "bg-primary/10 text-primary border-primary/20",
-    },
-    live: {
-      label: "Live",
-      className: "bg-green-50 text-green-700 border-green-100",
-    },
-    past: {
-      label: "Past",
-      className: "bg-slate-100 text-slate-500 border-slate-200",
-    },
-  };
+// const STATUS_STYLES: Record<EventStatus, { label: string; className: string }> =
+//   {
+//     upcoming: {
+//       label: "Upcoming",
+//       className: "bg-primary/10 text-primary border-primary/20",
+//     },
+//     live: {
+//       label: "Live",
+//       className: "bg-green-50 text-green-700 border-green-100",
+//     },
+//     past: {
+//       label: "Past",
+//       className: "bg-slate-100 text-slate-500 border-slate-200",
+//     },
+//   };
 
 const FILTERS: { key: EventStatus; label: string }[] = [
   { key: "upcoming", label: "Upcoming" },
   { key: "live", label: "Live" },
   { key: "past", label: "Past" },
+  { key: "archived", label: "Archived" },
 ];
 
 export default function EventsBackend() {
-  const { data } = useGetEvent();
+  const { data, isLoading } = useGetEvent();
   const [activeTab, setActiveTab] = useState<EventStatus>("upcoming");
   const [search, setSearch] = useState("");
-  const { mutate, isPending } = useDeleteEvent();
+  const { mutate: archiveEvent } = useArchiveEvent();
+  // const { mutate, isPending } = useDeleteEvent();
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -126,34 +152,59 @@ export default function EventsBackend() {
       });
   }, [allEvents, activeTab, search]);
 
-  const recentlyUpdated = useMemo(() => {
-    return [...allEvents]
-      .filter((event) => event.updatedAt)
-      .sort(
-        (a, b) =>
-          new Date(b.updatedAt ?? "").getTime() -
-          new Date(a.updatedAt ?? "").getTime(),
-      )
-      .slice(0, 5);
-  }, [allEvents]);
+  // const recentlyUpdated = useMemo(() => {
+  //   return [...allEvents]
+  //     .filter((event) => event.updatedAt)
+  //     .sort(
+  //       (a, b) =>
+  //         new Date(b.updatedAt ?? "").getTime() -
+  //         new Date(a.updatedAt ?? "").getTime(),
+  //     )
+  //     .slice(0, 5);
+  // }, [allEvents]);
 
-  const handleDelete = (id: string) => {
-    mutate(
-      { id },
-      {
-        onSuccess: () => {
-          toast.success("Event deleted successfully");
-          queryClient.invalidateQueries({ queryKey: ["event"] });
-        },
-      },
-    );
-  };
+  // const handleDelete = (id: string) => {
+  //   mutate(
+  //     { id },
+  //     {
+  //       onSuccess: () => {
+  //         toast.success("Event deleted successfully");
+  //         queryClient.invalidateQueries({ queryKey: ["event"] });
+  //       },
+  //     },
+  //   );
+  // };
 
   const handleCopyUrl = (slug?: string) => {
     if (!slug) return toast.error("This event doesn't have a public link yet");
     const url = `${window.location.origin}/events/${slug}`;
     navigator.clipboard.writeText(url);
     toast.success("Event URL copied to clipboard");
+  };
+
+  const handleArchiveToggle = (event: EventType) => {
+    if (!event.archived) {
+      const status = getEventStatus(event);
+      const ticketsTaken = getTicketsTakenCount(event);
+      if (status !== "past" && ticketsTaken > 0) {
+        toast.error(
+          "This event can't be archived while it still has tickets taken. You can archive it once the event has ended.",
+        );
+        return;
+      }
+    }
+
+    archiveEvent(
+      { id: event._id ?? "" },
+      {
+        onSuccess: () => {
+          toast.success(event.archived ? "Event unarchived" : "Event archived");
+          queryClient.invalidateQueries({ queryKey: ["event"] });
+        },
+        onError: (error: any) =>
+          toast.error(parseErrorMessage(error, "Failed to update event")),
+      },
+    );
   };
 
   return (
@@ -187,7 +238,7 @@ export default function EventsBackend() {
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-5 ">
         {/* ── Main list ── */}
         <div className="min-w-0 space-y-4">
           <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-4">
@@ -222,36 +273,55 @@ export default function EventsBackend() {
           </div>
 
           <div className="space-y-3">
-            {filteredEvents.map((event) => {
-              const status = getEventStatus(event);
-              return (
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
                 <div
-                  key={event._id}
-                  className="flex items-center gap-4 bg-white border border-gray-200 rounded-2xl px-4 py-3 hover:shadow-sm transition-shadow flex-wrap sm:flex-nowrap">
-                  <Avatar className="size-14 rounded-full border border-gray-100">
-                    <AvatarImage
-                      src={event.image}
-                      alt={event.title}
-                      className="object-cover"
-                    />
-                    <AvatarFallback>{event.title?.[0] ?? "E"}</AvatarFallback>
-                  </Avatar>
-
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-primary truncate">
-                      {event.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 truncate">
-                      {event.location_tba
-                        ? "To be announced"
-                        : event.venue || event.location}
-                    </p>
-                    <p className="text-sm text-gray-400 truncate">
-                      {formatEventDateTime(event)}
-                    </p>
+                  key={i}
+                  className="flex items-center gap-4 bg-white border border-gray-200 rounded-2xl px-4 py-3 animate-pulse">
+                  <div className="size-14 rounded-full bg-gray-200 shrink-0" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-4 w-40 rounded bg-gray-200" />
+                    <div className="h-3 w-28 rounded bg-gray-100" />
+                    <div className="h-3 w-36 rounded bg-gray-100" />
                   </div>
+                  <div className="hidden sm:block h-9 w-20 rounded-full bg-gray-200 shrink-0" />
+                  <div className="h-9 w-9 rounded-lg bg-gray-100 shrink-0" />
+                  <div className="h-9 w-9 rounded-lg bg-gray-100 shrink-0" />
+                </div>
+              ))
+            ) : (
+              <>
+                {filteredEvents.map((event) => {
+                  return (
+                    <div
+                      key={event._id}
+                      className="flex items-center gap-4 bg-white border border-gray-200 rounded-2xl px-4 py-3 hover:shadow-sm transition-shadow flex-wrap sm:flex-nowrap">
+                      <Avatar className="size-14 rounded-full border border-gray-100">
+                        <AvatarImage
+                          src={event.image}
+                          alt={event.title}
+                          className="object-cover"
+                        />
+                        <AvatarFallback>
+                          {event.title?.[0] ?? "E"}
+                        </AvatarFallback>
+                      </Avatar>
 
-                  <div className="hidden sm:block text-sm font-semibold text-primary shrink-0 w-16 text-right">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-primary truncate">
+                          {event.title}
+                        </h3>
+                        <p className="text-sm text-gray-500 truncate">
+                          {event.location_tba
+                            ? "To be announced"
+                            : event.venue || event.location}
+                        </p>
+                        <p className="text-sm text-gray-400 truncate">
+                          {formatEventDateTime(event)}
+                        </p>
+                      </div>
+
+                      {/* <div className="hidden sm:block text-sm font-semibold text-primary shrink-0 w-16 text-right">
                     {formatEventPrice(event)}
                   </div>
 
@@ -259,78 +329,94 @@ export default function EventsBackend() {
                     variant="secondary"
                     className={`shrink-0 ${STATUS_STYLES[status].className}`}>
                     {STATUS_STYLES[status].label}
-                  </Badge>
+                  </Badge> */}
 
-                  <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
-                    <Button
-                      onClick={() =>
-                        router.push(
-                          `/dashboard/events/redemtion-table/${event._id}`,
-                        )
-                      }
-                      size="sm"
-                      className="bg-primary text-white hover:bg-primary/90 rounded-full">
-                      Manage
-                    </Button>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-                          <MoreVertical size={16} />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => router.push(`/events/${event.slug}`)}>
-                          <Eye className="h-4 w-4" /> View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
+                      <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
+                        <Button
                           onClick={() =>
                             router.push(
-                              `/dashboard/events/add-event?id=${event._id}`,
+                              `/dashboard/events/redemtion-table/${event._id}`,
                             )
-                          }>
-                          <Edit className="h-4 w-4" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleCopyUrl(event.slug)}>
-                          <Link2 className="h-4 w-4" /> Copy URL
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          }
+                          size="sm"
+                          className="bg-primary text-white hover:bg-primary/90 rounded-full">
+                          Manage
+                        </Button>
 
-                    <DeleteConfirmDialog
-                      onConfirm={() => handleDelete(event._id ?? "")}
-                      text={event.title}
-                      isPending={isPending}
-                      header={
-                        <button className="flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 text-red-500 hover:bg-red-50 transition-colors">
-                          <Trash2 size={15} />
-                        </button>
-                      }
-                    />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+                              <MoreVertical size={16} />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(`/events/${event.slug}`)
+                              }>
+                              <Eye className="h-4 w-4" /> View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(
+                                  `/dashboard/events/add-event?id=${event._id}`,
+                                )
+                              }>
+                              <Edit className="h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleCopyUrl(event.slug)}>
+                              <Link2 className="h-4 w-4" /> Copy URL
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleArchiveToggle(event)}>
+                              {event.archived ? (
+                                <>
+                                  <ArchiveRestore className="h-4 w-4" />{" "}
+                                  Unarchive
+                                </>
+                              ) : (
+                                <>
+                                  <Archive className="h-4 w-4" /> Archive
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {/* <DeleteConfirmDialog
+                          onConfirm={() => handleDelete(event._id ?? "")}
+                          text={event.title}
+                          isPending={isPending}
+                          header={
+                            <button className="flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 text-red-500 hover:bg-red-50 transition-colors">
+                              <Trash2 size={15} />
+                            </button>
+                          }
+                        /> */}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {filteredEvents.length === 0 && (
+                  <div className="py-16 text-center bg-white border border-gray-200 rounded-2xl">
+                    <p className="text-gray-400 text-sm">
+                      No {activeTab} events found.
+                    </p>
+                    <Link
+                      href="/dashboard/events/add-event"
+                      className="mt-4 inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
+                      <PlusCircle size={14} /> Create your first event
+                    </Link>
                   </div>
-                </div>
-              );
-            })}
-
-            {filteredEvents.length === 0 && (
-              <div className="py-16 text-center bg-white border border-gray-200 rounded-2xl">
-                <p className="text-gray-400 text-sm">
-                  No {activeTab} events found.
-                </p>
-                <Link
-                  href="/dashboard/events/add-event"
-                  className="mt-4 inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
-                  <PlusCircle size={14} /> Create your first event
-                </Link>
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>
 
-        {/* ── Sidebar ── */}
-        <div className="hidden lg:block">
+        {/* <div className="hidden lg:block">
           <div className="bg-white border border-gray-200 rounded-2xl p-4">
             <h2 className="font-bold text-primary pb-3 border-b border-gray-100">
               Recently updated events
@@ -358,7 +444,7 @@ export default function EventsBackend() {
               </p>
             )}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

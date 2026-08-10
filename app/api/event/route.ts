@@ -41,7 +41,9 @@ export async function POST(req: NextRequest) {
     const endTime = formData.get("endTime") as string;
     const latitude = parseFloat(formData.get("latitude") as string);
     const longitude = parseFloat(formData.get("longitude") as string);
-    const registration_capacity = formData.get("registration_capacity") as string;
+    const registration_capacity = formData.get(
+      "registration_capacity",
+    ) as string;
     const max_tickets_per_request = formData.get(
       "max_tickets_per_request",
     ) as string;
@@ -174,9 +176,11 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const myEvents = await Event.find({ user: (session.user as any).id }).sort({
-      createdAt: -1,
-    });
+    const myEvents = await Event.find({ user: (session.user as any).id })
+      .sort({
+        createdAt: -1,
+      })
+      .select("-options.promo_code -promo_codes");
 
     return NextResponse.json(
       { data: myEvents, message: "User events retrieved" },

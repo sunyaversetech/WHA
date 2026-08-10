@@ -10,33 +10,32 @@ type RouteContext = {
 };
 export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
-    await connectToDb();
+    // await connectToDb();
 
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // const session = await getServerSession(authOptions);
+    // if (!session || !session.user) {
+    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // }
 
-    const { id: eventId } = await params;
-    const currentUserId = (session.user as any).id;
-    const event = await Event.findById(eventId);
-    await deleteFromS3(event.image);
-    if (!event) {
-      return NextResponse.json({ error: "Review not found" }, { status: 404 });
-    }
+    // const { id: eventId } = await params;
+    // const currentUserId = (session.user as any).id;
+    // const event = await Event.findById(eventId);
+    // await deleteFromS3(event.image);
+    // if (!event) {
+    //   return NextResponse.json({ error: "Review not found" }, { status: 404 });
+    // }
 
-    if (event.user.toString() !== currentUserId) {
-      return NextResponse.json(
-        { error: "You are not authorized to delete this event" },
-        { status: 403 },
-      );
-    }
+    // if (event.user.toString() !== currentUserId) {
+    //   return NextResponse.json(
+    //     { error: "You are not authorized to delete this event" },
+    //     { status: 403 },
+    //   );
+    // }
 
-    await Event.findByIdAndDelete(eventId);
+    // await Event.findByIdAndDelete(eventId);
 
-    return NextResponse.json({ message: "Review deleted successfully" });
+    return NextResponse.json({ message: "cannot delete" }, { status: 500 });
   } catch (error: any) {
-    console.error("Delete Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
