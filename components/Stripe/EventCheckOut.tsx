@@ -9,14 +9,7 @@ import {
   Elements,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import {
-  Loader2,
-  Plus,
-  Minus,
-  ShieldCheck,
-  Check,
-  Info,
-} from "lucide-react";
+import { Loader2, Plus, Minus, ShieldCheck, Check, Info } from "lucide-react";
 import {
   getEventTicketPaymentIntent,
   type EventTicketPricing,
@@ -291,7 +284,7 @@ function TicketsStep({
               </p>
               <p className="text-xs text-gray-400">
                 ${opt.price.toFixed(2)} each
-                {opt.remaining !== null && ` · ${opt.remaining} left`}
+                {/* {opt.remaining !== null && ` · ${opt.remaining} left`} */}
               </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
@@ -302,9 +295,7 @@ function TicketsStep({
                 className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition disabled:opacity-40">
                 <Minus className="h-4 w-4" />
               </button>
-              <span className="text-base font-bold w-4 text-center">
-                {qty}
-              </span>
+              <span className="text-base font-bold w-4 text-center">{qty}</span>
               <button
                 type="button"
                 onClick={() => !atMax && setQty(opt.optionId, qty + 1)}
@@ -333,11 +324,7 @@ function TicketsStep({
         disabled={totalQty === 0 || loading}
         style={{ backgroundColor: "#051e3a" }}
         className="w-full text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:opacity-95 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2">
-        {loading ? (
-          <Loader2 className="animate-spin h-5 w-5" />
-        ) : (
-          "Continue"
-        )}
+        {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Continue"}
       </button>
     </div>
   );

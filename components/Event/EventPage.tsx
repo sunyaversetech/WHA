@@ -26,16 +26,18 @@ export default function EventsPageClient() {
 
   return (
     <div className="flex flex-col min-h-screen pt-[148px] md:pt-[88px]">
-
       {/* ── Toolbar ── */}
       <div className="sticky top-[76px] md:top-[156px] z-40 bg-white border-b border-border px-4 md:px-6 py-3 flex items-center justify-between gap-3">
         <p className="text-xs md:text-sm font-medium text-muted-foreground">
-          <span className="font-bold text-primary">{data.length}</span>{" "}
-          event{data.length !== 1 ? "s" : ""} in {cityLabel}
+          <span className="font-bold text-primary">{data.length}</span> event
+          {data.length !== 1 ? "s" : ""} in {cityLabel}
         </p>
 
         <div className="flex items-center gap-2">
-          <FilterPanel title="Filter Events" categoriesContent={<EventHeader />} />
+          <FilterPanel
+            title="Filter Events"
+            categoriesContent={<EventHeader />}
+          />
 
           <Button
             variant="outline"
@@ -58,27 +60,35 @@ export default function EventsPageClient() {
       </div>
 
       {/* ── Content ── */}
-      <div className={`flex ${isMapExpanded ? "" : "flex-1"} px-4 md:px-6 gap-6 py-4`}>
-
+      <div
+        className={`flex ${isMapExpanded ? "" : "flex-1"} px-4 md:px-6 gap-6 py-4`}>
         {/* Card grid */}
         <div
           className={`transition-all w-full ${
             isMapExpanded ? "hidden" : showMap ? "lg:w-[55%]" : "w-full"
           }`}>
           {isLoading ? (
-            <div className={`grid gap-4 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
+            <div
+              className={`grid gap-4 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
               {[1, 2, 3, 4].map((i) => (
                 <Skeleton key={i} className="h-64 w-full rounded-xl" />
               ))}
             </div>
           ) : data.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="text-4xl mb-4" aria-hidden="true">📅</p>
-              <h3 className="text-base font-bold text-primary mb-1">No events found</h3>
-              <p className="text-sm text-muted-foreground">Try adjusting your filters or search a different city.</p>
+              <p className="text-4xl mb-4" aria-hidden="true">
+                📅
+              </p>
+              <h3 className="text-base font-bold text-primary mb-1">
+                No events found
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Try adjusting your filters or search a different city.
+              </p>
             </div>
           ) : (
-            <div className={`grid gap-4 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
+            <div
+              className={`grid gap-4 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
               {data.map((event) => (
                 <EventCard key={event._id} event={event} />
               ))}

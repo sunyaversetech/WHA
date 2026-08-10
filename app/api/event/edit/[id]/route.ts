@@ -228,9 +228,11 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       },
     );
 
-    const effectiveCategory = validatedData.price_category ?? event.price_category;
+    const effectiveCategory =
+      validatedData.price_category ?? event.price_category;
     const categoryGatedFields = {
-      ticket_link: effectiveCategory === "external" ? validatedData.ticket_link : "",
+      ticket_link:
+        effectiveCategory === "external" ? validatedData.ticket_link : "",
       options: effectiveCategory === "paid" ? mergedOptions : [],
       promo_codes: effectiveCategory === "paid" ? mergedPromoCodes : [],
       registration_capacity:
