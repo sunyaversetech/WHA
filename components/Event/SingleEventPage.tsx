@@ -295,7 +295,8 @@ export default function EventDetailPage() {
                 <div className="hidden flex items-center gap-2 md:flex md:items-center md:gap-2">
                   <button
                     onClick={handleAddRemoveFavorite}
-                    className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition">
+                    className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition"
+                  >
                     {isPending ? (
                       <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                     ) : (
@@ -314,7 +315,8 @@ export default function EventDetailPage() {
                   <button
                     onClick={handleShare}
                     className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition-all active:scale-90"
-                    title="Share Event">
+                    title="Share Event"
+                  >
                     <Share className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </button>
                 </div>
@@ -385,7 +387,8 @@ export default function EventDetailPage() {
                   <Button
                     variant={"ghost"}
                     className="p-0 transition-all hover:scale-105 active:scale-95"
-                    onClick={() => router.back()}>
+                    onClick={() => router.back()}
+                  >
                     <ChevronLeft
                       className="h-9 w-9 cursor-pointer rounded-full border  p-1.5 
                  text-primary bg-white transition-all hover:scale-105 active:scale-95"
@@ -394,7 +397,8 @@ export default function EventDetailPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={handleAddRemoveFavorite}
-                      className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95">
+                      className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95"
+                    >
                       {isPending ? (
                         <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                       ) : (
@@ -412,7 +416,8 @@ export default function EventDetailPage() {
 
                     <button
                       className="flex items-center justify-center p-2 border rounded-full bg-white transition-all hover:scale-105 active:scale-95"
-                      onClick={handleShare}>
+                      onClick={handleShare}
+                    >
                       <Share className="h-5 w-5 text-primary" />
                     </button>
                   </div>
@@ -435,7 +440,8 @@ export default function EventDetailPage() {
                     {event?.data?.price_category === "registration" && (
                       <p
                         className="text-sm font-medium text-primary"
-                        id="registration-button">
+                        id="registration-button"
+                      >
                         Free Event · Registration Required
                       </p>
                     )}
@@ -443,7 +449,8 @@ export default function EventDetailPage() {
                     {event?.data?.price_category === "external" && (
                       <p
                         className="text-sm font-medium text-primary"
-                        id="registration-button">
+                        id="registration-button"
+                      >
                         Tickets via external site
                       </p>
                     )}
@@ -451,11 +458,13 @@ export default function EventDetailPage() {
                     {event?.data?.price_category === "paid" && (
                       <div
                         className="space-y-2 border rounded-xl p-3"
-                        id="registration-button">
+                        id="registration-button"
+                      >
                         {optionsWithStatus.map((opt) => (
                           <div
                             key={opt.optionId}
-                            className="flex items-center justify-between text-sm gap-2">
+                            className="flex items-center justify-between text-sm gap-2"
+                          >
                             <span className="font-medium text-gray-800 truncate">
                               {opt.name}
                             </span>
@@ -497,7 +506,8 @@ export default function EventDetailPage() {
                           !hasPurchasableOptions
                             ? "bg-gray-400 text-white cursor-not-allowed"
                             : "bg-primary text-white hover:opacity-90",
-                        )}>
+                        )}
+                      >
                         {!hasPurchasableOptions
                           ? "Sold Out"
                           : purchaseResult?.success
@@ -509,7 +519,8 @@ export default function EventDetailPage() {
                         href={event?.data?.ticket_link || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full block text-center rounded-full py-3 font-semibold transition bg-primary text-white hover:opacity-90">
+                        className="w-full block text-center rounded-full py-3 font-semibold transition bg-primary text-white hover:opacity-90"
+                      >
                         Get Tickets
                       </a>
                     ) : (
@@ -526,7 +537,8 @@ export default function EventDetailPage() {
                             redemptionResult?.success || registrationFull
                               ? "bg-gray-400 text-white cursor-not-allowed"
                               : "bg-primary text-white hover:opacity-90",
-                          )}>
+                          )}
+                        >
                           {redemptionResult?.success
                             ? "Already Registered"
                             : registrationFull
@@ -583,64 +595,14 @@ export default function EventDetailPage() {
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-bold text-primary text-sm">
+                              className="font-bold text-primary text-sm"
+                            >
                               Get Directions
                             </a>
                           </div>
                         </span>
                       </div>
                     </div>
-
-                    {event?.data?.price_category === "registration" &&
-                      redemptionResult?.success && (
-                        <div className="border-t pt-4 flex flex-col items-center text-center">
-                          <p className="text-sm text-gray-500 mb-2">
-                            Your Ticket
-                          </p>
-
-                          <div className="bg-white p-3 rounded-lg border mb-3">
-                            <QRCodeCanvas
-                              value={redemptionResult?.code || ""}
-                              size={120}
-                            />
-                          </div>
-
-                          <code className="text-lg font-mono font-bold tracking-widest text-gray-800">
-                            {redemptionResult?.code}
-                          </code>
-                        </div>
-                      )}
-
-                    {event?.data?.price_category === "paid" &&
-                      purchaseResult?.success && (
-                        <div className="border-t pt-4 flex flex-col items-center text-center gap-4">
-                          <p className="text-sm text-gray-500">Your Tickets</p>
-                          {purchaseResult.items?.map((item) => (
-                            <div
-                              key={item.optionName}
-                              className="flex flex-col items-center gap-3 w-full">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                                {item.optionName}
-                              </p>
-                              {item.codes.map((code) => (
-                                <div
-                                  key={code}
-                                  className="flex flex-col items-center gap-2">
-                                  <div className="bg-white p-3 rounded-lg border">
-                                    <QRCodeCanvas value={code} size={110} />
-                                  </div>
-                                  <code className="text-sm font-mono font-bold tracking-widest text-gray-800">
-                                    {code}
-                                  </code>
-                                </div>
-                              ))}
-                            </div>
-                          ))}
-                          <p className="text-xs text-gray-400">
-                            Also emailed to you.
-                          </p>
-                        </div>
-                      )}
                   </div>
                 </div>
               </div>
@@ -670,7 +632,8 @@ export default function EventDetailPage() {
                         center={[event.data.latitude, event.data.longitude]}
                         zoom={13}
                         scrollWheelZoom={false}
-                        className="h-full w-full z-20">
+                        className="h-full w-full z-20"
+                      >
                         <TileLayer
                           attribution="&copy; OpenStreetMap contributors"
                           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -705,7 +668,8 @@ export default function EventDetailPage() {
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-bold text-primary text-sm pl-1">
+                      className="font-bold text-primary text-sm pl-1"
+                    >
                       Get Directions
                     </a>
                   </div>
@@ -790,7 +754,8 @@ export default function EventDetailPage() {
                     !hasPurchasableOptions
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : "bg-primary text-white hover:opacity-90",
-                  )}>
+                  )}
+                >
                   {!hasPurchasableOptions
                     ? "Sold Out"
                     : purchaseResult?.success
@@ -802,7 +767,8 @@ export default function EventDetailPage() {
                   href={event?.data?.ticket_link || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-full text-base font-semibold transition bg-primary text-white hover:opacity-90">
+                  className="px-4 py-2 rounded-full text-base font-semibold transition bg-primary text-white hover:opacity-90"
+                >
                   Get Tickets
                 </a>
               ) : (
@@ -813,7 +779,8 @@ export default function EventDetailPage() {
                     redemptionResult?.success || registrationFull
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : "bg-primary text-white hover:opacity-90",
-                  )}>
+                  )}
+                >
                   {redemptionResult?.success
                     ? "Already Registered"
                     : registrationFull
