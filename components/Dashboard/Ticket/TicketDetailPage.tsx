@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { QRCodeCanvas } from "qrcode.react";
+import { jsPDF } from "jspdf";
+import { toast } from "sonner";
 import { useGetTickets } from "@/services/dashboard.service";
 import {
   Carousel,
@@ -25,6 +27,10 @@ import {
   ExternalLink,
   CheckCircle2,
   Clock,
+  Download,
+  Share2,
+  Share,
+  LucideShare2,
 } from "lucide-react";
 import {
   getTicketTitle,
@@ -74,6 +80,7 @@ export default function TicketDetailPage() {
 
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
+  const canvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
 
   useEffect(() => {
     if (!api) return;
@@ -100,85 +107,176 @@ export default function TicketDetailPage() {
   const sourceHref = getSourceHref(item);
   const holderName = session?.user?.name || "Ticket Holder";
 
+  const loadLogo = (): Promise<HTMLImageElement | null> =>
+    new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = "/wha/logo.png";
+    });
+
+  const buildTicketPdf = (logo: HTMLImageElement | null) => {
+    const doc = new jsPDF({ unit: "mm", format: [100, 160] });
+
+    codes.forEach((code, i) => {
+      if (i > 0) doc.addPage([100, 160]);
+
+      if (logo) {
+        const logoW = 12;
+        const logoH = (logo.height / logo.width) * logoW;
+        doc.addImage(logo, "PNG", 100 - 10 - logoW, 6, logoW, logoH);
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(title, 50, 20, { align: "center", maxWidth: 70 });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      let y = 28;
+      if (dateRange) {
+        const dateLine = `${new Date(dateRange.from).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })} · ${formatTime(dateRange.from)}`;
+        doc.text(dateLine, 50, y, { align: "center" });
+        y += 5;
+      }
+      if (venue) {
+        doc.text(venue, 50, y, { align: "center", maxWidth: 90 });
+        y += 5;
+      }
+
+      const canvas = canvasRefs.current.get(code.key);
+      if (canvas) {
+        doc.addImage(canvas.toDataURL("image/png"), "PNG", 20, y + 5, 60, 60);
+      }
+
+      const qrBottom = y + 5 + 60;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text(holderName, 50, qrBottom + 7, { align: "center" });
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text(
+        `Ticket ${i + 1} of ${codes.length} · ${code.label}`,
+        50,
+        qrBottom + 12,
+        { align: "center" },
+      );
+    });
+
+    return doc;
+  };
+
+  const ticketFileName = `${title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-ticket.pdf`;
+
+  const handleDownload = async () => {
+    try {
+      const logo = await loadLogo();
+      const doc = buildTicketPdf(logo);
+      doc.save(ticketFileName);
+    } catch {
+      toast.error("Couldn't download ticket");
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = sourceHref
+      ? `${window.location.origin}${sourceHref}`
+      : window.location.href;
+    const shareText = venue ? `${title} · ${venue}` : title;
+
+    try {
+      const logo = await loadLogo();
+      const doc = buildTicketPdf(logo);
+      const file = new File([doc.output("blob")], ticketFileName, {
+        type: "application/pdf",
+      });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title, text: shareText });
+      } else if (navigator.share) {
+        await navigator.share({ title, text: shareText, url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard");
+      }
+    } catch (e: any) {
+      if (e?.name !== "AbortError") toast.error("Couldn't share ticket");
+    }
+  };
+
   return (
-    <div className="min-h-screen max-w-lg mx-auto pb-12">
-      <div className="flex items-center justify-between px-4 py-3 sticky top-0 bg-background/95 backdrop-blur-md border-b border-border z-10">
+    <div className="min-h-screen max-w-lg mx-auto pb-12 md:mt-20">
+      <div className="flex items-center justify-between px-4 py-3 sticky top-0 bg-background/95 backdrop-blur-md  z-10">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => router.back()}
-          aria-label="Back">
+          aria-label="Back"
+        >
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        {sourceHref && (
-          <Link
-            href={sourceHref}
-            className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1">
-            View {isEvent ? "event" : "deal"}
-            <ExternalLink className="h-3 w-3" />
-          </Link>
-        )}
+        <button
+          type="button"
+          onClick={handleShare}
+          className="text-primary hover:text-primary/80"
+          aria-label="Share"
+        >
+          <Share className="h-5 w-5" />
+        </button>
       </div>
 
       <div className="px-4 pt-4 space-y-5">
-        {/* Summary */}
-        <div className="card rounded-2xl p-5">
-          {dateRange ? (
-            <>
-              <p className="text-lg font-extrabold text-primary">
-                {formatDateLong(dateRange.from)}
-              </p>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {formatTime(dateRange.from)}
-              </p>
-            </>
-          ) : (
-            item?.deal?.valid_till && (
-              <p className="text-sm font-bold text-primary">
-                Valid till {formatDateLong(item.deal.valid_till)}
-              </p>
-            )
-          )}
-
-          <div className="flex items-center gap-3 mt-4">
-            <div className="relative h-14 w-14 rounded-lg overflow-hidden shrink-0 bg-muted">
-              {image ? (
-                <Image
-                  src={image}
-                  alt={title}
-                  fill
-                  className="object-cover"
-                  sizes="56px"
-                />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center">
-                  <TicketIcon className="h-5 w-5 text-muted-foreground" />
-                </div>
-              )}
-            </div>
-            <div className="min-w-0">
-              <h1 className="font-bold text-base text-foreground line-clamp-2">
-                {title}
-              </h1>
-              {venue && (
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  {venue}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
         {/* QR codes — one per attendee/ticket */}
         <div className="card rounded-2xl p-5">
+          <div className="flex justify-between">
+            <div className="flex items-center gap-3 mt-2 mb-4">
+              <div className="relative h-14 w-14 rounded-lg overflow-hidden shrink-0 bg-muted">
+                {image ? (
+                  <Image
+                    src={image}
+                    alt={title}
+                    fill
+                    className="object-cover"
+                    sizes="56px"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center">
+                    <TicketIcon className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <h1 className="font-bold text-base text-foreground line-clamp-2">
+                  {title}
+                </h1>
+              </div>
+            </div>
+            {/* logo WHA */}
+            <div>
+              <img
+                src="/wha/logo.png"
+                alt="Company logo"
+                className="h-14 w-14 object-contain"
+              />
+            </div>
+          </div>
+
           <Carousel setApi={setApi} className="w-full">
             <CarouselContent>
               {codes.map((code, i) => (
                 <CarouselItem
                   key={code.key}
-                  className="flex flex-col items-center gap-4">
+                  className="flex flex-col items-center gap-4"
+                >
                   <div className="bg-white p-4 rounded-2xl border border-border">
-                    <QRCodeCanvas value={code.key} size={200} level="H" />
+                    <QRCodeCanvas
+                      value={code.key}
+                      size={200}
+                      level="H"
+                      ref={(el) => {
+                        if (el) canvasRefs.current.set(code.key, el);
+                      }}
+                    />
                   </div>
                   <div className="text-center space-y-1.5">
                     <p className="text-sm font-bold text-foreground">
@@ -190,7 +288,8 @@ export default function TicketDetailPage() {
                     <span
                       className={`badge inline-flex items-center gap-1 ${
                         code.checkedIn ? "badge-success" : "badge-warning"
-                      }`}>
+                      }`}
+                    >
                       {code.checkedIn ? (
                         <>
                           <CheckCircle2 className="h-3 w-3" /> Checked in
@@ -207,12 +306,13 @@ export default function TicketDetailPage() {
             </CarouselContent>
             {codes.length > 1 && (
               <>
-                <CarouselPrevious className="-left-3" />
-                <CarouselNext className="-right-3" />
+                {/* <CarouselPrevious className="-left-3" />
+                <CarouselNext className="-right-3" /> */}
                 <div
                   className="flex justify-center gap-1.5 mt-5"
                   role="tablist"
-                  aria-label="Ticket pages">
+                  aria-label="Ticket pages"
+                >
                   {codes.map((code, i) => (
                     <span
                       key={code.key}
@@ -228,41 +328,55 @@ export default function TicketDetailPage() {
             )}
           </Carousel>
         </div>
+        {/* Date & Time & Location */}
+        {(dateRange || venue) && (
+          <div className="card rounded-2xl p-5 space-y-5">
+            {/* Date & Time */}
+            {dateRange && (
+              <div>
+                <h2 className="text-sm font-bold text-foreground mb-3">
+                  Date and time
+                </h2>
 
-        {/* Date & time */}
-        {dateRange && (
-          <div className="card rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-foreground mb-3">
-              Date and time
-            </h2>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CalendarDays className="h-4 w-4 text-secondary shrink-0" />
-              <span>
-                {formatDateLong(dateRange.from)} · {formatTime(dateRange.from)}
-                {dateRange.to ? ` – ${formatTime(dateRange.to)}` : ""}
-              </span>
-            </div>
-          </div>
-        )}
+                <div className="text-sm text-muted-foreground">
+                  <span>
+                    {new Date(dateRange.from).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+                  {" · "}
+                  <span>{formatTime(dateRange.from)}</span>
 
-        {/* Location */}
-        {venue && (
-          <div className="card rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-foreground mb-3">
-              Location
-            </h2>
-            <div className="flex items-start gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4 text-secondary shrink-0 mt-0.5" />
-              <span>{venue}</span>
-            </div>
-            {mapHref && (
-              <a
-                href={mapHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-secondary hover:underline mt-3">
-                View map <ExternalLink className="h-3 w-3" />
-              </a>
+                  {dateRange.to ? ` – ${formatTime(dateRange.to)}` : ""}
+                </div>
+              </div>
+            )}
+
+            {/* Location */}
+            {venue && (
+              <div>
+                <h2 className="text-sm font-bold text-foreground mb-3">
+                  Location
+                </h2>
+
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <MapPin className="h-4 w-4 text-secondary shrink-0 mt-0.5" />
+                  <span>{venue}</span>
+                </div>
+
+                {mapHref && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-secondary hover:underline mt-3"
+                  >
+                    View map
+                  </a>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -287,6 +401,14 @@ export default function TicketDetailPage() {
             )}
           </div>
         )}
+
+        {/* Download  */}
+        <div>
+          <Button variant="outline" className="w-full" onClick={handleDownload}>
+            <Download className="h-4 w-4" />
+            Download Ticket
+          </Button>
+        </div>
       </div>
     </div>
   );
