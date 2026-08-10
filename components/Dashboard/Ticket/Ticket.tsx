@@ -1,246 +1,185 @@
 "use client";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useGetTickets } from "@/services/dashboard.service";
-import { QRCodeCanvas } from "qrcode.react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
-  CalendarDays,
   ChevronLeft,
   MapPin,
-  Tag,
+  QrCode,
   Ticket as TicketIcon,
+  AlertCircle,
 } from "lucide-react";
 import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+  getTicketTitle,
+  getTicketImage,
+  getTicketVenue,
+  getTicketDateRange,
+  getTicketCodes,
+  isEventItem,
+  isTicketPast,
+  sortPendingFirst,
+  formatDateLong,
+  formatTime,
+} from "./ticket-utils";
 
-const QRDialog = ({
-  open,
-  onClose,
-  item,
-}: {
-  open: boolean;
-  onClose: () => void;
-  item: any;
-}) => {
-  const isEvent = !!item?.event;
-  const title = item?.event?.title ?? item?.deal?.title ?? "Ticket";
+const STATUS_BADGE: Record<string, string> = {
+  verified: "badge-success",
+  pending: "badge-warning",
+};
 
-  const keys =
-    item.uniqueKeys && item.uniqueKeys.length > 0
-      ? item.uniqueKeys
-      : [item.uniqueKey];
+const TicketRow = ({ item, onClick }: { item: any; onClick: () => void }) => {
+  const isEvent = isEventItem(item);
+  const title = getTicketTitle(item);
+  const image = getTicketImage(item);
+  const venue = getTicketVenue(item);
+  const dateRange = getTicketDateRange(item);
+  const codes = getTicketCodes(item);
+  const badgeClass = STATUS_BADGE[item.status] ?? "badge-secondary";
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-xs w-full rounded-2xl p-0 overflow-hidden border-none shadow-2xl bg-gradient-to-b from-[#1a1a2e] to-[#0f3460] text-white">
-        <div className="px-6 pt-6 pb-4 border-b border-white/10 text-center">
-          <div className="flex items-center justify-center mb-2">
-            {isEvent ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300">
-                <TicketIcon className="w-3 h-3" /> Event Pass
-              </span>
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded-2xl">
+      <div className="card rounded-2xl p-4 flex flex-col gap-3 group-hover:shadow-md group-active:scale-[0.99] transition-all">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            {dateRange ? (
+              <>
+                <p className="text-sm font-extrabold text-primary">
+                  {formatDateLong(dateRange.from)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {formatTime(dateRange.from)}
+                </p>
+              </>
             ) : (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300">
-                <Tag className="w-3 h-3" /> Deal Voucher
-              </span>
+              item?.deal?.valid_till && (
+                <p className="text-sm font-extrabold text-primary">
+                  Valid till {formatDateLong(item.deal.valid_till)}
+                </p>
+              )
             )}
           </div>
-          <DialogTitle className="text-base font-bold leading-snug">
-            {title}
-          </DialogTitle>
+          <div className="flex items-center gap-1 text-primary shrink-0 font-bold text-sm">
+            {codes.length}
+            <QrCode className="h-4 w-4 text-secondary" />
+          </div>
         </div>
 
-        <div className="px-6 py-8">
-          {keys.length > 1 ? (
-            <Carousel className="w-full max-w-[200px] mx-auto">
-              <CarouselContent>
-                {keys.map((key: string, index: number) => (
-                  <CarouselItem
-                    key={index}
-                    className="flex flex-col items-center gap-4">
-                    <div className="bg-white p-4 rounded-2xl shadow-xl">
-                      <QRCodeCanvas value={key} size={160} level="H" />
-                    </div>
-                    <div className="text-center space-y-1">
-                      <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
-                        Code {index + 1} of {keys.length}
-                      </p>
-                      <p className="text-xs font-mono font-bold text-white/80">
-                        {key}
-                      </p>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="-left-8 bg-white/10 border-none hover:bg-white/20" />
-              <CarouselNext className="-right-8 bg-white/10 border-none hover:bg-white/20" />
-            </Carousel>
-          ) : (
-            <div className="flex flex-col items-center gap-4">
-              <div className="bg-white p-4 rounded-2xl shadow-xl">
-                <QRCodeCanvas value={keys[0]} size={160} level="H" />
+        <div className="flex items-center gap-3">
+          <div className="relative h-14 w-14 rounded-lg overflow-hidden shrink-0 bg-muted">
+            {image ? (
+              <Image
+                src={image}
+                alt={title}
+                fill
+                className="object-cover"
+                sizes="56px"
+              />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center">
+                <TicketIcon className="h-5 w-5 text-muted-foreground" />
               </div>
-              <div className="text-center space-y-1">
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
-                  Unique Code
-                </p>
-                <p className="text-sm font-mono font-bold tracking-widest text-white/80 break-all">
-                  {keys[0]}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {!isEvent && (
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-400 italic text-center mt-6">
-              Show this at checkout to redeem
-            </p>
-          )}
+            )}
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-bold text-foreground text-sm line-clamp-1">
+              {title}
+            </h3>
+            {venue && (
+              <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+                <MapPin className="h-3 w-3 shrink-0 text-secondary" />
+                {venue}
+              </p>
+            )}
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
-const TicketCard = ({ item, onClick }: { item: any; onClick: () => void }) => {
-  const isEvent = !!item.event;
-  const { status } = item;
-  const title = isEvent
-    ? item.event?.title
-    : item.deal?.title || "Limited Deal";
-
-  const statusColor =
-    status === "verified"
-      ? "bg-emerald-500 text-white"
-      : status === "pending"
-        ? "bg-amber-500 text-white"
-        : "bg-blue-500 text-white";
-
-  return (
-    <div
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && onClick()}
-      className="relative cursor-pointer w-full overflow-hidden rounded-2xl shadow-xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] text-white  hover:border-indigo-400/40 hover:shadow-indigo-900/40 transition-all duration-200 active:scale-[0.98]">
-      <span className="absolute top-[45%] -left-1 -translate-x-1/2 w-6 h-6 rounded-full bg-background border border-white/10 z-10" />
-      <span className="absolute top-[45%] -right-7 -translate-x-1/2 w-6 h-6 rounded-full bg-background border border-white/10 z-10" />
-
-      <div className="p-5 flex flex-col gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          {isEvent ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300">
-              <TicketIcon className="w-3 h-3" /> Event
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300">
-              <Tag className="w-3 h-3" /> Deal
-            </span>
-          )}
-          <span
-            className={`text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full ${statusColor}`}>
-            {status}
+        <div className="flex items-center justify-between pt-2 border-t border-border">
+          <span className={`badge ${badgeClass} capitalize`}>
+            {isEvent ? "Event" : "Deal"} · {item.status}
+          </span>
+          <span className="text-xs font-semibold text-muted-foreground group-hover:text-secondary transition-colors">
+            View ticket &rarr;
           </span>
         </div>
-
-        <h3 className="text-lg font-extrabold leading-snug tracking-tight line-clamp-2">
-          {title}
-        </h3>
-
-        {isEvent ? (
-          <div className="space-y-1.5 text-slate-300 text-sm">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 shrink-0 text-indigo-400" />
-              <span>
-                {new Date(item.event.dateRange.from).toLocaleDateString()}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 shrink-0 text-rose-400" />
-              <span className="truncate">{item?.event?.venue}</span>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-1.5 text-slate-300 text-sm">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 shrink-0 text-indigo-400" />
-              <span>
-                {item?.deal?.valid_till &&
-                  new Date(item.deal.valid_till).toLocaleDateString()}
-              </span>
-            </div>
-          </div>
-        )}
-
-        <p className="text-[10px] text-white/30 font-medium tracking-wide mt-1">
-          {isEvent ? "Tap to view QR pass" : "Tap to view voucher"}
-        </p>
       </div>
-    </div>
+    </button>
   );
 };
 
-const DesktopGrid = ({
+const ListSkeleton = () => (
+  <div className="flex flex-col gap-3">
+    {[1, 2, 3].map((i) => (
+      <Skeleton key={i} className="h-[140px] w-full rounded-2xl" />
+    ))}
+  </div>
+);
+
+const EmptyState = ({ label }: { label: string }) => (
+  <div className="border border-dashed border-border rounded-2xl py-14 px-6 text-center">
+    <TicketIcon className="h-9 w-9 text-muted-foreground/40 mx-auto mb-3" />
+    <p className="text-sm font-semibold text-muted-foreground">{label}</p>
+  </div>
+);
+
+const ErrorState = ({ onRetry }: { onRetry: () => void }) => (
+  <div className="border border-dashed border-destructive/30 rounded-2xl py-14 px-6 text-center">
+    <AlertCircle className="h-9 w-9 text-destructive/60 mx-auto mb-3" />
+    <p className="text-sm font-semibold text-muted-foreground mb-3">
+      Couldn&apos;t load your tickets.
+    </p>
+    <Button variant="outline" size="sm" onClick={onRetry}>
+      Try again
+    </Button>
+  </div>
+);
+
+const TicketList = ({
   tickets,
-  onCardClick,
+  isLoading,
+  isError,
+  onRetry,
+  onSelect,
+  emptyLabel,
 }: {
   tickets: any[];
-  onCardClick: (item: any) => void;
+  isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
+  onSelect: (id: string) => void;
+  emptyLabel: string;
 }) => {
-  if (tickets.length === 0) return <EmptyState />;
+  if (isLoading) return <ListSkeleton />;
+  if (isError) return <ErrorState onRetry={onRetry} />;
+  if (tickets.length === 0) return <EmptyState label={emptyLabel} />;
+
   return (
-    <div className="grid gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-      {tickets.map((item: any) => (
-        <TicketCard
+    <div className="flex flex-col gap-3">
+      {tickets.map((item) => (
+        <TicketRow
           key={item._id}
           item={item}
-          onClick={() => onCardClick(item)}
+          onClick={() => onSelect(item._id)}
         />
       ))}
     </div>
   );
 };
 
-const EmptyState = () => (
-  <div className="text-center py-16 text-muted-foreground text-sm">
-    No tickets to show here.
-  </div>
-);
-
-const sortPendingFirst = (arr: any[]) =>
-  [...arr].sort((a, b) => {
-    if (a.status === "pending" && b.status !== "pending") return -1;
-    if (a.status !== "pending" && b.status === "pending") return 1;
-    return 0;
-  });
-
 const Ticket = ({ hideHeader = false }: { hideHeader?: boolean }) => {
-  const { data } = useGetTickets();
+  const { data, isLoading, isError, refetch } = useGetTickets();
   const tickets: any[] = data?.data || [];
-
-  const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
-
-  const now = new Date();
-
-  const upcomingTickets = sortPendingFirst(
-    tickets.filter((t) => {
-      if (t.event) return new Date(t.event.dateRange.from) >= now;
-      return true;
-    }),
-  );
-
   const router = useRouter();
-  const pastTickets = tickets.filter(
-    (t) => t.event && new Date(t.event.dateRange.from) < now,
-  );
+
+  const upcomingTickets = sortPendingFirst(tickets.filter((t) => !isTicketPast(t)));
+  const pastTickets = tickets.filter((t) => isTicketPast(t));
+
+  const goToTicket = (id: string) => router.push(`/activity/tickets/${id}`);
 
   return (
     <div className={hideHeader ? "" : "p-6 min-h-screen"}>
@@ -258,39 +197,44 @@ const Ticket = ({ hideHeader = false }: { hideHeader?: boolean }) => {
         </>
       )}
 
-      <Tabs defaultValue="upcoming" className="space-y-6">
-        <TabsList className="bg-muted/50 p-1 w-full">
-          <TabsTrigger value="upcoming" className="w-full">
+      <Tabs defaultValue="upcoming" className="gap-4">
+        <TabsList
+          variant="line"
+          className="!h-auto !w-full !justify-start !gap-6 !rounded-none !p-0 border-b border-border">
+          <TabsTrigger
+            value="upcoming"
+            className="!h-auto flex-1 !rounded-none !border-transparent !px-1 pb-3 text-base font-bold !text-muted-foreground data-[state=active]:!text-foreground after:!h-[3px] after:!rounded-full after:!bg-secondary">
             Upcoming
           </TabsTrigger>
-          <TabsTrigger value="past" className="w-full">
+          <TabsTrigger
+            value="past"
+            className="!h-auto flex-1 !rounded-none !border-transparent !px-1 pb-3 text-base font-bold !text-muted-foreground data-[state=active]:!text-foreground after:!h-[3px] after:!rounded-full after:!bg-secondary">
             Past
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="upcoming">
-          <DesktopGrid
+          <TicketList
             tickets={upcomingTickets}
-            onCardClick={setSelectedTicket}
+            isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
+            onSelect={goToTicket}
+            emptyLabel="No upcoming tickets"
           />
         </TabsContent>
 
         <TabsContent value="past">
-          <div className="">
-            <DesktopGrid
-              tickets={pastTickets}
-              onCardClick={setSelectedTicket}
-            />
-          </div>
+          <TicketList
+            tickets={pastTickets}
+            isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
+            onSelect={goToTicket}
+            emptyLabel="No past tickets"
+          />
         </TabsContent>
       </Tabs>
-      {selectedTicket && (
-        <QRDialog
-          open={!!selectedTicket}
-          onClose={() => setSelectedTicket(null)}
-          item={selectedTicket}
-        />
-      )}
     </div>
   );
 };
