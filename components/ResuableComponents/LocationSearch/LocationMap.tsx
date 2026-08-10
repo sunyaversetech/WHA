@@ -229,16 +229,16 @@ export default function LocationMap<T>({
   // MapBoundsWatcher doesn't mistake our own flyTo for a manual pan.
   const programmaticRef = useRef(false);
 
-  const [selectedItem, setSelectedItem] = useState<T | null>(null);
-
-  // Closes a stale popup if its item disappeared from `items` — e.g. the
-  // caller swapped datasets entirely (Services ↔ Events on the same
-  // persistent map instance) without the map itself remounting.
-  useEffect(() => {
-    if (selectedItem && !items.some((item) => getId(item) === getId(selectedItem))) {
-      setSelectedItem(null);
-    }
-  }, [items, selectedItem, getId]);
+  // Stores only the id, not the item object — the popup's item is derived
+  // from the current `items` on every render, so if the caller swaps
+  // datasets entirely (Services ↔ Events on the same persistent map
+  // instance, without the map itself remounting) a since-vanished
+  // selection just naturally resolves to null instead of needing an effect
+  // to notice and clear it.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedItem = selectedId
+    ? (items.find((item) => getId(item) === selectedId) ?? null)
+    : null;
 
   // Zoomed out further on mobile so the whole of Australia stays visible in
   // the initial no-location view — the same zoom level shows less area on a
@@ -252,7 +252,8 @@ export default function LocationMap<T>({
   const userIcon = useMemo(() => makeUserIcon(), []);
 
   const handleMarkerClick = (item: T) => {
-    setSelectedItem((prev) => (prev && getId(prev) === getId(item) ? null : item));
+    const id = getId(item);
+    setSelectedId((prev) => (prev === id ? null : id));
   };
 
   return (
@@ -310,7 +311,7 @@ export default function LocationMap<T>({
           const position = getPosition(item);
           if (!position) return null;
           const id = getId(item);
-          const isSelected = !!selectedItem && getId(selectedItem) === id;
+          const isSelected = selectedId === id;
 
           return (
             <Marker
@@ -329,7 +330,7 @@ export default function LocationMap<T>({
       {selectedItem &&
         renderPopup(selectedItem, {
           userLocation,
-          onClose: () => setSelectedItem(null),
+          onClose: () => setSelectedId(null),
         })}
     </div>
   );

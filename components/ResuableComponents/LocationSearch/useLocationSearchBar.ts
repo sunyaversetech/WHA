@@ -60,6 +60,15 @@ export function useLocationSearchBar() {
   // bounds (a manual pan) always win over a picked city, which itself wins
   // over GPS — so this stays correct regardless of which other params
   // happen to still be sitting in the URL.
+  //
+  // This is a genuine "synchronize with an external system" effect, not the
+  // derived-state antipattern react-hooks/set-state-in-effect otherwise
+  // warns about: searchParams changes independently of this component (the
+  // /search page's own geolocation request, or a map pan, write to it), and
+  // the dedup key lives in a ref, which itself may only be read/written
+  // inside an effect or event handler — so this can't be restructured into
+  // a render-time state adjustment the way LocationMap's popup-reset was.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (searchParams.get("swLat")) {
       applyLocation("Map Area");
@@ -81,6 +90,7 @@ export function useLocationSearchBar() {
     applyLocation("Current location");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const requestGeoLocation = (onDone?: () => void, onFail?: () => void) => {
     if (!navigator.geolocation) {
