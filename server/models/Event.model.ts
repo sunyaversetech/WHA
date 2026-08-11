@@ -51,6 +51,7 @@ const EventSchema = new Schema({
         price: { type: Number },
         capacity: { type: Number },
         sold: { type: Number, default: 0 },
+        held: { type: Number, default: 0 },
       },
     ],
     default: undefined,

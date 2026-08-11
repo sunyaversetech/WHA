@@ -4,6 +4,10 @@ import Stripe from "stripe";
 import crypto from "crypto";
 import { connectToDb } from "@/lib/db";
 import Event from "@/server/models/Event.model";
+import {
+  releaseExpiredHolds,
+  releaseHoldByPaymentIntent,
+} from "@/server/lib/ticketHold";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -44,9 +48,19 @@ export async function getEventTicketPaymentIntent(
   cartItems: CartItemInput[],
   promoCode?: string,
   existingInvoiceNumber?: string,
+  previousPaymentIntentId?: string,
 ): Promise<EventTicketPricing> {
   try {
     await connectToDb();
+
+    // Re-pricing (e.g. applying a promo code) creates a fresh PaymentIntent —
+    // if the previous one had already reserved tickets at checkout, release
+    // that hold now so it doesn't sit locked until it naturally expires.
+    if (previousPaymentIntentId) {
+      await releaseHoldByPaymentIntent(previousPaymentIntentId);
+    }
+    await releaseExpiredHolds(eventId);
+
     const event = await Event.findById(eventId);
     if (!event) throw new Error("Event not found");
     if (event.price_category !== "paid") {
@@ -97,10 +111,14 @@ export async function getEventTicketPaymentIntent(
       }
 
       const remaining =
-        option.capacity != null ? option.capacity - (option.sold || 0) : null;
+        option.capacity != null
+          ? option.capacity - (option.sold || 0) - (option.held || 0)
+          : null;
       if (remaining !== null && quantity > remaining) {
         throw new Error(
-          `Only ${Math.max(remaining, 0)} ${option.name} ticket(s) remaining`,
+          remaining > 0
+            ? `Only ${remaining} ${option.name} ticket(s) available right now`
+            : `${option.name} tickets are not available right now`,
         );
       }
 

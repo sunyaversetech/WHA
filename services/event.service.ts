@@ -14,6 +14,7 @@ export type EventOptionType = {
   price?: number | null;
   capacity?: number | null;
   sold?: number | null;
+  held?: number | null;
 };
 
 export type EventPromoCodeType = {
@@ -302,6 +303,43 @@ export const useFinalizeEventTicketPurchase = () => {
       Post<PurchaseTicketType, PurchaseTicketResponseType>({
         url: "/api/event/ticket/purchase",
         data: data,
+      }),
+  });
+};
+
+type HoldTicketsType = {
+  eventId: string;
+  items: { optionId: string; quantity: number }[];
+  paymentIntentId: string;
+};
+
+type HoldTicketsResponseType = {
+  success: boolean;
+  expiresAt: string;
+};
+
+export const useHoldTickets = () => {
+  return useMutation<HoldTicketsResponseType, any, HoldTicketsType>({
+    mutationKey: ["holdTickets"],
+    mutationFn: (data: HoldTicketsType) =>
+      Post<HoldTicketsType, HoldTicketsResponseType>({
+        url: "/api/event/ticket/hold",
+        data,
+      }),
+  });
+};
+
+export const useReleaseTicketHold = () => {
+  return useMutation<
+    { success: boolean },
+    any,
+    { paymentIntentId: string }
+  >({
+    mutationKey: ["releaseTicketHold"],
+    mutationFn: (data: { paymentIntentId: string }) =>
+      Post<{ paymentIntentId: string }, { success: boolean }>({
+        url: "/api/event/ticket/hold/release",
+        data,
       }),
   });
 };

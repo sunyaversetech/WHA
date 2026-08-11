@@ -236,9 +236,17 @@ export default function BusinessSearchWithDates() {
       router.push(`/search?${params.toString()}`);
       setActive(null);
     });
-  }, [ensureLocationForSearch, service, applyLocationParams, selDay, timeSlot, router]);
+  }, [
+    ensureLocationForSearch,
+    service,
+    applyLocationParams,
+    selDay,
+    timeSlot,
+    router,
+  ]);
 
-  const selectCity = (city: string) => selectCityLocation(city, () => setActive("when"));
+  const selectCity = (city: string) =>
+    selectCityLocation(city, () => setActive("when"));
 
   const prevMonth = () => {
     if (viewM === 0) {
@@ -543,6 +551,7 @@ export default function BusinessSearchWithDates() {
                       autoFocus
                       value={service}
                       onChange={(e) => setService(e.target.value)}
+                      className="border-none  text-base focus-within:outline-none focus-within:ring-0 focus-within:ring-offset-0"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleSearch();
                       }}

@@ -15,6 +15,7 @@ import { EventFormValues } from "../Dashboard/Events/EventsForm";
 import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
 import { Button } from "../ui/button";
 import { formatTime } from "@/components/Dashboard/Ticket/ticket-utils";
+import { format, parse } from "date-fns";
 
 const EventCard = memo(function EventCard({
   event,
@@ -60,8 +61,7 @@ const EventCard = memo(function EventCard({
       tabIndex={0}
       onKeyDown={(e) =>
         e.key === "Enter" && router.push(`/events/${event.slug}`)
-      }
-    >
+      }>
       {/* Image */}
       <div className="relative h-48 md:h-42 w-full overflow-hidden rounded-xl">
         <Image
@@ -86,8 +86,7 @@ const EventCard = memo(function EventCard({
           }
           className="absolute top-3 right-3 p-2 bg-black/20 backdrop-blur-md border border-white/30
                      rounded-full transition-all duration-150 hover:bg-black/40 disabled:opacity-60
-                     focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
-        >
+                     focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none">
           {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin text-white" />
           ) : (
@@ -113,7 +112,15 @@ const EventCard = memo(function EventCard({
                     month: "short",
                   })
                   .toUpperCase()}
-                , {formatTime(String(event.dateRange.from))}
+                ,{" "}
+                {event?.startTime
+                  ? format(
+                      parse(event.startTime, "HH:mm", new Date()),
+                      "h:mm aa",
+                    )
+                  : "Time TBA"}
+                {event?.endTime &&
+                  ` - ${format(parse(event.endTime, "HH:mm", new Date()), "h:mm aa")}`}
               </>
             ) : (
               "TBA"
@@ -147,22 +154,19 @@ const EventCard = memo(function EventCard({
               }}
               className="h-auto px-3 py-1.5 border border-primary rounded-full
                          text-primary bg-transparent hover:bg-primary hover:text-white
-                         transition-colors duration-150 flex-shrink-0"
-            >
+                         transition-colors duration-150 flex-shrink-0">
               <span className="text-xs font-semibold">GET TICKETS</span>
             </Button>
           ) : event.price_category === "external" ? (
             <span
               className="inline-flex items-center px-3 py-1.5 border border-primary rounded-full
-                            text-primary shrink-0"
-            >
+                            text-primary shrink-0">
               <span className="text-xs font-semibold">GET TICKETS</span>
             </span>
           ) : (
             <span
               className="inline-flex items-center px-3 py-1.5 border border-green-600 rounded-full
-                            text-green-600 flex-shrink-0"
-            >
+                            text-green-600 flex-shrink-0">
               <span className="text-xs font-semibold">FREE</span>
             </span>
           )}

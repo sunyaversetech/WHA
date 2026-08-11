@@ -82,12 +82,25 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         await connectToDb();
-        const existing = await User.findOne({
+        let existing = await User.findOne({
           email: user.email?.toLowerCase(),
         });
 
-        // Google is login-only — block if account does not already exist
-        if (!existing) return false;
+        // New Google sign-in with no matching account: auto-create one.
+        // Business accounts still go through the dedicated signup flow, so
+        // only a regular "user" account is created here.
+        if (!existing) {
+          existing = await User.create({
+            name: user.name || "New User",
+            email: user.email?.toLowerCase(),
+            image: user.image || undefined,
+            category: "user",
+            provider: "google",
+            googleId: account.providerAccountId,
+            emailVerified: new Date(),
+            verified: true,
+          });
+        }
 
         user.id = existing._id.toString();
         (user as any).category = existing.category;

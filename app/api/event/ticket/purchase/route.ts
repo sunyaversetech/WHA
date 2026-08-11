@@ -5,6 +5,7 @@ import crypto from "crypto";
 import Stripe from "stripe";
 import Event from "@/server/models/Event.model";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
+import { TicketHold } from "@/server/models/TicketHold.model";
 import { sendMultiTierEventTicketEmail } from "@/lib/mail";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -179,6 +180,13 @@ export async function POST(req: Request) {
     try {
       await dbSession.withTransaction(async () => {
         const freshEvent = await Event.findById(eventId).session(dbSession);
+        // The checkout hold already reserved this capacity — consume it
+        // rather than re-checking raw capacity. If it's missing (expired
+        // right as payment completed), fall back to a raw capacity check
+        // so a successful charge is never left without tickets.
+        const hold = await TicketHold.findOne({ paymentIntentId }).session(
+          dbSession,
+        );
         const itemsForPurchase: any[] = [];
         const allKeys: string[] = [];
 
@@ -193,12 +201,16 @@ export async function POST(req: Request) {
             throw new Error("CLOSED");
           }
 
-          const remaining =
-            option.capacity != null
-              ? option.capacity - (option.sold || 0)
-              : null;
-          if (remaining !== null && quantity > remaining) {
-            throw new Error("SOLD_OUT");
+          if (hold) {
+            option.held = Math.max(0, (option.held || 0) - quantity);
+          } else {
+            const remaining =
+              option.capacity != null
+                ? option.capacity - (option.sold || 0)
+                : null;
+            if (remaining !== null && quantity > remaining) {
+              throw new Error("SOLD_OUT");
+            }
           }
 
           option.sold = (option.sold || 0) + quantity;
@@ -235,6 +247,10 @@ export async function POST(req: Request) {
         }
 
         await freshEvent.save({ session: dbSession });
+
+        if (hold) {
+          await TicketHold.deleteOne({ _id: hold._id }).session(dbSession);
+        }
 
         const created = await EventTicketPurchase.create(
           [

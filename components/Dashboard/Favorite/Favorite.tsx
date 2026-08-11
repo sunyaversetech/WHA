@@ -34,10 +34,10 @@ export default function FavoritesPage() {
 
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-xl text-secondary  font-bold tracking-tight">
+          <h1 className="text-xl text-primary  font-bold tracking-tight">
             Favorites
           </h1>
-          <p className="text-muted">View and manage your favorites.</p>
+          <p className="text-gray-800">View and manage your favorites.</p>
         </div>
       </div>
 
@@ -47,19 +47,19 @@ export default function FavoritesPage() {
         <TabsList className="grid w-full max-w-md grid-cols-3 mb-8 bg-slate-100 p-1 rounded-xl">
           <TabsTrigger value="events" className="rounded-lg font-bold">
             Events{" "}
-            <Badge variant="secondary" className="ml-2 bg-white">
+            <Badge variant="secondary" className="ml-2 bg-white text-primary">
               {favorites.events.length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="deals" className="rounded-lg font-bold">
             Deals{" "}
-            <Badge variant="secondary" className="ml-2 bg-white">
+            <Badge variant="secondary" className="ml-2 bg-white text-primary">
               {favorites.deals.length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="business" className="rounded-lg font-bold">
             Business{" "}
-            <Badge variant="secondary" className="ml-2 bg-white">
+            <Badge variant="secondary" className="ml-2 bg-white text-primary">
               {favorites.business.length}
             </Badge>
           </TabsTrigger>

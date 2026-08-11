@@ -9,7 +9,7 @@ export default function BusinessLoginPage() {
       backHref="/auth">
       <LoginPage
         loginType="business"
-        showGoogle={true}
+        showGoogle={false}
         signupHref="/auth/business/signup"
       />
     </AuthShell>

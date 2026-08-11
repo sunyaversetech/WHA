@@ -135,8 +135,7 @@ function TRow({
         borderRadius: 14,
         cursor: "pointer",
         background: hov ? "#f4f7fb" : "transparent",
-      }}
-    >
+      }}>
       {children}
     </div>
   );
@@ -152,8 +151,7 @@ function StepDots({ step }: { step: Step }) {
         justifyContent: "center",
         gap: 6,
         padding: "8px 0",
-      }}
-    >
+      }}>
       {STEPS.map((s) => {
         const done = STEPS.indexOf(s) < STEPS.indexOf(step);
         const current = s === step;
@@ -258,7 +256,8 @@ export default function MobileBusinessSearchWithDates({
 
   const requestGeoLocation = () => requestGeo(() => setStep("when"));
 
-  const selectCity = (city: string) => selectCityLocation(city, () => setStep("when"));
+  const selectCity = (city: string) =>
+    selectCityLocation(city, () => setStep("when"));
 
   const handleSearch = useCallback(() => {
     // No active location (e.g. the user cleared it) — fall back to the
@@ -328,15 +327,13 @@ export default function MobileBusinessSearchWithDates({
                 background: "linear-gradient(135deg, #c4b5fd 0%, #f9a8d4 100%)",
                 borderRadius: 23,
                 padding: 1.5,
-              }}
-            >
+              }}>
               <div
                 style={{
                   background: "#fff",
                   borderRadius: 22,
                   overflow: "hidden",
-                }}
-              >
+                }}>
                 {/* Treatment row */}
                 <div
                   onClick={() => {
@@ -350,15 +347,13 @@ export default function MobileBusinessSearchWithDates({
                     padding: "18px 22px",
                     borderBottom: "1px solid #f1f4f8",
                     cursor: "pointer",
-                  }}
-                >
+                  }}>
                   <Search size={20} color="#64748b" style={{ flexShrink: 0 }} />
                   <span
                     style={{
                       fontSize: 16,
                       color: service ? "#1e293b" : "#64748b",
-                    }}
-                  >
+                    }}>
                     {service || "All Services"}
                   </span>
                 </div>
@@ -376,15 +371,13 @@ export default function MobileBusinessSearchWithDates({
                     padding: "18px 22px",
                     borderBottom: "1px solid #f1f4f8",
                     cursor: "pointer",
-                  }}
-                >
+                  }}>
                   <MapPin size={20} color="#64748b" style={{ flexShrink: 0 }} />
                   <span
                     style={{
                       fontSize: 16,
                       color: location ? "#1e293b" : "#64748b",
-                    }}
-                  >
+                    }}>
                     {location || "Current location"}
                   </span>
                 </div>
@@ -401,8 +394,7 @@ export default function MobileBusinessSearchWithDates({
                     gap: 14,
                     padding: "18px 22px",
                     cursor: "pointer",
-                  }}
-                >
+                  }}>
                   <Calendar
                     size={20}
                     color="#64748b"
@@ -412,8 +404,7 @@ export default function MobileBusinessSearchWithDates({
                     style={{
                       fontSize: 16,
                       color: selDay ? "#1e293b" : "#64748b",
-                    }}
-                  >
+                    }}>
                     {selDay ? whenLabel() : "Any time"}
                   </span>
                 </div>
@@ -432,8 +423,7 @@ export default function MobileBusinessSearchWithDates({
                       fontSize: 16,
                       fontWeight: 700,
                       cursor: "pointer",
-                    }}
-                  >
+                    }}>
                     Search
                   </button>
                 </div>
@@ -456,8 +446,7 @@ export default function MobileBusinessSearchWithDates({
                 padding: "13px 18px",
                 cursor: "pointer",
                 boxShadow: "0 4px 16px rgba(2,12,26,0.06)",
-              }}
-            >
+              }}>
               <Search size={18} color="#3771db" style={{ flexShrink: 0 }} />
               <span
                 style={{
@@ -468,8 +457,7 @@ export default function MobileBusinessSearchWithDates({
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
-                }}
-              >
+                }}>
                 {triggerSummary}
               </span>
               {(service || location || selDay) && (
@@ -493,8 +481,7 @@ export default function MobileBusinessSearchWithDates({
                     justifyContent: "center",
                     cursor: "pointer",
                     flexShrink: 0,
-                  }}
-                >
+                  }}>
                   <X size={11} strokeWidth={3} />
                 </button>
               )}
@@ -511,8 +498,7 @@ export default function MobileBusinessSearchWithDates({
           flexDirection: "column",
           borderRadius: 0,
           border: "none",
-        }}
-      >
+        }}>
         <DrawerTitle
           style={{
             position: "absolute",
@@ -520,8 +506,7 @@ export default function MobileBusinessSearchWithDates({
             height: 1,
             overflow: "hidden",
             clip: "rect(0,0,0,0)",
-          }}
-        >
+          }}>
           Find a service
         </DrawerTitle>
 
@@ -533,8 +518,7 @@ export default function MobileBusinessSearchWithDates({
             gap: 12,
             padding: "16px 16px 12px",
             borderBottom: "1px solid #f1f4f8",
-          }}
-        >
+          }}>
           <button
             onClick={goBack}
             aria-label="Back"
@@ -549,8 +533,7 @@ export default function MobileBusinessSearchWithDates({
               justifyContent: "center",
               cursor: "pointer",
               flexShrink: 0,
-            }}
-          >
+            }}>
             <ChevronLeft size={20} color="#0f2748" />
           </button>
 
@@ -565,15 +548,13 @@ export default function MobileBusinessSearchWithDates({
               border: "1px solid #e6ebf2",
               borderRadius: 9999,
               padding: "11px 16px",
-            }}
-          >
+            }}>
             {stepIcon}
             {step === "what" ? (
               <input
                 type="text"
-                autoFocus
                 autoComplete="off"
-                className="placeholder:text-gray-400 text-base"
+                className="placeholder:text-gray-400 text-sm focus-within:outline-none focus-within:ring-0 focus-within:ring-offset-0"
                 value={serviceQuery}
                 onChange={(e) => {
                   setServiceQuery(e.target.value);
@@ -599,8 +580,7 @@ export default function MobileBusinessSearchWithDates({
                   fontWeight: 600,
                   color: stepVal ? "#1e293b" : "#94a3b8",
                   flex: 1,
-                }}
-              >
+                }}>
                 {stepVal || stepLabel}
               </span>
             )}
@@ -627,8 +607,7 @@ export default function MobileBusinessSearchWithDates({
                   justifyContent: "center",
                   cursor: "pointer",
                   flexShrink: 0,
-                }}
-              >
+                }}>
                 <X size={10} strokeWidth={3} />
               </button>
             )}
@@ -651,8 +630,7 @@ export default function MobileBusinessSearchWithDates({
                     gap: 8,
                     padding: "12px 16px 16px",
                     flexWrap: "wrap",
-                  }}
-                >
+                  }}>
                   {(["all", "services"] as const).map((tab) => (
                     <button
                       key={tab}
@@ -667,8 +645,7 @@ export default function MobileBusinessSearchWithDates({
                         cursor: "pointer",
                         background: whatTab === tab ? "#051e3a" : "#fff",
                         color: whatTab === tab ? "#fff" : "#334155",
-                      }}
-                    >
+                      }}>
                       {tab === "all" ? "All" : "Services"}
                     </button>
                   ))}
@@ -685,8 +662,7 @@ export default function MobileBusinessSearchWithDates({
                         textTransform: "uppercase",
                         color: "#0f2748",
                         padding: "0 12px 8px",
-                      }}
-                    >
+                      }}>
                       Suggestions
                     </div>
                     {suggestions.map((s) => (
@@ -708,8 +684,7 @@ export default function MobileBusinessSearchWithDates({
                           alignItems: "center",
                           justifyContent: "space-between",
                           padding: "0 12px 8px",
-                        }}
-                      >
+                        }}>
                         <span
                           style={{
                             fontSize: 12,
@@ -717,8 +692,7 @@ export default function MobileBusinessSearchWithDates({
                             letterSpacing: "0.06em",
                             textTransform: "uppercase" as const,
                             color: "#0f2748",
-                          }}
-                        >
+                          }}>
                           Recents
                         </span>
                       </div>
@@ -727,8 +701,7 @@ export default function MobileBusinessSearchWithDates({
                           setService("");
                           setServiceQuery("");
                           setStep("where");
-                        }}
-                      >
+                        }}>
                         <span style={{ ...TILE, background: "#f1f4f9" }}>
                           <Clock size={20} color="#64748b" />
                         </span>
@@ -749,8 +722,7 @@ export default function MobileBusinessSearchWithDates({
                           textTransform: "uppercase" as const,
                           color: "#0f2748",
                           padding: "4px 12px 8px",
-                        }}
-                      >
+                        }}>
                         Services
                       </div>
                       {SERVICE_CATEGORIES.map((cat) => (
@@ -763,8 +735,7 @@ export default function MobileBusinessSearchWithDates({
                               letterSpacing: "0.06em",
                               color: "#94a3b8",
                               padding: "6px 16px 2px",
-                            }}
-                          >
+                            }}>
                             {cat.name}
                           </div>
                           {cat.services.map((s) => (
@@ -790,8 +761,7 @@ export default function MobileBusinessSearchWithDates({
               <motion.div
                 key="where"
                 {...SLIDE}
-                style={{ padding: "8px 8px 0" }}
-              >
+                style={{ padding: "8px 8px 0" }}>
                 <div
                   style={{
                     fontSize: 12,
@@ -800,8 +770,7 @@ export default function MobileBusinessSearchWithDates({
                     textTransform: "uppercase",
                     color: "#0f2748",
                     padding: "4px 12px 8px",
-                  }}
-                >
+                  }}>
                   Location
                 </div>
 
@@ -815,8 +784,7 @@ export default function MobileBusinessSearchWithDates({
                         fill="none"
                         stroke="#fff"
                         strokeWidth={2.5}
-                        strokeLinecap="round"
-                      >
+                        strokeLinecap="round">
                         <circle cx={12} cy={12} r={9} strokeOpacity={0.25} />
                         <path
                           d="M12 3a9 9 0 0 1 9 9"
@@ -856,8 +824,7 @@ export default function MobileBusinessSearchWithDates({
                         stroke="#3771db"
                         strokeWidth={2.4}
                         strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
+                        strokeLinejoin="round">
                         <path d="M5 12.5l4.5 4.5L19 7" />
                       </svg>
                     )}
@@ -871,8 +838,7 @@ export default function MobileBusinessSearchWithDates({
               <motion.div
                 key="when"
                 {...SLIDE}
-                style={{ padding: "8px 16px 100px" }}
-              >
+                style={{ padding: "8px 16px 100px" }}>
                 {/* Quick picks */}
                 <div
                   style={{
@@ -882,8 +848,7 @@ export default function MobileBusinessSearchWithDates({
                     textTransform: "uppercase" as const,
                     color: "#0f2748",
                     padding: "4px 0 10px",
-                  }}
-                >
+                  }}>
                   Quick pick
                 </div>
                 <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
@@ -914,15 +879,13 @@ export default function MobileBusinessSearchWithDates({
                           cursor: "pointer",
                           background: isSel ? "rgba(55,113,219,0.06)" : "#fff",
                           boxShadow: isSel ? "inset 0 0 0 1px #3771db" : "none",
-                        }}
-                      >
+                        }}>
                         <span
                           style={{
                             fontSize: 16,
                             fontWeight: 700,
                             color: "#0f2748",
-                          }}
-                        >
+                          }}>
                           {q.label}
                         </span>
                         <span style={{ fontSize: 13, color: "#7c899c" }}>
@@ -941,16 +904,14 @@ export default function MobileBusinessSearchWithDates({
                     border: "1px solid #f1f4f8",
                     padding: "16px",
                     marginBottom: 16,
-                  }}
-                >
+                  }}>
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       marginBottom: 14,
-                    }}
-                  >
+                    }}>
                     <button
                       onClick={prevMonth}
                       style={{
@@ -963,8 +924,7 @@ export default function MobileBusinessSearchWithDates({
                         alignItems: "center",
                         justifyContent: "center",
                         cursor: "pointer",
-                      }}
-                    >
+                      }}>
                       <svg
                         width={17}
                         height={17}
@@ -973,8 +933,7 @@ export default function MobileBusinessSearchWithDates({
                         stroke="#0f2748"
                         strokeWidth={2.2}
                         strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
+                        strokeLinejoin="round">
                         <path d="M15 6l-6 6 6 6" />
                       </svg>
                     </button>
@@ -983,8 +942,7 @@ export default function MobileBusinessSearchWithDates({
                         fontSize: 16,
                         fontWeight: 700,
                         color: "#0f2748",
-                      }}
-                    >
+                      }}>
                       {MON_NAMES[viewM]} {viewY}
                     </span>
                     <button
@@ -999,8 +957,7 @@ export default function MobileBusinessSearchWithDates({
                         alignItems: "center",
                         justifyContent: "center",
                         cursor: "pointer",
-                      }}
-                    >
+                      }}>
                       <svg
                         width={17}
                         height={17}
@@ -1009,8 +966,7 @@ export default function MobileBusinessSearchWithDates({
                         stroke="#0f2748"
                         strokeWidth={2.2}
                         strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
+                        strokeLinejoin="round">
                         <path d="M9 6l6 6-6 6" />
                       </svg>
                     </button>
@@ -1022,8 +978,7 @@ export default function MobileBusinessSearchWithDates({
                       gridTemplateColumns: "repeat(7,1fr)",
                       gap: 2,
                       marginBottom: 4,
-                    }}
-                  >
+                    }}>
                     {WEEKDAYS.map((wd) => (
                       <div
                         key={wd}
@@ -1035,8 +990,7 @@ export default function MobileBusinessSearchWithDates({
                           fontSize: 12,
                           fontWeight: 600,
                           color: "#94a3b8",
-                        }}
-                      >
+                        }}>
                         {wd}
                       </div>
                     ))}
@@ -1049,8 +1003,7 @@ export default function MobileBusinessSearchWithDates({
                         display: "grid",
                         gridTemplateColumns: "repeat(7,1fr)",
                         gap: 2,
-                      }}
-                    >
+                      }}>
                       {week.map((d, di) => {
                         if (d === null) return <div key={di} />;
                         const isPast =
@@ -1094,8 +1047,7 @@ export default function MobileBusinessSearchWithDates({
                                 !isSel && isToday
                                   ? "inset 0 0 0 1.6px #c7d2e3"
                                   : "none",
-                            }}
-                          >
+                            }}>
                             {d}
                           </div>
                         );
@@ -1113,8 +1065,7 @@ export default function MobileBusinessSearchWithDates({
                     textTransform: "uppercase" as const,
                     color: "#0f2748",
                     marginBottom: 10,
-                  }}
-                >
+                  }}>
                   Time of day
                 </div>
                 <div
@@ -1122,8 +1073,7 @@ export default function MobileBusinessSearchWithDates({
                     display: "grid",
                     gridTemplateColumns: "1fr 1fr",
                     gap: 8,
-                  }}
-                >
+                  }}>
                   {TIME_SLOTS.map((sl) => {
                     const isAct = timeSlot === sl.key;
                     return (
@@ -1143,8 +1093,7 @@ export default function MobileBusinessSearchWithDates({
                           background: isAct ? "rgba(55,113,219,0.07)" : "#fff",
                           color: isAct ? "#3771db" : "#0f2748",
                           fontSize: 15,
-                        }}
-                      >
+                        }}>
                         <span>{sl.label}</span>
                         {sl.sub && (
                           <span
@@ -1152,8 +1101,7 @@ export default function MobileBusinessSearchWithDates({
                               fontSize: 12,
                               fontWeight: 500,
                               color: isAct ? "#3771db" : "#7c899c",
-                            }}
-                          >
+                            }}>
                             {sl.sub}
                           </span>
                         )}
@@ -1172,8 +1120,7 @@ export default function MobileBusinessSearchWithDates({
             padding: "12px 16px 28px",
             borderTop: "1px solid #f1f4f8",
             background: "#fff",
-          }}
-        >
+          }}>
           <button
             onClick={handleSearch}
             style={{
@@ -1191,8 +1138,7 @@ export default function MobileBusinessSearchWithDates({
               fontWeight: 700,
               cursor: "pointer",
               boxShadow: "0 4px 20px rgba(5,30,58,0.28)",
-            }}
-          >
+            }}>
             <Search size={20} strokeWidth={2.2} />
             Search
             {service && (

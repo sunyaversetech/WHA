@@ -35,7 +35,6 @@ import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import EventDetailsSkeleton from "./SingleEventSkeleton";
-import { QRCodeCanvas } from "qrcode.react";
 import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
 
 export default function EventDetailPage() {
@@ -45,7 +44,12 @@ export default function EventDetailPage() {
   const { data: session } = useSession();
   const { mutate, isPending } = useCreateFavroite();
   const router = useRouter();
-  const { data: event, isLoading, isFetching } = useGetSingleEvent(slug);
+  const {
+    data: event,
+    isLoading,
+    isFetching,
+    refetch: refetchEvent,
+  } = useGetSingleEvent(slug);
   const queryClient = useQueryClient();
   const DefaultIcon = L.icon({
     iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -80,8 +84,11 @@ export default function EventDetailPage() {
     const released = !opt.release_date || opt.release_date <= today;
     const closed = !!opt.close_date && opt.close_date < today;
     const sold = opt.sold ? Number(opt.sold) : 0;
+    const held = opt.held ? Number(opt.held) : 0;
     const remaining =
-      opt.capacity != null ? Math.max(0, Number(opt.capacity) - sold) : null;
+      opt.capacity != null
+        ? Math.max(0, Number(opt.capacity) - sold - held)
+        : null;
     const soldOut = remaining !== null && remaining <= 0;
 
     let status: "upcoming" | "closed" | "soldout" | "released" = "released";
@@ -191,7 +198,15 @@ export default function EventDetailPage() {
       toast.error("Please login to buy tickets");
       return;
     }
+    // Refresh availability right before opening checkout so quantity limits
+    // reflect any tickets other buyers currently have on hold.
+    refetchEvent();
     setIsCheckoutOpen(true);
+  };
+
+  const handleCheckoutClose = () => {
+    setIsCheckoutOpen(false);
+    refetchEvent();
   };
 
   const handlePurchaseSuccess = (paymentIntentId: string) => {
@@ -277,7 +292,7 @@ export default function EventDetailPage() {
               eventTitle={event?.data?.title}
               options={purchasableOptions}
               maxTicketsPerRequest={event?.data?.max_tickets_per_request ?? 10}
-              onClose={() => setIsCheckoutOpen(false)}
+              onClose={handleCheckoutClose}
               onSuccess={handlePurchaseSuccess}
             />
           )}
@@ -295,8 +310,7 @@ export default function EventDetailPage() {
                 <div className="hidden flex items-center gap-2 md:flex md:items-center md:gap-2">
                   <button
                     onClick={handleAddRemoveFavorite}
-                    className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition"
-                  >
+                    className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition">
                     {isPending ? (
                       <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                     ) : (
@@ -315,8 +329,7 @@ export default function EventDetailPage() {
                   <button
                     onClick={handleShare}
                     className="flex items-center justify-center p-2 border rounded-full hover:bg-primary/10 transition-all active:scale-90"
-                    title="Share Event"
-                  >
+                    title="Share Event">
                     <Share className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </button>
                 </div>
@@ -387,8 +400,7 @@ export default function EventDetailPage() {
                   <Button
                     variant={"ghost"}
                     className="p-0 transition-all hover:scale-105 active:scale-95"
-                    onClick={() => router.back()}
-                  >
+                    onClick={() => router.back()}>
                     <ChevronLeft
                       className="h-9 w-9 cursor-pointer rounded-full border  p-1.5 
                  text-primary bg-white transition-all hover:scale-105 active:scale-95"
@@ -397,8 +409,7 @@ export default function EventDetailPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={handleAddRemoveFavorite}
-                      className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95"
-                    >
+                      className="flex items-center justify-center bg-white p-2 border rounded-full transition-all hover:scale-105 active:scale-95">
                       {isPending ? (
                         <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
                       ) : (
@@ -416,8 +427,7 @@ export default function EventDetailPage() {
 
                     <button
                       className="flex items-center justify-center p-2 border rounded-full bg-white transition-all hover:scale-105 active:scale-95"
-                      onClick={handleShare}
-                    >
+                      onClick={handleShare}>
                       <Share className="h-5 w-5 text-primary" />
                     </button>
                   </div>
@@ -440,8 +450,7 @@ export default function EventDetailPage() {
                     {event?.data?.price_category === "registration" && (
                       <p
                         className="text-sm font-medium text-primary"
-                        id="registration-button"
-                      >
+                        id="registration-button">
                         Free Event · Registration Required
                       </p>
                     )}
@@ -449,8 +458,7 @@ export default function EventDetailPage() {
                     {event?.data?.price_category === "external" && (
                       <p
                         className="text-sm font-medium text-primary"
-                        id="registration-button"
-                      >
+                        id="registration-button">
                         Tickets via external site
                       </p>
                     )}
@@ -458,13 +466,11 @@ export default function EventDetailPage() {
                     {event?.data?.price_category === "paid" && (
                       <div
                         className="space-y-2 border rounded-xl p-3"
-                        id="registration-button"
-                      >
+                        id="registration-button">
                         {optionsWithStatus.map((opt) => (
                           <div
                             key={opt.optionId}
-                            className="flex items-center justify-between text-sm gap-2"
-                          >
+                            className="flex items-center justify-between text-sm gap-2">
                             <span className="font-medium text-gray-800 truncate">
                               {opt.name}
                             </span>
@@ -506,8 +512,7 @@ export default function EventDetailPage() {
                           !hasPurchasableOptions
                             ? "bg-gray-400 text-white cursor-not-allowed"
                             : "bg-primary text-white hover:opacity-90",
-                        )}
-                      >
+                        )}>
                         {!hasPurchasableOptions
                           ? "Sold Out"
                           : purchaseResult?.success
@@ -519,8 +524,7 @@ export default function EventDetailPage() {
                         href={event?.data?.ticket_link || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full block text-center rounded-full py-3 font-semibold transition bg-primary text-white hover:opacity-90"
-                      >
+                        className="w-full block text-center rounded-full py-3 font-semibold transition bg-primary text-white hover:opacity-90">
                         Get Tickets
                       </a>
                     ) : (
@@ -537,8 +541,7 @@ export default function EventDetailPage() {
                             redemptionResult?.success || registrationFull
                               ? "bg-gray-400 text-white cursor-not-allowed"
                               : "bg-primary text-white hover:opacity-90",
-                          )}
-                        >
+                          )}>
                           {redemptionResult?.success
                             ? "Already Registered"
                             : registrationFull
@@ -595,8 +598,7 @@ export default function EventDetailPage() {
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-bold text-primary text-sm"
-                            >
+                              className="font-bold text-primary text-sm">
                               Get Directions
                             </a>
                           </div>
@@ -632,8 +634,7 @@ export default function EventDetailPage() {
                         center={[event.data.latitude, event.data.longitude]}
                         zoom={13}
                         scrollWheelZoom={false}
-                        className="h-full w-full z-20"
-                      >
+                        className="h-full w-full z-20">
                         <TileLayer
                           attribution="&copy; OpenStreetMap contributors"
                           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -668,8 +669,7 @@ export default function EventDetailPage() {
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-bold text-primary text-sm pl-1"
-                    >
+                      className="font-bold text-primary text-sm pl-1">
                       Get Directions
                     </a>
                   </div>
@@ -680,59 +680,189 @@ export default function EventDetailPage() {
                     Host
                   </h2>
                   <div className="flex flex-row  items-center gap-6 border rounded-md p-4">
-                    <div className="flex-shrink-0">
-                      <Image
-                        src={event?.data?.user.image || "/placeholder.svg"}
-                        alt={event?.data?.title || "Host Image"}
-                        width={80}
-                        height={80}
-                        className="rounded-sm h-full object-cover shadow-md"
-                      />
-                    </div>
-
-                    <div className="flex-1 space-y-2">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
-                        <h3 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-white">
-                          {event?.data?.user.business_name || "Host Name"}
-                        </h3>
-                      </div>
-
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <div className="flex items-center gap-1 sm:gap-2">
-                          <span className="font-medium text-foreground">
-                            {averageRating.toFixed(1)}
-                          </span>
-                          <div className="flex gap-1">
-                            {[...Array(5)].map((_, index) => (
-                              <Star
-                                key={index}
-                                className={`h-4 w-4 ${
-                                  index < averageRating
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span>
-                            (
-                            {event?.data?.reviews &&
-                            event?.data?.reviews?.length > 0
-                              ? event?.data?.reviews?.length
-                              : "No Review Yet"}
-                            )
-                          </span>
+                    {event?.data?.host_name ? (
+                      <div className="flex items-center gap-4">
+                        <div className="flex-shrink-0 w-20 h-20">
+                          <Image
+                            src={event?.data?.image || "/placeholder.svg"}
+                            alt={event?.data?.title || "Host Image"}
+                            width={80}
+                            height={80}
+                            className="rounded-sm h-full object-cover shadow-md"
+                          />
                         </div>
-                        <div className="flex gap-1"></div>
-                        <span></span>
-                      </div>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+                            <h3 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-white">
+                              {event?.data?.host_name || "Host Name"}
+                            </h3>
+                          </div>
 
-                      <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base mt-3">
-                        {event?.data?.user?.city || "Host Description"}
-                      </p>
-                    </div>
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <div className="flex flex-col gap-1">
+                              {event?.data?.phone_number && (
+                                <p className="font-medium text-foreground text-sm">
+                                  Phone N.O:{" "}
+                                  <Link
+                                    href={`tel:${event?.data?.phone_number}`}
+                                    rel="noopener noreferrer">
+                                    {event?.data?.phone_number ?? "N/A"}
+                                  </Link>
+                                </p>
+                              )}
+                              {event?.data?.email && (
+                                <p className="font-medium text-foreground text-sm">
+                                  Email:{" "}
+                                  <Link
+                                    href={`mailto:${event?.data?.email}`}
+                                    rel="noopener noreferrer">
+                                    {event?.data?.email ?? "N/A"}
+                                  </Link>
+                                </p>
+                              )}
+                              {event?.data?.website_link && (
+                                <p className="font-medium text-foreground text-sm">
+                                  Website:{" "}
+                                  <Link
+                                    href={`https://${event?.data?.website_link || "#"}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer">
+                                    {event?.data?.website_link ?? "N/A"}
+                                  </Link>
+                                </p>
+                              )}
+                            </div>
+                            <span></span>
+                          </div>
+
+                          <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base mt-3">
+                            {event?.data?.user?.city || "Host Description"}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-4">
+                        <div className="flex-shrink-0">
+                          <Image
+                            src={event?.data?.user.image || "/placeholder.svg"}
+                            alt={event?.data?.title || "Host Image"}
+                            width={80}
+                            height={80}
+                            className="rounded-sm h-full object-cover shadow-md"
+                          />
+                        </div>
+
+                        <div className="flex-1 space-y-2">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+                            <h3 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-white">
+                              {event?.data?.user.business_name || "Host Name"}
+                            </h3>
+                          </div>
+
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <span className="font-medium text-foreground">
+                                {averageRating.toFixed(1)}
+                              </span>
+                              <div className="flex gap-1">
+                                {[...Array(5)].map((_, index) => (
+                                  <Star
+                                    key={index}
+                                    className={`h-4 w-4 ${
+                                      index < averageRating
+                                        ? "fill-yellow-400 text-yellow-400"
+                                        : "text-gray-300"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span>
+                                (
+                                {event?.data?.reviews &&
+                                event?.data?.reviews?.length > 0
+                                  ? event?.data?.reviews?.length
+                                  : "No Review Yet"}
+                                )
+                              </span>
+                            </div>
+                            <div className="flex gap-1"></div>
+                            <span></span>
+                          </div>
+
+                          <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base mt-3">
+                            {event?.data?.user?.city || "Host Description"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
+                {event?.data?.support_details && (
+                  <div className="md:p-4 md:p-6 -mt-10">
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
+                      Support Details
+                    </h2>
+                    <div className="flex flex-row  items-center gap-6 border rounded-md p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+                            <h3 className="text-lg flex flex-col md:text-sm font-semibold text-gray-800 dark:text-white">
+                              {event?.data?.support_details
+                                .split("\r\n")
+                                .map((line, index) => (
+                                  <span key={index}>{line}</span>
+                                ))}
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {event?.data?.event_rules && (
+                  <div className="md:p-4 md:p-6 -mt-10">
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
+                      Event Rules
+                    </h2>
+                    <div className="flex flex-row  items-center gap-6 border rounded-md p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+                            <h3 className="text-lg flex flex-col md:text-sm font-semibold text-gray-800 dark:text-white">
+                              {event?.data?.event_rules
+                                .split("\r\n")
+                                .map((line, index) => (
+                                  <span key={index}>{line}</span>
+                                ))}
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {event?.data?.refund_policy && (
+                  <div className="md:p-4 md:p-6 -mt-10">
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
+                      Refund Policy
+                    </h2>
+                    <div className="flex flex-row  items-center gap-6 border rounded-md p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+                            <h3 className="text-lg flex flex-col md:text-sm font-semibold text-gray-800 dark:text-white">
+                              {event?.data?.refund_policy
+                                .split("\r\n")
+                                .map((line, index) => (
+                                  <span key={index}>{line}</span>
+                                ))}
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -754,8 +884,7 @@ export default function EventDetailPage() {
                     !hasPurchasableOptions
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : "bg-primary text-white hover:opacity-90",
-                  )}
-                >
+                  )}>
                   {!hasPurchasableOptions
                     ? "Sold Out"
                     : purchaseResult?.success
@@ -767,8 +896,7 @@ export default function EventDetailPage() {
                   href={event?.data?.ticket_link || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-full text-base font-semibold transition bg-primary text-white hover:opacity-90"
-                >
+                  className="px-4 py-2 rounded-full text-base font-semibold transition bg-primary text-white hover:opacity-90">
                   Get Tickets
                 </a>
               ) : (
@@ -779,8 +907,7 @@ export default function EventDetailPage() {
                     redemptionResult?.success || registrationFull
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : "bg-primary text-white hover:opacity-90",
-                  )}
-                >
+                  )}>
                   {redemptionResult?.success
                     ? "Already Registered"
                     : registrationFull

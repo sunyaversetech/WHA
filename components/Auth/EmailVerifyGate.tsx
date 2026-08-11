@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import {
@@ -30,10 +30,19 @@ export default function EmailVerifyGate({
 }) {
   const [sent, setSent] = useState(false);
   const [code, setCode] = useState("");
+  const [cooldown, setCooldown] = useState(0);
   const { mutate: sendCode, isPending: sending } = useSendSignupCode();
   const { mutate: verifyCode, isPending: verifying } = useVerifySignupCode();
 
   const emailValid = EMAIL_RE.test(email);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((c) => (c <= 1 ? 0 : c - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const handleSend = () => {
     if (!emailValid) return;
@@ -43,10 +52,13 @@ export default function EmailVerifyGate({
         onSuccess: () => {
           setSent(true);
           setCode("");
+          setCooldown(60);
           toast.success("Verification code sent to your email");
         },
         onError: (error) => {
-          toast.error(apiErrorMessage(error, "Failed to send verification code"));
+          toast.error(
+            apiErrorMessage(error, "Failed to send verification code"),
+          );
         },
       },
     );
@@ -83,7 +95,18 @@ export default function EmailVerifyGate({
         type="button"
         onClick={handleSend}
         disabled={!emailValid || sending}
-        className="mt-1.5 text-sm font-semibold text-primary hover:underline disabled:text-slate-300 disabled:no-underline disabled:cursor-not-allowed flex items-center gap-1.5">
+        style={{
+          width: "100%",
+          background: sending ? "#334155" : "#0f172a",
+          color: "#fff",
+          border: "none",
+          borderRadius: 9999,
+          padding: "16px",
+          fontSize: 16,
+          fontWeight: 700,
+          cursor: sending ? "not-allowed" : "pointer",
+          transition: "background .15s",
+        }}>
         {sending && <Loader2 size={13} className="animate-spin" />}
         Verify this email
       </button>
@@ -91,29 +114,31 @@ export default function EmailVerifyGate({
   }
 
   return (
-    <div className="mt-2 flex items-center gap-2">
+    <div className="mt-2 flex flex-col items-center gap-2">
       <input
         value={code}
         onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
         placeholder="6-digit code"
         inputMode="numeric"
-        className="w-32 border border-slate-200 rounded-lg px-3 py-2 text-sm tracking-widest outline-none focus:border-primary"
+        className="w-full border focus-within:ring-0 focus-within:ring-offset-0 focus-within:outline-none  border-slate-200 rounded-lg px-3 py-2 text-sm tracking-widest outline-none focus:border-primary"
       />
-      <button
-        type="button"
-        onClick={handleVerify}
-        disabled={code.length !== 6 || verifying}
-        className="text-sm font-semibold px-3 py-2 rounded-lg bg-primary text-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5">
-        {verifying && <Loader2 size={13} className="animate-spin" />}
-        Confirm
-      </button>
-      <button
-        type="button"
-        onClick={handleSend}
-        disabled={sending}
-        className="text-sm font-medium text-slate-400 hover:text-slate-600">
-        Resend
-      </button>
+      <div className="flex items-center justify-between w-full">
+        <button
+          type="button"
+          onClick={handleVerify}
+          disabled={code.length !== 6 || verifying}
+          className="text-sm w-full font-semibold px-3 py-2 rounded-lg bg-primary text-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5">
+          {verifying && <Loader2 size={13} className="animate-spin" />}
+          Confirm
+        </button>
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={sending || cooldown > 0}
+          className="text-sm font-medium w-full text-slate-400 hover:text-slate-600 disabled:hover:text-slate-400 disabled:cursor-not-allowed">
+          {cooldown > 0 ? `${cooldown}s` : "Resend"}
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 // components/Stripe/EventCheckOut.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   PaymentElement,
   useStripe,
@@ -9,13 +9,32 @@ import {
   Elements,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { Loader2, Plus, Minus, ShieldCheck, Check, Info } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Minus,
+  ShieldCheck,
+  Check,
+  Info,
+  Clock,
+} from "lucide-react";
 import {
   getEventTicketPaymentIntent,
   type EventTicketPricing,
 } from "@/app/actions/eventTicketStripe";
+import { useHoldTickets, useReleaseTicketHold } from "@/services/event.service";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
+function parseErrorMessage(error: any, fallback: string): string {
+  try {
+    const parsed = JSON.parse(error?.message);
+    return parsed?.error || parsed?.message || fallback;
+  } catch {
+    return error?.message || fallback;
+  }
+}
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
@@ -106,10 +125,43 @@ export default function EventCheckOut({
     text: string;
   } | null>(null);
   const [elementsKey, setElementsKey] = useState(0);
+  const [holdExpiresAt, setHoldExpiresAt] = useState<number | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const { mutate: holdTickets, isPending: holding } = useHoldTickets();
+  const { mutate: releaseHold } = useReleaseTicketHold();
 
   const cartItems = Object.entries(quantities)
     .filter(([, qty]) => qty > 0)
     .map(([optionId, quantity]) => ({ optionId, quantity }));
+
+  const handleClose = () => {
+    if (pricing?.paymentIntentId && holdExpiresAt) {
+      releaseHold({ paymentIntentId: pricing.paymentIntentId });
+    }
+    onClose();
+  };
+
+  // Counts down the active hold and auto-closes the modal once it expires —
+  // the tickets are released server-side (TTL + the release call above), so
+  // the user simply has to start the checkout over.
+  useEffect(() => {
+    if (holdExpiresAt == null) return;
+    const tick = () => {
+      const secs = Math.max(0, Math.round((holdExpiresAt - Date.now()) / 1000));
+      setRemainingSeconds(secs);
+      if (secs <= 0) {
+        if (pricing?.paymentIntentId) {
+          releaseHold({ paymentIntentId: pricing.paymentIntentId });
+        }
+        toast.error("Your ticket hold has expired. Please try again.");
+        onClose();
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [holdExpiresAt]);
 
   const fetchPricing = async (
     items: { optionId: string; quantity: number }[],
@@ -123,9 +175,14 @@ export default function EventCheckOut({
         items,
         promo || undefined,
         pricing?.invoiceNumber,
+        pricing?.paymentIntentId,
       );
       setPricing(res);
       setElementsKey((prev) => prev + 1);
+      // A fresh PaymentIntent means any prior hold (tied to the old one) was
+      // just released server-side — reset the local timer too.
+      setHoldExpiresAt(null);
+      setRemainingSeconds(null);
       return res;
     } catch (err: any) {
       setError(err.message || "Failed to price your order");
@@ -143,6 +200,26 @@ export default function EventCheckOut({
     } catch {
       // error already surfaced via `error` state
     }
+  };
+
+  const handleContinueToPayment = () => {
+    if (!pricing) return;
+    setError("");
+    holdTickets(
+      { eventId, items: cartItems, paymentIntentId: pricing.paymentIntentId },
+      {
+        onSuccess: (res) => {
+          setHoldExpiresAt(new Date(res.expiresAt).getTime());
+          setStep(3);
+        },
+        onError: (err: any) => {
+          setError(
+            parseErrorMessage(err, "Those tickets are no longer available"),
+          );
+          setStep(1);
+        },
+      },
+    );
   };
 
   const handleApplyPromo = async () => {
@@ -175,7 +252,7 @@ export default function EventCheckOut({
               Complete Payment
             </h3>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-gray-400 hover:text-gray-600 text-lg leading-none">
               ✕
             </button>
@@ -222,12 +299,14 @@ export default function EventCheckOut({
                   promoMessage={promoMessage}
                   loadingPricing={loadingPricing}
                   onBack={() => setStep(1)}
-                  onContinue={() => setStep(3)}
+                  onContinue={handleContinueToPayment}
+                  holding={holding}
                 />
               )}
               {step === 3 && (
                 <CheckoutStep
                   pricing={pricing}
+                  remainingSeconds={remainingSeconds}
                   onBack={() => setStep(2)}
                   onSuccess={(paymentIntentId) =>
                     onSuccess(paymentIntentId, cartItems)
@@ -339,6 +418,7 @@ function DetailsStep({
   loadingPricing,
   onBack,
   onContinue,
+  holding,
 }: {
   pricing: EventTicketPricing;
   promoInput: string;
@@ -348,6 +428,7 @@ function DetailsStep({
   loadingPricing: boolean;
   onBack: () => void;
   onContinue: () => void;
+  holding: boolean;
 }) {
   const orderTotal = pricing.ticketTotal + pricing.serviceFee;
 
@@ -466,14 +547,20 @@ function DetailsStep({
       <div className="flex gap-3">
         <button
           onClick={onBack}
-          className="flex-1 py-3.5 rounded-2xl font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+          disabled={holding}
+          className="flex-1 py-3.5 rounded-2xl font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition disabled:opacity-50">
           Back
         </button>
         <button
           onClick={onContinue}
+          disabled={holding}
           style={{ backgroundColor: "#051e3a" }}
-          className="flex-2 text-white py-3.5 rounded-2xl font-bold shadow-lg hover:opacity-95 transition-all active:scale-[0.98]">
-          Continue to Payment
+          className="flex-2 text-white py-3.5 rounded-2xl font-bold shadow-lg hover:opacity-95 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2">
+          {holding ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            "Continue to Payment"
+          )}
         </button>
       </div>
     </div>
@@ -482,10 +569,12 @@ function DetailsStep({
 
 function CheckoutStep({
   pricing,
+  remainingSeconds,
   onBack,
   onSuccess,
 }: {
   pricing: EventTicketPricing;
+  remainingSeconds: number | null;
   onBack: () => void;
   onSuccess: (paymentIntentId: string) => void;
 }) {
@@ -536,6 +625,20 @@ function CheckoutStep({
 
   return (
     <form onSubmit={handlePay} className="space-y-6">
+      {remainingSeconds != null && (
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
+          <Clock className="h-4 w-4 shrink-0" />
+          <span>
+            Your tickets are on hold for{" "}
+            <span className="font-mono font-bold">
+              {String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:
+              {String(remainingSeconds % 60).padStart(2, "0")}
+            </span>{" "}
+            — complete payment before time runs out.
+          </span>
+        </div>
+      )}
+
       <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-sm">
         <span className="text-gray-500">
           Total to pay{" "}
