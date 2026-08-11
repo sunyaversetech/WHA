@@ -330,11 +330,7 @@ export const useHoldTickets = () => {
 };
 
 export const useReleaseTicketHold = () => {
-  return useMutation<
-    { success: boolean },
-    any,
-    { paymentIntentId: string }
-  >({
+  return useMutation<{ success: boolean }, any, { paymentIntentId: string }>({
     mutationKey: ["releaseTicketHold"],
     mutationFn: (data: { paymentIntentId: string }) =>
       Post<{ paymentIntentId: string }, { success: boolean }>({

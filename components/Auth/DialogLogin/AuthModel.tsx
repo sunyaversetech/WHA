@@ -104,14 +104,18 @@ const AuthForm = ({
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={loading} className="w-full mb-2">
+        <Button
+          type="submit"
+          onClick={form.handleSubmit(onSubmit)}
+          disabled={loading}
+          className="w-full mb-2">
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {loading ? "Signing In..." : "Sign In"}
         </Button>
       </form>
     </Form>
     <Link
-      href="/auth"
+      href="/auth/user/signup"
       className="text-xs text-muted-foreground underline underline-offset-4 ">
       Don`t have an account? Sign up
     </Link>
@@ -149,7 +153,7 @@ export const AuthModal = () => {
   const onSubmit = async (values: LoginValues) => {
     setLoading(true);
     try {
-      const result = await signIn("credentials", {
+      const result = await signIn("user-credentials", {
         email: values.email.toLowerCase().trim(),
         password: values.password,
         redirect: false,
