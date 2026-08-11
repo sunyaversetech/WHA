@@ -40,8 +40,6 @@ const TicketRow = ({ item, onClick }: { item: any; onClick: () => void }) => {
   const codes = getTicketCodes(item);
   const badgeClass = STATUS_BADGE[item.status] ?? "badge-secondary";
 
-  console.log("TicketRow item:", item);
-
   return (
     <button
       type="button"

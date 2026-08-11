@@ -566,11 +566,15 @@ export default function MobileBusinessSearchWithDates({
                   border: "none",
                   outline: "none",
                   background: "transparent",
-                  fontSize: 15,
+                  fontSize: "16px",
+                  lineHeight: "24px",
                   fontWeight: 600,
                   color: "#1e293b",
                   flex: 1,
+                  minWidth: 0,
                   padding: 0,
+                  margin: 0,
+                  WebkitTextSizeAdjust: "100%",
                 }}
               />
             ) : (
