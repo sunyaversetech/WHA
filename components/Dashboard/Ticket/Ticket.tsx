@@ -24,6 +24,7 @@ import {
   formatDateLong,
   formatTime,
 } from "./ticket-utils";
+import { format, parse } from "date-fns";
 
 const STATUS_BADGE: Record<string, string> = {
   verified: "badge-success",
@@ -39,12 +40,13 @@ const TicketRow = ({ item, onClick }: { item: any; onClick: () => void }) => {
   const codes = getTicketCodes(item);
   const badgeClass = STATUS_BADGE[item.status] ?? "badge-secondary";
 
+  console.log("TicketRow item:", item);
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded-2xl"
-    >
+      className="w-full text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded-2xl">
       <div className="card rounded-2xl p-4 flex flex-col gap-3 group-hover:shadow-md group-active:scale-[0.99] transition-all">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -57,7 +59,17 @@ const TicketRow = ({ item, onClick }: { item: any; onClick: () => void }) => {
                   })}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {formatTime(dateRange.from)}
+                  {item.event.startTime &&
+                    format(
+                      parse(item.event.startTime, "HH:mm", new Date()),
+                      "h:mm aa",
+                    )}{" "}
+                  -{" "}
+                  {item.event.startTime &&
+                    format(
+                      parse(item.event.endTime, "HH:mm", new Date()),
+                      "h:mm aa",
+                    )}
                 </p>
               </>
             ) : (
@@ -206,12 +218,10 @@ const Ticket = ({ hideHeader = false }: { hideHeader?: boolean }) => {
       <Tabs defaultValue="upcoming" className="gap-4">
         <TabsList
           variant="default"
-          className="!h-auto !w-full !gap-1 !rounded-xl !border-none !bg-muted !p-1"
-        >
+          className="!h-auto !w-full !gap-1 !rounded-xl !border-none !bg-muted !p-1">
           <TabsTrigger
             value="upcoming"
-            className="!h-auto flex-1 !rounded-lg !border-none !bg-transparent !px-0 !py-2.5 text-sm font-bold !text-muted-foreground !shadow-none after:!hidden data-[state=active]:!bg-background data-[state=active]:!text-foreground data-[state=active]:!shadow-sm"
-          >
+            className="!h-auto flex-1 !rounded-lg !border-none !bg-transparent !px-0 !py-2.5 text-sm font-bold !text-muted-foreground !shadow-none after:!hidden data-[state=active]:!bg-background data-[state=active]:!text-foreground data-[state=active]:!shadow-sm">
             Upcoming{" "}
             <span className="font-normal text-xs text-muted-foreground/70">
               ({upcomingTickets.length})
@@ -219,8 +229,7 @@ const Ticket = ({ hideHeader = false }: { hideHeader?: boolean }) => {
           </TabsTrigger>
           <TabsTrigger
             value="past"
-            className="!h-auto flex-1 !rounded-lg !border-none !bg-transparent !px-0 !py-2.5 text-sm font-bold !text-muted-foreground !shadow-none after:!hidden data-[state=active]:!bg-background data-[state=active]:!text-foreground data-[state=active]:!shadow-sm"
-          >
+            className="!h-auto flex-1 !rounded-lg !border-none !bg-transparent !px-0 !py-2.5 text-sm font-bold !text-muted-foreground !shadow-none after:!hidden data-[state=active]:!bg-background data-[state=active]:!text-foreground data-[state=active]:!shadow-sm">
             Past{" "}
             <span className="font-normal text-xs text-muted-foreground/70">
               ({pastTickets.length})
