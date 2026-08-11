@@ -195,6 +195,13 @@ export type LocationMapProps<T> = {
   userLat?: number;
   userLng?: number;
   searchLocationMode?: SearchLocationMode;
+  /** Raw mapArea viewport rectangle. When present (mapArea mode), used as
+   * the map's initial view on mount, so navigating away (e.g. to a detail
+   * page) and back restores the exact previous centre and zoom instead of
+   * the default view — the fly-to effect deliberately never re-centres an
+   * already-mounted map in mapArea mode, so a fresh mount needs this to
+   * start in the right place. */
+  bounds?: Bounds | null;
   onBoundsChange?: (b: Bounds) => void;
   /** Events-only in-map "go to my location" button. */
   showLocateButton?: boolean;
@@ -216,6 +223,7 @@ export default function LocationMap<T>({
   userLat,
   userLng,
   searchLocationMode = "current",
+  bounds,
   onBoundsChange,
   showLocateButton = false,
   isVisible = true,
@@ -228,6 +236,23 @@ export default function LocationMap<T>({
   // Flags moves FlyToLocation/UserLocationButton trigger themselves, so
   // MapBoundsWatcher doesn't mistake our own flyTo for a manual pan.
   const programmaticRef = useRef(false);
+
+  // Captures whatever `bounds` was on the very first render only — mirrors
+  // MapContainer's own "center/zoom are initial-view-only" semantics. When
+  // present, this is passed as MapContainer's `bounds` prop instead of
+  // `center`/`zoom`, so a fresh mount (e.g. navigating to a business/event
+  // detail page and back to /search) restores the user's exact previous
+  // map position and zoom immediately — no animation, no snap-back-then-
+  // correct flash — rather than starting at the generic default view.
+  const [initialBounds] = useState<[[number, number], [number, number]] | null>(
+    () =>
+      bounds
+        ? [
+            [bounds.swLat, bounds.swLng],
+            [bounds.neLat, bounds.neLng],
+          ]
+        : null,
+  );
 
   // Stores only the id, not the item object — the popup's item is derived
   // from the current `items` on every render, so if the caller swaps
@@ -272,8 +297,9 @@ export default function LocationMap<T>({
       )}
 
       <MapContainer
-        center={AU_CENTRE}
-        zoom={auZoom}
+        center={initialBounds ? undefined : AU_CENTRE}
+        zoom={initialBounds ? undefined : auZoom}
+        bounds={initialBounds ?? undefined}
         zoomControl={false}
         className="h-full w-full"
         style={{ height: "100%", width: "100%", position: "absolute" }}>

@@ -130,6 +130,15 @@ export function useSearchLocation() {
     [searchParams, router],
   );
 
+  // The raw viewport rectangle, when in mapArea mode — lets the map restore
+  // the user's exact previous centre and zoom on a fresh mount (e.g.
+  // navigating to a business/event detail page and back), rather than only
+  // being usable to compute a centre point for ongoing distance sort.
+  const bounds: Bounds | null =
+    hasBounds && swLat !== null && swLng !== null && neLat !== null && neLng !== null
+      ? { swLat, swLng, neLat, neLng }
+      : null;
+
   return {
     userLat,
     userLng,
@@ -139,5 +148,6 @@ export function useSearchLocation() {
     geoDenied,
     handleBoundsChange,
     currentCity,
+    bounds,
   };
 }
