@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronRight,
   type LucideIcon,
+  Ticket,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogoutDialog } from "@/components/ui/LogoutDialog";
@@ -25,7 +26,7 @@ type MenuItem = {
 const accountItems: MenuItem[] = [
   { icon: User, label: "Profile", href: "/dashboard/profile" },
   { icon: Heart, label: "Favourites", href: "/dashboard/favorite" },
-  { icon: Wallet, label: "Wallet", href: "/dashboard/tickets" },
+  { icon: Ticket, label: "Tickets", href: "/dashboard/tickets" },
   { icon: CalendarCheck, label: "My Bookings", href: "/dashboard/my-bookings" },
 ];
 
@@ -36,7 +37,8 @@ function MenuRow({ item }: { item: MenuItem }) {
       className="flex items-center gap-4 px-4 py-4
                  md:flex-col md:items-center md:justify-center md:gap-3 md:px-4 md:py-6 md:text-center
                  md:bg-white md:rounded-2xl md:border md:border-gray-100 md:shadow-sm
-                 md:hover:shadow-md md:hover:-translate-y-0.5 md:transition-all">
+                 md:hover:shadow-md md:hover:-translate-y-0.5 md:transition-all"
+    >
       <div className="md:bg-primary/10 md:p-3 md:rounded-full">
         <Icon
           className="h-5 w-5 text-gray-700 md:h-6 md:w-6 md:text-primary"
@@ -61,7 +63,8 @@ function MenuRow({ item }: { item: MenuItem }) {
       <button
         type="button"
         onClick={() => toast("Coming soon")}
-        className="w-full text-left hover:bg-gray-50 md:hover:bg-transparent transition-colors">
+        className="w-full text-left hover:bg-gray-50 md:hover:bg-transparent transition-colors"
+      >
         {content}
       </button>
     );
@@ -70,7 +73,8 @@ function MenuRow({ item }: { item: MenuItem }) {
   return (
     <Link
       href={item.href}
-      className="block hover:bg-gray-50 md:hover:bg-transparent transition-colors">
+      className="block hover:bg-gray-50 md:hover:bg-transparent transition-colors"
+    >
       {content}
     </Link>
   );
@@ -80,10 +84,12 @@ function MenuGroup({ items }: { items: MenuItem[] }) {
   return (
     <div
       className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden
-                 md:bg-transparent md:border-none md:shadow-none md:overflow-visible">
+                 md:bg-transparent md:border-none md:shadow-none md:overflow-visible"
+    >
       <div
         className="divide-y divide-gray-100
-                   md:divide-y-0 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-4">
+                   md:divide-y-0 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-4"
+      >
         {items.map((item) => (
           <MenuRow key={item.label} item={item} />
         ))}
@@ -102,7 +108,8 @@ export default function UserAccountMenu() {
     <div className="max-w-md md:max-w-5xl mx-auto space-y-5 md:space-y-8 pb-6">
       <div
         className="flex items-center justify-between gap-4 px-1
-                   md:bg-white md:rounded-2xl md:border md:border-gray-100 md:shadow-sm md:px-6 md:py-6">
+                   md:bg-white md:rounded-2xl md:border md:border-gray-100 md:shadow-sm md:px-6 md:py-6"
+      >
         <div className="flex items-center gap-4">
           <Avatar className="h-14 w-14 md:h-16 md:w-16">
             <AvatarImage src={session?.user?.image ?? ""} alt={name} />
@@ -119,7 +126,8 @@ export default function UserAccountMenu() {
         <LogoutDialog>
           <button
             type="button"
-            className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl border border-red-100 text-red-500 text-sm font-semibold hover:bg-red-50 transition-colors">
+            className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl border border-red-100 text-red-500 text-sm font-semibold hover:bg-red-50 transition-colors"
+          >
             <LogOut className="h-4 w-4" strokeWidth={1.75} />
             Log out
           </button>
@@ -132,7 +140,8 @@ export default function UserAccountMenu() {
         <LogoutDialog>
           <button
             type="button"
-            className="w-full flex items-center gap-4 px-4 py-4 text-left text-red-500 hover:bg-red-50 transition-colors">
+            className="w-full flex items-center gap-4 px-4 py-4 text-left text-red-500 hover:bg-red-50 transition-colors"
+          >
             <LogOut className="h-5 w-5" strokeWidth={1.75} />
             <span className="text-[15px] font-semibold">Log out</span>
           </button>

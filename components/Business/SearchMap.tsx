@@ -25,6 +25,7 @@ export default function SearchMap({
   userLat,
   userLng,
   searchLocationMode,
+  bounds,
   onBoundsChange,
   isVisible = true,
 }: {
@@ -35,6 +36,10 @@ export default function SearchMap({
   userLat?: number;
   userLng?: number;
   searchLocationMode?: SearchLocationMode;
+  /** Raw mapArea viewport rectangle — lets a fresh mount restore the exact
+   * previous centre/zoom (e.g. navigating to a detail page and back)
+   * instead of resetting to the default view. */
+  bounds?: Bounds | null;
   onBoundsChange?: (b: Bounds) => void;
   /** Whether the map's container is currently visible on screen — the
    * container itself must stay mounted even when this is false (CSS-hidden,
@@ -88,6 +93,7 @@ export default function SearchMap({
       userLat={userLat}
       userLng={userLng}
       searchLocationMode={searchLocationMode}
+      bounds={bounds}
       onBoundsChange={onBoundsChange}
       showLocateButton
       isVisible={isVisible}

@@ -88,7 +88,6 @@ export function useLocationSearchBar() {
 
     applyGeoCoords({ lat: Number(lat), lng: Number(lng) });
     applyLocation("Current location");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
   /* eslint-enable react-hooks/set-state-in-effect */
 

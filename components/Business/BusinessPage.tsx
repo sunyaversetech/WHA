@@ -442,6 +442,7 @@ export default function BusinessesClientPage() {
     refLng,
     geoDenied,
     handleBoundsChange,
+    bounds,
   } = useSearchLocation();
 
   const enrichedBusinesses = useDistanceEnriched(businesses, refLat, refLng);
@@ -875,10 +876,17 @@ export default function BusinessesClientPage() {
         activeType={listType}
         businesses={enrichedBusinesses}
         events={enrichedEvents}
-        currentCity={searchParams.get("city") || ""}
+        // If the user denies location permission (and hasn't picked a city
+        // or map area of their own), default the map's view to Sydney
+        // instead of the wide, zoomed-out whole-of-Australia fallback.
+        currentCity={
+          searchParams.get("city") ||
+          (geoDenied && userLat === null ? "Sydney" : "")
+        }
         userLat={userLat ?? undefined}
         userLng={userLng ?? undefined}
         searchLocationMode={searchLocationMode}
+        bounds={bounds}
         onBoundsChange={handleBoundsChange}
         isVisible={isVisible}
       />
