@@ -258,7 +258,8 @@ export default function MobileBusinessSearchWithDates({
 
   const requestGeoLocation = () => requestGeo(() => setStep("when"));
 
-  const selectCity = (city: string) => selectCityLocation(city, () => setStep("when"));
+  const selectCity = (city: string) =>
+    selectCityLocation(city, () => setStep("when"));
 
   const handleSearch = useCallback(() => {
     // No active location (e.g. the user cleared it) — fall back to the
@@ -573,7 +574,7 @@ export default function MobileBusinessSearchWithDates({
                 type="text"
                 autoFocus
                 autoComplete="off"
-                className="placeholder:text-gray-400 text-base"
+                className="placeholder:text-gray-400 text-base outline-none focus:outline-none focus:ring-0"
                 value={serviceQuery}
                 onChange={(e) => {
                   setServiceQuery(e.target.value);
@@ -585,11 +586,15 @@ export default function MobileBusinessSearchWithDates({
                   border: "none",
                   outline: "none",
                   background: "transparent",
-                  fontSize: 15,
+                  fontSize: "16px",
+                  lineHeight: "24px",
                   fontWeight: 600,
                   color: "#1e293b",
                   flex: 1,
+                  minWidth: 0,
                   padding: 0,
+                  margin: 0,
+                  WebkitTextSizeAdjust: "100%",
                 }}
               />
             ) : (
