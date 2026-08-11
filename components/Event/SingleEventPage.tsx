@@ -806,7 +806,7 @@ export default function EventDetailPage() {
                       <div className="flex items-center gap-4">
                         <div className="flex-1 space-y-2">
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
-                            <h3 className="text-lg flex flex-col md:text-sm font-semibold text-gray-800 dark:text-white">
+                            <h3 className="text-lg flex flex-col md:text-sm font-normal text-gray-800 dark:text-white">
                               {event?.data?.support_details
                                 .split("\r\n")
                                 .map((line, index) => (
@@ -828,7 +828,7 @@ export default function EventDetailPage() {
                       <div className="flex items-center gap-4">
                         <div className="flex-1 space-y-2">
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
-                            <h3 className="text-lg flex flex-col md:text-sm font-semibold text-gray-800 dark:text-white">
+                            <h3 className="text-lg flex flex-col md:text-sm font-normal text-gray-800 dark:text-white">
                               {event?.data?.event_rules
                                 .split("\r\n")
                                 .map((line, index) => (
@@ -850,7 +850,7 @@ export default function EventDetailPage() {
                       <div className="flex items-center gap-4">
                         <div className="flex-1 space-y-2">
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
-                            <h3 className="text-lg flex flex-col md:text-sm font-semibold text-gray-800 dark:text-white">
+                            <h3 className="text-lg flex flex-col md:text-sm font-normal text-gray-800 dark:text-white">
                               {event?.data?.refund_policy
                                 .split("\r\n")
                                 .map((line, index) => (

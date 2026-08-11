@@ -466,7 +466,9 @@ function DetailsStep({
                 ? "text-emerald-600"
                 : "text-red-500",
             )}>
-            {promoMessage.text}
+            {promoMessage.type === "success"
+              ? promoMessage.text
+              : `invalid promo code`}
           </p>
         )}
       </div>
