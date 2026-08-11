@@ -452,7 +452,8 @@ export default function BusinessesClientPage() {
     searchParams.get("service") || searchParams.get("search") || "";
   const isNearMe =
     !searchParams.get("city") && refLat !== null && refLng !== null;
-  const nearLabel = searchLocationMode === "mapArea" ? "in this map area" : "near you";
+  const nearLabel =
+    searchLocationMode === "mapArea" ? "in this map area" : "near you";
   const cityLabel = searchParams.get("city") ?? (isNearMe ? "" : "Australia");
   const countText = isLoading
     ? "Loading…"
@@ -583,13 +584,38 @@ export default function BusinessesClientPage() {
           overflowX: "auto",
           scrollbarWidth: "none" as const,
         }}
-        className="[&::-webkit-scrollbar]:hidden">
+        className="[&::-webkit-scrollbar]:hidden items-center">
         {/* Filter icon button */}
+
+        {/* Services / Events pill — same segmented toggle as desktop, so the
+           choice always reads as "pick one of two", not "tap to flip". */}
+        <div
+          className="items-center"
+          style={{
+            display: "flex",
+            background: "#fff",
+            border: "1px solid #e9edf3",
+            borderRadius: 9999,
+            padding: 4,
+            flexShrink: 0,
+          }}>
+          <button
+            onClick={() => setListType("services")}
+            style={listType === "services" ? SEG_ACT : SEG_BASE}>
+            Services
+          </button>
+          <button
+            onClick={() => setListType("events")}
+            style={listType === "events" ? SEG_ACT : SEG_BASE}>
+            Events
+          </button>
+        </div>
+
         <button
           onClick={() => setFiltersOpen(true)}
           style={{
-            width: 38,
-            height: 38,
+            width: 48,
+            height: 48,
             border: "1px solid #e6ebf2",
             background: "#fff",
             borderRadius: 9999,
@@ -613,29 +639,6 @@ export default function BusinessesClientPage() {
             <circle cx={15} cy={17} r={2.4} fill="#fff" />
           </svg>
         </button>
-
-        {/* Services / Events pill — same segmented toggle as desktop, so the
-           choice always reads as "pick one of two", not "tap to flip". */}
-        <div
-          style={{
-            display: "flex",
-            background: "#fff",
-            border: "1px solid #e9edf3",
-            borderRadius: 9999,
-            padding: 4,
-            flexShrink: 0,
-          }}>
-          <button
-            onClick={() => setListType("services")}
-            style={listType === "services" ? SEG_ACT : SEG_BASE}>
-            Services
-          </button>
-          <button
-            onClick={() => setListType("events")}
-            style={listType === "events" ? SEG_ACT : SEG_BASE}>
-            Events
-          </button>
-        </div>
       </div>
     </>
   );
@@ -901,8 +904,8 @@ export default function BusinessesClientPage() {
               color: "#64748b",
               marginBottom: 16,
             }}>
-            Location access is disabled. Search for a location manually to
-            see nearby results.
+            Location access is disabled. Search for a location manually to see
+            nearby results.
           </div>
         )}
 
@@ -915,7 +918,9 @@ export default function BusinessesClientPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: showMap ? "minmax(0, 1.04fr) 0.96fr" : "1fr 0px",
+              gridTemplateColumns: showMap
+                ? "minmax(0, 1.04fr) 0.96fr"
+                : "1fr 0px",
               gap: showMap ? 26 : 0,
               alignItems: "start",
             }}>

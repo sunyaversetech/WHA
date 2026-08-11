@@ -39,8 +39,7 @@ export default function WhSearchBar() {
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
-              className="flex-1 justify-start rounded-full text-muted-foreground"
-            >
+              className="flex-1 justify-start rounded-full text-muted-foreground">
               <Search size={18} className="mr-2" />
               {category}
             </Button>
@@ -67,8 +66,7 @@ export default function WhSearchBar() {
         <Button
           variant={communityOnly ? "default" : "ghost"}
           className="rounded-full"
-          onClick={() => setCommunityOnly(!communityOnly)}
-        >
+          onClick={() => setCommunityOnly(!communityOnly)}>
           Community
         </Button>
 
@@ -76,8 +74,7 @@ export default function WhSearchBar() {
         <Button
           variant={mapView ? "default" : "ghost"}
           className="rounded-full"
-          onClick={() => setMapView(!mapView)}
-        >
+          onClick={() => setMapView(!mapView)}>
           <Map size={18} className="mr-2" />
           Map View
         </Button>

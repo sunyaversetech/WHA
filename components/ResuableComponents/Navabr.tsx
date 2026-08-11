@@ -54,49 +54,31 @@ export default function Navbar() {
   const UserDropdown = ({ pillStyle }: { pillStyle?: boolean }) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        {pillStyle ? (
-          /* Fresha-style bordered pill: avatar + chevron */
-          <button
-            aria-label="Account menu"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              border: "1px solid #e6ebf2",
-              background: "#fff",
-              borderRadius: 9999,
-              padding: "5px 10px 5px 5px",
-              cursor: "pointer",
-              outline: "none",
-              boxShadow: "none",
-            }}>
-            <Avatar className="h-9 w-9 rounded-full">
-              <AvatarImage
-                className="object-cover"
-                src={session?.user?.image ?? ""}
-              />
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
-                {session?.user?.name?.charAt(0)?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <ChevronDown size={18} color="#64748b" strokeWidth={2.2} />
-          </button>
-        ) : (
-          /* Compact: just avatar */
-          <button
-            aria-label="Account menu"
-            className="rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-            <Avatar className="h-9 w-9 border-2 border-border">
-              <AvatarImage
-                className="object-cover"
-                src={session?.user?.image ?? ""}
-              />
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
-                {session?.user?.name?.charAt(0)?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-          </button>
-        )}
+        <button
+          aria-label="Account menu"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            border: "1px solid #e6ebf2",
+            background: "#fff",
+            borderRadius: 9999,
+            padding: "5px 10px 5px 5px",
+            cursor: "pointer",
+            outline: "none",
+            boxShadow: "none",
+          }}>
+          <Avatar className="h-9 w-9 rounded-full">
+            <AvatarImage
+              className="object-cover"
+              src={session?.user?.image ?? ""}
+            />
+            <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+              {session?.user?.name?.charAt(0)?.toUpperCase() || "U"}
+            </AvatarFallback>
+          </Avatar>
+          <ChevronDown size={18} color="#64748b" strokeWidth={2.2} />
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
@@ -112,6 +94,11 @@ export default function Navbar() {
           )}
           className="block px-2 py-2 rounded-lg text-sm hover:bg-muted transition-colors">
           Dashboard
+        </Link>
+        <Link
+          href={buildPath("/activity")}
+          className="block px-2 py-2 rounded-lg text-sm hover:bg-muted transition-colors">
+          My Activity
         </Link>
         <LogoutDialog />
       </DropdownMenuContent>

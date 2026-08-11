@@ -11,7 +11,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const SERVICE_FEE_FLAT = 5.0;
+const SERVICE_FEE_PER_TICKET = 2.0;
 const SURCHARGE_PERCENT = 0.025;
 
 function toTicketResponse(purchase: any) {
@@ -161,7 +161,8 @@ export async function POST(req: Request) {
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
     );
-    const orderTotal = ticketTotal + SERVICE_FEE_FLAT;
+    const serviceFee = totalQuantity * SERVICE_FEE_PER_TICKET;
+    const orderTotal = ticketTotal + serviceFee;
     const surcharge = orderTotal * SURCHARGE_PERCENT;
     const expectedAmount = Math.round((orderTotal + surcharge) * 100);
     if (paymentIntent.amount !== expectedAmount) {
@@ -263,7 +264,7 @@ export async function POST(req: Request) {
               promoCode: promoApplied ? promoCode : undefined,
               invoiceNumber,
               ticketTotal,
-              serviceFee: SERVICE_FEE_FLAT,
+              serviceFee,
               surcharge,
               totalAmount: paymentIntent.amount / 100,
               paymentIntentId,

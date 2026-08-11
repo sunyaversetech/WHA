@@ -44,6 +44,7 @@ import {
   formatDateLong,
   formatTime,
 } from "./ticket-utils";
+import { format, parse } from "date-fns";
 
 const DetailSkeleton = () => (
   <div className="min-h-screen max-w-lg mx-auto px-4 py-4 space-y-5">
@@ -106,6 +107,8 @@ export default function TicketDetailPage() {
   const mapHref = getMapHref(item);
   const sourceHref = getSourceHref(item);
   const holderName = session?.user?.name || "Ticket Holder";
+
+  console.log("TicketDetailPage item:", item);
 
   const loadLogo = (): Promise<HTMLImageElement | null> =>
     new Promise((resolve) => {
@@ -178,6 +181,137 @@ export default function TicketDetailPage() {
     }
   };
 
+  const invoiceLineItems = item.items?.length
+    ? item.items
+    : [
+        {
+          optionName: title,
+          quantity: 1,
+          unitPrice: item.ticketTotal ?? item.totalAmount ?? 0,
+        },
+      ];
+
+  const buildInvoicePdf = (logo: HTMLImageElement | null) => {
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const pageWidth = 210;
+    let y = 20;
+
+    if (logo) {
+      const logoW = 22;
+      const logoH = (logo.height / logo.width) * logoW;
+      doc.addImage(logo, "PNG", 14, y, logoW, logoH);
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Invoice", pageWidth - 14, y + 8, { align: "right" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Invoice #: ${item.invoiceNumber}`, pageWidth - 14, y + 15, {
+      align: "right",
+    });
+    if (item.createdAt) {
+      doc.text(
+        new Date(item.createdAt).toLocaleDateString("en-AU", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
+        pageWidth - 14,
+        y + 20,
+        { align: "right" },
+      );
+    }
+
+    y += 32;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text(title, 14, y);
+    y += 6;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    if (venue) {
+      doc.text(venue, 14, y);
+      y += 5;
+    }
+    if (dateRange) {
+      doc.text(formatDateLong(dateRange.from), 14, y);
+      y += 5;
+    }
+    doc.setTextColor(0);
+
+    y += 6;
+    doc.setDrawColor(220);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 8;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Description", 14, y);
+    doc.text("Qty", 150, y, { align: "right" });
+    doc.text("Amount", pageWidth - 14, y, { align: "right" });
+    y += 3;
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+
+    doc.setFont("helvetica", "normal");
+    invoiceLineItems.forEach((li: any) => {
+      doc.text(li.optionName || "Ticket", 14, y);
+      doc.text(String(li.quantity), 150, y, { align: "right" });
+      doc.text(
+        `$${(li.unitPrice * li.quantity).toFixed(2)}`,
+        pageWidth - 14,
+        y,
+        { align: "right" },
+      );
+      y += 6;
+    });
+
+    y += 2;
+    doc.line(14, y, pageWidth - 14, y);
+    y += 8;
+
+    const summaryRow = (label: string, value: string, bold = false) => {
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.text(label, 150, y, { align: "right" });
+      doc.text(value, pageWidth - 14, y, { align: "right" });
+      y += 6;
+    };
+
+    summaryRow("Service fee", `$${(item.serviceFee ?? 0).toFixed(2)}`);
+    summaryRow("Surcharge", `$${(item.surcharge ?? 0).toFixed(2)}`);
+    if (item.promoCode) {
+      summaryRow("Promo code", item.promoCode.toUpperCase());
+    }
+    y += 2;
+    doc.line(150, y, pageWidth - 14, y);
+    y += 6;
+    summaryRow("Total paid", `$${(item.totalAmount ?? 0).toFixed(2)}`, true);
+
+    y += 15;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Service and processing fees are non-refundable.", 14, y);
+
+    return doc;
+  };
+
+  const invoiceFileName = `invoice-${item.invoiceNumber || "ticket"}.pdf`;
+
+  const handleDownloadInvoice = async () => {
+    try {
+      const logo = await loadLogo();
+      const doc = buildInvoicePdf(logo);
+      doc.save(invoiceFileName);
+    } catch {
+      toast.error("Couldn't download invoice");
+    }
+  };
+
   const handleShare = async () => {
     const shareUrl = sourceHref
       ? `${window.location.origin}${sourceHref}`
@@ -211,16 +345,14 @@ export default function TicketDetailPage() {
           variant="ghost"
           size="icon"
           onClick={() => router.back()}
-          aria-label="Back"
-        >
+          aria-label="Back">
           <ChevronLeft className="h-5 w-5" />
         </Button>
         <button
           type="button"
           onClick={handleShare}
           className="text-primary hover:text-primary/80"
-          aria-label="Share"
-        >
+          aria-label="Share">
           <Share className="h-5 w-5" />
         </button>
       </div>
@@ -266,8 +398,7 @@ export default function TicketDetailPage() {
               {codes.map((code, i) => (
                 <CarouselItem
                   key={code.key}
-                  className="flex flex-col items-center gap-4"
-                >
+                  className="flex flex-col items-center gap-4">
                   <div className="bg-white p-4 rounded-2xl border border-border">
                     <QRCodeCanvas
                       value={code.key}
@@ -288,8 +419,7 @@ export default function TicketDetailPage() {
                     <span
                       className={`badge inline-flex items-center gap-1 ${
                         code.checkedIn ? "badge-success" : "badge-warning"
-                      }`}
-                    >
+                      }`}>
                       {code.checkedIn ? (
                         <>
                           <CheckCircle2 className="h-3 w-3" /> Checked in
@@ -311,8 +441,7 @@ export default function TicketDetailPage() {
                 <div
                   className="flex justify-center gap-1.5 mt-5"
                   role="tablist"
-                  aria-label="Ticket pages"
-                >
+                  aria-label="Ticket pages">
                   {codes.map((code, i) => (
                     <span
                       key={code.key}
@@ -347,9 +476,19 @@ export default function TicketDetailPage() {
                     })}
                   </span>
                   {" · "}
-                  <span>{formatTime(dateRange.from)}</span>
-
-                  {dateRange.to ? ` – ${formatTime(dateRange.to)}` : ""}
+                  <span>
+                    {item.event?.startTime &&
+                      format(
+                        parse(item.event?.startTime, "HH:mm", new Date()),
+                        "h:mm aa",
+                      )}
+                  </span>
+                  {" - "}
+                  {item.event?.endTime &&
+                    format(
+                      parse(item.event?.endTime, "HH:mm", new Date()),
+                      "h:mm aa",
+                    )}
                 </div>
               </div>
             )}
@@ -371,8 +510,7 @@ export default function TicketDetailPage() {
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-secondary hover:underline mt-3"
-                  >
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-secondary hover:underline mt-3">
                     View map
                   </a>
                 )}
@@ -381,33 +519,75 @@ export default function TicketDetailPage() {
           </div>
         )}
 
-        {/* Order details */}
+        {/* Invoice breakdown */}
         {item.invoiceNumber && (
-          <div className="card rounded-2xl p-5 space-y-2">
-            <h2 className="text-sm font-bold text-foreground mb-1">
-              Order details
-            </h2>
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Invoice</span>
-              <span className="font-mono">{item.invoiceNumber}</span>
+          <div className="card rounded-2xl p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-foreground">Invoice</h2>
+              <span className="text-xs font-mono text-muted-foreground">
+                {item.invoiceNumber}
+              </span>
             </div>
-            {typeof item.totalAmount === "number" && (
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Total paid</span>
-                <span className="font-semibold text-foreground">
-                  ${item.totalAmount.toFixed(2)}
+
+            <div className="divide-y divide-border">
+              {invoiceLineItems.map((li: any, i: number) => (
+                <div key={i} className="flex justify-between py-2 text-sm">
+                  <span className="text-muted-foreground">
+                    {li.optionName || "Ticket"} × {li.quantity}
+                  </span>
+                  <span className="font-medium text-foreground">
+                    ${(li.unitPrice * li.quantity).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+              <div className="flex justify-between py-2 text-sm">
+                <span className="text-muted-foreground">Service fee</span>
+                <span className="font-medium text-foreground">
+                  ${(item.serviceFee ?? 0).toFixed(2)}
                 </span>
               </div>
-            )}
+              <div className="flex justify-between py-2 text-sm">
+                <span className="text-muted-foreground">Surcharge</span>
+                <span className="font-medium text-foreground">
+                  ${(item.surcharge ?? 0).toFixed(2)}
+                </span>
+              </div>
+              {item.promoCode && (
+                <div className="flex justify-between py-2 text-sm">
+                  <span className="text-emerald-600">Promo code applied</span>
+                  <span className="font-medium text-emerald-600">
+                    {item.promoCode.toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-between items-center pt-2 border-t border-border">
+              <span className="text-sm font-bold text-foreground">
+                Total paid
+              </span>
+              <span className="text-base font-bold text-foreground">
+                ${(item.totalAmount ?? 0).toFixed(2)}
+              </span>
+            </div>
           </div>
         )}
 
-        {/* Download  */}
-        <div>
+        {/* Download */}
+        <div className="space-y-2">
           <Button variant="outline" className="w-full" onClick={handleDownload}>
             <Download className="h-4 w-4" />
             Download Ticket
           </Button>
+          {item.invoiceNumber && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleDownloadInvoice}>
+              <Download className="h-4 w-4" />
+              Download Invoice
+            </Button>
+          )}
         </div>
       </div>
     </div>

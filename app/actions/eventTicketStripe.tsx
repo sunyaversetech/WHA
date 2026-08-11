@@ -11,7 +11,7 @@ import {
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-const SERVICE_FEE_FLAT = 5.0;
+const SERVICE_FEE_PER_TICKET = 2.0;
 const SURCHARGE_PERCENT = 0.025;
 
 type CartItemInput = { optionId: string; quantity: number };
@@ -152,7 +152,8 @@ export async function getEventTicketPaymentIntent(
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
     );
-    const orderTotal = ticketTotal + SERVICE_FEE_FLAT;
+    const serviceFee = totalQuantity * SERVICE_FEE_PER_TICKET;
+    const orderTotal = ticketTotal + serviceFee;
     const surcharge = orderTotal * SURCHARGE_PERCENT;
     const totalToPay = orderTotal + surcharge;
     const amountInCents = Math.round(totalToPay * 100);
@@ -177,7 +178,7 @@ export async function getEventTicketPaymentIntent(
       invoiceNumber,
       items,
       ticketTotal,
-      serviceFee: SERVICE_FEE_FLAT,
+      serviceFee,
       surcharge,
       totalToPay,
       promoApplied,
