@@ -798,7 +798,7 @@ export default function EventDetailPage() {
                   </div>
                 </div>
                 {event?.data?.support_details && (
-                  <div className="md:p-4 md:p-6 -mt-10">
+                  <div className="md:p-4 md:p-6 -mt-2 md:-mt-10">
                     <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
                       Support Details
                     </h2>
@@ -820,7 +820,7 @@ export default function EventDetailPage() {
                   </div>
                 )}
                 {event?.data?.event_rules && (
-                  <div className="md:p-4 md:p-6 -mt-10">
+                  <div className="md:p-4 md:p-6 -mt-2 md:-mt-10">
                     <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
                       Event Rules
                     </h2>
@@ -842,7 +842,7 @@ export default function EventDetailPage() {
                   </div>
                 )}
                 {event?.data?.refund_policy && (
-                  <div className="md:p-4 md:p-6 -mt-10">
+                  <div className="md:p-4 md:p-6 -mt-2 md:-mt-10">
                     <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
                       Refund Policy
                     </h2>
@@ -900,10 +900,15 @@ export default function EventDetailPage() {
                   Get Tickets
                 </a>
               ) : (
-                <Link
-                  href={"#registration-button"}
+                <button
+                  onClick={handleRedeem}
+                  disabled={
+                    redeemPending ||
+                    redemptionResult?.success ||
+                    registrationFull
+                  }
                   className={cn(
-                    "w-full rounded-full py-3 text-center font-semibold transition",
+                    "w-full rounded-full py-3 font-semibold transition",
                     redemptionResult?.success || registrationFull
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : "bg-primary text-white hover:opacity-90",
@@ -915,7 +920,7 @@ export default function EventDetailPage() {
                       : redeemPending
                         ? "Processing..."
                         : "Register"}
-                </Link>
+                </button>
               )}
             </div>
           </div>

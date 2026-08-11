@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     await connectToDb();
     const today = new Date();
     const todayISO = today.toISOString();
+    const todayDAte = new Date().toISOString().split("T")[0];
 
     const { searchParams } = new URL(request.url);
     const cityParam = searchParams.get("city") || "";
@@ -65,8 +66,7 @@ export async function GET(request: NextRequest) {
     //   };
     // });
     const upcomingevents = await Event.find({
-      "dateRange.from": { $gte: todayISO },
-      city: { $regex: city, $options: "i" },
+      "dateRange.from": { $gte: todayDAte },
     })
       .populate("user")
       .sort({ "dateRange.from": 1 })
