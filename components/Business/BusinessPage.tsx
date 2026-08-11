@@ -187,14 +187,14 @@ function FiltersModal({
               marginBottom: 28,
             }}>
             <button
-              onClick={() => onListTypeChange("services")}
-              style={listType === "services" ? TAB_ACT : TAB_BASE}>
-              Services
-            </button>
-            <button
               onClick={() => onListTypeChange("events")}
               style={listType === "events" ? TAB_ACT : TAB_BASE}>
               Events
+            </button>
+            <button
+              onClick={() => onListTypeChange("services")}
+              style={listType === "services" ? TAB_ACT : TAB_BASE}>
+              Services
             </button>
           </div>
 
@@ -374,7 +374,7 @@ function FiltersModal({
             onClick={() => {
               setSortBy("best");
               setMaxPrice(1400);
-              onListTypeChange("services");
+              onListTypeChange("events");
             }}
             style={{
               border: "1px solid #d8dfe9",
@@ -420,8 +420,10 @@ export default function BusinessesClientPage() {
   const router = useRouter();
 
   const [showMap, setShowMap] = useState(true);
+  // Events is the default/first tab — Services stays available as the other
+  // tab, only shown when explicitly requested via ?tab=services.
   const [listType, setListType] = useState<ListType>(() =>
-    searchParams.get("tab") === "events" ? "events" : "services",
+    searchParams.get("tab") === "services" ? "services" : "events",
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
@@ -601,14 +603,14 @@ export default function BusinessesClientPage() {
             flexShrink: 0,
           }}>
           <button
-            onClick={() => setListType("services")}
-            style={listType === "services" ? SEG_ACT : SEG_BASE}>
-            Services
-          </button>
-          <button
             onClick={() => setListType("events")}
             style={listType === "events" ? SEG_ACT : SEG_BASE}>
             Events
+          </button>
+          <button
+            onClick={() => setListType("services")}
+            style={listType === "services" ? SEG_ACT : SEG_BASE}>
+            Services
           </button>
         </div>
 
@@ -665,14 +667,14 @@ export default function BusinessesClientPage() {
           flexShrink: 0,
         }}>
         <button
-          onClick={() => setListType("services")}
-          style={listType === "services" ? SEG_ACT : SEG_BASE}>
-          Services
-        </button>
-        <button
           onClick={() => setListType("events")}
           style={listType === "events" ? SEG_ACT : SEG_BASE}>
           Events
+        </button>
+        <button
+          onClick={() => setListType("services")}
+          style={listType === "services" ? SEG_ACT : SEG_BASE}>
+          Services
         </button>
       </div>
 
