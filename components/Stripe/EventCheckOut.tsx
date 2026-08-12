@@ -26,6 +26,7 @@ import { useHoldTickets, useReleaseTicketHold } from "@/services/event.service";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Input } from "../ui/input";
 
 function parseErrorMessage(error: any, fallback: string): string {
   try {
@@ -514,28 +515,28 @@ function GuestDetailsStep({
         <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
           Your details
         </p>
-        <input
+        <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Full name"
           autoComplete="name"
-          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
+          className="bg-white outline-none focus-visible:outline-none focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
         />
-        <input
+        <Input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           type="email"
           placeholder="Email address"
           autoComplete="email"
-          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
+          className="bg-white outline-none focus-visible:outline-none focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
         />
-        <input
+        <Input
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           type="tel"
           placeholder="Phone number"
           autoComplete="tel"
-          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
+          className="bg-white outline-none focus-visible:outline-none focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
         />
         {error && <p className="text-xs font-medium text-red-500">{error}</p>}
         <p className="text-[11px] text-gray-400">
@@ -658,12 +659,13 @@ function CheckoutStep({
           Promo code
         </label>
         <div className="flex gap-2">
-          <input
+          <Input
             value={promoInput}
             onChange={(e) => setPromoInput(e.target.value)}
             placeholder="Promo code"
-            className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm uppercase outline-none focus:border-primary"
+            className="bg-white outline-none focus-visible:outline-none focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
           />
+
           <button
             type="button"
             onClick={onApplyPromo}
