@@ -337,6 +337,51 @@ export default function LandingPage() {
           margin: "0 auto",
           padding: "50px clamp(20px,4vw,56px) 0",
         }}>
+        {events.length > 0 && (
+          <section style={{ marginBottom: 54 }}>
+            <SectionHeading
+              title={`Upcoming Events in ${cityLabel}`}
+              onPrev={() => scrollSection(eventsScrollRef, -1)}
+              onNext={() => scrollSection(eventsScrollRef, 1)}
+              canPrev={eventsCan.prev}
+              canNext={eventsCan.next}
+            />
+            <div className="hidden md:block">
+              <div
+                ref={eventsScrollRef}
+                onScroll={() =>
+                  eventsScrollRef.current &&
+                  syncCan(eventsScrollRef.current, setEventsCan)
+                }
+                className="[&::-webkit-scrollbar]:hidden"
+                style={{
+                  display: "flex",
+                  gap: 26,
+                  overflowX: "auto",
+                  scrollbarWidth: "none",
+                  scrollSnapType: "x mandatory",
+                }}>
+                {events.map((e: any) => (
+                  <div
+                    key={e.id}
+                    style={{
+                      flex: "0 0 calc((100% - 78px) / 4)",
+                      scrollSnapAlign: "start",
+                    }}>
+                    <EventCard event={e} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="md:hidden">
+              <CardSlider viewAllHref="/search?tab=event">
+                {events.map((e: any) => (
+                  <EventCard key={e.id} event={e} />
+                ))}
+              </CardSlider>
+            </div>
+          </section>
+        )}
         {businesses.length > 0 && (
           <section style={{ marginBottom: 54 }}>
             <SectionHeading
@@ -384,51 +429,6 @@ export default function LandingPage() {
         )}
 
         {/* Upcoming Events */}
-        {events.length > 0 && (
-          <section style={{ marginBottom: 54 }}>
-            <SectionHeading
-              title={`Upcoming Events in ${cityLabel}`}
-              onPrev={() => scrollSection(eventsScrollRef, -1)}
-              onNext={() => scrollSection(eventsScrollRef, 1)}
-              canPrev={eventsCan.prev}
-              canNext={eventsCan.next}
-            />
-            <div className="hidden md:block">
-              <div
-                ref={eventsScrollRef}
-                onScroll={() =>
-                  eventsScrollRef.current &&
-                  syncCan(eventsScrollRef.current, setEventsCan)
-                }
-                className="[&::-webkit-scrollbar]:hidden"
-                style={{
-                  display: "flex",
-                  gap: 26,
-                  overflowX: "auto",
-                  scrollbarWidth: "none",
-                  scrollSnapType: "x mandatory",
-                }}>
-                {events.map((e: any) => (
-                  <div
-                    key={e.id}
-                    style={{
-                      flex: "0 0 calc((100% - 78px) / 4)",
-                      scrollSnapAlign: "start",
-                    }}>
-                    <EventCard event={e} />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="md:hidden">
-              <CardSlider viewAllHref="/search?tab=event">
-                {events.map((e: any) => (
-                  <EventCard key={e.id} event={e} />
-                ))}
-              </CardSlider>
-            </div>
-          </section>
-        )}
       </div>
 
       {/* ═══════ APP DOWNLOAD ═══════ */}

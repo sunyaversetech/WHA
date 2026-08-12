@@ -17,6 +17,9 @@ import {
   Check,
   Info,
   Clock,
+  Ticket,
+  User,
+  CreditCard,
 } from "lucide-react";
 import {
   getEventTicketPaymentIntent,
@@ -47,14 +50,14 @@ type Step = 1 | 2 | 3;
 
 // Guests get a "Details" step to collect their info; logged-in buyers skip
 // straight from Tickets to Checkout.
-const GUEST_STEPS: { n: Step; label: string }[] = [
-  { n: 1, label: "Tickets" },
-  { n: 2, label: "Details" },
-  { n: 3, label: "Checkout" },
+const GUEST_STEPS: { n: Step; label: string; icon: React.ElementType }[] = [
+  { n: 1, label: "Tickets", icon: Ticket },
+  { n: 2, label: "Details", icon: User },
+  { n: 3, label: "Checkout", icon: CreditCard },
 ];
-const AUTH_STEPS: { n: Step; label: string }[] = [
-  { n: 1, label: "Tickets" },
-  { n: 3, label: "Checkout" },
+const AUTH_STEPS: { n: Step; label: string; icon: React.ElementType }[] = [
+  { n: 1, label: "Tickets", icon: Ticket },
+  { n: 3, label: "Checkout", icon: CreditCard },
 ];
 
 function StepIndicator({
@@ -62,7 +65,7 @@ function StepIndicator({
   steps,
 }: {
   step: Step;
-  steps: { n: Step; label: string }[];
+  steps: { n: Step; label: string; icon: React.ElementType }[];
 }) {
   return (
     <div className="flex items-center justify-center">
@@ -78,7 +81,11 @@ function StepIndicator({
                     ? "bg-emerald-500 border-emerald-500 text-white"
                     : "bg-white border-gray-300 text-gray-400",
               )}>
-              {step > s.n ? <Check className="w-3.5 h-3.5" /> : s.n}
+              {step > s.n ? (
+                <Check className="w-3.5 h-3.5" />
+              ) : (
+                <s.icon className="w-3.5 h-3.5" />
+              )}
             </div>
             <span
               className={cn(
