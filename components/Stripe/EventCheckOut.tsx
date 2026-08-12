@@ -637,7 +637,12 @@ function CheckoutStep({
         alert(confirmError.message);
         setIsPaying(false);
       } else if (paymentIntent?.status === "succeeded") {
+        // The charge is done — hand off to the parent to finalize the
+        // purchase. Reset here regardless of how that finalize turns out,
+        // since this component may stay mounted (and stuck spinning) if it
+        // fails instead of closing the modal.
         onSuccess(paymentIntent.id, guestInfo);
+        setIsPaying(false);
       }
     } catch (err) {
       console.error(err);

@@ -27,6 +27,7 @@ import "leaflet/dist/leaflet.css";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import {
   useCreateFavroite,
   useGetUserFavroite,
@@ -41,7 +42,7 @@ export default function EventDetailPage() {
   const param = useParams();
   const awaitedParams = param as { id: string };
   const slug = awaitedParams?.id.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const { mutate, isPending } = useCreateFavroite();
   const router = useRouter();
   const {
@@ -75,6 +76,33 @@ export default function EventDetailPage() {
     items?: { optionName: string; codes: string[] }[];
   } | null>(null);
   const { mutate: finalizePurchase } = useFinalizeEventTicketPurchase();
+
+  // Payment already succeeded (Stripe charged the card) but the finalize
+  // call rejected it because the guest's name/email/phone weren't present
+  // on the request — e.g. their session silently expired mid-checkout. The
+  // money is already taken, so instead of just erroring out we let them
+  // re-supply their details and retry against the same paymentIntentId.
+  const [pendingFinalize, setPendingFinalize] = useState<{
+    paymentIntentId: string;
+  } | null>(null);
+  const [recoverName, setRecoverName] = useState("");
+  const [recoverEmail, setRecoverEmail] = useState("");
+  const [recoverPhone, setRecoverPhone] = useState("");
+  const [recoverError, setRecoverError] = useState("");
+  const [recovering, setRecovering] = useState(false);
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function parseErrorResponse(error: any): { message: string; code?: string } {
+    try {
+      const parsed = JSON.parse(error?.message);
+      return {
+        message: parsed?.error || parsed?.message || "Something went wrong",
+        code: parsed?.code,
+      };
+    } catch {
+      return { message: error?.message || "Something went wrong" };
+    }
+  }
 
   const EventId = event?.data?._id;
 
@@ -209,11 +237,16 @@ export default function EventDetailPage() {
     refetchEvent();
   };
 
-  const handlePurchaseSuccess = (paymentIntentId: string) => {
+  const handlePurchaseSuccess = (
+    paymentIntentId: string,
+    _items: { optionId: string; quantity: number }[],
+    guestInfo?: { name: string; email: string; phone: string },
+  ) => {
     finalizePurchase(
       {
         eventId: event?.data?._id ?? "",
         paymentIntentId,
+        guestInfo,
       },
       {
         onSuccess: (responseData) => {
@@ -224,9 +257,70 @@ export default function EventDetailPage() {
           queryClient.invalidateQueries({ queryKey: ["singleEvent", slug] });
           toast.success("Payment successful! Your tickets are ready.");
           setIsCheckoutOpen(false);
+          if (responseData.signedIn) {
+            updateSession();
+          }
         },
         onError: (error: any) => {
-          toast.error(error.message || "Payment verification failed");
+          const { message, code } = parseErrorResponse(error);
+          if (code === "GUEST_INFO_REQUIRED") {
+            // The card was already charged — don't strand that payment.
+            // Close the payment modal (nothing left to pay) and collect
+            // the missing details so we can retry against the same intent.
+            setIsCheckoutOpen(false);
+            setRecoverName("");
+            setRecoverEmail("");
+            setRecoverPhone("");
+            setRecoverError("");
+            setPendingFinalize({ paymentIntentId });
+            toast.error(
+              "Your payment went through — please confirm your details to receive your tickets.",
+            );
+            return;
+          }
+          toast.error(message);
+        },
+      },
+    );
+  };
+
+  const handleRecoverSubmit = () => {
+    if (!recoverName.trim() || !recoverPhone.trim()) {
+      setRecoverError("Please enter your full name and phone number.");
+      return;
+    }
+    if (!EMAIL_RE.test(recoverEmail.trim())) {
+      setRecoverError("Please enter a valid email address.");
+      return;
+    }
+    if (!pendingFinalize) return;
+    setRecoverError("");
+    setRecovering(true);
+    finalizePurchase(
+      {
+        eventId: event?.data?._id ?? "",
+        paymentIntentId: pendingFinalize.paymentIntentId,
+        guestInfo: {
+          name: recoverName.trim(),
+          email: recoverEmail.trim(),
+          phone: recoverPhone.trim(),
+        },
+      },
+      {
+        onSuccess: (responseData) => {
+          setPurchaseResult({ success: true, items: responseData.items });
+          queryClient.invalidateQueries({ queryKey: ["singleEvent", slug] });
+          toast.success("Payment successful! Your tickets are ready.");
+          setPendingFinalize(null);
+          setRecovering(false);
+          if (responseData.signedIn) {
+            updateSession();
+          }
+        },
+        onError: (error: any) => {
+          const { message } = parseErrorResponse(error);
+          setRecoverError(message);
+          setRecovering(false);
         },
       },
     );
@@ -295,6 +389,67 @@ export default function EventDetailPage() {
               onClose={handleCheckoutClose}
               onSuccess={handlePurchaseSuccess}
             />
+          )}
+
+          {pendingFinalize && (
+            <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-5">
+                <div>
+                  <h3
+                    className="text-xl font-bold"
+                    style={{ color: "#051e3a" }}>
+                    Confirm your details
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Your payment went through successfully — we just need
+                    your details to send your tickets.
+                  </p>
+                </div>
+
+                <div className="space-y-3 p-4 rounded-2xl border border-gray-200 bg-gray-50/50">
+                  <Input
+                    value={recoverName}
+                    onChange={(e) => setRecoverName(e.target.value)}
+                    placeholder="Full name"
+                    autoComplete="name"
+                    className="bg-white outline-none focus-visible:outline-none focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                  />
+                  <Input
+                    value={recoverEmail}
+                    onChange={(e) => setRecoverEmail(e.target.value)}
+                    type="email"
+                    placeholder="Email address"
+                    autoComplete="email"
+                    className="bg-white outline-none focus-visible:outline-none focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                  />
+                  <Input
+                    value={recoverPhone}
+                    onChange={(e) => setRecoverPhone(e.target.value)}
+                    type="tel"
+                    placeholder="Phone number"
+                    autoComplete="tel"
+                    className="bg-white outline-none focus-visible:outline-none focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                  />
+                  {recoverError && (
+                    <p className="text-xs font-medium text-red-500">
+                      {recoverError}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleRecoverSubmit}
+                  disabled={recovering}
+                  style={{ backgroundColor: "#051e3a" }}
+                  className="w-full text-white py-3.5 rounded-2xl font-bold shadow-lg hover:opacity-95 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2">
+                  {recovering ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Get my tickets"
+                  )}
+                </button>
+              </div>
+            </div>
           )}
           <div className="flex flex-col md:flex-col">
             <div className=" order-2 md:order-1 mt-4 md:mt-0 mb-4 px-6 md:px-0">

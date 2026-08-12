@@ -46,6 +46,18 @@ export async function POST(req: Request) {
       );
     }
 
+    // Idempotency: if this payment was already finalized, return the same
+    // tickets. This must run BEFORE we require any identity info — a retry
+    // (e.g. after a lost session forced the client to re-collect guest info)
+    // must not fail just because that retry no longer has the original
+    // session, once the purchase already exists.
+    const existingPurchase = await EventTicketPurchase.findOne({
+      paymentIntentId,
+    });
+    if (existingPurchase) {
+      return NextResponse.json(toTicketResponse(existingPurchase));
+    }
+
     // Not signed in — check out as a guest. The purchase is attached to an
     // account found/created from their email; we only auto-sign them into
     // it if that account has no password (a genuine guest or Google-only
@@ -73,6 +85,7 @@ export async function POST(req: Request) {
           {
             error:
               "Name, email and phone number are required to check out as a guest",
+            code: "GUEST_INFO_REQUIRED",
           },
           { status: 400 },
         );
@@ -96,14 +109,6 @@ export async function POST(req: Request) {
         });
         canAutoSignIn = true;
       }
-    }
-
-    // Idempotency: if this payment was already finalized, return the same tickets.
-    const existingPurchase = await EventTicketPurchase.findOne({
-      paymentIntentId,
-    });
-    if (existingPurchase) {
-      return NextResponse.json(toTicketResponse(existingPurchase));
     }
 
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
