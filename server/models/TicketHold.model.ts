@@ -7,7 +7,9 @@ export interface ITicketHoldItem {
 
 export interface ITicketHold {
   event: mongoose.Types.ObjectId;
-  user: mongoose.Types.ObjectId;
+  // Absent for guest (not-signed-in) checkouts — the hold still atomically
+  // reserves inventory, it just isn't tied to an account until purchase.
+  user?: mongoose.Types.ObjectId;
   items: ITicketHoldItem[];
   paymentIntentId: string;
   expiresAt: Date;
@@ -24,7 +26,7 @@ const TicketHoldItemSchema = new Schema<ITicketHoldItem>(
 const TicketHoldSchema = new Schema<ITicketHold>(
   {
     event: { type: Schema.Types.ObjectId, ref: "Event", required: true },
-    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    user: { type: Schema.Types.ObjectId, ref: "User" },
     items: {
       type: [TicketHoldItemSchema],
       required: true,

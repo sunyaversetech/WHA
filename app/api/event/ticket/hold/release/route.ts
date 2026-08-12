@@ -8,10 +8,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 export async function POST(req: Request) {
   try {
     await connectToDb();
+    // Guests (no session) can release their own hold too — the
+    // paymentIntentId itself is effectively a bearer secret only the
+    // checkout session that created it knows.
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
 
     const { paymentIntentId } = await req.json();
     if (!paymentIntentId) {
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true });
     }
 
-    if (hold.user.toString() !== session.user.id) {
+    if (hold.user && hold.user.toString() !== session?.user?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
 

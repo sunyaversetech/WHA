@@ -172,7 +172,6 @@ export const AuthModal = () => {
     }
   };
 
-  // ✅ Shared props passed down — no closures over render scope
   const authFormProps: AuthFormProps = {
     form,
     onSubmit,

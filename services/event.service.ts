@@ -108,12 +108,14 @@ type RedeemCodeFormResponseType = {
 type PurchaseTicketType = {
   eventId: string;
   paymentIntentId: string;
+  guestInfo?: { name: string; email: string; phone: string };
 };
 
 type PurchaseTicketResponseType = {
   success: boolean;
   invoiceNumber: string;
   items: { optionName: string; codes: string[] }[];
+  signedIn?: boolean;
 };
 
 export const useCreateEvent = () => {

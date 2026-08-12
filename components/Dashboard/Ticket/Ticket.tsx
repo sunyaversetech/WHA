@@ -63,7 +63,7 @@ const TicketRow = ({ item, onClick }: { item: any; onClick: () => void }) => {
                       "h:mm aa",
                     )}{" "}
                   -{" "}
-                  {item.event.startTime &&
+                  {item.event.endTime &&
                     format(
                       parse(item.event.endTime, "HH:mm", new Date()),
                       "h:mm aa",

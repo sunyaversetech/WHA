@@ -94,6 +94,8 @@ export type PurchasableOption = {
   remaining: number | null;
 };
 
+export type GuestInfo = { name: string; email: string; phone: string };
+
 type EventCheckOutProps = {
   eventId: string;
   eventTitle?: string;
@@ -102,6 +104,7 @@ type EventCheckOutProps = {
   onSuccess: (
     paymentIntentId: string,
     items: { optionId: string; quantity: number }[],
+    guestInfo?: GuestInfo,
   ) => void;
   onClose: () => void;
 };
@@ -308,8 +311,8 @@ export default function EventCheckOut({
                   pricing={pricing}
                   remainingSeconds={remainingSeconds}
                   onBack={() => setStep(2)}
-                  onSuccess={(paymentIntentId) =>
-                    onSuccess(paymentIntentId, cartItems)
+                  onSuccess={(paymentIntentId, guestInfo) =>
+                    onSuccess(paymentIntentId, cartItems, guestInfo)
                   }
                 />
               )}
@@ -569,6 +572,8 @@ function DetailsStep({
   );
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function CheckoutStep({
   pricing,
   remainingSeconds,
@@ -578,16 +583,39 @@ function CheckoutStep({
   pricing: EventTicketPricing;
   remainingSeconds: number | null;
   onBack: () => void;
-  onSuccess: (paymentIntentId: string) => void;
+  onSuccess: (paymentIntentId: string, guestInfo?: GuestInfo) => void;
 }) {
   const stripe = useStripe();
   const elements = useElements();
-  const { data } = useSession();
+  const { data, status } = useSession();
+  const isGuest = status !== "authenticated";
   const [isPaying, setIsPaying] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestError, setGuestError] = useState("");
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
+
+    let guestInfo: GuestInfo | undefined;
+    if (isGuest) {
+      if (!guestName.trim() || !guestPhone.trim()) {
+        setGuestError("Please enter your full name and phone number.");
+        return;
+      }
+      if (!EMAIL_RE.test(guestEmail.trim())) {
+        setGuestError("Please enter a valid email address.");
+        return;
+      }
+      guestInfo = {
+        name: guestName.trim(),
+        email: guestEmail.trim().toLowerCase(),
+        phone: guestPhone.trim(),
+      };
+    }
+    setGuestError("");
 
     setIsPaying(true);
     try {
@@ -598,9 +626,10 @@ function CheckoutStep({
           confirmParams: {
             payment_method_data: {
               billing_details: {
-                name: data?.user?.name ?? "Guest",
-                email: data?.user?.email ?? undefined,
-                phone: data?.user?.phone_number ?? undefined,
+                name: guestInfo?.name ?? data?.user?.name ?? "Guest",
+                email: guestInfo?.email ?? data?.user?.email ?? undefined,
+                phone:
+                  guestInfo?.phone ?? data?.user?.phone_number ?? undefined,
                 address: {
                   line1: data?.user?.location ?? "",
                   country: "AU",
@@ -617,7 +646,7 @@ function CheckoutStep({
         alert(confirmError.message);
         setIsPaying(false);
       } else if (paymentIntent?.status === "succeeded") {
-        onSuccess(paymentIntent.id);
+        onSuccess(paymentIntent.id, guestInfo);
       }
     } catch (err) {
       console.error(err);
@@ -627,6 +656,44 @@ function CheckoutStep({
 
   return (
     <form onSubmit={handlePay} className="space-y-6">
+      {isGuest && (
+        <div className="space-y-3 p-4 rounded-2xl border border-gray-200 bg-gray-50/50">
+          <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+            Your details
+          </p>
+          <input
+            value={guestName}
+            onChange={(e) => setGuestName(e.target.value)}
+            placeholder="Full name"
+            autoComplete="name"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
+          />
+          <input
+            value={guestEmail}
+            onChange={(e) => setGuestEmail(e.target.value)}
+            type="email"
+            placeholder="Email address"
+            autoComplete="email"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
+          />
+          <input
+            value={guestPhone}
+            onChange={(e) => setGuestPhone(e.target.value)}
+            type="tel"
+            placeholder="Phone number"
+            autoComplete="tel"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
+          />
+          {guestError && (
+            <p className="text-xs font-medium text-red-500">{guestError}</p>
+          )}
+          <p className="text-[11px] text-gray-400">
+            We&apos;ll email your tickets here and use this to keep you
+            signed in after checkout.
+          </p>
+        </div>
+      )}
+
       {remainingSeconds != null && (
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
           <Clock className="h-4 w-4 shrink-0" />

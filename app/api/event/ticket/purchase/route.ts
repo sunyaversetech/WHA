@@ -4,9 +4,11 @@ import { connectToDb } from "@/lib/db";
 import crypto from "crypto";
 import Stripe from "stripe";
 import Event from "@/server/models/Event.model";
+import User from "@/server/models/Auth.model";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
 import { TicketHold } from "@/server/models/TicketHold.model";
 import { sendMultiTierEventTicketEmail } from "@/lib/mail";
+import { attachAutoLoginCookie } from "@/server/lib/guestAuth";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
@@ -14,7 +16,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const SERVICE_FEE_PER_TICKET = 2.0;
 const SURCHARGE_PERCENT = 0.025;
 
-function toTicketResponse(purchase: any) {
+function toTicketResponse(purchase: any, signedIn = false) {
   return {
     success: true,
     invoiceNumber: purchase.invoiceNumber,
@@ -22,6 +24,7 @@ function toTicketResponse(purchase: any) {
       optionName: i.optionName,
       codes: i.uniqueKeys,
     })),
+    signedIn,
   };
 }
 
@@ -31,9 +34,6 @@ export async function POST(req: Request) {
   try {
     await connectToDb();
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
 
     const body = await req.json();
     const { eventId } = body;
@@ -44,6 +44,58 @@ export async function POST(req: Request) {
         { error: "Missing required fields" },
         { status: 400 },
       );
+    }
+
+    // Not signed in — check out as a guest. The purchase is attached to an
+    // account found/created from their email; we only auto-sign them into
+    // it if that account has no password (a genuine guest or Google-only
+    // account), never into an existing password-protected account someone
+    // else's email might belong to.
+    let buyer: any;
+    let canAutoSignIn = false;
+
+    if (session?.user) {
+      buyer = {
+        _id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+      };
+    } else {
+      const guestInfo = body.guestInfo as
+        | { name?: string; email?: string; phone?: string }
+        | undefined;
+      const guestName = guestInfo?.name?.trim();
+      const guestEmail = guestInfo?.email?.trim().toLowerCase();
+      const guestPhone = guestInfo?.phone?.trim();
+
+      if (!guestName || !guestEmail || !guestPhone) {
+        return NextResponse.json(
+          {
+            error:
+              "Name, email and phone number are required to check out as a guest",
+          },
+          { status: 400 },
+        );
+      }
+
+      const existingUser = await User.findOne({ email: guestEmail });
+      if (existingUser) {
+        buyer = existingUser;
+        canAutoSignIn = !existingUser.password;
+        if (!existingUser.phone_number) {
+          existingUser.phone_number = guestPhone;
+          await existingUser.save();
+        }
+      } else {
+        buyer = await User.create({
+          name: guestName,
+          email: guestEmail,
+          phone_number: guestPhone,
+          category: "user",
+          provider: "guest",
+        });
+        canAutoSignIn = true;
+      }
     }
 
     // Idempotency: if this payment was already finalized, return the same tickets.
@@ -257,7 +309,7 @@ export async function POST(req: Request) {
           [
             {
               event: eventId,
-              user: session.user.id,
+              user: buyer._id,
               business: event.user._id,
               items: itemsForPurchase,
               uniqueKeys: allKeys,
@@ -306,7 +358,7 @@ export async function POST(req: Request) {
     }
 
     await sendMultiTierEventTicketEmail(
-      session.user.email!,
+      buyer.email!,
       event.title,
       createdPurchase.items.map((i: any) => ({
         optionName: i.optionName,
@@ -314,7 +366,7 @@ export async function POST(req: Request) {
         quantity: i.quantity,
         unitPrice: i.unitPrice,
       })),
-      session.user.name!,
+      buyer.name!,
       {
         ticketTotal: createdPurchase.ticketTotal,
         serviceFee: createdPurchase.serviceFee,
@@ -325,7 +377,13 @@ export async function POST(req: Request) {
       },
     );
 
-    return NextResponse.json(toTicketResponse(createdPurchase));
+    const response = NextResponse.json(
+      toTicketResponse(createdPurchase, canAutoSignIn),
+    );
+    if (canAutoSignIn) {
+      await attachAutoLoginCookie(response, buyer);
+    }
+    return response;
   } catch (error: any) {
     if (error.code === 11000 && paymentIntentId) {
       const existing = await EventTicketPurchase.findOne({ paymentIntentId });

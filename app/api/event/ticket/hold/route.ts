@@ -12,10 +12,9 @@ export async function POST(req: Request) {
 
   try {
     await connectToDb();
+    // Guests (no session) can still hold tickets — identity is only needed
+    // to attach the purchase to an account at finalize time.
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
 
     const body = await req.json();
     const eventId = body.eventId as string;
@@ -85,7 +84,7 @@ export async function POST(req: Request) {
           [
             {
               event: eventId,
-              user: session.user.id,
+              user: session?.user?.id,
               items,
               paymentIntentId,
               expiresAt,
