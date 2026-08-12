@@ -98,7 +98,8 @@ function SectionHeading({
         alignItems: "center",
         justifyContent: "space-between",
         marginBottom: 22,
-      }}>
+      }}
+    >
       <h2
         style={{
           fontSize: 26,
@@ -106,7 +107,8 @@ function SectionHeading({
           letterSpacing: "-0.02em",
           color: "#051e3a",
           margin: 0,
-        }}>
+        }}
+      >
         {title}
       </h2>
       <div style={{ display: "flex", gap: 10 }}>
@@ -140,7 +142,8 @@ function SectionHeading({
               color: enabled ? "#0f2748" : "#c8d0db",
               opacity: enabled ? 1 : 0.5,
               transition: "opacity 0.15s",
-            }}>
+            }}
+          >
             <svg
               width={18}
               height={18}
@@ -149,7 +152,8 @@ function SectionHeading({
               stroke="currentColor"
               strokeWidth={2.2}
               strokeLinecap="round"
-              strokeLinejoin="round">
+              strokeLinejoin="round"
+            >
               <path d={path} />
             </svg>
           </button>
@@ -222,7 +226,8 @@ export default function LandingPage() {
             "radial-gradient(120% 120% at 50% -8%, #bad2f5 0%, #d4e7f8 16%, #e8f1fc 38%, #f4f8fd 60%, #ffffff 100%)",
           overflow: "visible",
           zIndex: 1,
-        }}>
+        }}
+      >
         <div style={{ maxWidth: 1120, margin: "0 auto", textAlign: "center" }}>
           <h1
             style={{
@@ -232,7 +237,8 @@ export default function LandingPage() {
               letterSpacing: "-0.035em",
               color: "#051e3a",
               margin: "0 0 18px",
-            }}>
+            }}
+          >
             What&apos;s Happening Australia
           </h1>
           <p
@@ -242,7 +248,8 @@ export default function LandingPage() {
               fontWeight: 500,
               margin: "0 auto 40px",
               maxWidth: 620,
-            }}>
+            }}
+          >
             Discover trusted local businesses, professional services, and
             upcoming events across Australia all in one place.
           </p>
@@ -255,7 +262,8 @@ export default function LandingPage() {
               zIndex: 50,
               maxWidth: 1040,
               margin: "0 auto",
-            }}>
+            }}
+          >
             <BusinessSearchWithDates />
           </div>
 
@@ -300,9 +308,10 @@ export default function LandingPage() {
           maxWidth: 1280,
           margin: "30px auto 0",
           padding: "0 clamp(20px,4vw,56px)",
-        }}>
+        }}
+      >
         <Link
-          href="https://skippyeducation.com/"
+          href="https://whaustralia.com/events/liljholaliveincanberra"
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -310,17 +319,19 @@ export default function LandingPage() {
             borderRadius: 22,
             overflow: "hidden",
             boxShadow: "0 8px 30px rgba(2,12,26,0.12)",
-          }}>
+          }}
+        >
           <div
             style={{
               position: "relative",
               aspectRatio: "21/8",
               background: "#0f2748",
             }}
-            className="max-md:aspect-[10/5]">
+            className="max-md:aspect-[10/5]"
+          >
             <Image
               fill
-              src="/skippy-banner.png"
+              src="/lil-banner3.png"
               alt="Featured promotion"
               className="object-cover object-center"
               priority
@@ -336,7 +347,8 @@ export default function LandingPage() {
           maxWidth: 1280,
           margin: "0 auto",
           padding: "50px clamp(20px,4vw,56px) 0",
-        }}>
+        }}
+      >
         {businesses.length > 0 && (
           <section style={{ marginBottom: 54 }}>
             <SectionHeading
@@ -360,14 +372,16 @@ export default function LandingPage() {
                   overflowX: "auto",
                   scrollbarWidth: "none",
                   scrollSnapType: "x mandatory",
-                }}>
+                }}
+              >
                 {businesses.map((b: any) => (
                   <div
                     key={b._id}
                     style={{
                       flex: "0 0 calc((100% - 78px) / 4)",
                       scrollSnapAlign: "start",
-                    }}>
+                    }}
+                  >
                     <BusinessCard business={b} />
                   </div>
                 ))}
@@ -407,14 +421,16 @@ export default function LandingPage() {
                   overflowX: "auto",
                   scrollbarWidth: "none",
                   scrollSnapType: "x mandatory",
-                }}>
+                }}
+              >
                 {events.map((e: any) => (
                   <div
                     key={e.id}
                     style={{
                       flex: "0 0 calc((100% - 78px) / 4)",
                       scrollSnapAlign: "start",
-                    }}>
+                    }}
+                  >
                     <EventCard event={e} />
                   </div>
                 ))}
@@ -728,7 +744,8 @@ export default function LandingPage() {
           maxWidth: 1280,
           margin: "96px auto 0",
           padding: "0 clamp(20px,4vw,56px)",
-        }}>
+        }}
+      >
         <div
           className="wha-2col"
           style={{
@@ -736,7 +753,8 @@ export default function LandingPage() {
             gridTemplateColumns: "0.9fr 1.1fr",
             gap: 48,
             alignItems: "center",
-          }}>
+          }}
+        >
           <div>
             <h2
               style={{
@@ -746,7 +764,8 @@ export default function LandingPage() {
                 lineHeight: 1.08,
                 color: "#051e3a",
                 margin: "0 0 18px",
-              }}>
+              }}
+            >
               WHA for business
             </h2>
             <p
@@ -756,7 +775,8 @@ export default function LandingPage() {
                 fontWeight: 500,
                 maxWidth: 400,
                 margin: "0 0 28px",
-              }}>
+              }}
+            >
               Grow your business with WHA — Australia’s community platform for
               discovering and promoting local businesses, services, and events.
               Reach new customers, showcase your services, and connect with the
@@ -776,7 +796,8 @@ export default function LandingPage() {
                   fontSize: 16,
                   fontWeight: 700,
                   cursor: "pointer",
-                }}>
+                }}
+              >
                 List your business
                 <ArrowRight size={18} strokeWidth={2.2} />
               </button>
@@ -798,7 +819,8 @@ export default function LandingPage() {
                       alignItems: "center",
                       justifyContent: "center",
                       borderRadius: 3,
-                    }}>
+                    }}
+                  >
                     <svg width={18} height={18} viewBox="0 0 24 24" fill="#fff">
                       <path d="M12 3.2l2.6 5.6 6 .5-4.5 4 1.3 5.9L12 16.7 6.6 19.2 7.9 13.3 3.4 9.3l6-.5z" />
                     </svg>
@@ -823,7 +845,8 @@ export default function LandingPage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-            }}>
+            }}
+          >
             {/* <div style={{ textAlign: "center", color: "#7c899c" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
               <div style={{ fontSize: 15, fontWeight: 600 }}>
@@ -846,7 +869,8 @@ export default function LandingPage() {
           maxWidth: 1280,
           margin: "96px auto 0",
           padding: "0 clamp(20px,4vw,56px)",
-        }}>
+        }}
+      >
         <h2
           style={{
             fontSize: 30,
@@ -854,7 +878,8 @@ export default function LandingPage() {
             letterSpacing: "-0.025em",
             color: "#051e3a",
             margin: "0 0 28px",
-          }}>
+          }}
+        >
           Browse by City
         </h2>
 
@@ -865,7 +890,8 @@ export default function LandingPage() {
             gap: 10,
             flexWrap: "wrap",
             marginBottom: 40,
-          }}>
+          }}
+        >
           {CITY_LINKS.map((c, i) => (
             <button
               key={c}
@@ -879,7 +905,8 @@ export default function LandingPage() {
                 padding: "10px 20px",
                 borderRadius: 9999,
                 cursor: "pointer",
-              }}>
+              }}
+            >
               {c}
             </button>
           ))}
@@ -937,7 +964,8 @@ export default function LandingPage() {
             marginTop: 40,
             paddingTop: 36,
             borderTop: "1px solid #eef1f5",
-          }}>
+          }}
+        >
           {EMPLOYEE_CATEGORIES.map((chip) => (
             <button
               key={chip.label}
@@ -951,7 +979,8 @@ export default function LandingPage() {
                 padding: "11px 20px",
                 borderRadius: 9999,
                 cursor: "pointer",
-              }}>
+              }}
+            >
               {chip.label}
             </button>
           ))}
@@ -964,7 +993,8 @@ export default function LandingPage() {
           marginTop: 90,
           borderTop: "1px solid #eef1f5",
           padding: "54px clamp(20px,4vw,56px) 40px",
-        }}>
+        }}
+      >
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           {/* Top footer grid */}
           <div
@@ -975,7 +1005,8 @@ export default function LandingPage() {
               gap: 40,
               paddingBottom: 44,
               borderBottom: "1px solid #eef1f5",
-            }}>
+            }}
+          >
             {/* Brand */}
             <div>
               <div
@@ -985,7 +1016,8 @@ export default function LandingPage() {
                   letterSpacing: "-0.03em",
                   color: "#051e3a",
                   marginBottom: 20,
-                }}>
+                }}
+              >
                 wha<span style={{ color: "#3771db" }}>.</span>
               </div>
             </div>
@@ -998,11 +1030,13 @@ export default function LandingPage() {
                     fontWeight: 800,
                     color: "#0f2748",
                     marginBottom: 18,
-                  }}>
+                  }}
+                >
                   {col.heading}
                 </div>
                 <div
-                  style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+                  style={{ display: "flex", flexDirection: "column", gap: 13 }}
+                >
                   {col.links.map((lk) =>
                     lk.href ? (
                       <Link
@@ -1013,7 +1047,8 @@ export default function LandingPage() {
                           color: "#5a6a80",
                           fontWeight: 500,
                           textDecoration: "none",
-                        }}>
+                        }}
+                      >
                         {lk.label}
                       </Link>
                     ) : (
@@ -1024,7 +1059,8 @@ export default function LandingPage() {
                           color: "#5a6a80",
                           fontWeight: 500,
                           cursor: "pointer",
-                        }}>
+                        }}
+                      >
                         {lk.label}
                       </span>
                     ),
@@ -1043,7 +1079,8 @@ export default function LandingPage() {
               flexWrap: "wrap",
               gap: 20,
               paddingTop: 36,
-            }}>
+            }}
+          >
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               {SOCIAL_LINKS.map(({ label, href }) => (
                 <a
@@ -1061,7 +1098,8 @@ export default function LandingPage() {
                     color: "#5a6a80",
                     fontWeight: 500,
                     textDecoration: "none",
-                  }}>
+                  }}
+                >
                   <svg
                     width={15}
                     height={15}
@@ -1070,7 +1108,8 @@ export default function LandingPage() {
                     stroke="currentColor"
                     strokeWidth={2}
                     strokeLinecap="round"
-                    strokeLinejoin="round">
+                    strokeLinejoin="round"
+                  >
                     <path d="M7 17 17 7" />
                     <path d="M8 7h9v9" />
                   </svg>
@@ -1086,21 +1125,24 @@ export default function LandingPage() {
                 fontSize: 14,
                 color: "#94a3b8",
                 fontWeight: 500,
-              }}>
+              }}
+            >
               <span
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 7,
                   cursor: "pointer",
-                }}>
+                }}
+              >
                 <svg
                   width={16}
                   height={16}
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth={2}>
+                  strokeWidth={2}
+                >
                   <circle cx={12} cy={12} r={9} />
                   <path d="M3 12h18M12 3a14 14 0 0 1 0 18A14 14 0 0 1 12 3Z" />
                 </svg>
