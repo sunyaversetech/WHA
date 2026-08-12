@@ -129,6 +129,10 @@ type EventCheckOutProps = {
     guestInfo?: GuestInfo,
   ) => void;
   onClose: () => void;
+  // True while the parent is finalizing a successful charge into an actual
+  // ticket purchase — keeps the Pay button locked so a slow finalize call
+  // can't be double-submitted.
+  finalizing?: boolean;
 };
 
 export default function EventCheckOut({
@@ -138,6 +142,7 @@ export default function EventCheckOut({
   maxTicketsPerRequest = 10,
   onSuccess,
   onClose,
+  finalizing = false,
 }: EventCheckOutProps) {
   const { status } = useSession();
   const isGuest = status !== "authenticated";
@@ -396,6 +401,7 @@ export default function EventCheckOut({
                   onSuccess={(paymentIntentId, info) =>
                     onSuccess(paymentIntentId, cartItems, info)
                   }
+                  finalizing={finalizing}
                 />
               )}
             </Elements>
@@ -586,6 +592,7 @@ function CheckoutStep({
   guestInfo,
   onBack,
   onSuccess,
+  finalizing = false,
 }: {
   pricing: EventTicketPricing;
   remainingSeconds: number | null;
@@ -597,12 +604,17 @@ function CheckoutStep({
   guestInfo?: GuestInfo;
   onBack: () => void;
   onSuccess: (paymentIntentId: string, guestInfo?: GuestInfo) => void;
+  finalizing?: boolean;
 }) {
   const stripe = useStripe();
   const elements = useElements();
   const { data } = useSession();
   const [isPaying, setIsPaying] = useState(false);
   const orderTotal = pricing.ticketTotal + pricing.serviceFee;
+  // Locked from the moment Stripe confirms the charge until the parent's
+  // finalize call resolves one way or the other — prevents a double-submit
+  // during the window between a successful charge and a slow finalize.
+  const isBusy = isPaying || finalizing;
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -800,16 +812,16 @@ function CheckoutStep({
         <button
           type="button"
           onClick={onBack}
-          disabled={isPaying}
+          disabled={isBusy}
           className="flex-1 py-3.5 rounded-2xl font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition disabled:opacity-50">
           Back
         </button>
         <button
           type="submit"
-          disabled={isPaying || !stripe}
+          disabled={isBusy || !stripe}
           style={{ backgroundColor: "#051e3a" }}
           className="flex-2 text-white py-3.5 rounded-2xl font-bold shadow-lg hover:opacity-95 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2">
-          {isPaying ? (
+          {isBusy ? (
             <Loader2 className="animate-spin" />
           ) : (
             `Pay $${pricing.totalToPay.toFixed(2)}`

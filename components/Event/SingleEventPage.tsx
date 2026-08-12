@@ -75,7 +75,8 @@ export default function EventDetailPage() {
     success: boolean;
     items?: { optionName: string; codes: string[] }[];
   } | null>(null);
-  const { mutate: finalizePurchase } = useFinalizeEventTicketPurchase();
+  const { mutate: finalizePurchase, isPending: isFinalizing } =
+    useFinalizeEventTicketPurchase();
 
   // Payment already succeeded (Stripe charged the card) but the finalize
   // call rejected it because the guest's name/email/phone weren't present
@@ -388,6 +389,7 @@ export default function EventDetailPage() {
               maxTicketsPerRequest={event?.data?.max_tickets_per_request ?? 10}
               onClose={handleCheckoutClose}
               onSuccess={handlePurchaseSuccess}
+              finalizing={isFinalizing}
             />
           )}
 
@@ -401,8 +403,8 @@ export default function EventDetailPage() {
                     Confirm your details
                   </h3>
                   <p className="text-sm text-gray-500 mt-1">
-                    Your payment went through successfully — we just need
-                    your details to send your tickets.
+                    Your payment went through successfully — we just need your
+                    details to send your tickets.
                   </p>
                 </div>
 
