@@ -389,7 +389,9 @@ export async function POST(req: Request) {
     // rather than thrown.
     if (canAutoSignIn) {
       try {
-        const response = NextResponse.json(toTicketResponse(createdPurchase, true));
+        const response = NextResponse.json(
+          toTicketResponse(createdPurchase, true),
+        );
         await attachAutoLoginCookie(response, buyer);
         return response;
       } catch (autoLoginError) {
