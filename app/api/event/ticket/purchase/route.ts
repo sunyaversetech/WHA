@@ -382,13 +382,21 @@ export async function POST(req: Request) {
       },
     );
 
-    const response = NextResponse.json(
-      toTicketResponse(createdPurchase, canAutoSignIn),
-    );
+    // The purchase is fully committed and the ticket email is already sent
+    // at this point — auto-login is a convenience on top, not part of the
+    // sale. It must never be allowed to turn an already-successful purchase
+    // into an error response, so any failure here is logged and swallowed
+    // rather than thrown.
     if (canAutoSignIn) {
-      await attachAutoLoginCookie(response, buyer);
+      try {
+        const response = NextResponse.json(toTicketResponse(createdPurchase, true));
+        await attachAutoLoginCookie(response, buyer);
+        return response;
+      } catch (autoLoginError) {
+        console.error("Guest auto-login failed:", autoLoginError);
+      }
     }
-    return response;
+    return NextResponse.json(toTicketResponse(createdPurchase, false));
   } catch (error: any) {
     if (error.code === 11000 && paymentIntentId) {
       const existing = await EventTicketPurchase.findOne({ paymentIntentId });
