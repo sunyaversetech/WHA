@@ -41,7 +41,7 @@ export default function EventDetailPage() {
   const param = useParams();
   const awaitedParams = param as { id: string };
   const slug = awaitedParams?.id.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const { data: session, update: updateSession } = useSession();
+  const { data: session } = useSession();
   const { mutate, isPending } = useCreateFavroite();
   const router = useRouter();
   const {
@@ -193,9 +193,13 @@ export default function EventDetailPage() {
   };
 
   const handleBuyTicketsClick = () => {
-    // Guests can buy without logging in — they enter their details in the
-    // checkout step. Refresh availability right before opening so quantity
-    // limits reflect any tickets other buyers currently have on hold.
+    // if (!session?.user) {
+    //   onOpen();
+    //   toast.error("Please login to buy tickets");
+    //   return;
+    // }
+    // Refresh availability right before opening checkout so quantity limits
+    // reflect any tickets other buyers currently have on hold.
     refetchEvent();
     setIsCheckoutOpen(true);
   };
@@ -205,16 +209,11 @@ export default function EventDetailPage() {
     refetchEvent();
   };
 
-  const handlePurchaseSuccess = (
-    paymentIntentId: string,
-    _items: { optionId: string; quantity: number }[],
-    guestInfo?: { name: string; email: string; phone: string },
-  ) => {
+  const handlePurchaseSuccess = (paymentIntentId: string) => {
     finalizePurchase(
       {
         eventId: event?.data?._id ?? "",
         paymentIntentId,
-        guestInfo,
       },
       {
         onSuccess: (responseData) => {
@@ -225,11 +224,6 @@ export default function EventDetailPage() {
           queryClient.invalidateQueries({ queryKey: ["singleEvent", slug] });
           toast.success("Payment successful! Your tickets are ready.");
           setIsCheckoutOpen(false);
-          // A guest purchase may have auto-signed them in — refresh the
-          // client session so the rest of the app (wallet, nav, etc.) sees it.
-          if (responseData.signedIn) {
-            updateSession();
-          }
         },
         onError: (error: any) => {
           toast.error(error.message || "Payment verification failed");

@@ -36,22 +36,36 @@ function parseErrorMessage(error: any, fallback: string): string {
   }
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
 );
 
 type Step = 1 | 2 | 3;
 
-const STEPS: { n: Step; label: string }[] = [
+// Guests get a "Details" step to collect their info; logged-in buyers skip
+// straight from Tickets to Checkout.
+const GUEST_STEPS: { n: Step; label: string }[] = [
   { n: 1, label: "Tickets" },
   { n: 2, label: "Details" },
   { n: 3, label: "Checkout" },
 ];
+const AUTH_STEPS: { n: Step; label: string }[] = [
+  { n: 1, label: "Tickets" },
+  { n: 3, label: "Checkout" },
+];
 
-function StepIndicator({ step }: { step: Step }) {
+function StepIndicator({
+  step,
+  steps,
+}: {
+  step: Step;
+  steps: { n: Step; label: string }[];
+}) {
   return (
     <div className="flex items-center justify-center">
-      {STEPS.map((s, i) => (
+      {steps.map((s, i) => (
         <div key={s.n} className="flex items-center">
           <div className="flex flex-col items-center gap-1">
             <div
@@ -73,7 +87,7 @@ function StepIndicator({ step }: { step: Step }) {
               {s.label}
             </span>
           </div>
-          {i < STEPS.length - 1 && (
+          {i < steps.length - 1 && (
             <div
               className={cn(
                 "w-10 sm:w-14 h-0.5 mb-4",
@@ -117,6 +131,9 @@ export default function EventCheckOut({
   onSuccess,
   onClose,
 }: EventCheckOutProps) {
+  const { status } = useSession();
+  const isGuest = status !== "authenticated";
+
   const [step, setStep] = useState<Step>(1);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [promoInput, setPromoInput] = useState("");
@@ -130,6 +147,10 @@ export default function EventCheckOut({
   const [elementsKey, setElementsKey] = useState(0);
   const [holdExpiresAt, setHoldExpiresAt] = useState<number | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestFieldError, setGuestFieldError] = useState("");
   const { mutate: holdTickets, isPending: holding } = useHoldTickets();
   const { mutate: releaseHold } = useReleaseTicketHold();
 
@@ -195,21 +216,13 @@ export default function EventCheckOut({
     }
   };
 
-  const handleContinueFromTickets = async () => {
-    if (cartItems.length === 0) return;
-    try {
-      await fetchPricing(cartItems, "");
-      setStep(2);
-    } catch {
-      // error already surfaced via `error` state
-    }
-  };
-
-  const handleContinueToPayment = () => {
-    if (!pricing) return;
+  // Reserves the cart under `paymentIntentId` and moves into Checkout —
+  // shared by the logged-in path (straight from Tickets) and the guest path
+  // (after their details are collected).
+  const goToCheckout = (paymentIntentId: string) => {
     setError("");
     holdTickets(
-      { eventId, items: cartItems, paymentIntentId: pricing.paymentIntentId },
+      { eventId, items: cartItems, paymentIntentId },
       {
         onSuccess: (res) => {
           setHoldExpiresAt(new Date(res.expiresAt).getTime());
@@ -225,10 +238,57 @@ export default function EventCheckOut({
     );
   };
 
+  const handleContinueFromTickets = async () => {
+    if (cartItems.length === 0) return;
+    try {
+      const res = await fetchPricing(cartItems, "");
+      if (isGuest) {
+        setStep(2);
+      } else {
+        goToCheckout(res.paymentIntentId);
+      }
+    } catch {
+      // error already surfaced via `error` state
+    }
+  };
+
+  const handleContinueFromDetails = () => {
+    if (!guestName.trim() || !guestPhone.trim()) {
+      setGuestFieldError("Please enter your full name and phone number.");
+      return;
+    }
+    if (!EMAIL_RE.test(guestEmail.trim())) {
+      setGuestFieldError("Please enter a valid email address.");
+      return;
+    }
+    setGuestFieldError("");
+    if (!pricing) return;
+    goToCheckout(pricing.paymentIntentId);
+  };
+
   const handleApplyPromo = async () => {
     setPromoMessage(null);
     try {
       const res = await fetchPricing(cartItems, promoInput);
+      // Re-pricing releases the hold tied to the previous PaymentIntent —
+      // immediately re-establish it under the new one so nothing is left
+      // unprotected while the buyer is still mid-checkout.
+      await new Promise<void>((resolve, reject) => {
+        holdTickets(
+          {
+            eventId,
+            items: cartItems,
+            paymentIntentId: res.paymentIntentId,
+          },
+          {
+            onSuccess: (holdRes) => {
+              setHoldExpiresAt(new Date(holdRes.expiresAt).getTime());
+              resolve();
+            },
+            onError: (err) => reject(err),
+          },
+        );
+      });
       setPromoMessage(
         promoInput.trim()
           ? res.promoApplied
@@ -243,6 +303,10 @@ export default function EventCheckOut({
       });
     }
   };
+
+  const guestInfo: GuestInfo | undefined = isGuest
+    ? { name: guestName, email: guestEmail, phone: guestPhone }
+    : undefined;
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -264,15 +328,18 @@ export default function EventCheckOut({
             <p className="text-sm text-gray-500 mb-5">{eventTitle}</p>
           )}
 
-          <StepIndicator step={step} />
+          <StepIndicator
+            step={step}
+            steps={isGuest ? GUEST_STEPS : AUTH_STEPS}
+          />
         </div>
 
         <div className="p-6 space-y-6">
-          {error && (
+          {/* {error && (
             <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
               {error}
             </div>
-          )}
+          )} */}
 
           {step === 1 && (
             <TicketsStep
@@ -293,16 +360,17 @@ export default function EventCheckOut({
                 clientSecret: pricing.clientSecret,
                 appearance: { theme: "stripe" },
               }}>
-              {step === 2 && (
-                <DetailsStep
-                  pricing={pricing}
-                  promoInput={promoInput}
-                  setPromoInput={setPromoInput}
-                  onApplyPromo={handleApplyPromo}
-                  promoMessage={promoMessage}
-                  loadingPricing={loadingPricing}
+              {step === 2 && isGuest && (
+                <GuestDetailsStep
+                  name={guestName}
+                  setName={setGuestName}
+                  email={guestEmail}
+                  setEmail={setGuestEmail}
+                  phone={guestPhone}
+                  setPhone={setGuestPhone}
+                  error={guestFieldError}
                   onBack={() => setStep(1)}
-                  onContinue={handleContinueToPayment}
+                  onContinue={handleContinueFromDetails}
                   holding={holding}
                 />
               )}
@@ -310,9 +378,15 @@ export default function EventCheckOut({
                 <CheckoutStep
                   pricing={pricing}
                   remainingSeconds={remainingSeconds}
-                  onBack={() => setStep(2)}
-                  onSuccess={(paymentIntentId, guestInfo) =>
-                    onSuccess(paymentIntentId, cartItems, guestInfo)
+                  promoInput={promoInput}
+                  setPromoInput={setPromoInput}
+                  onApplyPromo={handleApplyPromo}
+                  promoMessage={promoMessage}
+                  loadingPricing={loadingPricing}
+                  guestInfo={guestInfo}
+                  onBack={() => setStep(isGuest ? 2 : 1)}
+                  onSuccess={(paymentIntentId, info) =>
+                    onSuccess(paymentIntentId, cartItems, info)
                   }
                 />
               )}
@@ -366,7 +440,6 @@ function TicketsStep({
               </p>
               <p className="text-xs text-gray-400">
                 ${opt.price.toFixed(2)} each
-                {/* {opt.remaining !== null && ` · ${opt.remaining} left`} */}
               </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
@@ -412,31 +485,174 @@ function TicketsStep({
   );
 }
 
-function DetailsStep({
+function GuestDetailsStep({
+  name,
+  setName,
+  email,
+  setEmail,
+  phone,
+  setPhone,
+  error,
+  onBack,
+  onContinue,
+  holding,
+}: {
+  name: string;
+  setName: (val: string) => void;
+  email: string;
+  setEmail: (val: string) => void;
+  phone: string;
+  setPhone: (val: string) => void;
+  error: string;
+  onBack: () => void;
+  onContinue: () => void;
+  holding: boolean;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-3 p-4 rounded-2xl border border-gray-200 bg-gray-50/50">
+        <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+          Your details
+        </p>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Full name"
+          autoComplete="name"
+          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
+        />
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          type="email"
+          placeholder="Email address"
+          autoComplete="email"
+          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
+        />
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          type="tel"
+          placeholder="Phone number"
+          autoComplete="tel"
+          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
+        />
+        {error && <p className="text-xs font-medium text-red-500">{error}</p>}
+        <p className="text-[11px] text-gray-400">
+          We&apos;ll email your tickets here and use this to keep you signed in
+          after checkout.
+        </p>
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          onClick={onBack}
+          disabled={holding}
+          className="flex-1 py-3.5 rounded-2xl font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition disabled:opacity-50">
+          Back
+        </button>
+        <button
+          onClick={onContinue}
+          disabled={holding}
+          style={{ backgroundColor: "#051e3a" }}
+          className="flex-2 text-white py-3.5 rounded-2xl font-bold shadow-lg hover:opacity-95 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2">
+          {holding ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            "Continue to Payment"
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CheckoutStep({
   pricing,
+  remainingSeconds,
   promoInput,
   setPromoInput,
   onApplyPromo,
   promoMessage,
   loadingPricing,
+  guestInfo,
   onBack,
-  onContinue,
-  holding,
+  onSuccess,
 }: {
   pricing: EventTicketPricing;
+  remainingSeconds: number | null;
   promoInput: string;
   setPromoInput: (val: string) => void;
   onApplyPromo: () => void;
   promoMessage: { type: "success" | "error"; text: string } | null;
   loadingPricing: boolean;
+  guestInfo?: GuestInfo;
   onBack: () => void;
-  onContinue: () => void;
-  holding: boolean;
+  onSuccess: (paymentIntentId: string, guestInfo?: GuestInfo) => void;
 }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const { data } = useSession();
+  const [isPaying, setIsPaying] = useState(false);
   const orderTotal = pricing.ticketTotal + pricing.serviceFee;
 
+  const handlePay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+
+    setIsPaying(true);
+    try {
+      const { error: confirmError, paymentIntent } =
+        await stripe.confirmPayment({
+          elements,
+          redirect: "if_required",
+          confirmParams: {
+            payment_method_data: {
+              billing_details: {
+                name: guestInfo?.name ?? data?.user?.name ?? "Guest",
+                email: guestInfo?.email ?? data?.user?.email ?? undefined,
+                phone:
+                  guestInfo?.phone ?? data?.user?.phone_number ?? undefined,
+                address: {
+                  line1: data?.user?.location ?? "",
+                  country: "AU",
+                  city: data?.user?.location ?? "Melbourne",
+                  state: data?.user?.location ?? "VIC",
+                  postal_code: data?.user?.location ?? "3000",
+                },
+              },
+            },
+          },
+        });
+
+      if (confirmError) {
+        alert(confirmError.message);
+        setIsPaying(false);
+      } else if (paymentIntent?.status === "succeeded") {
+        onSuccess(paymentIntent.id, guestInfo);
+      }
+    } catch (err) {
+      console.error(err);
+      setIsPaying(false);
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <form onSubmit={handlePay} className="space-y-6">
+      {remainingSeconds != null && (
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
+          <Clock className="h-4 w-4 shrink-0" />
+          <span>
+            Your tickets are on hold for{" "}
+            <span className="font-mono font-bold">
+              {String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:
+              {String(remainingSeconds % 60).padStart(2, "0")}
+            </span>{" "}
+            — complete payment before time runs out.
+          </span>
+        </div>
+      )}
+
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-wide text-gray-500">
           Promo code
@@ -547,177 +763,6 @@ function DetailsStep({
       <div className="flex items-start gap-2 text-xs text-gray-400">
         <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
         <span>Service and processing fees are non-refundable.</span>
-      </div>
-
-      <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          disabled={holding}
-          className="flex-1 py-3.5 rounded-2xl font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition disabled:opacity-50">
-          Back
-        </button>
-        <button
-          onClick={onContinue}
-          disabled={holding}
-          style={{ backgroundColor: "#051e3a" }}
-          className="flex-2 text-white py-3.5 rounded-2xl font-bold shadow-lg hover:opacity-95 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2">
-          {holding ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            "Continue to Payment"
-          )}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function CheckoutStep({
-  pricing,
-  remainingSeconds,
-  onBack,
-  onSuccess,
-}: {
-  pricing: EventTicketPricing;
-  remainingSeconds: number | null;
-  onBack: () => void;
-  onSuccess: (paymentIntentId: string, guestInfo?: GuestInfo) => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const { data, status } = useSession();
-  const isGuest = status !== "authenticated";
-  const [isPaying, setIsPaying] = useState(false);
-  const [guestName, setGuestName] = useState("");
-  const [guestEmail, setGuestEmail] = useState("");
-  const [guestPhone, setGuestPhone] = useState("");
-  const [guestError, setGuestError] = useState("");
-
-  const handlePay = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-
-    let guestInfo: GuestInfo | undefined;
-    if (isGuest) {
-      if (!guestName.trim() || !guestPhone.trim()) {
-        setGuestError("Please enter your full name and phone number.");
-        return;
-      }
-      if (!EMAIL_RE.test(guestEmail.trim())) {
-        setGuestError("Please enter a valid email address.");
-        return;
-      }
-      guestInfo = {
-        name: guestName.trim(),
-        email: guestEmail.trim().toLowerCase(),
-        phone: guestPhone.trim(),
-      };
-    }
-    setGuestError("");
-
-    setIsPaying(true);
-    try {
-      const { error: confirmError, paymentIntent } =
-        await stripe.confirmPayment({
-          elements,
-          redirect: "if_required",
-          confirmParams: {
-            payment_method_data: {
-              billing_details: {
-                name: guestInfo?.name ?? data?.user?.name ?? "Guest",
-                email: guestInfo?.email ?? data?.user?.email ?? undefined,
-                phone:
-                  guestInfo?.phone ?? data?.user?.phone_number ?? undefined,
-                address: {
-                  line1: data?.user?.location ?? "",
-                  country: "AU",
-                  city: data?.user?.location ?? "Melbourne",
-                  state: data?.user?.location ?? "VIC",
-                  postal_code: data?.user?.location ?? "3000",
-                },
-              },
-            },
-          },
-        });
-
-      if (confirmError) {
-        alert(confirmError.message);
-        setIsPaying(false);
-      } else if (paymentIntent?.status === "succeeded") {
-        onSuccess(paymentIntent.id, guestInfo);
-      }
-    } catch (err) {
-      console.error(err);
-      setIsPaying(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handlePay} className="space-y-6">
-      {isGuest && (
-        <div className="space-y-3 p-4 rounded-2xl border border-gray-200 bg-gray-50/50">
-          <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
-            Your details
-          </p>
-          <input
-            value={guestName}
-            onChange={(e) => setGuestName(e.target.value)}
-            placeholder="Full name"
-            autoComplete="name"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
-          />
-          <input
-            value={guestEmail}
-            onChange={(e) => setGuestEmail(e.target.value)}
-            type="email"
-            placeholder="Email address"
-            autoComplete="email"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
-          />
-          <input
-            value={guestPhone}
-            onChange={(e) => setGuestPhone(e.target.value)}
-            type="tel"
-            placeholder="Phone number"
-            autoComplete="tel"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary bg-white"
-          />
-          {guestError && (
-            <p className="text-xs font-medium text-red-500">{guestError}</p>
-          )}
-          <p className="text-[11px] text-gray-400">
-            We&apos;ll email your tickets here and use this to keep you
-            signed in after checkout.
-          </p>
-        </div>
-      )}
-
-      {remainingSeconds != null && (
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
-          <Clock className="h-4 w-4 shrink-0" />
-          <span>
-            Your tickets are on hold for{" "}
-            <span className="font-mono font-bold">
-              {String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:
-              {String(remainingSeconds % 60).padStart(2, "0")}
-            </span>{" "}
-            — complete payment before time runs out.
-          </span>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-sm">
-        <span className="text-gray-500">
-          Total to pay{" "}
-          <span className="font-mono text-xs text-gray-400">
-            ({pricing.invoiceNumber})
-          </span>
-        </span>
-        <span className="font-bold text-lg" style={{ color: "#051e3a" }}>
-          ${pricing.totalToPay.toFixed(2)}
-        </span>
       </div>
 
       <PaymentElement
