@@ -22,7 +22,7 @@ export default function FavoritesPage() {
   if (isLoading) return <FavoritesSkeleton />;
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex items-start justify-between md:hidden">
         <ChevronLeft
           onClick={() => router.back()}
@@ -44,22 +44,34 @@ export default function FavoritesPage() {
       <hr className="border-slate-200" />
 
       <Tabs defaultValue="events" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3 mb-8 bg-slate-100 p-1 rounded-xl">
-          <TabsTrigger value="events" className="rounded-lg font-bold">
+        <TabsList className="grid w-full h-13! border-none!  grid-cols-3 mb-8 bg-[#f1f5f9] p-1 rounded-xl">
+          <TabsTrigger
+            value="events"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary h-10 font-bold">
             Events{" "}
-            <Badge variant="secondary" className="ml-2 bg-white text-primary">
+            <Badge
+              variant="secondary"
+              className="ml-2 bg-gray-200 text-primary">
               {favorites.events.length}
             </Badge>
           </TabsTrigger>
-          <TabsTrigger value="deals" className="rounded-lg font-bold">
+          <TabsTrigger
+            value="deals"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary h-10 font-bold">
             Deals{" "}
-            <Badge variant="secondary" className="ml-2 bg-white text-primary">
+            <Badge
+              variant="secondary"
+              className="ml-2 bg-gray-200 text-primary">
               {favorites.deals.length}
             </Badge>
           </TabsTrigger>
-          <TabsTrigger value="business" className="rounded-lg font-bold">
+          <TabsTrigger
+            value="business"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary h-10 font-bold">
             Business{" "}
-            <Badge variant="secondary" className="ml-2 bg-white text-primary">
+            <Badge
+              variant="secondary"
+              className="ml-2 bg-gray-200 text-primary">
               {favorites.business.length}
             </Badge>
           </TabsTrigger>

@@ -198,10 +198,13 @@ const Ticket = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   const goToTicket = (id: string) => router.push(`/activity/tickets/${id}`);
 
   return (
-    <div className={hideHeader ? "" : "p-6 min-h-screen"}>
+    <div className={hideHeader ? "" : "p-6 min-h-screen max-w-3xl mx-auto"}>
       {!hideHeader && (
         <>
-          <Button variant={"ghost"} onClick={() => router.back()}>
+          <Button
+            variant={"ghost"}
+            className="p-0 m-0 md:hidden max-sm:absolute top-10 left-2"
+            onClick={() => router.back()}>
             <ChevronLeft />
           </Button>
           <div className="mb-8">

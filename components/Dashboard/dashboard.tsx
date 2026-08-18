@@ -721,7 +721,6 @@ export default function Dashboard() {
             )}
           </Card>
 
-          {/* ── Today's next appointments ── */}
           <Card>
             <CardHeader title="Today's next appointments" />
             {today.length === 0 ? (

@@ -860,7 +860,6 @@ export default function UserBookings({
         ))}
       </div>
 
-      {/* Content */}
       {loading ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {[1, 2, 3].map((i) => (
@@ -920,7 +919,6 @@ export default function UserBookings({
         </div>
       )}
 
-      {/* Reschedule Modal */}
       {rescheduleTarget && (
         <RescheduleModal
           booking={rescheduleTarget}
