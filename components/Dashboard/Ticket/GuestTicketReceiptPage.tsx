@@ -153,6 +153,9 @@ export default function GuestTicketReceiptPage() {
         qrBottom + 12,
         { align: "center" },
       );
+      doc.setFont("courier", "normal");
+      doc.setFontSize(7);
+      doc.text(code.key, 50, qrBottom + 17, { align: "center" });
     });
 
     return doc;

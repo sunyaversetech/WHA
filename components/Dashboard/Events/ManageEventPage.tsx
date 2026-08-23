@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format, parse } from "date-fns";
 import { toast } from "sonner";
+import { QRCodeCanvas } from "qrcode.react";
+import { jsPDF } from "jspdf";
 import {
   LayoutDashboard,
   Receipt,
@@ -24,8 +26,15 @@ import {
   Eye,
   Printer,
   Send,
+  Download,
   Loader2,
 } from "lucide-react";
+import {
+  getTicketTitle,
+  getTicketVenue,
+  getTicketDateRange,
+  getTicketCodes,
+} from "../Ticket/ticket-utils";
 import {
   useGetSingleForForm,
   useGetEventVerifyUsers,
@@ -190,6 +199,16 @@ export default function ManageEventPage() {
   const [attendeeSearch, setAttendeeSearch] = useState("");
   const [viewInvoice, setViewInvoice] = useState<any | null>(null);
   const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
+  // Ticket QR codes have to actually be painted to a <canvas> before we can
+  // read them back out as an image for the PDF — there's no headless QR
+  // encoder in this project — so downloading tickets from a table row (no
+  // permanently-visible QR carousel like the ticket detail pages have)
+  // briefly mounts them off-screen, captures each canvas, then unmounts.
+  const [ticketsToRender, setTicketsToRender] = useState<any | null>(null);
+  const [downloadingTicketsId, setDownloadingTicketsId] = useState<
+    string | null
+  >(null);
+  const ticketCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
   const [pendingStatusChange, setPendingStatusChange] = useState<{
     row: any;
     status: "verified" | "pending";
@@ -334,6 +353,112 @@ export default function ManageEventPage() {
     win.focus();
     setTimeout(() => win.print(), 250);
   };
+
+  const loadLogo = (): Promise<HTMLImageElement | null> =>
+    new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = "/wha/logo.png";
+    });
+
+  const handleDownloadTickets = (p: any) => {
+    ticketCanvasRefs.current.clear();
+    setDownloadingTicketsId(p._id);
+    setTicketsToRender(p);
+  };
+
+  // Runs once the hidden QR canvases for `ticketsToRender` have painted,
+  // reads them back out as images, builds the PDF, then tears the hidden
+  // canvases back down.
+  useEffect(() => {
+    if (!ticketsToRender) return;
+    const timer = setTimeout(async () => {
+      const p = ticketsToRender;
+      try {
+        const title = getTicketTitle(p);
+        const venue = getTicketVenue(p);
+        const dateRange = getTicketDateRange(p);
+        const codes = getTicketCodes(p);
+        const holderName = p.user?.name || p.user?.email || "Ticket Holder";
+        const logo = await loadLogo();
+
+        const doc = new jsPDF({ unit: "mm", format: [100, 160] });
+        codes.forEach((code, i) => {
+          if (i > 0) doc.addPage([100, 160]);
+
+          if (logo) {
+            const logoW = 12;
+            const logoH = (logo.height / logo.width) * logoW;
+            doc.addImage(logo, "PNG", 100 - 10 - logoW, 6, logoW, logoH);
+          }
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(14);
+          doc.text(title, 50, 20, { align: "center", maxWidth: 70 });
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          let y = 28;
+          if (dateRange) {
+            doc.text(
+              new Date(dateRange.from).toLocaleDateString("en-AU", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              }),
+              50,
+              y,
+              { align: "center" },
+            );
+            y += 5;
+          }
+          if (venue) {
+            doc.text(venue, 50, y, { align: "center", maxWidth: 90 });
+            y += 5;
+          }
+
+          const canvas = ticketCanvasRefs.current.get(code.key);
+          if (canvas) {
+            doc.addImage(
+              canvas.toDataURL("image/png"),
+              "PNG",
+              20,
+              y + 5,
+              60,
+              60,
+            );
+          }
+
+          const qrBottom = y + 5 + 60;
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(10);
+          doc.text(holderName, 50, qrBottom + 7, { align: "center" });
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.text(
+            `Ticket ${i + 1} of ${codes.length} · ${code.label}`,
+            50,
+            qrBottom + 12,
+            { align: "center" },
+          );
+          doc.setFont("courier", "normal");
+          doc.setFontSize(7);
+          doc.text(code.key, 50, qrBottom + 17, { align: "center" });
+        });
+
+        doc.save(
+          `${(title || "event").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-tickets-${p.invoiceNumber || p._id}.pdf`,
+        );
+      } catch {
+        toast.error("Couldn't download tickets");
+      } finally {
+        setTicketsToRender(null);
+        setDownloadingTicketsId(null);
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [ticketsToRender]);
 
   const handleSendInvoice = (p: any) => {
     setSendingInvoiceId(p._id);
@@ -755,6 +880,16 @@ export default function ManageEventPage() {
                                 )}
                                 Send Invoice
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                disabled={downloadingTicketsId === p._id}
+                                onClick={() => handleDownloadTickets(p)}>
+                                {downloadingTicketsId === p._id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Download className="h-4 w-4" />
+                                )}
+                                Download Tickets
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -1055,6 +1190,27 @@ export default function ManageEventPage() {
           </div>
         )}
       </div>
+
+      {/* Off-screen QR codes for the ticket currently being downloaded — see
+          the effect above for why these have to actually mount before a PDF
+          can be built from them. */}
+      {ticketsToRender && (
+        <div
+          style={{ position: "fixed", left: -9999, top: 0 }}
+          aria-hidden="true">
+          {getTicketCodes(ticketsToRender).map((code) => (
+            <QRCodeCanvas
+              key={code.key}
+              value={code.key}
+              size={200}
+              level="H"
+              ref={(el) => {
+                if (el) ticketCanvasRefs.current.set(code.key, el);
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* View invoice dialog */}
       <Dialog
