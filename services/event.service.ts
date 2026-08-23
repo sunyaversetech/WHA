@@ -111,11 +111,42 @@ type PurchaseTicketType = {
   guestInfo?: { name: string; email: string; phone: string };
 };
 
+export type GuestReceiptType = {
+  holderName: string;
+  event: {
+    title?: string;
+    image?: string;
+    venue?: string;
+    location?: string;
+    dateRange?: { from: string; to?: string };
+    latitude?: number;
+    longitude?: number;
+    slug?: string;
+    startTime?: string;
+    endTime?: string;
+  };
+  items: {
+    optionName: string;
+    uniqueKeys: string[];
+    quantity: number;
+    unitPrice: number;
+  }[];
+  invoiceNumber: string;
+  ticketTotal: number;
+  serviceFee: number;
+  surcharge: number;
+  totalAmount: number;
+  promoCode?: string;
+  createdAt: string;
+};
+
 type PurchaseTicketResponseType = {
   success: boolean;
+  purchaseId?: string;
   invoiceNumber: string;
   items: { optionName: string; codes: string[] }[];
   signedIn?: boolean;
+  receipt?: GuestReceiptType;
 };
 
 export const useCreateEvent = () => {

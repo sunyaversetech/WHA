@@ -16,15 +16,56 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const SERVICE_FEE_PER_TICKET = 2.0;
 const SURCHARGE_PERCENT = 0.025;
 
-function toTicketResponse(purchase: any, signedIn = false) {
+// `eventDoc` is the populated Event document (either passed in already-loaded
+// during the main flow, or attached via `.populate("event")` on the two
+// existing-purchase lookups) — used only to build the `receipt` payload that
+// lets a guest's post-payment receipt page render without a second,
+// unauthenticated fetch.
+function toTicketResponse(
+  purchase: any,
+  eventDoc?: any,
+  signedIn = false,
+  holderName?: string,
+) {
   return {
     success: true,
+    purchaseId: purchase._id.toString(),
     invoiceNumber: purchase.invoiceNumber,
     items: purchase.items.map((i: any) => ({
       optionName: i.optionName,
       codes: i.uniqueKeys,
     })),
     signedIn,
+    receipt: eventDoc
+      ? {
+          holderName: holderName || "Ticket Holder",
+          event: {
+            title: eventDoc.title,
+            image: eventDoc.image,
+            venue: eventDoc.venue,
+            location: eventDoc.location,
+            dateRange: eventDoc.dateRange,
+            latitude: eventDoc.latitude,
+            longitude: eventDoc.longitude,
+            slug: eventDoc.slug,
+            startTime: eventDoc.startTime,
+            endTime: eventDoc.endTime,
+          },
+          items: purchase.items.map((i: any) => ({
+            optionName: i.optionName,
+            uniqueKeys: i.uniqueKeys,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+          })),
+          invoiceNumber: purchase.invoiceNumber,
+          ticketTotal: purchase.ticketTotal,
+          serviceFee: purchase.serviceFee,
+          surcharge: purchase.surcharge,
+          totalAmount: purchase.totalAmount,
+          promoCode: purchase.promoCode,
+          createdAt: purchase.createdAt,
+        }
+      : undefined,
   };
 }
 
@@ -53,9 +94,11 @@ export async function POST(req: Request) {
     // session, once the purchase already exists.
     const existingPurchase = await EventTicketPurchase.findOne({
       paymentIntentId,
-    });
+    }).populate("event");
     if (existingPurchase) {
-      return NextResponse.json(toTicketResponse(existingPurchase));
+      return NextResponse.json(
+        toTicketResponse(existingPurchase, existingPurchase.event),
+      );
     }
 
     // Not signed in — check out as a guest. The purchase is attached to an
@@ -390,7 +433,7 @@ export async function POST(req: Request) {
     if (canAutoSignIn) {
       try {
         const response = NextResponse.json(
-          toTicketResponse(createdPurchase, true),
+          toTicketResponse(createdPurchase, event, true, buyer.name),
         );
         await attachAutoLoginCookie(response, buyer);
         return response;
@@ -398,12 +441,16 @@ export async function POST(req: Request) {
         console.error("Guest auto-login failed:", autoLoginError);
       }
     }
-    return NextResponse.json(toTicketResponse(createdPurchase, false));
+    return NextResponse.json(
+      toTicketResponse(createdPurchase, event, false, buyer.name),
+    );
   } catch (error: any) {
     if (error.code === 11000 && paymentIntentId) {
-      const existing = await EventTicketPurchase.findOne({ paymentIntentId });
+      const existing = await EventTicketPurchase.findOne({
+        paymentIntentId,
+      }).populate("event");
       if (existing) {
-        return NextResponse.json(toTicketResponse(existing));
+        return NextResponse.json(toTicketResponse(existing, existing.event));
       }
     }
     return NextResponse.json({ error: error.message }, { status: 500 });

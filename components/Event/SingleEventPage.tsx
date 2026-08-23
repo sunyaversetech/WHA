@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { storeGuestReceipt } from "@/lib/guestReceipt";
 import {
   useCreateFavroite,
   useGetUserFavroite,
@@ -261,6 +262,10 @@ export default function EventDetailPage() {
           if (responseData.signedIn) {
             updateSession();
           }
+          if (!session?.user && responseData.receipt && responseData.purchaseId) {
+            storeGuestReceipt(responseData.purchaseId, responseData.receipt);
+            router.push(`/checkout/receipt/${responseData.purchaseId}`);
+          }
         },
         onError: (error: any) => {
           const { message, code } = parseErrorResponse(error);
@@ -316,6 +321,10 @@ export default function EventDetailPage() {
           setRecovering(false);
           if (responseData.signedIn) {
             updateSession();
+          }
+          if (!session?.user && responseData.receipt && responseData.purchaseId) {
+            storeGuestReceipt(responseData.purchaseId, responseData.receipt);
+            router.push(`/checkout/receipt/${responseData.purchaseId}`);
           }
         },
         onError: (error: any) => {
