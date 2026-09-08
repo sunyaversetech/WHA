@@ -6,6 +6,7 @@ import { format, parse } from "date-fns";
 import { toast } from "sonner";
 import { QRCodeCanvas } from "qrcode.react";
 import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   LayoutDashboard,
   Receipt,
@@ -28,6 +29,8 @@ import {
   Send,
   Download,
   Loader2,
+  FileSpreadsheet,
+  FileText,
 } from "lucide-react";
 import {
   getTicketTitle,
@@ -58,6 +61,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -268,6 +274,97 @@ export default function ManageEventPage() {
     return map;
   }, [purchases]);
 
+  // Shared reference for "how much was this ticket type actually worth" —
+  // used to work out the discount on any line item priced below it. Comes
+  // from the event's current ticket options; a type since renamed/removed
+  // there just won't get a discount figure (nothing to compare against).
+  const basePriceByName = useMemo(() => {
+    const map: Record<string, number> = {};
+    (event?.options || []).forEach((o: any) => {
+      if (o.name) map[o.name] = o.price || 0;
+    });
+    return map;
+  }, [event]);
+
+  // The report needs how many of each ticket type sold, what that type's
+  // list price is, how many of those were bought with a promo code, and how
+  // much discount they received, alongside the revenue it already shows.
+  const ticketTypeSales = useMemo(() => {
+    const map: Record<
+      string,
+      { quantity: number; revenue: number; promoUses: number; discount: number }
+    > = {};
+    purchases.forEach((p: any) => {
+      (p.items || []).forEach((item: any) => {
+        if (!map[item.optionName]) {
+          map[item.optionName] = {
+            quantity: 0,
+            revenue: 0,
+            promoUses: 0,
+            discount: 0,
+          };
+        }
+        map[item.optionName].quantity += item.quantity;
+        map[item.optionName].revenue += item.unitPrice * item.quantity;
+
+        // A discount only counts against a promo-coded order — a ticket
+        // priced lower than today's list price for some other reason (e.g.
+        // the business changed prices since) isn't a "discount".
+        if (p.promoCode) {
+          const base = basePriceByName[item.optionName];
+          if (base != null && item.unitPrice < base) {
+            map[item.optionName].discount +=
+              (base - item.unitPrice) * item.quantity;
+            map[item.optionName].promoUses += item.quantity;
+          }
+        }
+      });
+    });
+
+    return Object.entries(map).map(
+      ([name, { quantity, revenue, promoUses, discount }]) => ({
+        name,
+        quantity,
+        revenue,
+        promoUses,
+        discount,
+        price:
+          basePriceByName[name] != null
+            ? basePriceByName[name]
+            : quantity
+              ? revenue / quantity
+              : 0,
+      }),
+    );
+  }, [purchases, basePriceByName]);
+
+  // One row per ticket type in a promo-coded order — lets the report show
+  // exactly who used a promo code, for which ticket type, how many, and at
+  // what price, rather than just an aggregate count per code.
+  const promoBuyerDetails = useMemo(() => {
+    const list: {
+      buyer: string;
+      promoCode: string;
+      ticketType: string;
+      quantity: number;
+      price: number;
+    }[] = [];
+    purchases.forEach((p: any) => {
+      if (!p.promoCode) return;
+      const buyer = p.user?.name || p.user?.email || "N/A";
+      (p.items || []).forEach((item: any) => {
+        list.push({
+          buyer,
+          promoCode: p.promoCode,
+          ticketType: item.optionName,
+          quantity: item.quantity,
+          price: item.unitPrice,
+        });
+      });
+    });
+    return list;
+  }, [purchases]);
+
   const filteredPurchases = useMemo(() => {
     const q = orderSearch.trim().toLowerCase();
     if (!q) return purchases;
@@ -296,6 +393,204 @@ export default function ManageEventPage() {
     const url = `${window.location.origin}/events/${event.slug}`;
     navigator.clipboard.writeText(url);
     toast.success("Event URL copied to clipboard");
+  };
+
+  const salesReportFileBase = `sales-report-${(event?.title || "event")
+    .replace(/[^a-z0-9]+/gi, "-")
+    .toLowerCase()}`;
+
+  // Sales-facing figures only — ticket revenue excludes the service fee and
+  // card surcharge throughout, per how this report is meant to be read.
+  const handleDownloadSalesReportCsv = () => {
+    const csvEscape = (cell: string | number) =>
+      `"${String(cell).replace(/"/g, '""')}"`;
+    const totalTicketsSold = ticketTypeSales.reduce(
+      (sum, t) => sum + t.quantity,
+      0,
+    );
+    const totalPromoUses = ticketTypeSales.reduce(
+      (sum, t) => sum + t.promoUses,
+      0,
+    );
+    const totalDiscount = ticketTypeSales.reduce(
+      (sum, t) => sum + t.discount,
+      0,
+    );
+
+    const rows: (string | number)[][] = [
+      ["Sales Report", event?.title || ""],
+      ["Generated", format(new Date(), "dd MMM yyyy h:mm aa")],
+      [],
+      [
+        "Total Earnings (excl. service fee & surcharge)",
+        money(earnings.ticketTotal),
+      ],
+      [],
+      ["Earnings by Ticket Type"],
+      [
+        "Ticket Type",
+        "Price Per Ticket",
+        "Tickets Sold",
+        "Promo Uses",
+        "Discount Given",
+        "Earnings",
+      ],
+      ...ticketTypeSales.map(
+        ({ name, price, quantity, promoUses, discount, revenue }) => [
+          name,
+          money(price),
+          quantity,
+          promoUses,
+          money(discount),
+          money(revenue),
+        ],
+      ),
+      [
+        "Total",
+        "",
+        totalTicketsSold,
+        totalPromoUses,
+        money(totalDiscount),
+        money(earnings.ticketTotal),
+      ],
+      [],
+      ["Buyers Who Used a Promo Code"],
+      ["Buyer", "Promo Code", "Ticket Type", "Quantity", "Price"],
+      ...(promoBuyerDetails.length
+        ? promoBuyerDetails.map(
+            ({ buyer, promoCode, ticketType, quantity, price }) => [
+              buyer,
+              promoCode.toUpperCase(),
+              ticketType,
+              quantity,
+              money(price),
+            ],
+          )
+        : [["—", "—", "—", 0, money(0)]]),
+    ];
+    const csv = rows.map((row) => row.map(csvEscape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${salesReportFileBase}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadSalesReportPdf = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(5, 30, 58);
+    doc.text("Sales Report", 14, 18);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(event?.title || "", 14, 25);
+    doc.text(`Generated ${format(new Date(), "dd MMM yyyy h:mm aa")}`, 14, 31);
+
+    // Total earnings banner, front and center at the top of the report.
+    doc.setFillColor(5, 30, 58);
+    doc.roundedRect(14, 37, pageWidth - 28, 20, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("TOTAL EARNINGS", 20, 45);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text(money(earnings.ticketTotal), 20, 53);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.text("Excludes service fee & surcharge", pageWidth - 20, 53, {
+      align: "right",
+    });
+    doc.setTextColor(0);
+
+    const totalTicketsSold = ticketTypeSales.reduce(
+      (sum, t) => sum + t.quantity,
+      0,
+    );
+    const totalPromoUses = ticketTypeSales.reduce(
+      (sum, t) => sum + t.promoUses,
+      0,
+    );
+    const totalDiscount = ticketTypeSales.reduce(
+      (sum, t) => sum + t.discount,
+      0,
+    );
+
+    autoTable(doc, {
+      head: [
+        [
+          "Ticket Type",
+          "Price Per Ticket",
+          "Tickets Sold",
+          "Promo Uses",
+          "Discount Given",
+          "Earnings",
+        ],
+      ],
+      body: ticketTypeSales.map(
+        ({ name, price, quantity, promoUses, discount, revenue }) => [
+          name,
+          money(price),
+          String(quantity),
+          String(promoUses),
+          money(discount),
+          money(revenue),
+        ],
+      ),
+      foot: [
+        [
+          "Total",
+          "",
+          String(totalTicketsSold),
+          String(totalPromoUses),
+          money(totalDiscount),
+          money(earnings.ticketTotal),
+        ],
+      ],
+      startY: 65,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [5, 30, 58] },
+      footStyles: {
+        fillColor: [240, 240, 240],
+        textColor: [5, 30, 58],
+        fontStyle: "bold",
+      },
+      margin: { left: 14, right: 14 },
+    });
+
+    const afterTicketTypeY = (doc as any).lastAutoTable.finalY + 14;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(5, 30, 58);
+    doc.text("Buyers Who Used a Promo Code", 14, afterTicketTypeY);
+
+    autoTable(doc, {
+      head: [["Buyer", "Promo Code", "Ticket Type", "Quantity", "Price"]],
+      body: promoBuyerDetails.length
+        ? promoBuyerDetails.map(
+            ({ buyer, promoCode, ticketType, quantity, price }) => [
+              buyer,
+              promoCode.toUpperCase(),
+              ticketType,
+              String(quantity),
+              money(price),
+            ],
+          )
+        : [["—", "—", "No promo codes used", "", ""]],
+      startY: afterTicketTypeY + 5,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [5, 30, 58] },
+      margin: { left: 14, right: 14 },
+    });
+
+    doc.save(`${salesReportFileBase}.pdf`);
   };
 
   // const handleDelete = () => {
@@ -642,6 +937,19 @@ export default function ManageEventPage() {
                   }>
                   <Settings className="h-4 w-4" /> Edit event
                 </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Receipt className="h-4 w-4" /> Generate Sales Report
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={handleDownloadSalesReportCsv}>
+                      <FileSpreadsheet className="h-4 w-4" /> Download as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleDownloadSalesReportPdf}>
+                      <FileText className="h-4 w-4" /> Download as PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 {/* <DeleteConfirmDialog
                   onConfirm={handleDelete}
                   text={event.title}
