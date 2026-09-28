@@ -1,10 +1,9 @@
 import { connectToDb } from "@/lib/db";
 import { Review } from "@/server/models/Review.model";
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 import * as z from "zod";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { getAuthUser } from "@/server/lib/getAuthUser";
 
 import "@/server/models/Auth.model";
 import mongoose from "mongoose";
@@ -30,11 +29,11 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDb();
 
-    const session = await getServerSession(authOptions);
-    if (!session)
+    const authUser = await getAuthUser(req);
+    if (!authUser)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const userId = (session.user as any).id;
+    const userId = authUser.id;
 
     const body = await req.json();
     const searchRegex = body.business_id.split("").join("\\s*");

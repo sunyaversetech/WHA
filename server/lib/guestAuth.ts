@@ -1,8 +1,47 @@
 import { encode } from "next-auth/jwt";
 import { NextResponse } from "next/server";
+import User from "@/server/models/Auth.model";
 
 // Matches NextAuth's default JWT session lifetime (session.maxAge default).
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60;
+
+export type GuestInfo = { name: string; email: string; phone: string };
+
+/**
+ * Extracted from the guest branch of app/api/event/ticket/purchase/route.ts (which
+ * now calls this too, rather than inlining its own copy) so the mobile /auth/guest
+ * endpoint shares the exact same find-or-create + security boundary: an existing
+ * PASSWORD-PROTECTED account matched by email is used as the purchase's buyer, but
+ * `canAutoSignIn` comes back false for it — callers must never issue a session/token
+ * for an account they don't already own. Only a brand-new or already-passwordless
+ * (Google/guest) account may be auto-signed-in.
+ */
+export async function findOrCreateGuestUser(
+  guestInfo: GuestInfo,
+): Promise<{ user: any; canAutoSignIn: boolean }> {
+  const name = guestInfo.name.trim();
+  const email = guestInfo.email.trim().toLowerCase();
+  const phone = guestInfo.phone.trim();
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    const canAutoSignIn = !existingUser.password;
+    if (!existingUser.phone_number) {
+      existingUser.phone_number = phone;
+      await existingUser.save();
+    }
+    return { user: existingUser, canAutoSignIn };
+  }
+
+  const user = await User.create({
+    name,
+    email,
+    phone_number: phone,
+    category: "user",
+    provider: "guest",
+  });
+  return { user, canAutoSignIn: true };
+}
 
 /**
  * Signs a NextAuth-compatible session cookie onto `response` for `user`,

@@ -2,16 +2,15 @@ import { NextResponse } from "next/server";
 import { connectToDb } from "@/lib/db";
 import { TicketHold } from "@/server/models/TicketHold.model";
 import { releaseHoldByPaymentIntent } from "@/server/lib/ticketHold";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getAuthUser } from "@/server/lib/getAuthUser";
 
 export async function POST(req: Request) {
   try {
     await connectToDb();
-    // Guests (no session) can release their own hold too — the
+    // Guests (no session, no bearer token) can release their own hold too — the
     // paymentIntentId itself is effectively a bearer secret only the
     // checkout session that created it knows.
-    const session = await getServerSession(authOptions);
+    const authUser = await getAuthUser(req);
 
     const { paymentIntentId } = await req.json();
     if (!paymentIntentId) {
@@ -27,7 +26,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true });
     }
 
-    if (hold.user && hold.user.toString() !== session?.user?.id) {
+    if (hold.user && hold.user.toString() !== authUser?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
 

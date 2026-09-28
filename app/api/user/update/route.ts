@@ -1,12 +1,12 @@
-import { getServerSession } from "next-auth";
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import { NextResponse } from "next/server";
+import { getAuthUser } from "@/server/lib/getAuthUser";
 
 export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession();
-    if (!session?.user?.email) {
+    const authUser = await getAuthUser(req);
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -16,7 +16,7 @@ export async function PATCH(req: Request) {
     await connectToDb();
 
     const updatedUser = await User.findOneAndUpdate(
-      { email: session.user.email },
+      { email: authUser.email },
       { $set: { name, image } },
       { new: true, runValidators: true },
     );

@@ -4,13 +4,13 @@ import { connectToDb } from "@/lib/db";
 import crypto from "crypto";
 import Stripe from "stripe";
 import Event from "@/server/models/Event.model";
-import User from "@/server/models/Auth.model";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
 import { TicketHold } from "@/server/models/TicketHold.model";
 import { sendMultiTierEventTicketEmail } from "@/lib/mail";
-import { attachAutoLoginCookie } from "@/server/lib/guestAuth";
+import { attachAutoLoginCookie, findOrCreateGuestUser } from "@/server/lib/guestAuth";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getAuthUser } from "@/server/lib/getAuthUser";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const SERVICE_FEE_PER_TICKET = 2.0;
@@ -74,7 +74,9 @@ export async function POST(req: Request) {
 
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
+    // Web session cookie or mobile bearer token — guests (neither) are still
+    // allowed through to the guestInfo branch below.
+    const authUser = await getAuthUser(req);
 
     const body = await req.json();
     const { eventId } = body;
@@ -109,11 +111,11 @@ export async function POST(req: Request) {
     let buyer: any;
     let canAutoSignIn = false;
 
-    if (session?.user) {
+    if (authUser) {
       buyer = {
-        _id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
+        _id: authUser.id,
+        email: authUser.email,
+        name: authUser.name,
       };
     } else {
       const guestInfo = body.guestInfo as
@@ -134,24 +136,13 @@ export async function POST(req: Request) {
         );
       }
 
-      const existingUser = await User.findOne({ email: guestEmail });
-      if (existingUser) {
-        buyer = existingUser;
-        canAutoSignIn = !existingUser.password;
-        if (!existingUser.phone_number) {
-          existingUser.phone_number = guestPhone;
-          await existingUser.save();
-        }
-      } else {
-        buyer = await User.create({
-          name: guestName,
-          email: guestEmail,
-          phone_number: guestPhone,
-          category: "user",
-          provider: "guest",
-        });
-        canAutoSignIn = true;
-      }
+      const guestResult = await findOrCreateGuestUser({
+        name: guestName,
+        email: guestEmail,
+        phone: guestPhone,
+      });
+      buyer = guestResult.user;
+      canAutoSignIn = guestResult.canAutoSignIn;
     }
 
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);

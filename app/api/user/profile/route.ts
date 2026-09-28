@@ -1,14 +1,14 @@
-import { getServerSession } from "next-auth";
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import { NextResponse } from "next/server";
+import { getAuthUser } from "@/server/lib/getAuthUser";
 
-export async function GET() {
-  const session = await getServerSession();
-  if (!session)
+export async function GET(req: Request) {
+  const authUser = await getAuthUser(req);
+  if (!authUser)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await connectToDb();
-  const user = await User.findOne({ email: session.user?.email });
+  const user = await User.findOne({ email: authUser.email });
   return NextResponse.json(user);
 }

@@ -1,8 +1,7 @@
 import { connectToDb } from "@/lib/db";
 import { Review } from "@/server/models/Review.model";
-import { getServerSession } from "next-auth";
+import { getAuthUser } from "@/server/lib/getAuthUser";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "../../../auth/[...nextauth]/route";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -11,13 +10,13 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
     await connectToDb();
 
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    const authUser = await getAuthUser(req);
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id: reviewId } = await params;
-    const currentUserId = (session.user as any).id;
+    const currentUserId = authUser.id;
     const review = await Review.findById(reviewId);
 
     if (!review) {
@@ -26,7 +25,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
     if (
       review.user.toString() !== currentUserId &&
-      session.user.category !== "super-admin"
+      authUser.category !== "super-admin"
     ) {
       return NextResponse.json(
         { error: "You are not authorized to delete this review" },
