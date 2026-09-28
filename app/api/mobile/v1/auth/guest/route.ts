@@ -40,12 +40,9 @@ export async function POST(req: NextRequest) {
         409,
       );
     }
-    if (user.deletedAt) {
-      return mobileError("This account no longer exists", 401);
-    }
-    if (user.isblocked) {
-      return mobileError("This account has been blocked", 403);
-    }
+    // No isblocked/deletedAt gate here either — matches attachAutoLoginCookie
+    // (server/lib/guestAuth.ts), which never checks isblocked before issuing the
+    // web auto-login cookie. See login/route.ts's comment for the full reasoning.
 
     const { accessToken, refreshToken, expiresIn } = await issueTokenPair(user, {
       deviceId,

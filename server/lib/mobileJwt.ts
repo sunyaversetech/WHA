@@ -29,6 +29,16 @@ function getSecretKey(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
+/**
+ * Lets a caller (e.g. /auth/register) fail fast, before doing anything with side
+ * effects, when the secret is missing — rather than discovering it only after
+ * creating a database row. Throws the same MobileAuthConfigError signAccessToken
+ * would; does not sign anything.
+ */
+export function assertMobileJwtConfigured(): void {
+  getSecretKey();
+}
+
 export type MobileAccessTokenClaims = {
   sub: string; // User._id
   category: "user" | "business" | "super-admin";

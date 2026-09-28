@@ -163,7 +163,7 @@ deliberate duplicate of the NextAuth callback's find-or-create block
 | Purpose | Method | Path | Auth | Request | Response (`data`) |
 |---|---|---|---|---|---|
 | Login | POST | `/auth/login` | — | `{email,password,category:"user"\|"business",deviceId?,platform?}` | `{accessToken,refreshToken,expiresIn,user}` |
-| Register | POST | `/auth/register` | — (rate-limited: 10/10min/IP) | `FormData` — same fields as the existing web signup routes, plus `category`, `deviceId?`, `platform?` | `{accessToken,refreshToken,expiresIn,user}` |
+| Register | POST | `/auth/register` | — (rate-limited: 10/10min/IP) | `FormData` — same fields as the existing web signup routes, plus `category`, `deviceId?`, `platform?` | 201 `{accessToken,refreshToken,expiresIn,user}`. Checks `MOBILE_JWT_SECRET` is configured *before* creating the account (500 config error, nothing created, if not). If the account is created but token issuance then fails for some other reason, still 201 — `{user,tokens:null}` with `meta:{message:"Account created, please log in"}` — the account is never deleted or treated as a failed registration once it exists; the client should fall back to `/auth/login`. |
 | Refresh | POST | `/auth/refresh` | — | `{refreshToken,deviceId?,platform?}` | `{accessToken,refreshToken,expiresIn}` (rotated — see below) |
 | Logout | POST | `/auth/logout` | — | `{refreshToken}` | `{success:true}` |
 | Forgot password | POST | `/auth/forgot-password` | — | `{email}` | `{message}` (reuses `/api/reset-password`'s logic) |
@@ -215,6 +215,28 @@ itself is unchanged. `/auth/register` and `/auth/guest` additionally have their 
 stricter 10-req/10min-per-IP limiter (`server/lib/mobileRateLimit.ts`) on top of that,
 since they're the two endpoints that can create an account/identity with no password
 guess required.
+
+### Error codes
+
+Every `error` object in the `{data,error,meta}` envelope may carry an optional
+`code` alongside `message` — a stable, machine-readable string the client can switch
+on without parsing prose. Only `GET /me` and `DELETE /me` return these today (they're
+the only routes that expose `getAuthUserDetailed`'s reason — see
+`server/lib/getAuthUser.ts`); every other mobile route's `error.code` is currently
+`null`, message-only.
+
+| Code | HTTP status | Meaning |
+|---|---|---|
+| `ACCOUNT_BLOCKED` | 403 | The credential (session or bearer token) is valid and identifies a real account, but that account has `isblocked:true`. The client should show a "your account has been blocked" message, not prompt for re-login. |
+| `ACCOUNT_NOT_FOUND` | 401 | The credential identifies a user id that no longer resolves to a usable account — either genuinely doesn't exist, or resolves to one with `deletedAt` set (anonymized via `DELETE /me`). The client should clear stored tokens and treat this as "not logged in". |
+| `TOKEN_INVALID` | 401 | No bearer token was presented, or the one presented is malformed, unsigned, or expired. The client should attempt `/auth/refresh`, and if that also fails, clear tokens and prompt for login. |
+
+The 11 pre-existing consumer routes this phase swapped to `getAuthUser` (tickets,
+favroite, review*, event redeem/ticket/hold/purchase, user profile/update) deliberately
+do **not** return these codes — they use the plain `getAuthUser` wrapper, which
+collapses every rejection reason back to a bare `null`, so their response shape for
+both the web session-cookie path and a mobile bearer-token caller is byte-identical to
+what it was before this phase. Only new, mobile-only routes distinguish reasons.
 
 ---
 

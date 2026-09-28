@@ -43,12 +43,11 @@ export async function POST(req: NextRequest) {
     return mobileError(err.message || "Could not complete social sign-in", 400);
   }
 
-  if (user.deletedAt) {
-    return mobileError("This account no longer exists", 401);
-  }
-  if (user.isblocked) {
-    return mobileError("This account has been blocked", 403);
-  }
+  // No isblocked/deletedAt gate here — matches the web Google signIn callback
+  // exactly (app/api/auth/[...nextauth]/route.ts:82-124), which returns `true`
+  // unconditionally after find-or-create. Enforcement happens per-request via
+  // getAuthUser, same as the login route — see that file's comment for the full
+  // reasoning, including why a deleted account can't actually be matched here.
 
   try {
     const { accessToken, refreshToken, expiresIn } = await issueTokenPair(user, {

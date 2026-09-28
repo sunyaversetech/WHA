@@ -58,7 +58,13 @@ const UserSchema = new Schema(
       unique: true,
       sparse: true,
     },
-    business_name: { type: String, unique: true },
+    // sparse: true (added — pre-existing bug found via mobile-auth testing): without
+    // it, every "user"/guest account (which never sets business_name) collides on
+    // the same implicit indexed `null` value, so only the very first such account
+    // could ever be created — every one after it failed with an E11000 duplicate
+    // key error. This affected the existing web guest-checkout flow identically,
+    // not just the new mobile /auth/guest endpoint.
+    business_name: { type: String, unique: true, sparse: true },
     business_type: {
       type: String,
       enum: ["employee_based", "item_based"],

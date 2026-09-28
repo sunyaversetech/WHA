@@ -37,20 +37,15 @@ export async function POST(req: NextRequest) {
     if (!passwordOk) {
       return mobileError("Invalid email or password", 401);
     }
-    if (user.deletedAt) {
-      return mobileError("This account no longer exists", 401);
-    }
-    if (user.isblocked) {
-      return mobileError("This account has been blocked", 403);
-    }
-    if (!user.emailVerified) {
-      return mobileError("Please verify your email before signing in", 403);
-    }
-    // NOTE: `verified` is intentionally NOT enforced as a login gate here — see the
-    // Phase 1 rollout summary. Empirically, credentials-signup accounts never have
-    // `verified` set true (only Google-originated or admin-approved business accounts
-    // do), so gating login on it would lock out most real "user" accounts. It's still
-    // returned on the user object for the client to use if relevant.
+    // Deliberately no isblocked / emailVerified / verified gate here — verified
+    // against the actual web Credentials providers' authorize() functions
+    // (app/api/auth/[...nextauth]/route.ts:42-53,63-74), which check ONLY category,
+    // password presence, and the bcrypt compare above. Web issues a session to a
+    // blocked or email-unverified account the same way it issues one to any other —
+    // enforcement happens per-request (getAuthUser rejects isblocked/deletedAt on
+    // every subsequent call, on both the web and mobile paths), not at sign-in. A
+    // deleted account is unreachable here anyway: its email was overwritten to a
+    // placeholder on deletion, so this exact lookup naturally finds nothing for it.
 
     const { accessToken, refreshToken, expiresIn } = await issueTokenPair(user, {
       deviceId,
