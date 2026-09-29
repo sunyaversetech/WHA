@@ -12,6 +12,8 @@ export async function GET(req: Request) {
   const authUser = authResult.user;
 
   await connectToDb();
-  const user = await User.findOne({ email: authUser.email });
+  const user = await User.findOne({ email: authUser.email }).select(
+    "-password -token -resetPasswordToken -resetPasswordExpire -verificationTokenExpire",
+  );
   return NextResponse.json(user);
 }

@@ -45,7 +45,7 @@ export const authOptions: NextAuthOptions = {
         const user = await User.findOne({
           email: credentials.email.toLowerCase(),
           category: "user",
-        });
+        }).select("+password");
         if (!user || !user.password) return null;
         const ok = await bcrypt.compare(credentials.password, user.password);
         if (!ok) return null;
@@ -66,7 +66,7 @@ export const authOptions: NextAuthOptions = {
         const user = await User.findOne({
           email: credentials.email.toLowerCase(),
           category: { $in: ["business", "super-admin"] },
-        });
+        }).select("+password");
         if (!user || !user.password) return null;
         const ok = await bcrypt.compare(credentials.password, user.password);
         if (!ok) return null;
