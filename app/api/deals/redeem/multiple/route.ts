@@ -90,12 +90,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 export async function POST(req: Request) {
   try {
     await connectToDb();
-    const { dealId, userId, quantity, paymentIntentId } = await req.json();
+    const { dealId, quantity, paymentIntentId } = await req.json();
 
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+    const userId = (session.user as any).id;
 
     // ✅ VERIFY PAYMENT INTENT AND QUANTITY
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
@@ -104,6 +105,29 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Payment not verified" },
         { status: 400 },
+      );
+    }
+
+    // Verify this PaymentIntent was actually created for this deal — otherwise a
+    // successful PaymentIntent for a cheap deal could be replayed against a
+    // different, more expensive dealId whose price happens to compute to the
+    // same amount.
+    if (paymentIntent.metadata.dealId !== dealId) {
+      return NextResponse.json(
+        { error: "Payment does not match this deal" },
+        { status: 400 },
+      );
+    }
+
+    // Reject replay: this exact PaymentIntent must not already have a redemption.
+    const existingForPayment = await Redemption.findOne({ paymentIntentId });
+    if (existingForPayment) {
+      return NextResponse.json(
+        {
+          error: "This payment has already been used",
+          codes: existingForPayment.uniqueKeys,
+        },
+        { status: 409 },
       );
     }
 
