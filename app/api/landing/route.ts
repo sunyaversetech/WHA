@@ -4,6 +4,10 @@ import { Deal } from "@/server/models/DealSchema.model";
 import Event from "@/server/models/Event.model";
 import { Review } from "@/server/models/Review.model";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  PUBLIC_BUSINESS_FIELDS,
+  PUBLIC_ORGANIZER_FIELDS,
+} from "@/server/lib/publicUserFields";
 
 function escapeRegex(text: string) {
   return text.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
@@ -28,6 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     const business = await User.find(query)
+      .select(PUBLIC_BUSINESS_FIELDS)
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();
@@ -68,13 +73,13 @@ export async function GET(request: NextRequest) {
     const upcomingevents = await Event.find({
       "dateRange.from": { $gte: todayDAte },
     })
-      .populate("user")
+      .populate("user", PUBLIC_ORGANIZER_FIELDS)
       .sort({ "dateRange.from": 1 })
       .limit(5)
       .lean();
 
     const deals = await Deal.find({ valid_till: { $gte: todayISO } })
-      .populate("user")
+      .populate("user", PUBLIC_ORGANIZER_FIELDS)
       .sort({ valid_till: 1 })
       .limit(10);
 

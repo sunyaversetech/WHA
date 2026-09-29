@@ -7,6 +7,7 @@ import { OperatingHours } from "@/server/models/OperatingHour.model";
 import { Review } from "@/server/models/Review.model";
 import { Service } from "@/server/models/Service.model";
 import { NextRequest, NextResponse } from "next/server";
+import { PUBLIC_BUSINESS_FIELDS } from "@/server/lib/publicUserFields";
 
 type Props = { params: Promise<{ id: string }> };
 export async function GET(req: NextRequest, { params }: Props) {
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest, { params }: Props) {
           $options: "i",
         },
       },
-      "-accpetalltermsandcondition -password -provider -googleId",
+      PUBLIC_BUSINESS_FIELDS,
     )
       .sort({ createdAt: -1 })
       .lean();

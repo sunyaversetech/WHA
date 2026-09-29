@@ -18,7 +18,9 @@ export async function POST(req: NextRequest) {
   }
 
   await connectToDb();
-  const user = await User.findOne({ _id: id });
+  const user = await User.findOne({ _id: id }).select(
+    "-password -token -resetPasswordToken -resetPasswordExpire -verificationTokenExpire",
+  );
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });

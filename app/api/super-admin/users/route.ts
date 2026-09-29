@@ -1,13 +1,22 @@
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.category !== "super-admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await connectToDb();
-    const users = await User.find({ category: "user" }).sort({
-      createdAt: -1,
-    });
+    const users = await User.find({ category: "user" })
+      .select("-password -token -resetPasswordToken -resetPasswordExpire -verificationTokenExpire")
+      .sort({
+        createdAt: -1,
+      });
     return NextResponse.json({
       message: "User Fetched Scuccessfully",
       data: users,

@@ -5,6 +5,8 @@ import { Employee } from "@/server/models/Employee.model";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { z, ZodError } from "zod";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const create_time_off_schema = z.object({
   employee_id: z.string().min(1),
@@ -63,6 +65,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const business_id = (session.user as any).id;
+
     await connectToDb();
     const body = await request.json();
     const validated = create_time_off_schema.parse(body);
@@ -77,8 +85,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify employee exists
-    const employee = await Employee.findById(validated.employee_id);
+    // Verify employee exists and belongs to the calling business
+    const employee = await Employee.findOne({
+      _id: validated.employee_id,
+      business_id,
+    });
     if (!employee) {
       return NextResponse.json(
         { success: false, error: "Employee not found" },
