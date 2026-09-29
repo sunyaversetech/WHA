@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import "@/server/models/Service.model";
 import { resolveCityCoords } from "@/components/ResuableComponents/LocationSearch/city-coords";
 import { buildDistancePipeline } from "@/server/lib/geo-search";
+import { PUBLIC_BUSINESS_FIELD_LIST } from "@/server/lib/publicUserFields";
 
 function escapeRegex(text: string) {
   return text.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
@@ -292,19 +293,23 @@ export async function GET(request: NextRequest) {
       // unsorted, unfiltered-by-distance query would defeat the point of a
       // distance-based search.
       try {
-        businesses = await User.aggregate(
-          buildDistancePipeline(
+        const projection: Record<string, 1> = { distance: 1 };
+        for (const field of PUBLIC_BUSINESS_FIELD_LIST) projection[field] = 1;
+        businesses = await User.aggregate([
+          ...buildDistancePipeline(
             geoLat!,
             geoLng!,
             baseFilter,
             geoRadiusKm,
             RESULT_LIMIT,
           ),
-        );
+          { $project: projection },
+        ]);
       } catch {
         // Aggregation itself failed (e.g. transient DB error) — degrade to
         // an unsorted query rather than a hard failure.
         businesses = await User.find(baseFilter)
+          .select(PUBLIC_BUSINESS_FIELD_LIST.join(" "))
           .sort({ createdAt: -1 })
           .limit(RESULT_LIMIT)
           .lean();
@@ -312,6 +317,7 @@ export async function GET(request: NextRequest) {
     } else {
       // City/text filter only, no resolvable coordinates
       businesses = await User.find(baseFilter)
+        .select(PUBLIC_BUSINESS_FIELD_LIST.join(" "))
         .sort({ createdAt: -1 })
         .limit(RESULT_LIMIT)
         .lean();

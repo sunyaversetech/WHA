@@ -2,11 +2,19 @@ import { connectToDb } from "@/lib/db";
 import { Employee } from "@/server/models/Employee.model";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, { params }: Props) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const business_id = (session.user as any).id;
+
     await connectToDb();
     const { id } = await params;
 
@@ -30,8 +38,8 @@ export async function PATCH(request: Request, { params }: Props) {
     const patch: any = { availability_schedule };
     if (repeating_schedule_config) patch.repeating_schedule_config = repeating_schedule_config;
 
-    const employee = await Employee.findByIdAndUpdate(
-      id,
+    const employee = await Employee.findOneAndUpdate(
+      { _id: id, business_id },
       { $set: patch },
       { new: true },
     );

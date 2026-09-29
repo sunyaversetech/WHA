@@ -7,6 +7,10 @@ import "@/server/models/Event.model";
 import "@/server/models/Service.schema";
 import "@/server/models/DealSchema.model";
 import "@/server/models/Auth.model";
+import {
+  PUBLIC_ORGANIZER_FIELDS,
+  pickPublicBusinessFields,
+} from "@/server/lib/publicUserFields";
 export async function POST(req: Request) {
   try {
     await connectToDb();
@@ -68,6 +72,7 @@ export async function GET() {
       path: "item_id",
       populate: {
         path: "user",
+        select: PUBLIC_ORGANIZER_FIELDS,
         strictPopulate: false,
       },
     });
@@ -92,7 +97,7 @@ export async function GET() {
         .map((f) => f.item_id),
       business: favorite_docs
         .filter((f) => f.item_type === "User")
-        .map((f) => f.item_id),
+        .map((f) => pickPublicBusinessFields(f.item_id)),
     };
 
     return NextResponse.json(

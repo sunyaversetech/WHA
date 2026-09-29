@@ -134,7 +134,9 @@ export async function POST(req: Request) {
         );
       }
 
-      const existingUser = await User.findOne({ email: guestEmail });
+      const existingUser = await User.findOne({ email: guestEmail }).select(
+        "+password",
+      );
       if (existingUser) {
         buyer = existingUser;
         canAutoSignIn = !existingUser.password;

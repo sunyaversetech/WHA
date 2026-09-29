@@ -10,6 +10,7 @@ import "@/server/models/Auth.model";
 import mongoose from "mongoose";
 import Notification from "@/server/models/Notification.model";
 import { resolveBusinessBySlugOrId } from "@/lib/resolve-business";
+import { PUBLIC_USER_SUMMARY_FIELDS } from "@/server/lib/publicUserFields";
 
 export const reviewSchema = z.object({
   business_id: z.string().min(1, "Business ID is required"),
@@ -37,7 +38,18 @@ export async function POST(req: NextRequest) {
     const userId = (session.user as any).id;
 
     const body = await req.json();
-    const searchRegex = body.business_id.split("").join("\\s*");
+    const parsed = reviewSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          message: "Invalid review data",
+          error: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 },
+      );
+    }
+    const { business_id, rating, comment } = parsed.data;
+    const searchRegex = business_id.split("").join("\\s*");
 
     const existingReview = await Review.findOne({
       business_id: searchRegex,
@@ -50,8 +62,6 @@ export async function POST(req: NextRequest) {
         { status: 409 },
       );
     }
-
-    const { business_id, rating, comment } = body;
 
     const newReview = await Review.create({
       business_id: business_id,
@@ -102,14 +112,15 @@ export async function GET(req: NextRequest) {
     const rawBusinessId = searchParams.get("business_id") || "";
 
     const businessId = rawBusinessId.replace(/\?+$/, "").trim();
-    const query: any = {};
-
-    if (businessId) {
-      query.business_id = businessId;
+    if (!businessId) {
+      return NextResponse.json(
+        { message: "business_id is required" },
+        { status: 400 },
+      );
     }
 
-    const reviews = await Review.find(query ?? "")
-      .populate("user", { password: 0 })
+    const reviews = await Review.find({ business_id: businessId })
+      .populate("user", PUBLIC_USER_SUMMARY_FIELDS)
       .sort({ created_at: -1 });
 
     return NextResponse.json({
