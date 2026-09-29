@@ -19,11 +19,6 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
     const { id: eventId } = await params;
     const currentUserCategory = (session.user as any).category;
-    const event = await Event.findById(eventId);
-    await deleteFromS3(event.image);
-    if (!event) {
-      return NextResponse.json({ error: "Review not found" }, { status: 404 });
-    }
 
     if (currentUserCategory !== "super-admin") {
       return NextResponse.json(
@@ -32,6 +27,12 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       );
     }
 
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return NextResponse.json({ error: "Review not found" }, { status: 404 });
+    }
+
+    await deleteFromS3(event.image);
     await Event.findByIdAndDelete(eventId);
 
     return NextResponse.json({ message: "Review deleted successfully" });
