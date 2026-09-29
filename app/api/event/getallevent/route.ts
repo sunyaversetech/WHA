@@ -131,13 +131,13 @@ export async function GET(request: NextRequest) {
             geoRadiusKm,
             RESULT_LIMIT,
           ),
-          { $unset: "options.promo_code" },
+          { $unset: "promo_codes" },
         ]);
       } catch {
         // Aggregation itself failed (e.g. transient DB error) — degrade to
         // an unsorted query rather than a hard failure.
         events = await Event.find(baseFilter)
-          .select("-options.promo_code")
+          .select("-promo_codes")
           .sort({ "dateRange.from": 1 })
           .limit(RESULT_LIMIT)
           .lean();
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
     } else {
       // City/text filter only, no resolvable coordinates
       events = await Event.find(baseFilter)
-        .select("-options.promo_code")
+        .select("-promo_codes")
         .sort({ "dateRange.from": 1 })
         .limit(RESULT_LIMIT)
         .lean();

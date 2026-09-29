@@ -193,6 +193,13 @@ export async function DELETE(
     await connectToDb();
     const { id } = await params;
 
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const business_id = (session.user as any).id;
+    const is_super_admin = session.user.category === "super-admin";
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, error: "Invalid Service ID" },
@@ -200,7 +207,9 @@ export async function DELETE(
       );
     }
 
-    const service = await Service.findByIdAndDelete(id);
+    const service = await Service.findOneAndDelete(
+      is_super_admin ? { _id: id } : { _id: id, business_id },
+    );
     if (!service) {
       return NextResponse.json(
         { success: false, error: "Service not found" },

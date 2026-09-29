@@ -31,9 +31,10 @@ const UserSchema = new Schema(
     accpetalltermsandcondition: { type: Boolean, default: false },
     password: {
       type: String,
-      required: function () {
+      required: function (this: any) {
         return this.provider === "credentials";
       },
+      select: false,
     },
     emailVerified: {
       type: Date,
@@ -71,9 +72,9 @@ const UserSchema = new Schema(
     },
     seo_description: { type: String, maxlength: 200, default: "" },
     verified: { type: Boolean, default: false },
-    token: { type: String },
+    token: { type: String, select: false },
     verificationTokenExpire: { type: Date },
-    resetPasswordToken: { type: String },
+    resetPasswordToken: { type: String, select: false },
     resetPasswordExpire: { type: Date },
     isSponsor: { type: Boolean, default: false },
   },

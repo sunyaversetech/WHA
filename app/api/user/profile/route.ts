@@ -9,6 +9,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await connectToDb();
-  const user = await User.findOne({ email: session.user?.email });
+  const user = await User.findOne({ email: session.user?.email }).select(
+    "-password -token -resetPasswordToken -resetPasswordExpire -verificationTokenExpire",
+  );
   return NextResponse.json(user);
 }

@@ -17,7 +17,9 @@ export async function POST(req: NextRequest) {
   const { id, isblocked } = body;
 
   await connectToDb();
-  const user = await User.findById(id);
+  const user = await User.findById(id).select(
+    "-password -token -resetPasswordToken -resetPasswordExpire -verificationTokenExpire",
+  );
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });

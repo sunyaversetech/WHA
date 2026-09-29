@@ -1,6 +1,7 @@
 import { connectToDb } from "@/lib/db";
 import { Deal } from "@/server/models/DealSchema.model";
 import { NextRequest, NextResponse } from "next/server";
+import { PUBLIC_ORGANIZER_FIELDS } from "@/server/lib/publicUserFields";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest, { params }: Props) {
 
     const { id } = await params;
 
-    const deal = await Deal.findById(id).populate("user");
+    const deal = await Deal.findById(id).populate("user", PUBLIC_ORGANIZER_FIELDS);
     if (!deal) {
       return NextResponse.json({ message: "deal not found" }, { status: 404 });
     }
