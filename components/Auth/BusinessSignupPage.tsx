@@ -1442,13 +1442,13 @@ function StepLogin({
               className="text-sm text-slate-500 leading-relaxed font-normal cursor-pointer">
               I agree to the{" "}
               <a
-                href="/terms"
+                href="/terms-and-conditions"
                 className="text-primary font-semibold hover:underline">
                 Terms & Conditions
               </a>{" "}
               and{" "}
               <a
-                href="/privacy"
+                href="/privacy-policy"
                 className="text-primary font-semibold hover:underline">
                 Privacy Policy
               </a>

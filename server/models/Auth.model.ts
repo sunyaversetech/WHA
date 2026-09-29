@@ -42,14 +42,29 @@ const UserSchema = new Schema(
     provider: {
       type: String,
       default: "credentials",
-      enum: ["credentials", "google", "guest"],
+      enum: ["credentials", "google", "apple", "guest"],
     },
     googleId: {
       type: String,
       unique: true,
       sparse: true,
     },
-    business_name: { type: String, unique: true },
+    // No `default` here, deliberately — matching googleId above. A sparse+unique
+    // index only excludes documents where the field is genuinely ABSENT; a default
+    // of `null` would make every account without an Apple ID collide on the same
+    // indexed null value.
+    appleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    // sparse: true (added — pre-existing bug found via mobile-auth testing): without
+    // it, every "user"/guest account (which never sets business_name) collides on
+    // the same implicit indexed `null` value, so only the very first such account
+    // could ever be created — every one after it failed with an E11000 duplicate
+    // key error. This affected the existing web guest-checkout flow identically,
+    // not just the new mobile /auth/guest endpoint.
+    business_name: { type: String, unique: true, sparse: true },
     business_type: {
       type: String,
       enum: ["employee_based", "item_based"],
@@ -76,6 +91,11 @@ const UserSchema = new Schema(
     resetPasswordToken: { type: String },
     resetPasswordExpire: { type: Date },
     isSponsor: { type: Boolean, default: false },
+    // Set by the mobile DELETE /me flow (server/lib/accountDeletion.ts). The account
+    // row and its _id are kept (so every existing Booking/EventTicketPurchase/Review
+    // reference stays valid) but PII is wiped and login is blocked once this is set —
+    // see getAuthUser.ts and each mobile auth route for the enforcement points.
+    deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

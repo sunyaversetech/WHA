@@ -4,17 +4,16 @@ import { connectToDb } from "@/lib/db";
 import Event from "@/server/models/Event.model";
 import { TicketHold } from "@/server/models/TicketHold.model";
 import { releaseExpiredHolds, getHoldDurationMs } from "@/server/lib/ticketHold";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getAuthUser } from "@/server/lib/getAuthUser";
 
 export async function POST(req: Request) {
   let paymentIntentId: string | undefined;
 
   try {
     await connectToDb();
-    // Guests (no session) can still hold tickets — identity is only needed
-    // to attach the purchase to an account at finalize time.
-    const session = await getServerSession(authOptions);
+    // Guests (no session, no bearer token) can still hold tickets — identity is
+    // only needed to attach the purchase to an account at finalize time.
+    const authUser = await getAuthUser(req);
 
     const body = await req.json();
     const eventId = body.eventId as string;
@@ -84,7 +83,7 @@ export async function POST(req: Request) {
           [
             {
               event: eventId,
-              user: session?.user?.id,
+              user: authUser?.id,
               items,
               paymentIntentId,
               expiresAt,

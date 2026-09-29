@@ -1,15 +1,14 @@
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
-import { getServerSession } from "next-auth";
+import { getAuthUser } from "@/server/lib/getAuthUser";
 import { NextResponse } from "next/server";
-import { authOptions } from "../auth/[...nextauth]/route";
 
 export async function POST(req: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
+    const authUser = await getAuthUser(req);
 
-    if (!session || !session.user?.id) {
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -30,7 +29,7 @@ export async function POST(req: Request) {
     }
 
     const updatedProfile = await User.findByIdAndUpdate(
-      session.user.id,
+      authUser.id,
       { $set: updateData },
       {
         new: true,

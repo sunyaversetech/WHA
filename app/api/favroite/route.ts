@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDb } from "@/lib/db";
 import Favorite from "@/server/models/Favroite.model";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getAuthUserDetailed, bearerRejectionResponse } from "@/server/lib/getAuthUser";
 import "@/server/models/Event.model";
 import "@/server/models/Service.schema";
 import "@/server/models/DealSchema.model";
@@ -10,11 +9,13 @@ import "@/server/models/Auth.model";
 export async function POST(req: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
+    const authResult = await getAuthUserDetailed(req);
 
-    if (!session) {
+    if (!authResult.user) {
+      if (authResult.viaBearer) return bearerRejectionResponse(authResult.reason);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const authUser = authResult.user;
 
     const { item_id, item_type } = await req.json();
 
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
       item_type.charAt(0).toUpperCase() + item_type.slice(1);
 
     const existing_favorite = await Favorite.findOne({
-      user_id: session.user.id,
+      user_id: authUser.id,
       item_id: item_id,
       item_type: capitalized_type,
     });
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
       });
     } else {
       await Favorite.create({
-        user_id: session.user.id,
+        user_id: authUser.id,
         item_id: item_id,
         item_type: capitalized_type,
       });
@@ -54,16 +55,19 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
+    const authResult = await getAuthUserDetailed(req);
 
-    if (!session)
+    if (!authResult.user) {
+      if (authResult.viaBearer) return bearerRejectionResponse(authResult.reason);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const authUser = authResult.user;
 
     const favorite_docs = await Favorite.find({
-      user_id: session.user.id,
+      user_id: authUser.id,
     }).populate({
       path: "item_id",
       populate: {
