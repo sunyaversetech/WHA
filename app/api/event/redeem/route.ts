@@ -1,6 +1,6 @@
 import { connectToDb } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthUser } from "@/server/lib/getAuthUser";
+import { getAuthUserDetailed, bearerRejectionResponse } from "@/server/lib/getAuthUser";
 import { sendEventTicketEmail } from "@/lib/mail";
 import crypto from "crypto";
 import Event from "@/server/models/Event.model";
@@ -8,10 +8,14 @@ import { EventRedemption } from "@/server/models/EventCodeRemtion.model";
 
 export async function POST(request: NextRequest) {
   try {
-    const authUser = await getAuthUser(request);
-    if (!authUser) {
+    const authResult = await getAuthUserDetailed(request);
+    if (!authResult.user) {
+      if (authResult.viaBearer) {
+        return bearerRejectionResponse(authResult.reason, "message");
+      }
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+    const authUser = authResult.user;
 
     await connectToDb();
     const { eventId } = await request.json();
@@ -90,10 +94,14 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     await connectToDb();
-    const authUser = await getAuthUser(request);
-    if (!authUser) {
+    const authResult = await getAuthUserDetailed(request);
+    if (!authResult.user) {
+      if (authResult.viaBearer) {
+        return bearerRejectionResponse(authResult.reason, "message");
+      }
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+    const authUser = authResult.user;
     const redemption = await EventRedemption.find({
       user: authUser.id,
     }).populate("event");

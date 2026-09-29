@@ -17,7 +17,7 @@ const generateEmailTemplate = (verificationLink: string) => `
     </p>
     <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
     <p style="font-size: 12px; color: #aaa; text-align: center;">
-      &copy; ${new Date().getFullYear()} Sunyaverse Tech. All rights reserved.
+      &copy; ${new Date().getFullYear()} Whats Happening Australia. All rights reserved.
     </p>
   </div>
 `;

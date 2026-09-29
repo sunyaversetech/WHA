@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
 import { EventRedemption } from "@/server/models/EventCodeRemtion.model";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
-import { getAuthUser } from "@/server/lib/getAuthUser";
+import { getAuthUserDetailed, bearerRejectionResponse } from "@/server/lib/getAuthUser";
 
 import "@/server/models/Event.model";
 import "@/server/models/DealSchema.model";
@@ -12,11 +12,15 @@ import "@/server/models/Auth.model";
 export async function GET(req: Request) {
   try {
     await connectToDb();
-    const authUser = await getAuthUser(req);
+    const authResult = await getAuthUserDetailed(req);
 
-    if (!authUser) {
+    if (!authResult.user) {
+      if (authResult.viaBearer) {
+        return bearerRejectionResponse(authResult.reason, "message");
+      }
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+    const authUser = authResult.user;
 
     const dealRedemptions = await Redemption.find({
       user: authUser.id,

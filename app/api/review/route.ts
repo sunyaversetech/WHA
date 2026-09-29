@@ -3,7 +3,7 @@ import { Review } from "@/server/models/Review.model";
 import { NextRequest, NextResponse } from "next/server";
 
 import * as z from "zod";
-import { getAuthUser } from "@/server/lib/getAuthUser";
+import { getAuthUserDetailed, bearerRejectionResponse } from "@/server/lib/getAuthUser";
 
 import "@/server/models/Auth.model";
 import mongoose from "mongoose";
@@ -29,9 +29,12 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDb();
 
-    const authUser = await getAuthUser(req);
-    if (!authUser)
+    const authResult = await getAuthUserDetailed(req);
+    if (!authResult.user) {
+      if (authResult.viaBearer) return bearerRejectionResponse(authResult.reason);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const authUser = authResult.user;
 
     const userId = authUser.id;
 

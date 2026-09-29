@@ -12,6 +12,9 @@ export default function ResetPassword() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password.length < 6) {
+      return alert("Password must be at least 6 characters");
+    }
     if (password !== confirm) return alert("Passwords do not match");
 
     const res = await fetch("/api/auth/update-password", {
@@ -20,7 +23,7 @@ export default function ResetPassword() {
     });
     if (res.ok) {
       alert("Success! Redirecting to login...");
-      router.push("/login");
+      router.push("/auth");
     }
   };
 

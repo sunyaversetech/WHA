@@ -149,11 +149,11 @@ See `05-auth-and-user.md` for full detail. Table form:
 | Send "verify my email" link | POST | `/api/send-email-verification` | — | `{ email }` | `{ success }` |
 | Consume verify-email link | GET | `/api/verify-email?token=` | — | — | `{ message }` |
 
-### Mobile Auth (`/api/mobile/v1/*`) — implemented, Phase 1
+### Mobile Auth (`/api/mobile/v1/*`) — implemented, Phase 1 + Phase A
 
 New, parallel bearer-token auth namespace — see `05-auth-and-user.md` and
-`12-mobile-gap-report.md` for the design rationale. All 9 routes below share one
-response envelope: `{ data, error: {message}|null, meta }`. `authOptions` /
+`12-mobile-gap-report.md` for the design rationale. All routes below share one
+response envelope: `{ data, error: {message,code?}|null, meta }`. `authOptions` /
 `app/api/auth/[...nextauth]/route.ts` was never modified to build this — every route
 either reuses extracted shared logic (`server/lib/accountCreation.ts`,
 `server/lib/passwordReset.ts`, `server/lib/guestAuth.ts`) or, for Google sign-in, a
@@ -164,14 +164,49 @@ deliberate duplicate of the NextAuth callback's find-or-create block
 |---|---|---|---|---|---|
 | Login | POST | `/auth/login` | — | `{email,password,category:"user"\|"business",deviceId?,platform?}` | `{accessToken,refreshToken,expiresIn,user}` |
 | Register | POST | `/auth/register` | — (rate-limited: 10/10min/IP) | `FormData` — same fields as the existing web signup routes, plus `category`, `deviceId?`, `platform?` | 201 `{accessToken,refreshToken,expiresIn,user}`. Checks `MOBILE_JWT_SECRET` is configured *before* creating the account (500 config error, nothing created, if not). If the account is created but token issuance then fails for some other reason, still 201 — `{user,tokens:null}` with `meta:{message:"Account created, please log in"}` — the account is never deleted or treated as a failed registration once it exists; the client should fall back to `/auth/login`. |
-| Refresh | POST | `/auth/refresh` | — | `{refreshToken,deviceId?,platform?}` | `{accessToken,refreshToken,expiresIn}` (rotated — see below) |
+| Refresh | POST | `/auth/refresh` | — | `{refreshToken,deviceId?,platform?}` | `{accessToken,refreshToken,expiresIn}` (rotated — see below). On rejection, returns the same `error.code` values as `/me` (see Error codes below) — `ACCOUNT_BLOCKED` (403), `ACCOUNT_NOT_FOUND` (401), or `TOKEN_INVALID` (401, dead/reused/malformed refresh token). |
 | Logout | POST | `/auth/logout` | — | `{refreshToken}` | `{success:true}` |
 | Forgot password | POST | `/auth/forgot-password` | — | `{email}` | `{message}` (reuses `/api/reset-password`'s logic) |
-| Reset password | POST | `/auth/reset-password` | — | `{email,code,password}` | `{message}` (reuses `/api/auth/verify-code` + `/api/auth/update-password`'s logic in one call) |
+| Verify reset code | POST | `/auth/verify-reset-code` | — | `{email,code}` | `{message}` (new in Phase A — thin wrapper over the same `verifyResetCode` the web `/api/auth/verify-code` calls; the web route is untouched) |
+| Reset password | POST | `/auth/reset-password` | — | `{email,code,password}` (password min length 6, enforced same as signup) | `{message}` (reuses `/api/auth/verify-code` + `/api/auth/update-password`'s logic in one call) |
 | Social sign-in | POST | `/auth/social` | — | `{idToken,provider:"google"\|"apple",name?,deviceId?,platform?}` | `{accessToken,refreshToken,expiresIn,user}` — `name` only matters for Apple (its id_token never carries a name; the client sends it separately on first authorization) |
 | Guest checkout identity | POST | `/auth/guest` | — (rate-limited: 10/10min/IP) | `{name,email,phone,deviceId?,platform?}` | `{accessToken,refreshToken,expiresIn,user}`, or 409 if that email already belongs to a password-protected account (never auto-signs into an account it doesn't own) |
 | Current user | GET | `/me` | bearer | — | `{user}` |
 | Delete account | DELETE | `/me` | bearer | — | `{success:true}` — anonymizes in place (email → `deleted+<id>@invalid`, PII wiped, googleId/appleId/password unset, `deletedAt` set); the `User` document and its `_id` are kept so existing Booking/EventTicketPurchase/Review references never dangle |
+
+**Note on password reset email normalization** (Phase A): `sendResetCode`,
+`verifyResetCode`, and `setNewPassword` (`server/lib/passwordReset.ts`) now all
+`.trim().toLowerCase()` the email consistently at every step, for both the web
+(`/api/reset-password`, `/api/auth/verify-code`, `/api/auth/update-password`) and
+mobile callers that share this logic — previously `setNewPassword` did neither,
+which could cause a reset to silently fail to match the account if the client sent
+the email with different casing/whitespace than the earlier steps.
+
+**`AuthUser` shape** (`server/lib/authUser.ts`) — this is what every `user` field
+above actually contains. Field names deliberately mirror the web session's
+`session.user` shape (verified against `authOptions`'s `session` callback directly):
+
+```ts
+type AuthUser = {
+  id: string;
+  email: string;
+  name?: string;
+  image?: string;
+  category: "user" | "business" | "super-admin";
+  business_name?: string;
+  business_category?: string;
+  business_type?: "employee_based" | "item_based" | null;
+  city_name?: string;
+  community_name?: string;
+  location?: string;
+  phone_number?: string;
+  emailVerified?: Date | null;
+  isblocked: boolean;
+  verified: boolean;
+  googleId?: string | null;
+  appleId?: string | null;
+};
+```
 
 **Token design**: access tokens are short-lived (15 min) HS256 JWTs signed with
 `MOBILE_JWT_SECRET` (a new secret, deliberately separate from `NEXT_AUTH_SECRET`),
@@ -218,12 +253,8 @@ guess required.
 
 ### Error codes
 
-Every `error` object in the `{data,error,meta}` envelope may carry an optional
-`code` alongside `message` — a stable, machine-readable string the client can switch
-on without parsing prose. Only `GET /me` and `DELETE /me` return these today (they're
-the only routes that expose `getAuthUserDetailed`'s reason — see
-`server/lib/getAuthUser.ts`); every other mobile route's `error.code` is currently
-`null`, message-only.
+Every `error` object may carry an optional `code` alongside `message` — a stable,
+machine-readable string the client can switch on without parsing prose.
 
 | Code | HTTP status | Meaning |
 |---|---|---|
@@ -231,12 +262,26 @@ the only routes that expose `getAuthUserDetailed`'s reason — see
 | `ACCOUNT_NOT_FOUND` | 401 | The credential identifies a user id that no longer resolves to a usable account — either genuinely doesn't exist, or resolves to one with `deletedAt` set (anonymized via `DELETE /me`). The client should clear stored tokens and treat this as "not logged in". |
 | `TOKEN_INVALID` | 401 | No bearer token was presented, or the one presented is malformed, unsigned, or expired. The client should attempt `/auth/refresh`, and if that also fails, clear tokens and prompt for login. |
 
-The 11 pre-existing consumer routes this phase swapped to `getAuthUser` (tickets,
-favroite, review*, event redeem/ticket/hold/purchase, user profile/update) deliberately
-do **not** return these codes — they use the plain `getAuthUser` wrapper, which
-collapses every rejection reason back to a bare `null`, so their response shape for
-both the web session-cookie path and a mobile bearer-token caller is byte-identical to
-what it was before this phase. Only new, mobile-only routes distinguish reasons.
+`GET/DELETE /me` and `POST /auth/refresh` always return these on rejection,
+regardless of caller. The following **8 of the original 11 Phase 1 consumer-swapped
+routes** now also return `{message,code}` on this list **when the caller used a
+bearer token** — `GET/PATCH /api/user/profile`, `POST /api/user/update`,
+`GET/POST /api/event/redeem`, `POST /api/favroite` / `GET /api/favroite`,
+`GET /api/tickets`, `POST /api/review`, `PATCH /api/review/edit/[id]`,
+`POST /api/review/delete/[id]`. Each keeps its own historical top-level key name
+(`error` for most; `message` where that route always used `message` — see each
+route's existing shape) — only the *value* upgrades from a bare string to
+`{message,code}`, and only on the bearer path.
+
+**The web session-cookie path for all 8 is byte-identical to before Phase A** — a
+missing/invalid web session still gets that route's original plain response, never a
+coded one; coded errors only ever appear when `Authorization: Bearer` was actually
+presented and rejected (`getAuthUserDetailed(req).viaBearer === true`).
+
+**Not touched, unchanged from Phase 1**: `event/ticket/hold`, `event/ticket/purchase`
+(both intentionally guest-allowed, never reject on missing auth), and
+`event/ticket/hold/release` (its 403 is an ownership mismatch, not an auth-rejection
+reason — ships its own error shape, unrelated to this code list).
 
 ---
 
@@ -254,7 +299,8 @@ guest checkout, ticket holds, and business scanning/reports on top of it).
 | Edit event | PATCH | `/api/event/edit/[id]` | 🔒 | Same field set. **Important**: merges `options[].sold`/`promo_codes[].used` by `_id` rather than blindly overwriting — a naive full-array replace would zero out real sales counters (a bug this session fixed). A mobile edit screen must send existing option/promo `_id`s back, not just names, or it will silently create duplicates. |
 | Archive event | POST | `/api/event/archive/[id]` | 🔒 | Business rule (added this session): can only archive once the event has ended AND (if any ticket was ever sold) not before then — see `06-features-and-business-logic.md`. |
 | Delete event | POST/DELETE | `/api/event/delete/[id]` | 🔒 | ⚠️ UNVERIFIED exact HTTP verb — `services/event.service.ts` has this commented out (`useDeleteEvent`, lines 194-203); not currently called from the UI. |
-| Price + hold a cart | server action | `getEventTicketPaymentIntent` in `app/actions/eventTicketStripe.tsx` | — (guests allowed) | **This is a Next.js Server Action, not a REST endpoint** — see the Server Actions gap in `12-mobile-gap-report.md`. Re-derives pricing server-side: `serviceFee = quantity * $2.00`, `surcharge = 2.5% of (ticketTotal+serviceFee)`, creates/updates a Stripe PaymentIntent, returns `{ clientSecret, paymentIntentId, invoiceNumber, items[], ticketTotal, serviceFee, surcharge, totalToPay, promoApplied }`. |
+| Price + hold a cart (web) | server action | `getEventTicketPaymentIntent` in `app/actions/eventTicketStripe.tsx` | — (guests allowed) | Web's Server Action — now a thin wrapper over `priceEventTickets` in `server/lib/eventTicketPricing.ts` (extracted verbatim in Phase A, zero behavior change). Re-derives pricing server-side: `serviceFee = quantity * $2.00`, `surcharge = 2.5% of (ticketTotal+serviceFee)`, creates/updates a Stripe PaymentIntent, returns `{ clientSecret, paymentIntentId, invoiceNumber, items[], ticketTotal, serviceFee, surcharge, totalToPay, promoApplied }`. |
+| Price + hold a cart (mobile) | POST | `/api/mobile/v1/event/ticket/price` | — (guests allowed; rate-limited 30/min, keyed by user id when known else IP) | **New in Phase A/2** — the mobile-callable REST equivalent of the Server Action above; calls the exact same `priceEventTickets` function, so pricing is byte-identical between web and mobile. Body `{eventId, items:[{optionId,quantity}], promoCode?, previousPaymentIntentId?}`. `getAuthUser(req)` is called only so the rate limiter can key by user id — pricing itself never trusts or requires caller identity; buyer identity is only ever attached later, at finalize (`POST /api/event/ticket/purchase`). Response `data` is the same `EventTicketPricing` shape as the Server Action's return value. |
 | Hold tickets | POST | `/api/event/ticket/hold` | — (guests allowed) | Body `{ eventId, items:[{optionId,quantity}], paymentIntentId }`. Idempotent per `paymentIntentId` (repeat calls don't reset the 5-minute timer). Validates `capacity - sold - held >= quantity` per option inside a Mongo transaction; increments `held`; creates a `TicketHold` doc (TTL index, `expiresAt`). Response `{ success, expiresAt }`. Errors: `` `Only ${remaining} ${name} ticket(s) available right now` `` / `` `${name} tickets are not available right now` ``. |
 | Release a hold | POST | `/api/event/ticket/hold/release` | — | Body `{ paymentIntentId }`. No session required — the `paymentIntentId` itself is treated as a bearer secret for release authorization (only the client holding that ID would know it). Decrements `held`, deletes the `TicketHold` doc. |
 | Finalize purchase | POST | `/api/event/ticket/purchase` | — (guests allowed) | Body `{ eventId, paymentIntentId, guestInfo?: { name, email, phone } }`. **Idempotency check runs first** (returns the same result if `paymentIntentId` already has a purchase — safe to retry). If no session and no `guestInfo`, 400 `{ error, code: "GUEST_INFO_REQUIRED" }`. Verifies the Stripe PaymentIntent succeeded, re-derives pricing, consumes the hold (or falls back to a raw capacity check if the hold expired), creates the `EventTicketPurchase`, emails tickets, and — for a brand-new/passwordless guest account — mints an auto-login session cookie (see `05-auth-and-user.md`). Response: `{ success, purchaseId, invoiceNumber, items:[{optionName,codes}], signedIn, receipt?: {...} }` — `receipt` (added this session) carries everything needed to render a post-payment ticket page without another authenticated call: event summary, itemized `items` (with `uniqueKeys`), `ticketTotal, serviceFee, surcharge, totalAmount, promoCode, createdAt, holderName`. |

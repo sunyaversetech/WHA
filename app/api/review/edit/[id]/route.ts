@@ -1,6 +1,6 @@
 import { connectToDb } from "@/lib/db";
 import { Review } from "@/server/models/Review.model";
-import { getAuthUser } from "@/server/lib/getAuthUser";
+import { getAuthUserDetailed, bearerRejectionResponse } from "@/server/lib/getAuthUser";
 import { NextRequest, NextResponse } from "next/server";
 import { reviewSchema } from "../../route";
 import z from "zod";
@@ -14,11 +14,13 @@ type RouteContext = {
 export async function PATCH(req: NextRequest, { params }: RouteContext) {
   try {
     await connectToDb();
-    const authUser = await getAuthUser(req);
+    const authResult = await getAuthUserDetailed(req);
 
-    if (!authUser) {
+    if (!authResult.user) {
+      if (authResult.viaBearer) return bearerRejectionResponse(authResult.reason);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const authUser = authResult.user;
 
     const { id: reviewId } = await params;
     const userId = authUser.id;

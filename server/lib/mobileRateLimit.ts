@@ -8,6 +8,12 @@ import { Redis } from "@upstash/redis";
 const redisClient = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  // Without this, Next.js's fetch patching can cache the Upstash REST calls
+  // underneath the rate limiter, silently breaking the count — found while
+  // testing the new ticket-price limiter (30/min never actually tripped; the
+  // pre-existing 10/10min auth limiter happened not to expose it in casual use,
+  // but the same risk applies to it too, hence fixing it here for both).
+  cache: "no-store",
 });
 
 const authAbuseLimiter = new Ratelimit({
@@ -15,6 +21,17 @@ const authAbuseLimiter = new Ratelimit({
   limiter: Ratelimit.slidingWindow(10, "10 m"),
   analytics: true,
   prefix: "@mobile-auth-limiter",
+});
+
+// Separate, more generous limiter for event ticket pricing — legitimate checkout
+// activity (promo code retries, quantity changes) calls this repeatedly, but each
+// call creates a real Stripe PaymentIntent, which has a cost — bound it without
+// getting in the way of normal use.
+const ticketPriceLimiter = new Ratelimit({
+  redis: redisClient,
+  limiter: Ratelimit.slidingWindow(30, "1 m"),
+  analytics: true,
+  prefix: "@mobile-ticket-price-limiter",
 });
 
 export function getClientIp(req: Request): string {
@@ -40,5 +57,21 @@ export async function checkAuthAbuseLimit(
   }
   const ip = getClientIp(req);
   const { success } = await authAbuseLimiter.limit(`${bucket}:${ip}`);
+  return success;
+}
+
+/**
+ * 30 requests/minute, keyed by user id when authenticated (matches proxy.ts's own
+ * principle of keying by identity over IP once known), else by IP for guests.
+ */
+export async function checkTicketPriceLimit(
+  req: Request,
+  userId?: string | null,
+): Promise<boolean> {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return true;
+  }
+  const key = userId ? `user:${userId}` : `ip:${getClientIp(req)}`;
+  const { success } = await ticketPriceLimiter.limit(key);
   return success;
 }

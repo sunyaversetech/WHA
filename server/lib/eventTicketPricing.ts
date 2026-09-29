@@ -1,0 +1,193 @@
+import Stripe from "stripe";
+import crypto from "crypto";
+import { connectToDb } from "@/lib/db";
+import Event from "@/server/models/Event.model";
+import {
+  releaseExpiredHolds,
+  releaseHoldByPaymentIntent,
+} from "@/server/lib/ticketHold";
+
+// Extracted verbatim from app/actions/eventTicketStripe.tsx's getEventTicketPaymentIntent
+// Server Action, which now calls this instead of inlining its own copy — so the web
+// checkout flow (Server Action) and the new mobile POST /api/mobile/v1/event/ticket/price
+// route price a cart identically, with no duplicated business logic. Validation order
+// and error messages are unchanged from what was there before.
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+const SERVICE_FEE_PER_TICKET = 2.0;
+const SURCHARGE_PERCENT = 0.025;
+
+export type CartItemInput = { optionId: string; quantity: number };
+
+export type PricedItem = {
+  optionId: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  originalPrice: number;
+  discounted: boolean;
+};
+
+export type EventTicketPricing = {
+  clientSecret: string;
+  paymentIntentId: string;
+  invoiceNumber: string;
+  items: PricedItem[];
+  ticketTotal: number;
+  serviceFee: number;
+  surcharge: number;
+  totalToPay: number;
+  promoApplied: boolean;
+};
+
+function generateInvoiceNumber() {
+  const ts = Date.now().toString(36).toUpperCase();
+  const rand = crypto.randomBytes(3).toString("hex").toUpperCase();
+  return `INV-${ts}-${rand}`;
+}
+
+export async function priceEventTickets(
+  eventId: string,
+  cartItems: CartItemInput[],
+  promoCode?: string,
+  existingInvoiceNumber?: string,
+  previousPaymentIntentId?: string,
+): Promise<EventTicketPricing> {
+  try {
+    await connectToDb();
+
+    // Re-pricing (e.g. applying a promo code) creates a fresh PaymentIntent —
+    // if the previous one had already reserved tickets at checkout, release
+    // that hold now so it doesn't sit locked until it naturally expires.
+    if (previousPaymentIntentId) {
+      await releaseHoldByPaymentIntent(previousPaymentIntentId);
+    }
+    await releaseExpiredHolds(eventId);
+
+    const event = await Event.findById(eventId);
+    if (!event) throw new Error("Event not found");
+    if (event.price_category !== "paid") {
+      throw new Error("This event is not a paid event");
+    }
+    if (!cartItems || cartItems.length === 0) {
+      throw new Error("Select at least one ticket");
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    const normalizedPromo = promoCode?.trim().toLowerCase() || "";
+
+    const totalQuantity = cartItems.reduce((sum, c) => sum + c.quantity, 0);
+    const maxPerRequest = event.max_tickets_per_request || 10;
+    if (totalQuantity > maxPerRequest) {
+      throw new Error(
+        `You can book a maximum of ${maxPerRequest} tickets per request`,
+      );
+    }
+
+    let discountPercent = 0;
+    let promo: any = null;
+    if (normalizedPromo) {
+      promo = (event.promo_codes || []).find(
+        (p: any) => p.code && p.code.trim().toLowerCase() === normalizedPromo,
+      );
+      if (!promo) {
+        throw new Error("Promo code is not valid");
+      }
+      if (promo.limit != null && (promo.used || 0) >= promo.limit) {
+        throw new Error("Promo code usage limit has been reached");
+      }
+      discountPercent = promo.discount_percentage || 0;
+    }
+    const promoEntered = normalizedPromo.length > 0;
+
+    const items: PricedItem[] = cartItems.map(({ optionId, quantity }) => {
+      if (quantity < 1) throw new Error("Quantity must be at least 1");
+
+      const option = event.options?.id(optionId);
+      if (!option) throw new Error("Ticket option not found");
+
+      if (option.release_date && option.release_date > today) {
+        throw new Error(`${option.name} is not released yet`);
+      }
+      if (option.close_date && option.close_date < today) {
+        throw new Error(`${option.name} is no longer available`);
+      }
+
+      const remaining =
+        option.capacity != null
+          ? option.capacity - (option.sold || 0) - (option.held || 0)
+          : null;
+      if (remaining !== null && quantity > remaining) {
+        throw new Error(
+          remaining > 0
+            ? `Only ${remaining} ${option.name} ticket(s) available right now`
+            : `${option.name} tickets are not available right now`,
+        );
+      }
+
+      // A promo code with no applicable_options discounts every ticket type;
+      // otherwise it only discounts the ticket types it was assigned to.
+      const appliesHere =
+        promoEntered &&
+        (!promo.applicable_options?.length ||
+          promo.applicable_options.includes(option.name));
+
+      const originalPrice = option.price || 0;
+      const unitPrice = appliesHere
+        ? originalPrice * (1 - discountPercent / 100)
+        : originalPrice;
+
+      return {
+        optionId,
+        name: option.name,
+        quantity,
+        unitPrice,
+        originalPrice,
+        discounted: appliesHere,
+      };
+    });
+
+    // Reflects whether the promo actually discounted something in this cart,
+    // not just whether a valid code was entered.
+    const promoApplied = items.some((i) => i.discounted);
+
+    const ticketTotal = items.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
+    const serviceFee = totalQuantity * SERVICE_FEE_PER_TICKET;
+    const orderTotal = ticketTotal + serviceFee;
+    const surcharge = orderTotal * SURCHARGE_PERCENT;
+    const totalToPay = orderTotal + surcharge;
+    const amountInCents = Math.round(totalToPay * 100);
+    const invoiceNumber = existingInvoiceNumber || generateInvoiceNumber();
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountInCents,
+      currency: "aud",
+      metadata: {
+        eventId,
+        items: JSON.stringify(
+          items.map((i) => ({ optionId: i.optionId, quantity: i.quantity })),
+        ),
+        promoCode: normalizedPromo,
+        invoiceNumber,
+      },
+    });
+
+    return {
+      clientSecret: paymentIntent.client_secret as string,
+      paymentIntentId: paymentIntent.id,
+      invoiceNumber,
+      items,
+      ticketTotal,
+      serviceFee,
+      surcharge,
+      totalToPay,
+      promoApplied,
+    };
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}

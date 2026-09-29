@@ -5,6 +5,20 @@ index migration, and the order to do it all in. Written after a **read-only**
 investigation of the actual production database (see the findings below) — nothing in
 that investigation modified production.
 
+## Phase A + Phase 2 addendum (auth gaps, website fixes, ticket pricing endpoint)
+
+**No new env vars, no new indexes, no new deployment steps beyond Phase 1's.**
+Everything in this round (`/auth/verify-reset-code`, the 8 routes' bearer error
+codes, email trim/lowercase + password-length fix on reset, the three website bug
+fixes, `server/lib/eventTicketPricing.ts` + `POST /api/mobile/v1/event/ticket/price`)
+is either pure application code reusing existing config, or reuses the same
+`UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` already required by Phase 1's
+`server/lib/mobileRateLimit.ts` (unchanged variable names, just a new limiter
+instance in the same file — see that file's `checkTicketPriceLimit`). If Upstash
+isn't configured on the host, the new pricing rate limiter fails open exactly like
+the existing register/guest limiter does, rather than blocking checkout. Deploy this
+round the same way as any other code-only release — no special ordering required.
+
 ## What production actually is (read this first)
 
 Before this phase, `.env`'s `MONGODB_URL` had no database name in its path

@@ -11,15 +11,16 @@ type Result =
   | { ok: true; message: string }
   | { ok: false; status: number; message: string };
 
-export async function sendResetCode(email: string): Promise<Result> {
+export async function sendResetCode(rawEmail: string): Promise<Result> {
   await connectToDb();
+  const email = rawEmail?.trim().toLowerCase();
   if (!email) return { ok: false, status: 400, message: "Email is required" };
 
   const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
   const resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
 
   const user = await User.findOneAndUpdate(
-    { email: email.toLowerCase() },
+    { email },
     { $set: { resetPasswordToken: resetCode, resetPasswordExpire } },
     { new: true, runValidators: false },
   );
@@ -36,14 +37,14 @@ export async function sendResetCode(email: string): Promise<Result> {
       </div>
       <div style="margin-top: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
         <p>If you did not request this, please ignore this email.</p>
-        <p>&copy; ${new Date().getFullYear()} Sunyaverse. All rights reserved.</p>
+        <p>&copy; ${new Date().getFullYear()} Whats Happening Australia. All rights reserved.</p>
       </div>
     </div>
   `;
 
   const mailSent = await sendSimpleMail(
     email,
-    "Your Password Reset Code - Sunyaverse",
+    "Your Password Reset Code",
     `Your reset code is: ${resetCode}`,
     emailHtml,
   );
@@ -54,9 +55,9 @@ export async function sendResetCode(email: string): Promise<Result> {
   return { ok: true, message: "Reset code sent to email" };
 }
 
-export async function verifyResetCode(email: string, code: string): Promise<Result> {
+export async function verifyResetCode(rawEmail: string, code: string): Promise<Result> {
   await connectToDb();
-  const normalizedEmail = email.toLowerCase();
+  const normalizedEmail = rawEmail?.trim().toLowerCase();
   const existingUser = await User.findOne({ email: normalizedEmail });
   if (!existingUser) return { ok: false, status: 404, message: "User not found" };
 
@@ -80,14 +81,23 @@ export async function verifyResetCode(email: string, code: string): Promise<Resu
 }
 
 export async function setNewPassword(
-  email: string,
+  rawEmail: string,
   code: string,
   password: string,
 ): Promise<Result> {
   await connectToDb();
-  // Deliberately NOT lowercased here, matching the original web route's behavior
-  // exactly — a pre-existing inconsistency versus sendResetCode/verifyResetCode
-  // (which do lowercase), not something to silently "fix" as part of this extraction.
+  // Now trimmed + lowercased to match sendResetCode/verifyResetCode and how
+  // signup/login store and look up email — previously this one function didn't
+  // normalize at all, a real inconsistency now fixed rather than preserved.
+  const email = rawEmail?.trim().toLowerCase();
+  if (!password || password.length < 6) {
+    return {
+      ok: false,
+      status: 400,
+      message: "Password must be at least 6 characters",
+    };
+  }
+
   const user = await User.findOne({
     email,
     resetPasswordToken: code,

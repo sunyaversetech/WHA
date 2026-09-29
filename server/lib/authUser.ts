@@ -28,6 +28,12 @@ export type AuthUser = {
   appleId?: string | null;
 };
 
+// Shared between getAuthUser.ts (session/bearer identity checks) and
+// mobileTokens.ts (refresh-token rotation) — lives here, not in getAuthUser.ts, so
+// mobileTokens.ts doesn't have to import from the file that itself imports
+// mobileJwt.ts's token verification, keeping the dependency direction simple.
+export type AuthRejectReason = "TOKEN_INVALID" | "ACCOUNT_BLOCKED" | "ACCOUNT_NOT_FOUND";
+
 export function toAuthUser(dbUser: any): AuthUser {
   return {
     id: dbUser._id.toString(),

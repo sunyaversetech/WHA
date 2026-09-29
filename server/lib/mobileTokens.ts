@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { RefreshToken } from "@/server/models/RefreshToken.model";
 import User from "@/server/models/Auth.model";
 import { signAccessToken } from "./mobileJwt";
+import type { AuthRejectReason } from "./authUser";
 
 // Refresh-token issuance, rotation and revocation. This file imports Mongoose models
 // and must never be imported from `proxy.ts` (Edge runtime) — that file imports only
@@ -42,6 +43,10 @@ export async function issueTokenPair(
   return { accessToken, refreshToken: rawRefreshToken, expiresIn };
 }
 
+export type RotateResult =
+  | { ok: true; pair: IssuedTokenPair }
+  | { ok: false; reason: AuthRejectReason };
+
 /**
  * Rotates a refresh token. Three outcomes:
  *  - Normal rotation: the presented token was still active — atomically revoke it
@@ -55,12 +60,14 @@ export async function issueTokenPair(
  *  - Reuse: revoked outside the grace window, or its successor is no longer valid —
  *    treat as a replayed/stolen token and revoke every other active token for that
  *    user, forcing re-login everywhere.
- * Returns null for "reject" in every non-happy-path case (caller returns 401).
+ * Returns a reason alongside `ok:false` in every non-happy-path case, so
+ * /auth/refresh can return the same ACCOUNT_BLOCKED/ACCOUNT_NOT_FOUND/TOKEN_INVALID
+ * codes /me does.
  */
 export async function rotateRefreshToken(
   rawToken: string,
   device: DeviceInfo = {},
-): Promise<IssuedTokenPair | null> {
+): Promise<RotateResult> {
   const presentedHash = sha256(rawToken);
   const newRawToken = crypto.randomBytes(64).toString("hex");
   const newHash = sha256(newRawToken);
@@ -73,7 +80,8 @@ export async function rotateRefreshToken(
 
   if (rotated) {
     const user = await User.findById(rotated.userId);
-    if (!user || user.isblocked || user.deletedAt) return null;
+    if (!user || user.deletedAt) return { ok: false, reason: "ACCOUNT_NOT_FOUND" };
+    if (user.isblocked) return { ok: false, reason: "ACCOUNT_BLOCKED" };
     await RefreshToken.create({
       tokenHash: newHash,
       userId: rotated.userId,
@@ -85,12 +93,14 @@ export async function rotateRefreshToken(
       sub: rotated.userId.toString(),
       category: user.category,
     });
-    return { accessToken, refreshToken: newRawToken, expiresIn };
+    return { ok: true, pair: { accessToken, refreshToken: newRawToken, expiresIn } };
   }
 
   // Not matched: never existed, or already revoked by an earlier rotation/sibling.
   const existing = await RefreshToken.findOne({ tokenHash: presentedHash });
-  if (!existing || !existing.revokedAt) return null;
+  if (!existing || !existing.revokedAt) {
+    return { ok: false, reason: "TOKEN_INVALID" };
+  }
 
   const revokedMsAgo = now.getTime() - existing.revokedAt.getTime();
   if (revokedMsAgo <= GRACE_WINDOW_MS && existing.replacedByTokenHash) {
@@ -102,7 +112,8 @@ export async function rotateRefreshToken(
 
     if (successorValid) {
       const user = await User.findById(existing.userId);
-      if (!user || user.isblocked || user.deletedAt) return null;
+      if (!user || user.deletedAt) return { ok: false, reason: "ACCOUNT_NOT_FOUND" };
+      if (user.isblocked) return { ok: false, reason: "ACCOUNT_BLOCKED" };
       const siblingRawToken = crypto.randomBytes(64).toString("hex");
       await RefreshToken.create({
         tokenHash: sha256(siblingRawToken),
@@ -115,7 +126,10 @@ export async function rotateRefreshToken(
         sub: existing.userId.toString(),
         category: user.category,
       });
-      return { accessToken, refreshToken: siblingRawToken, expiresIn };
+      return {
+        ok: true,
+        pair: { accessToken, refreshToken: siblingRawToken, expiresIn },
+      };
     }
   }
 
@@ -124,7 +138,7 @@ export async function rotateRefreshToken(
     { userId: existing.userId, revokedAt: null },
     { revokedAt: now },
   );
-  return null;
+  return { ok: false, reason: "TOKEN_INVALID" };
 }
 
 /** Logout — idempotent, never errors if the token is already gone/revoked. */
