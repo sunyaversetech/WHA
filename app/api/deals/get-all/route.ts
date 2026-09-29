@@ -1,6 +1,7 @@
 import { connectToDb } from "@/lib/db";
 import { Deal } from "@/server/models/DealSchema.model";
 import { NextRequest, NextResponse } from "next/server";
+import { PUBLIC_ORGANIZER_FIELDS } from "@/server/lib/publicUserFields";
 function escapeRegex(text: string) {
   return text.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
 }
@@ -68,9 +69,11 @@ export async function GET(request: NextRequest) {
       query.category = category;
     }
 
-    const deals = await Deal.find(query).populate("user").sort({
-      createdAt: -1,
-    });
+    const deals = await Deal.find(query)
+      .populate("user", PUBLIC_ORGANIZER_FIELDS)
+      .sort({
+        createdAt: -1,
+      });
     return NextResponse.json({ message: "", data: deals });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

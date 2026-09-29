@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const user = await User.findOne({
       email: String(email).toLowerCase(),
       category: categoryFilter,
-    });
+    }).select("+password");
 
     if (!user || !user.password) {
       return mobileError("Invalid email or password", 401);

@@ -92,10 +92,14 @@ export async function GET() {
   try {
     await connectToDb();
 
-    const redemption = await Redemption.find();
-    if (!redemption) {
-      return NextResponse.json({ redeemed: false }, { status: 200 });
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+
+    const redemption = await Redemption.find({
+      user: (session.user as any).id,
+    });
     return NextResponse.json(
       {
         data: redemption,

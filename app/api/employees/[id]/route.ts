@@ -5,6 +5,8 @@ import { EmployeeTimeOff } from "@/server/models/EmployeeTimeOff.model";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { uploadToS3 } from "@/server/lib/function";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -39,6 +41,12 @@ export async function GET(_request: Request, { params }: Props) {
 
 export async function POST(request: Request, { params }: Props) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const business_id = (session.user as any).id;
+
     await connectToDb();
     const { id } = await params;
 
@@ -49,7 +57,7 @@ export async function POST(request: Request, { params }: Props) {
       );
     }
 
-    const employee = await Employee.findById(id);
+    const employee = await Employee.findOne({ _id: id, business_id });
     if (!employee) {
       return NextResponse.json(
         { success: false, error: "Employee not found" },
@@ -164,6 +172,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const business_id = (session.user as any).id;
+
     await connectToDb();
     const { id } = await params;
 
@@ -174,7 +188,7 @@ export async function DELETE(
       );
     }
 
-    const employee = await Employee.findByIdAndDelete(id);
+    const employee = await Employee.findOneAndDelete({ _id: id, business_id });
     if (!employee) {
       return NextResponse.json(
         { success: false, error: "Employee not found" },

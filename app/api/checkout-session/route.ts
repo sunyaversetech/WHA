@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { BookingLock } from "@/server/models/BookingLock.model"; // Ensure path matches your structure
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -8,6 +10,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: Request) {
   try {
+    const authSession = await getServerSession(authOptions);
+    if (!authSession?.user) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { lock_id, success_url, cancel_url, items } = body;
 
@@ -24,6 +31,13 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { success: false, message: "Lock session has already expired." },
         { status: 410 },
+      );
+    }
+
+    if (String(existingLock.user_id) !== String((authSession.user as any).id)) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 403 },
       );
     }
 

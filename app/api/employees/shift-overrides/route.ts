@@ -1,8 +1,11 @@
 import { connectToDb } from "@/lib/db";
 import { EmployeeShiftOverride } from "@/server/models/EmployeeShiftOverride.model";
+import { Employee } from "@/server/models/Employee.model";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { z, ZodError } from "zod";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const upsert_schema = z.object({
   employee_id: z.string().min(1),
@@ -45,9 +48,26 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const business_id = (session.user as any).id;
+
     await connectToDb();
     const body = await request.json();
     const validated = upsert_schema.parse(body);
+
+    const owningEmployee = await Employee.findOne({
+      _id: validated.employee_id,
+      business_id,
+    });
+    if (!owningEmployee) {
+      return NextResponse.json(
+        { success: false, error: "Employee not found" },
+        { status: 404 },
+      );
+    }
 
     const override = await EmployeeShiftOverride.findOneAndUpdate(
       { employee_id: validated.employee_id, date: validated.date },

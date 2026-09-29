@@ -23,7 +23,7 @@ export async function findOrCreateGuestUser(
   const email = guestInfo.email.trim().toLowerCase();
   const phone = guestInfo.phone.trim();
 
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email }).select("+password");
   if (existingUser) {
     const canAutoSignIn = !existingUser.password;
     if (!existingUser.phone_number) {
