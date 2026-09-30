@@ -16,13 +16,19 @@ export type AuthUserResult =
 
 /**
  * The single identity check both the web app's session cookie and the mobile app's
- * bearer token go through. Tries the existing NextAuth session first (read-only —
- * this never touches app/api/auth/[...nextauth]/route.ts), falling back to an
- * `Authorization: Bearer` header. Either path does a FRESH read of the user from
- * Mongo (not just the token's own claims) — this is stricter than the old per-route
- * session checks it replaces, which trusted whatever `isblocked` value happened to
- * be baked into the (possibly stale) JWT session cookie. See the behavior-change
- * note in the Phase 1 rollout summary.
+ * bearer token go through. Checks `Authorization: Bearer` FIRST — when present, it's
+ * used exclusively and any session cookie on the same request is ignored entirely
+ * (a request carrying both is only ever a mobile client that happens to also be
+ * holding a stray/unrelated cookie, never a signal to prefer the cookie). Only when
+ * no bearer header is present does this fall back to the existing NextAuth session
+ * (read-only — this never touches app/api/auth/[...nextauth]/route.ts). Web never
+ * sends an Authorization header, so this reordering is a no-op for the web path:
+ * every web request still falls straight through to the session check exactly as
+ * before. Either path does a FRESH read of the user from Mongo (not just the token's
+ * own claims) — this is stricter than the old per-route session checks it replaces,
+ * which trusted whatever `isblocked` value happened to be baked into the (possibly
+ * stale) JWT session cookie. See the behavior-change note in the Phase 1 rollout
+ * summary.
  *
  * Returns a *reason* alongside the null so mobile-facing routes can return a specific
  * error code — ACCOUNT_BLOCKED (403), ACCOUNT_NOT_FOUND (401, covers both "deleted"
@@ -41,18 +47,6 @@ export type AuthUserResult =
 export async function getAuthUserDetailed(req: Request): Promise<AuthUserResult> {
   await connectToDb();
 
-  const session = await getServerSession(authOptions);
-  if (session?.user?.id) {
-    const dbUser = await User.findById(session.user.id);
-    if (!dbUser || dbUser.deletedAt) {
-      return { user: null, reason: "ACCOUNT_NOT_FOUND", viaBearer: false };
-    }
-    if (dbUser.isblocked) {
-      return { user: null, reason: "ACCOUNT_BLOCKED", viaBearer: false };
-    }
-    return { user: toAuthUser(dbUser), viaBearer: false };
-  }
-
   const authHeader =
     req.headers.get("authorization") ?? req.headers.get("Authorization");
   const viaBearer = !!authHeader?.startsWith("Bearer ");
@@ -69,6 +63,18 @@ export async function getAuthUserDetailed(req: Request): Promise<AuthUserResult>
       return { user: null, reason: "ACCOUNT_BLOCKED", viaBearer };
     }
     return { user: toAuthUser(dbUser), viaBearer };
+  }
+
+  const session = await getServerSession(authOptions);
+  if (session?.user?.id) {
+    const dbUser = await User.findById(session.user.id);
+    if (!dbUser || dbUser.deletedAt) {
+      return { user: null, reason: "ACCOUNT_NOT_FOUND", viaBearer: false };
+    }
+    if (dbUser.isblocked) {
+      return { user: null, reason: "ACCOUNT_BLOCKED", viaBearer: false };
+    }
+    return { user: toAuthUser(dbUser), viaBearer: false };
   }
 
   return { user: null, reason: "TOKEN_INVALID", viaBearer: false };

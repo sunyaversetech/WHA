@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import crypto from "crypto";
 import { connectToDb } from "@/lib/db";
 import Event from "@/server/models/Event.model";
+import { TicketHold } from "@/server/models/TicketHold.model";
 import {
   releaseExpiredHolds,
   releaseHoldByPaymentIntent,
@@ -53,16 +54,35 @@ export async function priceEventTickets(
   promoCode?: string,
   existingInvoiceNumber?: string,
   previousPaymentIntentId?: string,
+  callerUserId?: string | null,
 ): Promise<EventTicketPricing> {
   try {
     await connectToDb();
 
-    // Re-pricing (e.g. applying a promo code) creates a fresh PaymentIntent —
-    // if the previous one had already reserved tickets at checkout, release
-    // that hold now so it doesn't sit locked until it naturally expires.
+    // Re-pricing (e.g. applying a promo code) replaces a previous checkout
+    // attempt with a fresh PaymentIntent. Ownership must be verified BEFORE
+    // touching anything: previousPaymentIntentId is caller-supplied, so without
+    // this check anyone could pass someone else's paymentIntentId and free up
+    // (or, worse, appear to release) inventory that wasn't theirs to release —
+    // same rule POST /api/event/ticket/hold/release already enforces. A hold
+    // with no `user` (a guest checkout) has no identity to check against, so —
+    // exactly like hold/release — anyone holding that paymentIntentId (an
+    // effectively unguessable Stripe id) may act on it.
+    let previousHold: Awaited<ReturnType<typeof TicketHold.findOne>> | null = null;
     if (previousPaymentIntentId) {
-      await releaseHoldByPaymentIntent(previousPaymentIntentId);
+      previousHold = await TicketHold.findOne({
+        paymentIntentId: previousPaymentIntentId,
+      });
+      if (
+        previousHold?.user &&
+        previousHold.user.toString() !== callerUserId
+      ) {
+        throw new Error("This checkout session does not belong to you");
+      }
     }
+    // Do NOT release the previous hold or cancel its PaymentIntent yet — if
+    // pricing fails below (sold out, invalid promo, etc.) the caller should
+    // still have their original hold intact rather than losing it for nothing.
     await releaseExpiredHolds(eventId);
 
     const event = await Event.findById(eventId);
@@ -175,6 +195,21 @@ export async function priceEventTickets(
         invoiceNumber,
       },
     });
+
+    // Only now that the new PaymentIntent genuinely exists: release the old
+    // hold (freeing its reserved inventory) and cancel the old PaymentIntent in
+    // Stripe so it can't be paid twice and doesn't linger as an abandoned
+    // uncaptured intent. Best-effort — a PaymentIntent already in a terminal
+    // state (canceled/succeeded) throws on cancel(), which is fine to ignore
+    // here since the goal (it can't be paid) is already true either way.
+    if (previousPaymentIntentId && previousHold) {
+      await releaseHoldByPaymentIntent(previousPaymentIntentId);
+      try {
+        await stripe.paymentIntents.cancel(previousPaymentIntentId);
+      } catch {
+        // Already succeeded/canceled/doesn't accept cancellation — fine.
+      }
+    }
 
     return {
       clientSecret: paymentIntent.client_secret as string,
