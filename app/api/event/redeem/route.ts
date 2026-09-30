@@ -1,5 +1,6 @@
 import { connectToDb } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import { sendEventTicketEmail } from "@/lib/mail";
@@ -8,18 +9,37 @@ import Event from "@/server/models/Event.model";
 import { EventRedemption } from "@/server/models/EventCodeRemtion.model";
 
 export async function POST(request: NextRequest) {
+  let eventId: string | undefined;
+  let capacityReserved = false;
+  let sessionUserId: string | undefined;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+    sessionUserId = session.user.id;
 
     await connectToDb();
-    const { eventId } = await request.json();
+    ({ eventId } = await request.json());
+
+    if (!eventId || !mongoose.Types.ObjectId.isValid(eventId)) {
+      return NextResponse.json({ message: "Invalid event id" }, { status: 400 });
+    }
 
     const event = await Event.findById(eventId).populate("user");
     if (!event) {
       return NextResponse.json({ message: "Event not found" }, { status: 404 });
+    }
+
+    // A paid event must never be registered for free — this route is only for
+    // "registration" (free) events. price_category "paid"/"external" events go
+    // through the Stripe checkout flow (event/ticket/*), never here.
+    if (event.price_category !== "registration") {
+      return NextResponse.json(
+        { message: "This event requires payment and cannot be registered for free." },
+        { status: 400 },
+      );
     }
 
     const existing = await EventRedemption.findOne({
@@ -55,6 +75,7 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         );
       }
+      capacityReserved = true;
     }
 
     const uniqueKey = `WHA-EVT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
@@ -84,6 +105,38 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error: any) {
+    if (error.code === 11000) {
+      // Lost a race against a concurrent request for the same user+event — the
+      // other request's redemption already exists. Release the capacity slot
+      // this request reserved (if any) so registration_sold isn't left
+      // permanently inflated by the loser of the race, then return the
+      // winner's existing code exactly like the pre-create check does.
+      if (capacityReserved && eventId) {
+        await Event.updateOne(
+          { _id: eventId },
+          { $inc: { registration_sold: -1 } },
+        );
+      }
+      if (eventId && sessionUserId) {
+        const existing = await EventRedemption.findOne({
+          event: eventId,
+          user: sessionUserId,
+        });
+        if (existing) {
+          return NextResponse.json(
+            {
+              message: "You have already claimed a ticket for this event.",
+              uniqueKey: existing.uniqueKey,
+            },
+            { status: 400 },
+          );
+        }
+      }
+      return NextResponse.json(
+        { message: "You have already claimed a ticket for this event." },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
