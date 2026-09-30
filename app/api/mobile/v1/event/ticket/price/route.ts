@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
       promoCode,
       undefined,
       previousPaymentIntentId,
+      authUser?.id ?? null,
     );
 
     return mobileOk(pricing);
