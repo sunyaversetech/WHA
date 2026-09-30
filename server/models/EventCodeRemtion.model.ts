@@ -22,6 +22,11 @@ const EventRedemptionSchema = new Schema<EventRedemptionSchema>(
   { timestamps: true },
 );
 
+// Enforces "one free redemption per user per event" at the database level — the
+// route's own findOne-then-create check has a race window two concurrent requests
+// can both pass, this index is what actually prevents a duplicate from landing.
+EventRedemptionSchema.index({ event: 1, user: 1 }, { unique: true });
+
 export const EventRedemption =
   mongoose.models.EventRedemption ||
   mongoose.model("EventRedemption", EventRedemptionSchema);
