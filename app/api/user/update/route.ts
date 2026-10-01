@@ -1,14 +1,16 @@
-import { getServerSession } from "next-auth";
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
 import { NextResponse } from "next/server";
+import { getAuthUserDetailed, bearerRejectionResponse } from "@/server/lib/getAuthUser";
 
 export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession();
-    if (!session?.user?.email) {
+    const authResult = await getAuthUserDetailed(req);
+    if (!authResult.user) {
+      if (authResult.viaBearer) return bearerRejectionResponse(authResult.reason);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const authUser = authResult.user;
 
     const body = await req.json();
     const { name, image } = body;
@@ -16,7 +18,7 @@ export async function PATCH(req: Request) {
     await connectToDb();
 
     const updatedUser = await User.findOneAndUpdate(
-      { email: session.user.email },
+      { email: authUser.email },
       { $set: { name, image } },
       { new: true, runValidators: true },
     );

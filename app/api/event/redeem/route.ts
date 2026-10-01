@@ -1,8 +1,7 @@
 import { connectToDb } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { getAuthUserDetailed, bearerRejectionResponse } from "@/server/lib/getAuthUser";
 import { sendEventTicketEmail } from "@/lib/mail";
 import crypto from "crypto";
 import Event from "@/server/models/Event.model";
@@ -11,14 +10,18 @@ import { EventRedemption } from "@/server/models/EventCodeRemtion.model";
 export async function POST(request: NextRequest) {
   let eventId: string | undefined;
   let capacityReserved = false;
-  let sessionUserId: string | undefined;
+  let authUserId: string | undefined;
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const authResult = await getAuthUserDetailed(request);
+    if (!authResult.user) {
+      if (authResult.viaBearer) {
+        return bearerRejectionResponse(authResult.reason, "message");
+      }
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-    sessionUserId = session.user.id;
+    const authUser = authResult.user;
+    authUserId = authUser.id;
 
     await connectToDb();
     ({ eventId } = await request.json());
@@ -44,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const existing = await EventRedemption.findOne({
       event: eventId,
-      user: session.user.id,
+      user: authUser.id,
     });
 
     if (existing) {
@@ -82,18 +85,18 @@ export async function POST(request: NextRequest) {
 
     const redemption = await EventRedemption.create({
       event: eventId,
-      user: session.user.id,
-      userName: session.user.name,
+      user: authUser.id,
+      userName: authUser.name,
       business: event.user._id,
       uniqueKey,
       status: "pending",
     });
 
     await sendEventTicketEmail(
-      session.user.email!,
+      authUser.email!,
       event.title,
       uniqueKey,
-      session.user.name!,
+      authUser.name!,
     );
 
     return NextResponse.json(
@@ -117,10 +120,10 @@ export async function POST(request: NextRequest) {
           { $inc: { registration_sold: -1 } },
         );
       }
-      if (eventId && sessionUserId) {
+      if (eventId && authUserId) {
         const existing = await EventRedemption.findOne({
           event: eventId,
-          user: sessionUserId,
+          user: authUserId,
         });
         if (existing) {
           return NextResponse.json(
@@ -141,15 +144,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const authResult = await getAuthUserDetailed(request);
+    if (!authResult.user) {
+      if (authResult.viaBearer) {
+        return bearerRejectionResponse(authResult.reason, "message");
+      }
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+    const authUser = authResult.user;
     const redemption = await EventRedemption.find({
-      user: session.user.id,
+      user: authUser.id,
     }).populate("event");
     if (!redemption) {
       return NextResponse.json({ redeemed: false }, { status: 200 });

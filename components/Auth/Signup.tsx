@@ -190,6 +190,13 @@ export default function SignupPage() {
                 {errors.email && (
                   <span style={ERR}>{errors.email.message}</span>
                 )}
+                {!errors.email && email && (
+                  <EmailVerifyGate
+                    email={email}
+                    verified={isEmailVerified}
+                    onVerified={() => setVerifiedEmail(email)}
+                  />
+                )}
               </div>
 
               {/* Password */}
@@ -295,7 +302,7 @@ export default function SignupPage() {
                   style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
                   I agree to the{" "}
                   <Link
-                    href="/privacy"
+                    href="/privacy-policy"
                     style={{
                       color: "#3b82f6",
                       textDecoration: "none",
@@ -305,7 +312,7 @@ export default function SignupPage() {
                   </Link>
                   ,{" "}
                   <Link
-                    href="/privacy"
+                    href="/terms-of-service"
                     style={{
                       color: "#3b82f6",
                       textDecoration: "none",
@@ -315,7 +322,7 @@ export default function SignupPage() {
                   </Link>{" "}
                   and{" "}
                   <Link
-                    href="/privacy"
+                    href="/terms-and-conditions"
                     style={{
                       color: "#3b82f6",
                       textDecoration: "none",
@@ -331,39 +338,33 @@ export default function SignupPage() {
                 </p>
               )}
 
-              {/* Submit */}
-
-              {!errors.email && email ? (
-                <EmailVerifyGate
-                  email={email}
-                  verified={isEmailVerified}
-                  onVerified={() => setVerifiedEmail(email)}
-                />
-              ) : (
-                <button
-                  type="submit"
-                  disabled={isPending || !isEmailVerified}
-                  style={{
-                    width: "100%",
-                    background:
-                      isPending || !isEmailVerified ? "#334155" : "#0f172a",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 9999,
-                    padding: "16px",
-                    fontSize: 16,
-                    fontWeight: 700,
-                    cursor:
-                      isPending || !isEmailVerified ? "not-allowed" : "pointer",
-                    transition: "background .15s",
-                  }}>
-                  {isPending
-                    ? "Creating account…"
-                    : isEmailVerified
-                      ? "Create account"
-                      : "Verify your email to continue"}
-                </button>
-              )}
+              {/* Submit — always mounted; EmailVerifyGate above is additive, not a
+                  replacement, so this button never disappears once a valid email is
+                  entered (see the fix note in the mobile-phase-a plan for why it
+                  previously did). */}
+              <button
+                type="submit"
+                disabled={isPending || !isEmailVerified}
+                style={{
+                  width: "100%",
+                  background:
+                    isPending || !isEmailVerified ? "#334155" : "#0f172a",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 9999,
+                  padding: "16px",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  cursor:
+                    isPending || !isEmailVerified ? "not-allowed" : "pointer",
+                  transition: "background .15s",
+                }}>
+                {isPending
+                  ? "Creating account…"
+                  : isEmailVerified
+                    ? "Create account"
+                    : "Verify your email to continue"}
+              </button>
             </form>
           </div>
         </div>

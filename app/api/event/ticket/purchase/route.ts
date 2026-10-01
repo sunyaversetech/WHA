@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { connectToDb } from "@/lib/db";
-import User from "@/server/models/Auth.model";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
-import { attachAutoLoginCookie } from "@/server/lib/guestAuth";
+import { attachAutoLoginCookie, findOrCreateGuestUser } from "@/server/lib/guestAuth";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getAuthUser } from "@/server/lib/getAuthUser";
 import { finalizeEventTicketPurchase } from "@/server/lib/eventTicketFinalize";
 
 // `eventDoc` is the populated Event document (either passed in already-loaded
@@ -65,7 +65,19 @@ export async function POST(req: Request) {
 
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
+    // Web session cookie or mobile bearer token — guests (neither) are still
+    // allowed through to the guestInfo branch below.
+    const authUser = await getAuthUser(req);
+    // A NextAuth session cookie is meaningless to a mobile client and must never
+    // be attached to a mobile response — the mobile app has no cookie jar backing
+    // it into a session the way a browser does, so setting one here would be
+    // pure dead weight at best. Detected via either signal a mobile caller sends:
+    // an explicit X-Client header, or (since web never sends one) a bearer token.
+    const isMobileClient =
+      req.headers.get("x-client")?.toLowerCase() === "mobile" ||
+      !!(req.headers.get("authorization") ?? req.headers.get("Authorization"))?.startsWith(
+        "Bearer ",
+      );
 
     const body = await req.json();
     const { eventId } = body;
@@ -84,9 +96,9 @@ export async function POST(req: Request) {
     // must not fail just because that retry no longer has the original
     // session, once the purchase already exists. This also covers the case
     // where the Stripe webhook's payment_intent.succeeded handler already
-    // finalized this same purchase (e.g. the browser tab closed right after
-    // paying) — whichever of the two got there first wins, this just returns
-    // its result.
+    // finalized this same purchase (e.g. the browser tab or app closed right
+    // after paying) — whichever of the two got there first wins, this just
+    // returns its result.
     const existingPurchase = await EventTicketPurchase.findOne({
       paymentIntentId,
     }).populate("event");
@@ -104,11 +116,11 @@ export async function POST(req: Request) {
     let buyer: any;
     let canAutoSignIn = false;
 
-    if (session?.user) {
+    if (authUser) {
       buyer = {
-        _id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
+        _id: authUser.id,
+        email: authUser.email,
+        name: authUser.name,
       };
     } else {
       const guestInfo = body.guestInfo as
@@ -129,26 +141,13 @@ export async function POST(req: Request) {
         );
       }
 
-      const existingUser = await User.findOne({ email: guestEmail }).select(
-        "+password",
-      );
-      if (existingUser) {
-        buyer = existingUser;
-        canAutoSignIn = !existingUser.password;
-        if (!existingUser.phone_number) {
-          existingUser.phone_number = guestPhone;
-          await existingUser.save();
-        }
-      } else {
-        buyer = await User.create({
-          name: guestName,
-          email: guestEmail,
-          phone_number: guestPhone,
-          category: "user",
-          provider: "guest",
-        });
-        canAutoSignIn = true;
-      }
+      const guestResult = await findOrCreateGuestUser({
+        name: guestName,
+        email: guestEmail,
+        phone: guestPhone,
+      });
+      buyer = guestResult.user;
+      canAutoSignIn = guestResult.canAutoSignIn;
     }
 
     const outcome = await finalizeEventTicketPurchase(eventId, paymentIntentId, buyer);
@@ -164,8 +163,8 @@ export async function POST(req: Request) {
     // at this point — auto-login is a convenience on top, not part of the
     // sale. It must never be allowed to turn an already-successful purchase
     // into an error response, so any failure here is logged and swallowed
-    // rather than thrown.
-    if (canAutoSignIn) {
+    // rather than thrown. Mobile never gets this cookie — see isMobileClient.
+    if (canAutoSignIn && !isMobileClient) {
       try {
         const response = NextResponse.json(
           toTicketResponse(createdPurchase, event, true, buyer.name),

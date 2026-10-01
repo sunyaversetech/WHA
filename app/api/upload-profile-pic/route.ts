@@ -2,15 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { deleteFromS3, uploadToS3 } from "@/server/lib/function";
 import User from "@/server/models/Auth.model";
 import { connectToDb } from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { getAuthUser } from "@/server/lib/getAuthUser";
 
 export async function POST(req: NextRequest) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
+    const authUser = await getAuthUser(req);
 
-    if (!session?.user) {
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -21,7 +20,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const user = await User.findById((session.user as any).id);
+    const user = await User.findById(authUser.id);
 
     if (user?.image && user.image.includes("amazonaws.com")) {
       await deleteFromS3(user.image);
@@ -31,7 +30,7 @@ export async function POST(req: NextRequest) {
     const result = await uploadToS3(buffer, file.name, file.type);
 
     await User.findByIdAndUpdate(
-      (session.user as any).id,
+      authUser.id,
       { image: result.Location },
       { new: true },
     );

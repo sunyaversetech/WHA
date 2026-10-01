@@ -1,32 +1,35 @@
 import { connectToDb } from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
 import { EventRedemption } from "@/server/models/EventCodeRemtion.model";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
+import { getAuthUserDetailed, bearerRejectionResponse } from "@/server/lib/getAuthUser";
 
 import "@/server/models/Event.model";
 import "@/server/models/DealSchema.model";
 import "@/server/models/Auth.model";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
+    const authResult = await getAuthUserDetailed(req);
 
-    if (!session?.user) {
+    if (!authResult.user) {
+      if (authResult.viaBearer) {
+        return bearerRejectionResponse(authResult.reason, "message");
+      }
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+    const authUser = authResult.user;
 
     const dealRedemptions = await Redemption.find({
-      user: session.user.id,
+      user: authUser.id,
     }).populate("deal");
     const eventRedemptions = await EventRedemption.find({
-      user: session.user.id,
+      user: authUser.id,
     }).populate("event");
     const eventPurchases = await EventTicketPurchase.find({
-      user: session.user.id,
+      user: authUser.id,
     }).populate("event");
 
     const validDeals = dealRedemptions.filter((r) => r.deal !== null);

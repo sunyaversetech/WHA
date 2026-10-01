@@ -100,8 +100,9 @@ export async function POST(req: Request) {
 
   // Safety net for event ticket purchases: the client normally finalizes the sale
   // itself right after Stripe confirms payment (POST /api/event/ticket/purchase),
-  // but if the tab/app closes or loses connectivity in that gap, the charge would
-  // otherwise succeed with no tickets ever created. This runs the exact same
+  // but if the browser tab or app closes/crashes/loses connectivity in that
+  // gap, the charge would otherwise succeed with no tickets ever created.
+  // This runs the exact same
   // finalize logic (server/lib/eventTicketFinalize.ts) so whichever of the two
   // paths gets there first wins — EventTicketPurchase.paymentIntentId is unique,
   // so the loser's create() just hits E11000 and is treated as already-done.
@@ -110,8 +111,9 @@ export async function POST(req: Request) {
     const eventId = paymentIntent.metadata?.eventId;
 
     // Only metadata shaped like an event-ticket PaymentIntent (set by
-    // getEventTicketPaymentIntent) is handled here — anything else (deals,
-    // bookings) is left alone, exactly as before this handler existed.
+    // priceEventTickets, called by both the web Server Action and the mobile
+    // price route) is handled here — anything else (deals, bookings) is left
+    // alone, exactly as before this handler existed.
     if (eventId) {
       await connectToDb();
       try {
@@ -123,11 +125,11 @@ export async function POST(req: Request) {
         }
 
         // Buyer identity for this safety net can only come from the ticket hold
-        // recorded at checkout time (set for any signed-in buyer — see
-        // app/api/event/ticket/hold/route.ts). A guest checkout's name/email/
-        // phone is only ever submitted in the /purchase request body itself,
-        // which this webhook never receives, so a guest purchase that never
-        // reaches /purchase cannot be finalized here — it's logged, not
+        // recorded at checkout time (set for any signed-in buyer, web or
+        // mobile — see app/api/event/ticket/hold/route.ts). A guest checkout's
+        // name/email/phone is only ever submitted in the /purchase request body
+        // itself, which this webhook never receives, so a guest purchase that
+        // never reaches /purchase cannot be finalized here — it's logged, not
         // silently dropped, and remains a real (documented, not yet solved)
         // gap for that one case.
         const hold = await TicketHold.findOne({ paymentIntentId: paymentIntent.id });
