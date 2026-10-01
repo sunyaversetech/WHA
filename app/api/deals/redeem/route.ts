@@ -10,12 +10,13 @@ import { sendEventMultipleTicketEmail } from "@/lib/mail";
 export async function POST(req: Request) {
   try {
     await connectToDb();
-    const { dealId, userId } = await req.json();
+    const { dealId } = await req.json();
 
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+    const userId = (session.user as any).id;
 
     const deal = await Deal.findById(dealId);
     if (!deal)
