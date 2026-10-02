@@ -2,16 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDb } from "@/lib/db";
 import { Service } from "@/server/models/Service.model";
 import { Employee } from "@/server/models/Employee.model";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const business_id = (session.user as any).id;
+    const auth = await requireBusinessUser(req);
+    if (!auth.user) return auth.response;
+    const business_id = auth.user.id;
 
     await connectToDb();
     const { serviceId, employeeId } = await req.json();

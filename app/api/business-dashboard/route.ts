@@ -1,20 +1,17 @@
 import { connectToDb } from "@/lib/db";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import Booking from "@/server/models/Booking.model";
 import "@/server/models/Service.model";
 import "@/server/models/Auth.model";
 import "@/server/models/Employee.model";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.category !== "business") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const businessId = (session.user as any).id;
+    const auth = await requireBusinessUser(req, { webNotBusiness: { body: { error: "Unauthorized" }, status: 401 } });
+    if (!auth.user) return auth.response;
+    const businessId = auth.user.id;
 
     const now = new Date();
     const sevenDaysAgo = new Date(now);

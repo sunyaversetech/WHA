@@ -1,20 +1,17 @@
 import { connectToDb } from "@/lib/db";
 import { Employee } from "@/server/models/Employee.model";
 import { Service } from "@/server/models/Service.model";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
 export async function POST(request: Request) {
   try {
     await connectToDb();
 
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
 
-    const business_id = (session.user as any).id;
+    const business_id = auth.user.id;
     const body = await request.json();
 
     const {
@@ -108,15 +105,13 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
     const services = await Service.find({
-      business_id: (session.user as any).id,
+      business_id: auth.user.id,
     })
       .populate("assigned_employees")
       .lean();

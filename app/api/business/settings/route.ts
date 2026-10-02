@@ -1,24 +1,22 @@
 import { connectToDb } from "@/lib/db";
 import User from "@/server/models/Auth.model";
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { uploadToS3, deleteFromS3 } from "@/server/lib/function";
 
 export async function PATCH(req: NextRequest) {
   try {
     await connectToDb();
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(req, { messageKey: "message" });
+    if (!auth.user) return auth.response;
+    const userId = auth.user.id;
 
     const formData = await req.formData();
     const updateData: Record<string, any> = {};
 
     // Fetch current doc once — needed for S3 cleanup
-    const currentUser = await User.findById(session.user.id)
+    const currentUser = await User.findById(userId)
       .select("image venue_images portfolio_images")
       .lean<{ image?: string; venue_images?: string[]; portfolio_images?: string[] }>();
     if (!currentUser) {
@@ -184,7 +182,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const updated = await User.findByIdAndUpdate(
-      session.user.id,
+      userId,
       { $set: updateData },
       { new: true, runValidators: true },
     ).select("-password -token -resetPasswordToken -resetPasswordExpire -verificationTokenExpire");

@@ -1,24 +1,22 @@
 import { connectToDb } from "@/lib/db";
 import Category from "@/server/models/Category.model";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectToDb();
     const { id } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
     if (!mongoose.Types.ObjectId.isValid(id))
       return NextResponse.json({ success: false, error: "Invalid ID" }, { status: 400 });
 
-    const category = await Category.findOne({ _id: id, business_id: (session.user as any).id });
+    const category = await Category.findOne({ _id: id, business_id: auth.user.id });
     if (!category)
       return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
 
@@ -35,15 +33,14 @@ export async function PATCH(
   try {
     await connectToDb();
     const { id } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
     if (!mongoose.Types.ObjectId.isValid(id))
       return NextResponse.json({ success: false, error: "Invalid ID" }, { status: 400 });
 
     const { name, color, description } = await request.json();
     const category = await Category.findOneAndUpdate(
-      { _id: id, business_id: (session.user as any).id },
+      { _id: id, business_id: auth.user.id },
       { $set: { name, color, description } },
       { new: true },
     );
@@ -62,21 +59,20 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectToDb();
     const { id } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
     if (!mongoose.Types.ObjectId.isValid(id))
       return NextResponse.json({ success: false, error: "Invalid ID" }, { status: 400 });
 
     const category = await Category.findOneAndDelete({
       _id: id,
-      business_id: (session.user as any).id,
+      business_id: auth.user.id,
     });
     if (!category)
       return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });

@@ -1,17 +1,15 @@
 import { connectToDb } from "@/lib/db";
 import { ResourceOverride } from "@/server/models/ResourceOverride.model";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
 export async function GET(request: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
 
-    const business_id = (session.user as any).id;
+    const business_id = auth.user.id;
     const { searchParams } = new URL(request.url);
     const week_start = searchParams.get("week_start");
     const week_end = searchParams.get("week_end");
@@ -34,11 +32,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
 
-    const business_id = (session.user as any).id;
+    const business_id = auth.user.id;
     const body = await request.json();
     const { service_id, date, is_closed, quantity_override } = body;
 
@@ -67,11 +64,10 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
 
-    const business_id = (session.user as any).id;
+    const business_id = auth.user.id;
     const { searchParams } = new URL(request.url);
     const service_id = searchParams.get("service_id");
     const date = searchParams.get("date");

@@ -2,9 +2,8 @@ import { connectToDb } from "@/lib/db";
 import Booking from "@/server/models/Booking.model";
 import { Service } from "@/server/models/Service.model";
 import { Employee } from "@/server/models/Employee.model";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import mongoose from "mongoose";
 import { z, ZodError } from "zod";
 
@@ -19,10 +18,10 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireBusinessUser(request, {
+    webUnauthorized: { success: false, error: "Unauthorized" },
+  });
+  if (!auth.user) return auth.response;
 
   await connectToDb();
 
@@ -62,8 +61,8 @@ export async function POST(request: Request) {
     .join(" — ");
 
   const booking = await Booking.create({
-    business_id: session.user.id,
-    user_id: new mongoose.Types.ObjectId(session.user.id),
+    business_id: auth.user.id,
+    user_id: new mongoose.Types.ObjectId(auth.user.id),
     service_id: body.service_id,
     employee_id: body.employee_id || null,
     start_time: start,

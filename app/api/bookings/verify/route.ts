@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { connectToDb } from "@/lib/db";
 import Booking from "@/server/models/Booking.model";
+import { bearerRejectionResponse, getAuthUserDetailed } from "@/server/lib/getAuthUser";
 
 export async function GET(req: Request) {
   try {
+    const auth = await getAuthUserDetailed(req);
+    if (!auth.user) {
+      if (auth.viaBearer) return bearerRejectionResponse(auth.reason);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { searchParams } = new URL(req.url);
     const session_id = searchParams.get("session_id");
 
@@ -28,6 +34,12 @@ export async function GET(req: Request) {
         message:
           "Booking records are currently being processed. Still waiting for payment authorization webhook...",
       });
+    }
+
+    // Only the customer who booked, or the business, may see it.
+    const viewerId = auth.user.id;
+    if (String(booking.user_id) !== viewerId && String(booking.business_id) !== viewerId) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
     // Booking found! Return full details to show on the success card

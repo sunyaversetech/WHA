@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDb } from "@/lib/db";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
 import { sendInvoiceEmail } from "@/lib/mail";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { format } from "date-fns";
 
 type RouteContext = {
@@ -13,10 +12,8 @@ type RouteContext = {
 export async function POST(req: Request, { params }: RouteContext) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(req, { messageKey: "message" });
+    if (!auth.user) return auth.response;
 
     const { purchaseId } = await params;
 
@@ -28,7 +25,7 @@ export async function POST(req: Request, { params }: RouteContext) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (purchase.business.toString() !== session.user.id) {
+    if (purchase.business.toString() !== auth.user.id) {
       return NextResponse.json(
         { message: "Unauthorized for this business." },
         { status: 403 },

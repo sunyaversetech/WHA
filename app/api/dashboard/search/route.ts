@@ -1,17 +1,14 @@
 import { connectToDb } from "@/lib/db";
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import Booking from "@/server/models/Booking.model";
 
 const RESULT_LIMIT = 5;
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || (session.user as any).category !== "business") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const business_id = session.user.id;
+  const auth = await requireBusinessUser(req, { webNotBusiness: { body: { error: "Unauthorized" }, status: 401 } });
+  if (!auth.user) return auth.response;
+  const business_id = auth.user.id;
   const q = (new URL(req.url).searchParams.get("q") ?? "").trim();
 
   await connectToDb();

@@ -1,8 +1,7 @@
 import { connectToDb } from "@/lib/db";
 import Booking from "@/server/models/Booking.model";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
 /** Convert a local date string (YYYY-MM-DD) + wall-clock time to UTC Date. */
 function localToUtc(dateStr: string, time: "start" | "end", timezone: string): Date {
@@ -27,11 +26,10 @@ function localToUtc(dateStr: string, time: "start" | "end", timezone: string): D
 }
 
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireBusinessUser(request);
+  if (!auth.user) return auth.response;
 
-  const business_id = (session.user as any).id;
+  const business_id = auth.user.id;
   const { searchParams } = new URL(request.url);
 
   const start_date   = searchParams.get("start_date");

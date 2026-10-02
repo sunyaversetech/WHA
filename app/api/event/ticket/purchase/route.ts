@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { connectToDb } from "@/lib/db";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
 import { attachAutoLoginCookie, findOrCreateGuestUser } from "@/server/lib/guestAuth";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getAuthUser } from "@/server/lib/getAuthUser";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { finalizeEventTicketPurchase } from "@/server/lib/eventTicketFinalize";
 
 // `eventDoc` is the populated Event document (either passed in already-loaded
@@ -194,15 +193,13 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(req, { messageKey: "message" });
+    if (!auth.user) return auth.response;
 
     const { searchParams } = new URL(req.url);
     const eventId = searchParams.get("eventId");
 
-    const query: Record<string, string> = { business: session.user.id };
+    const query: Record<string, string> = { business: auth.user.id };
     if (eventId) query.event = eventId;
 
     const purchases = await EventTicketPurchase.find(query)

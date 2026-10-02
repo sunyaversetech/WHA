@@ -1,16 +1,13 @@
 import { connectToDb } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { EventRedemption } from "@/server/models/EventCodeRemtion.model";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(request, { messageKey: "message" });
+    if (!auth.user) return auth.response;
 
     await connectToDb();
     const { uniqueKey, status } = await request.json();
@@ -21,7 +18,7 @@ export async function POST(request: Request) {
 
     const redemption = await EventRedemption.findOne({ uniqueKey });
     if (redemption) {
-      if (redemption.business.toString() !== session.user.id) {
+      if (redemption.business.toString() !== auth.user.id) {
         return NextResponse.json(
           { message: "Unauthorized for this business." },
           { status: 403 },
@@ -45,7 +42,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (purchase.business.toString() !== session.user.id) {
+    if (purchase.business.toString() !== auth.user.id) {
       return NextResponse.json(
         { message: "Unauthorized for this business." },
         { status: 403 },

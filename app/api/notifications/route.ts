@@ -1,15 +1,12 @@
 import { connectToDb } from "@/lib/db";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import Notification from "@/server/models/Notification.model";
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || (session.user as any).category !== "business") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const business_id = session.user.id;
+export async function GET(req: Request) {
+  const auth = await requireBusinessUser(req, { webNotBusiness: { body: { error: "Unauthorized" }, status: 401 } });
+  if (!auth.user) return auth.response;
+  const business_id = auth.user.id;
 
   await connectToDb();
 
@@ -22,4 +19,19 @@ export async function GET() {
   ]);
 
   return NextResponse.json({ data: notifications, unread_count });
+}
+
+/** Mark every unread notification of the signed-in business as read. */
+export async function PATCH(req: Request) {
+  const auth = await requireBusinessUser(req, { webNotBusiness: { body: { error: "Unauthorized" }, status: 401 } });
+  if (!auth.user) return auth.response;
+
+  await connectToDb();
+
+  const result = await Notification.updateMany(
+    { business_id: auth.user.id, is_read: false },
+    { is_read: true },
+  );
+
+  return NextResponse.json({ data: { updated: result.modifiedCount }, unread_count: 0 });
 }

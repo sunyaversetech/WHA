@@ -1,18 +1,15 @@
 import { connectToDb } from "@/lib/db";
 import { Employee } from "@/server/models/Employee.model";
 import { Service } from "@/server/models/Service.model";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { uploadToS3 } from "@/server/lib/function";
 
 export async function POST(request: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
 
     const formData = await request.formData();
 
@@ -75,7 +72,7 @@ export async function POST(request: Request) {
     }
 
     const new_employee = await Employee.create({
-      business_id: session.user.id,
+      business_id: auth.user.id,
       // personal
       full_name,
       last_name,
@@ -127,16 +124,14 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
 
     const employees = await Employee.find({
-      business_id: session.user.id,
+      business_id: auth.user.id,
     }).sort({ created_at: -1 });
 
     return NextResponse.json(

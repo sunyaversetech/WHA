@@ -2,18 +2,15 @@ import { connectToDb } from "@/lib/db";
 import { Employee } from "@/server/models/Employee.model";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, { params }: Props) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const business_id = (session.user as any).id;
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
+    const business_id = auth.user.id;
 
     await connectToDb();
     const { id } = await params;

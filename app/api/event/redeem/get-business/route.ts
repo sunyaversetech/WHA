@@ -1,19 +1,16 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { connectToDb } from "@/lib/db";
 import { EventRedemption } from "@/server/models/EventCodeRemtion.model";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(req, { messageKey: "message" });
+    if (!auth.user) return auth.response;
 
     const redemption = await EventRedemption.find({
-      business: session.user.id,
+      business: auth.user.id,
     }).populate("event");
     if (!redemption) {
       return NextResponse.json({ redeemed: false }, { status: 200 });

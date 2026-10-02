@@ -4,6 +4,7 @@ import User from "@/server/models/Auth.model";
 import Notification from "@/server/models/Notification.model";
 import { sendBookingChangeEmails } from "@/lib/mail";
 import logger from "@/lib/logger";
+import { sendPushToUser } from "@/server/lib/push";
 
 export async function notifyBookingChange(
   bookingId: string,
@@ -41,13 +42,19 @@ export async function notifyBookingChange(
 
     // Only the party that didn't trigger the change needs an in-app alert.
     if (actor === "user") {
+      const title = change === "cancelled" ? "Booking cancelled" : "Booking rescheduled";
+      const body = `${context.userName} ${change} their booking for ${context.serviceName} — ${context.bookingDate} at ${context.bookingTime}`;
       await Notification.create({
         business_id: booking.business_id,
         type: "appointment",
-        title:
-          change === "cancelled" ? "Booking cancelled" : "Booking rescheduled",
-        body: `${context.userName} ${change} their booking for ${context.serviceName} — ${context.bookingDate} at ${context.bookingTime}`,
+        title,
+        body,
         related_id: booking._id,
+      });
+      await sendPushToUser(String(booking.business_id), {
+        title,
+        body,
+        data: { type: "appointment", related_id: String(booking._id) },
       });
     }
   } catch (err) {

@@ -1,18 +1,15 @@
 import { connectToDb } from "@/lib/db";
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import Booking from "@/server/models/Booking.model";
 import User from "@/server/models/Auth.model";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: RouteContext) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || (session.user as any).category !== "business") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const business_id = session.user.id;
+  const auth = await requireBusinessUser(req, { webNotBusiness: { body: { error: "Unauthorized" }, status: 401 } });
+  if (!auth.user) return auth.response;
+  const business_id = auth.user.id;
   const { id: user_id } = await params;
 
   await connectToDb();
@@ -25,7 +22,9 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       .sort({ start_time: -1 }),
   ]);
 
-  if (!client) {
+  // Only people who have booked with THIS business are its clients — never expose
+  // another user's contact details just because their id is known.
+  if (!client || bookings.length === 0) {
     return NextResponse.json({ error: "Client not found" }, { status: 404 });
   }
 

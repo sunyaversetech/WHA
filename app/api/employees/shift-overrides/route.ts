@@ -4,8 +4,7 @@ import { Employee } from "@/server/models/Employee.model";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { z, ZodError } from "zod";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
 const upsert_schema = z.object({
   employee_id: z.string().min(1),
@@ -19,6 +18,11 @@ const upsert_schema = z.object({
 export async function GET(request: Request) {
   try {
     await connectToDb();
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
+    const own_employee_ids = (
+      await Employee.find({ business_id: auth.user.id }).select("_id").lean()
+    ).map((e) => String(e._id));
     const { searchParams } = new URL(request.url);
     const employee_id = searchParams.get("employee_id");
     const week_start = searchParams.get("week_start");
@@ -31,7 +35,10 @@ export async function GET(request: Request) {
           { success: false, error: "Invalid employee_id" },
           { status: 400 },
         );
-      query.employee_id = employee_id;
+      // Another business's employee → same empty result as an unknown id.
+      query.employee_id = own_employee_ids.includes(employee_id) ? employee_id : { $in: [] };
+    } else {
+      query.employee_id = { $in: own_employee_ids };
     }
     if (week_start) query.date = { ...query.date, $gte: week_start };
     if (week_end) query.date = { ...query.date, $lte: week_end };
@@ -48,11 +55,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const business_id = (session.user as any).id;
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
+    const business_id = auth.user.id;
 
     await connectToDb();
     const body = await request.json();

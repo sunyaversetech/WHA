@@ -1,23 +1,20 @@
 import { connectToDb } from "@/lib/db";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import Notification from "@/server/models/Notification.model";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireBusinessUser(request);
+  if (!auth.user) return auth.response;
   const { id } = await params;
 
   await connectToDb();
 
   const notification = await Notification.findOneAndUpdate(
-    { _id: id, business_id: session.user.id },
+    { _id: id, business_id: auth.user.id },
     { is_read: true },
     { new: true },
   );

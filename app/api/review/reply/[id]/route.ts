@@ -1,8 +1,7 @@
 import { connectToDb } from "@/lib/db";
 import { Review } from "@/server/models/Review.model";
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import * as z from "zod";
 
 const replySchema = z.object({
@@ -17,10 +16,8 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(req);
+    if (!auth.user) return auth.response;
 
     const { id } = await params;
     const { reply } = replySchema.parse(await req.json());
@@ -29,9 +26,15 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     if (!review) {
       return NextResponse.json({ error: "Review not found" }, { status: 404 });
     }
+    if (String(review.business_id) !== auth.user.id) {
+      return NextResponse.json(
+        { error: "You can only reply to reviews of your own business" },
+        { status: 403 },
+      );
+    }
 
     review.replies.push({
-      user: (session.user as any).id,
+      user: auth.user.id,
       text: reply,
       created_at: new Date(),
     } as any);

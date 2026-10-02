@@ -1,7 +1,6 @@
 import { connectToDb } from "@/lib/db";
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { Deal } from "@/server/models/DealSchema.model";
 
 type RouteContext = {
@@ -11,13 +10,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
     await connectToDb();
 
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(req);
+    if (!auth.user) return auth.response;
 
     const { id: dealId } = await params;
-    const currentUserId = (session.user as any).id;
+    const currentUserId = auth.user.id;
     const deal = await Deal.findById(dealId);
 
     if (!deal) {

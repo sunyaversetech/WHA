@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { connectToDb } from "@/lib/db";
 import { Deal } from "@/server/models/DealSchema.model";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
@@ -11,10 +10,8 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDb();
 
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(req);
+    if (!auth.user) return auth.response;
 
     const formData = await req.formData();
 
@@ -55,7 +52,7 @@ export async function POST(req: NextRequest) {
       category,
       discount_percentage,
       price,
-      user: (session.user as any).id,
+      user: auth.user.id,
       description,
       terms_for_the_deal,
       max_redemptions: max_redemptions ? parseInt(max_redemptions) : undefined,
@@ -70,16 +67,13 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
+    const auth = await requireBusinessUser(req);
+    if (!auth.user) return auth.response;
 
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const deals = await Deal.find({ user: (session.user as any).id })
+    const deals = await Deal.find({ user: auth.user.id })
       .populate({
         path: "user",
         select: "-password -emailVerified -isblocked -updatedAt -verified -_id",

@@ -9,7 +9,9 @@ import { Employee } from "@/server/models/Employee.model";
 import Booking from "@/server/models/Booking.model";
 import { BookingLock } from "@/server/models/BookingLock.model";
 import { authOptions } from "../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import logger from "@/lib/logger";
+import { sendPushToUser, type PushMessage } from "@/server/lib/push";
 import { sendServiceBookingEmails } from "@/lib/mail";
 import User from "@/server/models/Auth.model";
 import Notification from "@/server/models/Notification.model";
@@ -84,6 +86,8 @@ export async function POST(request: Request) {
     bookingTime: string;
     bookingId: string;
   } | null = null;
+  // Mirrors the in-app Notification; sent only once the transaction has committed.
+  let businessPush: { businessId: string; message: PushMessage } | null = null;
 
   try {
     let new_booking: any;
@@ -342,21 +346,39 @@ export async function POST(request: Request) {
         };
       }
 
+      const notice = {
+        title: "New appointment",
+        body: `${user?.name || "A customer"} booked ${service.title || service.name || "a service"} for ${start_date.toLocaleDateString("en-AU", { dateStyle: "medium" })}`,
+      };
       await Notification.create(
         [
           {
             business_id: service.business_id,
             type: "appointment",
-            title: "New appointment",
-            body: `${user?.name || "A customer"} booked ${service.title || service.name || "a service"} for ${start_date.toLocaleDateString("en-AU", { dateStyle: "medium" })}`,
+            title: notice.title,
+            body: notice.body,
             related_id: new_booking._id,
           },
         ],
         { session: db_session },
       );
+      businessPush = {
+        businessId: String(service.business_id),
+        message: {
+          ...notice,
+          data: { type: "appointment", related_id: String(new_booking._id) },
+        },
+      };
     });
     console.log(emailContext);
     logger.info({ booking_id: new_booking._id, user_id }, "Booking created");
+
+    // Assigned inside the transaction callback, which TS can't see — re-type it.
+    const push = businessPush as { businessId: string; message: PushMessage } | null;
+    if (push) {
+      // Best effort — sendPushToUser never throws.
+      await sendPushToUser(push.businessId, push.message);
+    }
 
     if (emailContext) {
       try {
@@ -386,19 +408,13 @@ export async function POST(request: Request) {
     await db_session.endSession();
   }
 }
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json(
-      {
-        success: false,
-        code: "UNAUTHORIZED",
-        message: "You must be logged in",
-      },
-      { status: 401 },
-    );
-  }
-  const user_id = session.user.id;
+export async function GET(request: Request) {
+  const auth = await requireBusinessUser(request, {
+    messageKey: "message",
+    webUnauthorized: { success: false, code: "UNAUTHORIZED", message: "You must be logged in" },
+  });
+  if (!auth.user) return auth.response;
+  const user_id = auth.user.id;
 
   await connectToDb();
 

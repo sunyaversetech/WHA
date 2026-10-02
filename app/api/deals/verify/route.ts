@@ -2,16 +2,12 @@ import { connectToDb } from "@/lib/db";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
 import { Deal } from "@/server/models/DealSchema.model"; // Ensure you import your Deal model
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(request, { messageKey: "message" });
+    if (!auth.user) return auth.response;
 
     await connectToDb();
     const { uniqueKey, deal } = await request.json();
@@ -23,9 +19,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const redemption = await Redemption.findOne({ uniqueKey });
-
-    console.log("DEBUG: Redemption Object:", redemption);
+    // Codes are stored in the `uniqueKeys` array (a multi-buy holds several). Match
+    // one element exactly, ignoring case and surrounding whitespace — same rule as
+    // event ticket verification (scanned values arrive as-is, typed ones uppercased).
+    const code = typeof uniqueKey === "string" ? uniqueKey.trim() : "";
+    const escaped = code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const redemption = code
+      ? await Redemption.findOne({ uniqueKeys: { $regex: `^${escaped}$`, $options: "i" } })
+      : null;
 
     if (!redemption) {
       return NextResponse.json(
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (redemption.business.toString() !== session.user.id) {
+    if (redemption.business.toString() !== auth.user.id) {
       return NextResponse.json(
         { message: "Unauthorized: This code belongs to another business." },
         { status: 403 },

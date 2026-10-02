@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import Booking from "@/server/models/Booking.model";
 import { connectToDb } from "@/lib/db";
 import { notifyBookingChange } from "@/lib/booking-notifications";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending: ["confirmed", "rescheduled", "cancelled"],
@@ -18,11 +17,9 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 
 export async function PATCH(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const business_id = (session.user as any).id;
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
+    const business_id = auth.user.id;
 
     const { bookingId, newStatus, notes } = await request.json();
 

@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { connectToDb } from "@/lib/db";
 import Booking from "@/server/models/Booking.model";
 
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireBusinessUser(request, {
+    webUnauthorized: { success: false, error: "Unauthorized" },
+  });
+  if (!auth.user) return auth.response;
 
   const { searchParams } = new URL(request.url);
   // Accept an optional date param (YYYY-MM-DD) for the client's local date;
@@ -31,7 +30,7 @@ export async function GET(request: Request) {
 
   try {
     const bookings = await Booking.find({
-      business_id: session.user.id,
+      business_id: auth.user.id,
       start_time: { $gte: dayStart, $lte: dayEnd },
     })
       .populate("service_id")

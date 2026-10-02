@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDb } from "@/lib/db";
 import Event from "@/server/models/Event.model";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -43,10 +42,8 @@ function getTicketsTakenCount(event: any): number {
 export async function POST(req: Request, { params }: RouteContext) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(req, { messageKey: "message", allowSuperAdmin: true });
+    if (!auth.user) return auth.response;
 
     const { id } = await params;
     const event = await Event.findById(id);
@@ -54,8 +51,8 @@ export async function POST(req: Request, { params }: RouteContext) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    const isOwner = event.user.toString() === session.user.id;
-    const isSuperAdmin = session.user.category === "super-admin";
+    const isOwner = event.user.toString() === auth.user.id;
+    const isSuperAdmin = auth.user.category === "super-admin";
     if (!isOwner && !isSuperAdmin) {
       return NextResponse.json(
         { error: "You can only archive your own events" },

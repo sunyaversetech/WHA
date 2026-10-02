@@ -1,18 +1,16 @@
 import { connectToDb } from "@/lib/db";
 import Category from "@/server/models/Category.model";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
 
     const categories = await Category.find({
-      business_id: (session.user as any).id,
+      business_id: auth.user.id,
     }).lean();
 
     return NextResponse.json(
@@ -30,9 +28,8 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
 
     const body = await request.json();
     const { name, color, description } = body;
@@ -45,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     const category = await Category.create({
-      business_id: (session.user as any).id,
+      business_id: auth.user.id,
       name: name.trim(),
       color: color ?? "Blue",
       description: description ?? "",

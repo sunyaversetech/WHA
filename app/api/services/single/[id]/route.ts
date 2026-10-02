@@ -3,8 +3,7 @@ import { Employee } from "@/server/models/Employee.model";
 import { Service } from "@/server/models/Service.model";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
 export async function GET(
   request: Request,
@@ -14,9 +13,8 @@ export async function GET(
     await connectToDb();
     const { id } = await params;
 
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -27,7 +25,7 @@ export async function GET(
 
     const service = await Service.findById(id).populate("assigned_employees");
 
-    if (session.user.id !== service?.business_id.toString()) {
+    if (auth.user.id !== service?.business_id.toString()) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 403 },
@@ -58,11 +56,10 @@ export async function POST(
     await connectToDb();
     const { id } = await params;
 
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
 
-    const business_id = (session.user as any).id;
+    const business_id = auth.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -193,12 +190,10 @@ export async function DELETE(
     await connectToDb();
     const { id } = await params;
 
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const business_id = (session.user as any).id;
-    const is_super_admin = session.user.category === "super-admin";
+    const auth = await requireBusinessUser(request, { allowSuperAdmin: true });
+    if (!auth.user) return auth.response;
+    const business_id = auth.user.id;
+    const is_super_admin = auth.user.category === "super-admin";
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(

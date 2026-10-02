@@ -1,9 +1,8 @@
 import { connectToDb } from "@/lib/db";
 import Booking from "@/server/models/Booking.model";
 import { Employee } from "@/server/models/Employee.model";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { notifyBookingChange } from "@/lib/booking-notifications";
 
 const VALID_STATUSES = [
@@ -15,10 +14,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(request, {
+      webUnauthorized: { success: false, error: "Unauthorized" },
+    });
+    if (!auth.user) return auth.response;
 
     await connectToDb();
 
@@ -28,7 +27,7 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: "Booking not found" }, { status: 404 });
     }
 
-    if (String(booking.business_id) !== String(session.user.id)) {
+    if (String(booking.business_id) !== auth.user.id) {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 

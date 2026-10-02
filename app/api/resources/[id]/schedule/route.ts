@@ -1,8 +1,7 @@
 import { connectToDb } from "@/lib/db";
 import { Service } from "@/server/models/Service.model";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import mongoose from "mongoose";
 
 export async function PATCH(
@@ -11,15 +10,14 @@ export async function PATCH(
 ) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireBusinessUser(request);
+    if (!auth.user) return auth.response;
 
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id))
       return NextResponse.json({ success: false, error: "Invalid service ID" }, { status: 400 });
 
-    const business_id = (session.user as any).id;
+    const business_id = auth.user.id;
     const existing = await Service.findOne({ _id: id, business_id }).select("_id");
     if (!existing)
       return NextResponse.json({ success: false, error: "Service not found" }, { status: 404 });

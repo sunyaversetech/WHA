@@ -226,3 +226,130 @@ Cookie: next-auth.session-token=PASTE_WEB_SESSION_COOKIE_HERE
 
 ### 16. Rate-limit check — call register or guest 11+ times in under 10 minutes from
 ### the same IP; the 11th call should 429 "Too many registration attempts...".
+
+### ═══════════════════════════════════════════════════════════════════════════════
+### 17. Business dashboard routes (feature/mobile-business-auth) — getAuthUser +
+### server-side category check via server/lib/businessAuth.ts (requireBusinessUser).
+### Every route is tested FOUR ways:
+###   a) no credentials          → the route's OLD web 401 body, byte-for-byte
+###   b) junk bearer             → 401 { <key>: { message: "Unauthorized", code: "TOKEN_INVALID" } }
+###   c) business bearer/cookie  → same success response as before this branch
+###   d) CUSTOMER bearer         → 403 { <key>: { message: "This is only available to
+###                                 business accounts.", code: "NOT_BUSINESS" } }
+###      CUSTOMER web cookie     → routes that already checked category keep their
+###                                 401 {error:"Unauthorized"}; all others 403 { <key>: "Forbidden" }
+### <key> is the route's existing error field ("error" or "message", listed below).
+### Blocked/deleted accounts are now rejected on BOTH paths (getAuthUser re-reads the user).
+### a) + b) are automated: node docs/mobile/business-auth-matrix.mjs <baseUrl>  (64/64 PASS, 2026-10-02).
+
+@businessToken = PASTE_BUSINESS_ACCESS_TOKEN
+@customerToken = PASTE_CUSTOMER_ACCESS_TOKEN
+@businessCookie = next-auth.session-token=PASTE_BUSINESS_WEB_SESSION_COOKIE
+
+### 17.1 Overview — bearer
+GET {{baseUrl}}/api/business-dashboard
+Authorization: Bearer {{businessToken}}
+
+### 17.1 Overview — web cookie
+GET {{baseUrl}}/api/business-dashboard
+Cookie: {{businessCookie}}
+
+### 17.1 Overview — customer bearer → 403 NOT_BUSINESS
+GET {{baseUrl}}/api/business-dashboard
+Authorization: Bearer {{customerToken}}
+
+### 17.2 Notifications — list, mark one, mark all (PATCH /api/notifications is new)
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{businessToken}}
+
+###
+PATCH {{baseUrl}}/api/notifications
+Authorization: Bearer {{businessToken}}
+
+### Expect: 200 { data: { updated: <n> }, unread_count: 0 }
+
+### 17.3 Clients — leak fix: an id that never booked with this business → 404
+GET {{baseUrl}}/api/clients/000000000000000000000000
+Authorization: Bearer {{businessToken}}
+
+### Expect: 404 { error: "Client not found" } (before: 200 with that user's name/email/phone)
+
+### 17.4 Deal redemptions — ownership fix: someone else's deal id → 404
+GET {{baseUrl}}/api/deals/redeem/single/PASTE_OTHER_BUSINESS_DEAL_ID
+Authorization: Bearer {{businessToken}}
+
+### Expect: 404 { message: "Deal not found" } (before: 200 with the redeemers' names/emails)
+
+### 17.5 Deal verify — field fix (uniqueKeys); case-insensitive
+POST {{baseUrl}}/api/deals/verify
+Authorization: Bearer {{businessToken}}
+Content-Type: application/json
+
+{ "uniqueKey": "wha-deal-paste_code_lowercase", "deal": "PASTE_DEAL_ID" }
+
+### Expect: 200 "Deal verified successfully!" for a pending code of this deal (before: always
+### 404 "Invalid code. No record found."); again → 400 "This code has already been verified."
+
+### 17.6 Review reply — only the review's own business
+POST {{baseUrl}}/api/review/reply/PASTE_REVIEW_ID_OF_ANOTHER_BUSINESS
+Authorization: Bearer {{businessToken}}
+Content-Type: application/json
+
+{ "reply": "test" }
+
+### Expect: 403 { error: "You can only reply to reviews of your own business" }
+
+### 17.7 Employee reads now scoped (were public)
+GET {{baseUrl}}/api/employees/PASTE_OTHER_BUSINESS_EMPLOYEE_ID
+Authorization: Bearer {{businessToken}}
+
+### Expect: 404 "Employee not found". Same for time-off / shift-overrides: only this
+### business's employees' records are returned; another business's employee_id → [].
+
+### 17.8 Booking verify — now requires the booking's customer or business
+GET {{baseUrl}}/api/bookings/verify?session_id=PASTE_STRIPE_SESSION_ID
+Authorization: Bearer {{customerToken}}
+
+### Expect: own booking → 200 { verified: ... }; someone else's → 404 "Booking not found".
+
+### 17.9 Push token (mobile envelope)
+POST {{baseUrl}}/api/mobile/v1/notifications/register-token
+Authorization: Bearer {{businessToken}}
+Content-Type: application/json
+
+{ "token": "ExponentPushToken[PASTE]", "platform": "android" }
+
+### Expect: 200 { data: { registered: true } }. Then create a booking for this business from a
+### customer account (or cancel/reschedule one as the customer) → the device gets a push.
+###
+DELETE {{baseUrl}}/api/mobile/v1/notifications/register-token
+Authorization: Bearer {{businessToken}}
+Content-Type: application/json
+
+{ "token": "ExponentPushToken[PASTE]" }
+
+### 17.10 Repeat c) with BOTH the bearer and the web cookie for every route below
+### (key in brackets; * = super-admin also allowed):
+### GET /api/business-dashboard [error] · GET /api/dashboard/search?q= [error]
+### GET|PATCH /api/notifications [error] · PATCH /api/notifications/:id [error]
+### GET /api/clients[?q=] [error] · GET /api/clients/:id [error]
+### POST /api/review/reply/:id [error] · PATCH /api/business/settings [message]
+### POST|GET /api/event [error] · PATCH /api/event/edit/:id* [error]
+### POST /api/event/archive/:id* [message] · GET /api/event/single-event-for-form/:id* [message]
+### GET /api/event/redeem/get-business [message] · POST /api/event/verify [message]
+### GET /api/event/verify/:id [message] · POST /api/event/verify/manual [message]
+### GET /api/event/ticket/purchase?eventId= [message] · POST /api/event/ticket/purchase/:id/send-invoice [message]
+### POST|GET /api/deals [error] · PATCH /api/deals/edit/:id [error] · POST /api/deals/delete/:id [error]
+### POST /api/deals/verify [message] · GET /api/deals/redeem/single/:id [message]
+### POST|GET /api/services [error] · GET|POST|DELETE* /api/services/single/:id [error]
+### POST /api/services/assign-employee [error] · GET|POST /api/categories [error]
+### GET|PATCH|DELETE /api/categories/:id [error] · POST|GET /api/employees [error]
+### GET|POST|DELETE /api/employees/:id [error] · PATCH /api/employees/:id/schedule [error]
+### GET|POST /api/employees/time-off [error] · DELETE /api/employees/time-off/:id [error]
+### GET|POST /api/employees/shift-overrides [error] · DELETE /api/employees/shift-overrides/:id [error]
+### PATCH /api/resources/:id/schedule [error] · GET|POST|DELETE /api/resources/overrides [error]
+### GET /api/bookings [message; web 401 body {success:false,code:"UNAUTHORIZED",message:"You must be logged in"}]
+### PATCH /api/bookings/:id [error] · PATCH /api/bookings/status [error] · GET /api/bookings/today [error]
+### GET /api/calendar/bookings [error] · POST /api/calendar/appointments [error]
+### Unchanged on purpose: POST /api/bookings (consumer booking), POST /api/event/ticket/purchase
+### (consumer/guest), /api/event/delete/:id (disabled server-side: always 500 "cannot delete").

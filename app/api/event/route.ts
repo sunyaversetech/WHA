@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { connectToDb } from "@/lib/db";
 import { uploadToS3 } from "@/server/lib/function";
 import Event from "@/server/models/Event.model";
@@ -9,11 +8,8 @@ import { generateSlug } from "./edit/[id]/route";
 export async function POST(req: NextRequest) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(req);
+    if (!auth.user) return auth.response;
 
     const formData = await req.formData();
 
@@ -154,7 +150,7 @@ export async function POST(req: NextRequest) {
       latitude,
       longitude,
 
-      user: (session.user as any).id,
+      user: auth.user.id,
     });
 
     return NextResponse.json(
@@ -167,16 +163,14 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectToDb();
 
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireBusinessUser(req);
+    if (!auth.user) return auth.response;
 
-    const myEvents = await Event.find({ user: (session.user as any).id })
+    const myEvents = await Event.find({ user: auth.user.id })
       .sort({
         createdAt: -1,
       })
