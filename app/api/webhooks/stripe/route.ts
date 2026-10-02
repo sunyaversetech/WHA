@@ -100,7 +100,7 @@ export async function POST(req: Request) {
 
   // Safety net for event ticket purchases: the client normally finalizes the sale
   // itself right after Stripe confirms payment (POST /api/event/ticket/purchase),
-  // but if the app closes/crashes/loses connectivity in that gap, the charge would
+  // but if the tab/app closes, crashes, or loses connectivity in that gap, the charge would
   // otherwise succeed with no tickets ever created. This runs the exact same
   // finalize logic (server/lib/eventTicketFinalize.ts) so whichever of the two
   // paths gets there first wins — EventTicketPurchase.paymentIntentId is unique,

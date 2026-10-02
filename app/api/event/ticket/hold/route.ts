@@ -51,6 +51,19 @@ export async function POST(req: Request) {
         const event = await Event.findById(eventId).session(dbSession);
         if (!event) throw new Error("EVENT_NOT_FOUND");
 
+        // Same per-booking cap priceEventTickets/finalizeEventTicketPurchase
+        // already enforce — without it here too, a client could skip pricing
+        // (or just send a bigger quantity directly to this route) and hold far
+        // more inventory than one checkout is allowed to, starving availability
+        // for everyone else for the length of the hold.
+        const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
+        const maxPerRequest = event.max_tickets_per_request || 10;
+        if (totalQuantity > maxPerRequest) {
+          throw new Error(
+            `You can book a maximum of ${maxPerRequest} tickets per request`,
+          );
+        }
+
         for (const { optionId, quantity } of items) {
           const option = event.options?.id(optionId);
           if (!option) throw new Error("OPTION_NOT_FOUND");

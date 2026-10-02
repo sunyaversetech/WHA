@@ -96,8 +96,9 @@ export async function POST(req: Request) {
     // must not fail just because that retry no longer has the original
     // session, once the purchase already exists. This also covers the case
     // where the Stripe webhook's payment_intent.succeeded handler already
-    // finalized this same purchase (e.g. the app closed right after paying) —
-    // whichever of the two got there first wins, this just returns its result.
+    // finalized this same purchase (e.g. the browser tab or app closed right
+    // after paying) — whichever of the two got there first wins, this just
+    // returns its result.
     const existingPurchase = await EventTicketPurchase.findOne({
       paymentIntentId,
     }).populate("event");

@@ -8,6 +8,7 @@ export interface IRedemption extends Document {
   uniqueKeys: string[];
   status: "pending" | "verified";
   verifiedAt?: Date;
+  paymentIntentId?: string;
 }
 
 const RedemptionSchema = new Schema<IRedemption>(
@@ -25,6 +26,10 @@ const RedemptionSchema = new Schema<IRedemption>(
     },
     status: { type: String, enum: ["pending", "verified"], default: "pending" },
     verifiedAt: { type: Date },
+    // Was previously passed to Redemption.create() but never declared on the
+    // schema, so Mongoose's default strict mode silently dropped it — every paid
+    // redemption's paymentIntentId was lost, making replay-protection impossible.
+    paymentIntentId: { type: String, index: true },
   },
   { timestamps: true },
 );
