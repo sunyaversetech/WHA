@@ -203,15 +203,16 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       endTime: "",
     };
 
-    // Editing only sends the fields the form actually manages — sold/used
-    // counters are maintained server-side by the purchase/redemption flows,
+    // Editing only sends the fields the form actually manages — sold/held/used
+    // counters are maintained server-side by the purchase/hold/redemption flows,
     // so they must be carried over from the existing document by _id or a
-    // full-array $set would silently reset them to their schema default.
+    // full-array $set would silently reset them to their schema default
+    // (resetting `held` would let active checkout holds be oversold).
     const mergedOptions = (validatedData.options || []).map((opt: any) => {
       const existing = opt._id
         ? (event.options || []).find((o: any) => o._id.toString() === opt._id)
         : null;
-      return { ...opt, sold: existing?.sold || 0 };
+      return { ...opt, sold: existing?.sold || 0, held: existing?.held || 0 };
     });
     const mergedPromoCodes = (validatedData.promo_codes || []).map(
       (promo: any) => {

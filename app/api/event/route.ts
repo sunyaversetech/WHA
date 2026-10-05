@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     const city = formData.get("city") as string;
     const community = formData.get("community") as string;
     const category = formData.get("category") as string;
+    const category_name = (formData.get("category_name") as string | null)?.trim() || "";
     const location = formData.get("location") as string;
     const location_tba = formData.get("location_tba") === "true";
     const email = formData.get("email") as string;
@@ -117,6 +118,7 @@ export async function POST(req: NextRequest) {
       community,
       slug,
       category,
+      category_name,
       image: uploadResult.Location,
 
       dateRange: {

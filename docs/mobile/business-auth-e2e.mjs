@@ -148,6 +148,8 @@ const optA = new ObjectId();
 ids.eventA = await ins("events", { latitude: -33.86, longitude: 151.2, geo: { type: "Point", coordinates: [151.2, -33.86] }, title: `E2E Event A ${TS}`, user: U.bizA, price_category: "paid", dateRange: { from: ymd(day(10)), to: ymd(day(11)) }, startTime: "18:00", endTime: "22:00", city: "Sydney", location: "Test venue", options: [{ _id: optA, name: "GA", price: 10, quantity: 100, sold: 4 }], max_tickets_per_request: 10 });
 ids.eventA2 = await ins("events", { latitude: -33.86, longitude: 151.2, geo: { type: "Point", coordinates: [151.2, -33.86] }, title: `E2E Event A2 ${TS}`, user: U.bizA, price_category: "free", dateRange: { from: ymd(day(20)), to: ymd(day(20)) }, options: [] });
 ids.eventA3 = await ins("events", { latitude: -33.86, longitude: 151.2, geo: { type: "Point", coordinates: [151.2, -33.86] }, title: `E2E Event A3 ${TS}`, user: U.bizA, price_category: "free", dateRange: { from: ymd(day(21)), to: ymd(day(21)) }, options: [] });
+const optHeld = new ObjectId();
+ids.eventHeld = await ins("events", { latitude: -33.86, longitude: 151.2, geo: { type: "Point", coordinates: [151.2, -33.86] }, title: `E2E Event Held ${TS}`, user: U.bizA, price_category: "paid", dateRange: { from: ymd(day(30)), to: ymd(day(30)) }, startTime: "10:00", venue: "Hall", location: "1 Test St", options: [{ _id: optHeld, name: "GA", release_date: ymd(day(0)), price: 15, capacity: 50, sold: 1, held: 2 }] });
 ids.eventB = await ins("events", { latitude: -33.86, longitude: 151.2, geo: { type: "Point", coordinates: [151.2, -33.86] }, title: `E2E Event B ${TS}`, user: U.bizB, price_category: "free", dateRange: { from: ymd(day(10)), to: ymd(day(10)) }, options: [] });
 const K = [1, 2, 3, 4].map((i) => `TKT${TS}-${i}`);
 ids.purchaseA = await ins("eventticketpurchases", { event: ids.eventA, user: U.user, business: U.bizA, items: [{ optionId: optA, optionName: "GA", quantity: 4, unitPrice: 10, uniqueKeys: K }], uniqueKeys: K, verifiedKeys: [], verifiedTimestamps: [], invoiceNumber: `E2E-${TS}`, ticketTotal: 40, serviceFee: 2, surcharge: 1.05, totalAmount: 43.05, paymentIntentId: `pi_e2e_${TS}`, status: "pending" });
@@ -173,7 +175,7 @@ ids.reviewB = await ins("reviews", { business_id: String(U.bizB), user: U.user, 
 ids.notifA1 = await ins("notifications", { business_id: String(U.bizA), type: "appointment", title: "Seed 1", body: "Seed", related_id: new ObjectId(), is_read: false });
 ids.notifA2 = await ins("notifications", { business_id: String(U.bizA), type: "appointment", title: "Seed 2", body: "Seed", related_id: new ObjectId(), is_read: false });
 const bookingBase = (n) => ({ business_id: String(U.bizA), service_id: ids.serviceA, user_id: U.user, employee_id: null, inventory_quantity: 1, start_time: day(n), end_time: new Date(day(n).getTime() + 3600_000), duration: 60, total_price: 50, currency: "AUD", payment_status: "pending", status: "confirmed" });
-ids.bookingVerify = await ins("bookings", { ...bookingBase(3), stripe_session_id: `cs_e2e_${TS}` });
+ids.bookingVerify = await ins("bookings", { ...bookingBase(3), employee_id: ids.empA, stripe_session_id: `cs_e2e_${TS}` });
 ids.bookingCancel = await ins("bookings", bookingBase(4));
 console.log("seeded:", Object.keys(ids).length, "documents");
 
@@ -321,6 +323,14 @@ r = await http("POST", "/api/business/operating-hours", { json: { is24_7: true, 
   const hoursA = await db.collection("operatinghours").countDocuments({ business_id: U.bizA });
   check("fix: operating-hours wrote the signed-in business, ignored body.business_id", hoursA === 1 && hoursB === 0, `A=${hoursA} B=${hoursB}`);
 }
+{
+  const form = { title: `E2E Event Held ${TS}`, description: "Held counter regression test", category: "Concert", dateRange: JSON.stringify({ from: ymd(day(30)), to: ymd(day(30)) }), startTime: "10:00", location_tba: "false", venue: "Hall", location: "1 Test St", price_category: "paid", options: JSON.stringify([{ _id: String(optHeld), name: "GA", release_date: ymd(day(0)), close_date: "", price: "18", capacity: "60" }]), promo_codes: "[]", max_tickets_per_request: "10", show_remaining_tickets: "true", image: "https://example.com/e2e.png" };
+  r = await http("PATCH", `/api/event/edit/${ids.eventHeld}`, { bearer: T.bizA, form });
+  const opt = (await db.collection("events").findOne({ _id: ids.eventHeld }))?.options?.find((o) => String(o._id) === String(optHeld));
+  check("fix: event edit keeps options[].held (and sold) by _id", r.status === 200 && opt?.held === 2 && opt?.sold === 1 && opt?.price === 18, `${short(r)} held=${opt?.held} sold=${opt?.sold}`);
+}
+r = await http("GET", "/api/business-dashboard", { bearer: T.bizA });
+check("fix: business-dashboard populates employee_id.full_name", r.status === 200 && r.data?.data?.upcomingBookings?.some((b) => b.employee_id?.full_name === "E2E Employee A"), short(r));
 r = await http("GET", `/api/event/verify/${ids.eventA}`, { bearer: T.bizA }); check("event attendees for own event → 200 with rows", r.status === 200 && r.data?.data?.length === K.length, short(r));
 
 // ── 6. push: register token, then new booking + customer cancel ────────────

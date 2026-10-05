@@ -31,6 +31,7 @@ export async function GET(req: Request) {
         })
           .populate("service_id", "name base_price")
           .populate("user_id", "name email")
+          .populate("employee_id", "full_name")
           .sort({ start_time: -1 })
           .lean(),
         Booking.find({
@@ -40,6 +41,7 @@ export async function GET(req: Request) {
         })
           .populate("service_id", "name base_duration base_price")
           .populate("user_id", "name email")
+          .populate("employee_id", "full_name")
           .sort({ start_time: 1 })
           .limit(10)
           .lean(),
@@ -50,6 +52,7 @@ export async function GET(req: Request) {
         })
           .populate("service_id", "name base_duration base_price")
           .populate("user_id", "name email")
+          .populate("employee_id", "full_name")
           .sort({ start_time: 1 })
           .lean(),
       ],
