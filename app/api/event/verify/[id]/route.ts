@@ -2,14 +2,28 @@ import { requireBusinessUser } from "@/server/lib/businessAuth";
 import { connectToDb } from "@/lib/db";
 import { EventRedemption } from "@/server/models/EventCodeRemtion.model";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
+import Event from "@/server/models/Event.model";
+import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request, { params }: any) {
   try {
     await connectToDb();
     const { id } = await params;
-    const auth = await requireBusinessUser(req, { messageKey: "message" });
+    const auth = await requireBusinessUser(req, {
+      messageKey: "message",
+      allowSuperAdmin: true,
+    });
     if (!auth.user) return auth.response;
+
+    // Attendee names and codes are visible only to the event's own business.
+    const event = mongoose.Types.ObjectId.isValid(id)
+      ? await Event.findById(id).select("user").lean<{ user?: unknown }>()
+      : null;
+    const isOwner = !!event && String(event.user) === auth.user.id;
+    if (!event || (!isOwner && auth.user.category !== "super-admin")) {
+      return NextResponse.json({ message: "Event not found" }, { status: 404 });
+    }
 
     const redemptions = await EventRedemption.find({ event: id })
       .populate("user", { _id: 1, name: 1 })

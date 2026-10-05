@@ -1,19 +1,15 @@
 import { NextResponse } from "next/server";
 import { OperatingHours } from "@/server/models/OperatingHour.model";
 import { connectToDb } from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireBusinessUser } from "@/server/lib/businessAuth";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectToDb();
-    const session = await getServerSession(authOptions);
+    const auth = await requireBusinessUser(req);
+    if (!auth.user) return auth.response;
 
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const currentUserId = (session.user as any).id;
+    const currentUserId = auth.user.id;
     const hours = await OperatingHours.findOne({ business_id: currentUserId });
 
     if (!hours) {
@@ -32,10 +28,13 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     await connectToDb();
+    const auth = await requireBusinessUser(req);
+    if (!auth.user) return auth.response;
     const body = await req.json();
 
+    // The signed-in business only — body.business_id is ignored.
     const updatedHours = await OperatingHours.findOneAndUpdate(
-      { business_id: body.business_id },
+      { business_id: auth.user.id },
       {
         is24_7: body.is24_7,
         schedule: body.schedule,

@@ -241,6 +241,14 @@ Cookie: next-auth.session-token=PASTE_WEB_SESSION_COOKIE_HERE
 ### <key> is the route's existing error field ("error" or "message", listed below).
 ### Blocked/deleted accounts are now rejected on BOTH paths (getAuthUser re-reads the user).
 ### a) + b) are automated: node docs/mobile/business-auth-matrix.mjs <baseUrl>  (64/64 PASS, 2026-10-02).
+### c) + d) + every fix check + push are automated against the wha_test database ONLY:
+###   node docs/mobile/business-auth-e2e.mjs <baseUrl>   (167/167 PASS, 2026-10-05)
+### It refuses to run unless MONGODB_URL points at wha_test, creates its own throwaway
+### accounts (2 businesses + 1 customer), logs in for a real bearer token AND a real web
+### session cookie, seeds events/deals/bookings directly (no S3 uploads), and checks:
+### every route with bearer + cookie, customer → 403 on every route, business B can't see
+### business A's data, operating-hours ignores body.business_id, and the Expo push calls
+### (fake tokens get pruned as DeviceNotRegistered, proving the push was sent).
 
 @businessToken = PASTE_BUSINESS_ACCESS_TOKEN
 @customerToken = PASTE_CUSTOMER_ACCESS_TOKEN
