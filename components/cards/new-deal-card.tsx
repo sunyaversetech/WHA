@@ -80,7 +80,7 @@ export default function NewDealCard({ deal }: { deal: DealsGetValues }) {
       <div className="relative h-42 w-full">
         <Image
           src={deal.image || "/placeholder.svg"}
-          alt="Deal Banner"
+          alt={deal.title}
           fill
           className="object-cover"
         />

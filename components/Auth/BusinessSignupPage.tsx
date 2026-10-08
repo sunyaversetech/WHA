@@ -1298,7 +1298,11 @@ function StepImages({
               key={i}
               className="relative aspect-4/3 rounded-xl overflow-hidden border border-slate-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="w-full h-full object-cover" />
+              <img
+                src={src}
+                alt={`Uploaded photo preview ${i + 1}`}
+                className="w-full h-full object-cover"
+              />
               <button
                 type="button"
                 onClick={() => onRemove(i)}
