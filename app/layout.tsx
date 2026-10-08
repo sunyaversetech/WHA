@@ -2,6 +2,7 @@ import { type Metadata } from "next";
 
 import { Inter, Quicksand } from "next/font/google";
 import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seo";
+import JsonLd from "@/components/SEO/JsonLd";
 import "./globals.css";
 import SessionWrapper from "@/components/Auth/SessionWrapper";
 import ReactQueryContext from "@/lib/ReactQueryContext";
@@ -66,6 +67,25 @@ export const metadata: Metadata = {
   },
 };
 
+const ORGANIZATION_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}/wha/logo2.png`,
+  sameAs: [
+    "https://www.instagram.com/whatshappening_australia",
+    "https://www.facebook.com/whatshappeningaustralia",
+  ],
+};
+
+const WEBSITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  url: SITE_URL,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -76,6 +96,8 @@ export default function RootLayout({
       <body
         className={`${quicksand.variable} ${inter.variable} ${quicksand.className} antialiased bg-background overflow-y-scroll overflow-x-hidden`}
       >
+        <JsonLd data={ORGANIZATION_JSON_LD} />
+        <JsonLd data={WEBSITE_JSON_LD} />
         <ReactQueryContext>
           <CityFilterProvider>
             <SessionWrapper>
