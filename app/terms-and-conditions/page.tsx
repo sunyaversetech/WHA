@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Terms and Conditions",
   description:
     "The general terms and conditions governing use of the What’s Happening Australia (WHA) booking marketplace platform.",
+  alternates: { canonical: "/terms-and-conditions" },
 };
 
 export default function TermsAndConditionsPage() {
