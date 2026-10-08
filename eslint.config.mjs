@@ -10,6 +10,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Standalone CommonJS maintenance scripts, run directly with `node`
+    // outside the app's module system/path aliases — not part of the
+    // Next.js app's TypeScript/ESM codebase these rules target.
+    "scripts/**",
   ]),
   {
     rules: {
