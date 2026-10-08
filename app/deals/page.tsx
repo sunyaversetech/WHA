@@ -1,8 +1,10 @@
 import DealsPageClient from "@/components/Deal/DealsPageClient";
 
 export const metadata = {
-  title: "Deals | What's Happening Canberra",
-  description: "Find the best deals from Nepali businesses in Canberra",
+  title: "Deals",
+  description:
+    "Find the best deals and offers from Nepali-owned businesses across Australia.",
+  alternates: { canonical: "/deals" },
 };
 
 export default function DealsPage() {

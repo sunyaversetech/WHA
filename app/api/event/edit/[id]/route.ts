@@ -5,14 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import Event from "@/server/models/Event.model";
 import { uploadToS3, deleteFromS3 } from "@/server/lib/function";
+import { generateSlug } from "@/server/lib/slug";
 
-export function generateSlug(title: string) {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "")
-    .trim()
-    .replace(/\s+/g, "");
-}
+export { generateSlug };
 
 export const eventSchema = z.object({
   _id: z.string().optional(),

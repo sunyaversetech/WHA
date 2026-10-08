@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import LegalLayout from "@/components/Legal/LegalLayout";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | What’s Happening Australia",
+  title: "Terms of Service",
   description:
     "The booking and marketplace terms that apply when Users book services and Business Partners list services on What’s Happening Australia (WHA).",
+  alternates: { canonical: "/terms-of-service" },
 };
 
 export default function TermsOfServicePage() {

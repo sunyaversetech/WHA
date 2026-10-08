@@ -35,7 +35,7 @@ export function isTicketPast(item: any): boolean {
 
 export function getSourceHref(item: any): string | null {
   if (item?.event?.slug) return `/events/${item.event.slug}`;
-  if (item?.deal?._id) return `/deals/${item.deal._id}`;
+  if (item?.deal?._id) return `/deals/${item.deal.slug || item.deal._id}`;
   return null;
 }
 

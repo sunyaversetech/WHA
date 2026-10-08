@@ -6,6 +6,7 @@ import { Deal } from "@/server/models/DealSchema.model";
 import { Redemption } from "@/server/models/CouponCodeRedemtion.model";
 
 import { uploadToS3 } from "@/server/lib/function";
+import { generateSlug } from "@/server/lib/slug";
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
 
     const newDeal = await Deal.create({
       title,
+      slug: generateSlug(title),
       valid_till: new Date(valid_till),
       category,
       discount_percentage,

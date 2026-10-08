@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -19,7 +20,12 @@ import {
 } from "lucide-react";
 import { useGetSingleBusiness } from "@/services/business.service";
 import BusinessReviewSection from "@/components/Business/Comment";
-import MapComponent from "./Map";
+
+// Leaflet needs `window` and is a meaningful chunk of JS for a below-the-
+// fold map — loaded only on the client, same pattern already used by the
+// business LISTING page's map (components/Business/SearchMap.tsx), instead
+// of bloating every business profile page's initial bundle.
+const MapComponent = dynamic(() => import("./Map"), { ssr: false });
 import { useGetReview } from "@/services/review.service";
 import {
   useCreateFavroite,
@@ -1112,7 +1118,7 @@ export default function BusinessPage() {
                   gap: 6,
                   flexWrap: "wrap",
                 }}>
-                <h1
+                <p
                   style={{
                     fontSize: 22,
                     fontWeight: 800,
@@ -1121,7 +1127,7 @@ export default function BusinessPage() {
                     margin: 0,
                   }}>
                   {name}
-                </h1>
+                </p>
                 {biz?.verified && (
                   <BadgeCheck size={20} fill={T.blue} color={T.white} />
                 )}

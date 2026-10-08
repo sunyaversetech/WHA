@@ -3,6 +3,7 @@ import User from "@/server/models/Auth.model";
 import EmailVerification from "@/server/models/EmailVerification.model";
 import bcrypt from "bcryptjs";
 import { uploadToS3 } from "@/server/lib/function";
+import { generateSlug } from "@/server/lib/slug";
 
 // Extracted verbatim (not re-derived) from the near-identical bodies of the existing
 // app/api/auth/user/signup and app/api/auth/business/signup routes, which now both
@@ -159,6 +160,7 @@ export async function createCredentialsAccount(
       password: hashedPassword,
       category: "business",
       business_name,
+      slug: generateSlug(business_name),
       business_type: business_type || undefined,
       business_category,
       phone_number: phone_number || undefined,
