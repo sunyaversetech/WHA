@@ -21,9 +21,7 @@ import {
 import EventCheckOut, { PurchasableOption } from "../Stripe/EventCheckOut";
 import Image from "next/image";
 import { format, formatDate, parse } from "date-fns";
-import { MapContainer, Marker, TileLayer } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
@@ -39,6 +37,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import EventDetailsSkeleton from "./SingleEventSkeleton";
 import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
 
+// Leaflet needs `window` and is a meaningful chunk of JS for a below-the-
+// fold map — loaded only on the client, same as the listing page's map
+// (components/Event/Event-map.tsx), instead of bloating every event page's
+// initial bundle.
+const EventLocationMap = dynamic(() => import("./EventLocationMap"), {
+  ssr: false,
+});
+
 export default function EventDetailPage() {
   const param = useParams();
   const awaitedParams = param as { id: string };
@@ -53,12 +59,6 @@ export default function EventDetailPage() {
     refetch: refetchEvent,
   } = useGetSingleEvent(slug);
   const queryClient = useQueryClient();
-  const DefaultIcon = L.icon({
-    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-  });
 
   const [redemptionResult, setRedemptionResult] = useState<{
     success: boolean;
@@ -796,34 +796,11 @@ export default function EventDetailPage() {
 
                   {event?.data?.latitude && event?.data?.longitude && (
                     <div className="h-[200px] md:h-[400px] z-20 w-full rounded-lg overflow-hidden">
-                      <MapContainer
-                        center={[event.data.latitude, event.data.longitude]}
-                        zoom={13}
-                        scrollWheelZoom={false}
-                        className="h-full w-full z-20">
-                        <TileLayer
-                          attribution="&copy; OpenStreetMap contributors"
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-
-                        <Marker
-                          position={[
-                            event?.data?.latitude,
-                            event?.data?.longitude,
-                          ]}
-                          icon={DefaultIcon}
-                          eventHandlers={{
-                            click: () => {
-                              window.open(
-                                `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                  event.data.location,
-                                )}`,
-                                "_blank",
-                              );
-                            },
-                          }}
-                        />
-                      </MapContainer>
+                      <EventLocationMap
+                        latitude={event.data.latitude}
+                        longitude={event.data.longitude}
+                        location={event.data.location}
+                      />
                     </div>
                   )}
 
