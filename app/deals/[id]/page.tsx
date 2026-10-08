@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { cache } from "react";
-import mongoose from "mongoose";
 import { connectToDb } from "@/lib/db";
 import { Deal } from "@/server/models/DealSchema.model";
 import { absoluteUrl, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { slugOrIdFilter } from "@/server/lib/slug";
 import JsonLd from "@/components/SEO/JsonLd";
 import DealDetailPage from "@/components/Deal/SingleDealPage";
 
@@ -15,12 +15,12 @@ function truncate(text: string, max: number) {
 }
 
 // cache() dedupes this within a single request, so generateMetadata and the
-// page body both calling it only hits the DB once.
+// page body both calling it only hits the DB once. Accepts either the new
+// slug or a legacy raw id (see slugOrIdFilter).
 const getDeal = cache(async (id: string) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
   await connectToDb();
-  return Deal.findById(id)
-    .select("title description city discount_percentage price image valid_till")
+  return Deal.findOne(slugOrIdFilter(id))
+    .select("slug title description city discount_percentage price image valid_till")
     .populate("user", "business_name")
     .lean<any>();
 });
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${deal.title}${deal.city ? ` in ${deal.city}` : ""}. Redeem this deal on What's Happening Australia.`,
     160,
   );
-  const url = absoluteUrl(`/deals/${id}`);
+  const url = absoluteUrl(`/deals/${deal.slug || id}`);
   const image = deal.image ? { url: deal.image, alt: deal.title } : DEFAULT_OG_IMAGE;
   const expired = deal.valid_till && new Date(deal.valid_till) < new Date();
 
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const { id } = await params;
   const deal = await getDeal(id);
-  const url = absoluteUrl(`/deals/${id}`);
+  const url = deal ? absoluteUrl(`/deals/${deal.slug || id}`) : absoluteUrl(`/deals/${id}`);
 
   if (!deal) {
     return <DealDetailPage params={{ id }} />;

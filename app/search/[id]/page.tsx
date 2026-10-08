@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       }. Find details, deals and events on What's Happening Australia.`,
     160,
   );
-  const canonicalUrl = absoluteUrl(`/businesses/${id}`);
+  const canonicalUrl = absoluteUrl(`/businesses/${business.slug || id}`);
   const image = business.image
     ? { url: business.image, alt: business.business_name }
     : DEFAULT_OG_IMAGE;

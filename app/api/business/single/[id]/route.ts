@@ -8,24 +8,38 @@ import { Review } from "@/server/models/Review.model";
 import { Service } from "@/server/models/Service.model";
 import { NextRequest, NextResponse } from "next/server";
 import { PUBLIC_BUSINESS_FIELDS } from "@/server/lib/publicUserFields";
+import { slugOrIdFilter } from "@/server/lib/slug";
 
 type Props = { params: Promise<{ id: string }> };
 export async function GET(req: NextRequest, { params }: Props) {
   try {
     await connectToDb();
     const { id } = await params;
-    const searchRegex = id.split("").join("\\s*");
-    const business = await User.findOne(
-      {
-        business_name: {
-          $regex: `^${searchRegex}$`,
-          $options: "i",
-        },
-      },
+
+    // Preferred path: the persisted slug (indexed) or a raw ObjectId.
+    let business = await User.findOne(
+      { category: "business", ...slugOrIdFilter(id) },
       PUBLIC_BUSINESS_FIELDS,
     )
       .sort({ createdAt: -1 })
       .lean();
+
+    // Safety net for any business somehow missing a slug (pre-backfill, or a
+    // gap in it) — falls back to the original fuzzy name match.
+    if (!business) {
+      const searchRegex = id.split("").join("\\s*");
+      business = await User.findOne(
+        {
+          business_name: {
+            $regex: `^${searchRegex}$`,
+            $options: "i",
+          },
+        },
+        PUBLIC_BUSINESS_FIELDS,
+      )
+        .sort({ createdAt: -1 })
+        .lean();
+    }
 
     const event = await Event.find({
       user: business._id,

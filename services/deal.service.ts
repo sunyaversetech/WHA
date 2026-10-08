@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 
 export type DealsGetValues = {
   _id: string;
+  slug?: string;
   title: string;
   current_redemptions: number;
   max_redemptions: number;

@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { Deal } from "@/server/models/DealSchema.model";
 import { uploadToS3, deleteFromS3 } from "@/server/lib/function";
+import { generateSlug } from "@/server/lib/slug";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -95,10 +96,13 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
 
     const validatedData = dealSchema.partial().parse(rawData);
 
-    const updatePayload = {
+    const updatePayload: Record<string, any> = {
       ...validatedData,
       image: finalImageUrl,
     };
+    if (validatedData.title) {
+      updatePayload.slug = generateSlug(validatedData.title);
+    }
 
     const updatedDeal = await Deal.findByIdAndUpdate(
       dealId,

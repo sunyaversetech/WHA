@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       }. Find details, deals and events on What's Happening Australia.`,
     160,
   );
-  const url = absoluteUrl(`/businesses/${id}`);
+  const url = absoluteUrl(`/businesses/${business.slug || id}`);
   const image = business.image
     ? { url: business.image, alt: business.business_name }
     : DEFAULT_OG_IMAGE;
@@ -68,11 +68,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const { id } = await params;
   const business = await getBusiness(id);
-  const url = absoluteUrl(`/businesses/${id}`);
 
   if (!business || business.isblocked || business.deletedAt) {
     return <BusinessPage />;
   }
+
+  const url = absoluteUrl(`/businesses/${business.slug || id}`);
 
   const place = business.city_name || business.location || business.city;
 

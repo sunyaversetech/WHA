@@ -66,6 +66,14 @@ const UserSchema = new Schema(
     // key error. This affected the existing web guest-checkout flow identically,
     // not just the new mobile /auth/guest endpoint.
     business_name: { type: String, unique: true, sparse: true },
+    // Derived from business_name at creation time (see server/lib/slug.ts).
+    // No `unique` constraint — business_name's own uniqueness makes a slug
+    // collision rare (only when two distinct names collapse to the same
+    // alphanumeric string), and this mirrors Event.slug's existing,
+    // already-accepted convention rather than introducing a new creation-
+    // failure mode for that edge case. `index` (not sparse+unique) is enough
+    // for the lookup speed this exists for.
+    slug: { type: String, index: true },
     business_type: {
       type: String,
       enum: ["employee_based", "item_based"],

@@ -10,6 +10,8 @@ import { SITE_URL } from "@/lib/seo";
 export const revalidate = 3600;
 
 const slugify = (s: string) => s?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
+// Pre-backfill safety net: a deal/business created before the slug field
+// existed and not yet covered by scripts/backfill-slugs.js.
 
 const STATIC_ROUTES = [
   { url: "", changeFrequency: "daily", priority: 1 },
@@ -27,10 +29,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const [events, deals, businesses] = await Promise.all([
     Event.find({ archived: { $ne: true } }, "slug updatedAt").lean(),
-    Deal.find({ valid_till: { $gte: new Date() } }, "_id updatedAt").lean(),
+    Deal.find({ valid_till: { $gte: new Date() } }, "_id slug title updatedAt").lean(),
     User.find(
       { category: "business", isblocked: { $ne: true }, deletedAt: null },
-      "business_name updatedAt",
+      "business_name slug updatedAt",
     ).lean(),
   ]);
 
@@ -44,7 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
   const dealEntries: MetadataRoute.Sitemap = deals.map((d: any) => ({
-    url: `${SITE_URL}/deals/${d._id}`,
+    url: `${SITE_URL}/deals/${d.slug || slugify(d.title) || d._id}`,
     lastModified: d.updatedAt,
     changeFrequency: "weekly",
     priority: 0.7,
@@ -53,7 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const businessEntries: MetadataRoute.Sitemap = businesses
     .filter((b: any) => b.business_name)
     .map((b: any) => ({
-      url: `${SITE_URL}/businesses/${slugify(b.business_name)}`,
+      url: `${SITE_URL}/businesses/${b.slug || slugify(b.business_name)}`,
       lastModified: b.updatedAt,
       changeFrequency: "weekly",
       priority: 0.6,

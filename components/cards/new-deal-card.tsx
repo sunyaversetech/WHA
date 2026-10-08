@@ -55,7 +55,7 @@ export default function NewDealCard({ deal }: { deal: DealsGetValues }) {
   return (
     <Card
       className="w-full max-w-sm overflow-hidden cursor-pointer hover:shadow-lg transition-all p-0"
-      onClick={() => router.push(`/deals/${deal._id}`)}>
+      onClick={() => router.push(`/deals/${deal.slug || deal._id}`)}>
       <div className="flex relative top-3 z-999 items-start justify-between gap-3">
         <h3 className="flex gap-2 text-base items-center font-bold p-2 bg-black/30 rounded-md text-gray-900 leading-snug line-clamp-1">
           <Tag size={15} /> {deal.category}

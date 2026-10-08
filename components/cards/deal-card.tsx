@@ -52,7 +52,7 @@ export default function DealCard({ deal }: { deal: DealsGetValues }) {
   return (
     <article
       className="relative block cursor-pointer group"
-      onClick={() => router.push(`/deals/${deal._id}`)}>
+      onClick={() => router.push(`/deals/${deal.slug || deal._id}`)}>
 
       {/* Discount badge */}
       {deal.discount_percentage > 0 && (

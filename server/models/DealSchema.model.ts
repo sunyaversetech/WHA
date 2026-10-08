@@ -2,6 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 export interface IDeal {
   title: string;
+  slug?: string;
   valid_till: Date;
   deals_for: string;
   description: string;
@@ -20,6 +21,12 @@ export interface IDeal {
 const DealSchema = new Schema<IDeal>(
   {
     title: { type: String, required: true },
+    // No `unique` constraint, deliberately — matches Event.slug's existing
+    // convention (plain lowercase/alphanumeric, no collision suffix). A
+    // collision here is no worse than the pre-existing risk in Event's own
+    // slug lookup or the business fuzzy-name match; not introducing new
+    // behavior, just extending the same established pattern.
+    slug: { type: String, index: true },
     valid_till: {
       type: Date,
       required: true,
