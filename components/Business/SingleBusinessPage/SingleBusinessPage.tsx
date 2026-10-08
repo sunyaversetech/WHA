@@ -1112,7 +1112,7 @@ export default function BusinessPage() {
                   gap: 6,
                   flexWrap: "wrap",
                 }}>
-                <h1
+                <p
                   style={{
                     fontSize: 22,
                     fontWeight: 800,
@@ -1121,7 +1121,7 @@ export default function BusinessPage() {
                     margin: 0,
                   }}>
                   {name}
-                </h1>
+                </p>
                 {biz?.verified && (
                   <BadgeCheck size={20} fill={T.blue} color={T.white} />
                 )}

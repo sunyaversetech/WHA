@@ -897,6 +897,9 @@ export default function BusinessesClientPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#fff" }}>
+      <h1 className="sr-only">
+        Local Businesses {isNearMe ? "Near You" : `in ${cityLabel}`}
+      </h1>
       {/* Spacer below sticky header — desktop only (mobile navbar is hidden on this page) */}
       <div className="hidden md:block pt-[88px]" />
 

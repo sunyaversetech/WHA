@@ -607,11 +607,11 @@ export default function EventDetailPage() {
               <div className="lg:col-span-1 order-2 md:order-2">
                 <div className="sticky top-30">
                   <div className="card p-5 md:p-6 rounded-md border border-gray-300 shadow-md space-y-4">
-                    <h1 className="text-xl font-bold text-gray-800">
+                    <p className="text-xl font-bold text-gray-800">
                       {event?.data?.title
                         ?.toLowerCase()
                         .replace(/\b\w/g, (c) => c.toUpperCase())}
-                    </h1>
+                    </p>
 
                     {event?.data?.price_category === "registration" && (
                       <p

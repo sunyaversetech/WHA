@@ -22,6 +22,7 @@ export default function DealsPageClient() {
 
   return (
     <div className="flex flex-col min-h-screen pt-[148px] md:pt-[88px]">
+      <h1 className="sr-only">Deals in {cityLabel}</h1>
 
       {/* ── Toolbar ── */}
       <div className="sticky top-[76px] md:top-[156px] z-40 bg-white border-b border-border px-4 md:px-6 py-3 flex items-center justify-between gap-3">
