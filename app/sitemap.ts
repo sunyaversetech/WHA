@@ -25,16 +25,33 @@ const STATIC_ROUTES = [
 ] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  await connectToDb();
+  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((entry) => ({
+    ...entry,
+    url: `${SITE_URL}${entry.url}`,
+  }));
 
-  const [events, deals, businesses] = await Promise.all([
-    Event.find({ archived: { $ne: true } }, "slug updatedAt").lean(),
-    Deal.find({ valid_till: { $gte: new Date() } }, "_id slug title updatedAt").lean(),
-    User.find(
-      { category: "business", isblocked: { $ne: true }, deletedAt: null },
-      "business_name slug updatedAt",
-    ).lean(),
-  ]);
+  // connectToDb() swallows its own connection errors instead of throwing
+  // (lib/db.ts) — a transient DB hiccup otherwise surfaces as an uncaught
+  // Mongoose buffering-timeout error here, which previously crashed the
+  // *entire build* (this route is statically generated). Degrade to just
+  // the static routes rather than fail the whole sitemap/deploy.
+  let events: any[] = [];
+  let deals: any[] = [];
+  let businesses: any[] = [];
+  try {
+    await connectToDb();
+    [events, deals, businesses] = await Promise.all([
+      Event.find({ archived: { $ne: true } }, "slug updatedAt").lean(),
+      Deal.find({ valid_till: { $gte: new Date() } }, "_id slug title updatedAt").lean(),
+      User.find(
+        { category: "business", isblocked: { $ne: true }, deletedAt: null },
+        "business_name slug updatedAt",
+      ).lean(),
+    ]);
+  } catch (err) {
+    console.error("sitemap: DB fetch failed, falling back to static routes only", err);
+    return staticEntries;
+  }
 
   const eventEntries: MetadataRoute.Sitemap = events
     .filter((e: any) => e.slug)
@@ -60,11 +77,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.6,
     }));
-
-  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((entry) => ({
-    ...entry,
-    url: `${SITE_URL}${entry.url}`,
-  }));
 
   return [...staticEntries, ...eventEntries, ...dealEntries, ...businessEntries];
 }

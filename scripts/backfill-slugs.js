@@ -44,8 +44,8 @@ async function run() {
   if (dbName !== "wha_test" && !process.env.I_UNDERSTAND_THIS_IS_PRODUCTION) {
     throw new Error(
       `Refusing to run against "${dbName}" — this looks like it might not be wha_test. ` +
-        `Set I_UNDERSTAND_THIS_IS_PRODUCTION=1 to proceed anyway once you've verified the ` +
-        `connection string is intentional.`,
+      `Set I_UNDERSTAND_THIS_IS_PRODUCTION=1 to proceed anyway once you've verified the ` +
+      `connection string is intentional.`,
     );
   }
 

@@ -15,17 +15,33 @@ function truncate(text: string, max: number) {
 
 // cache() dedupes this within a single request, so generateMetadata and the
 // page body both calling it only hits the DB once.
+//
+// connectToDb() swallows its own connection errors instead of throwing
+// (lib/db.ts) — a transient DB hiccup otherwise surfaces as an uncaught
+// Mongoose buffering-timeout error here and takes down the whole page with
+// a 500, even though this is an SEO/metadata enhancement layered on top of
+// a page whose real content comes from the client component's own fetch.
 const getBusiness = cache(async (id: string) => {
-  await connectToDb();
-  return resolveBusinessBySlugOrId(id);
+  try {
+    await connectToDb();
+    return await resolveBusinessBySlugOrId(id);
+  } catch (err) {
+    console.error(`getBusiness(${id}): DB fetch failed, degrading gracefully`, err);
+    // undefined (DB error) vs null (query ran, no such business) —
+    // generateMetadata only noindexes the genuine case, not a transient hiccup.
+    return undefined;
+  }
 });
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const business = await getBusiness(id);
 
-  if (!business || business.isblocked || business.deletedAt) {
+  if (business === null || business?.isblocked || business?.deletedAt) {
     return { title: "Business not found", robots: { index: false, follow: false } };
+  }
+  if (!business) {
+    return {};
   }
 
   const place = business.city_name || business.location || business.city;
