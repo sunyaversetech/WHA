@@ -21,10 +21,8 @@ import {
   User,
   CreditCard,
 } from "lucide-react";
-import {
-  getEventTicketPaymentIntent,
-  type EventTicketPricing,
-} from "@/app/actions/eventTicketStripe";
+import { getEventTicketPaymentIntent } from "@/app/actions/eventTicketStripe";
+import type { EventTicketPricing } from "@/server/lib/eventTicketPricing";
 import { useHoldTickets, useReleaseTicketHold } from "@/services/event.service";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";

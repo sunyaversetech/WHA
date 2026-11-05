@@ -5,11 +5,8 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import {
   priceEventTickets,
   type CartItemInput,
-  type PricedItem,
   type EventTicketPricing,
 } from "@/server/lib/eventTicketPricing";
-
-export type { PricedItem, EventTicketPricing };
 
 export async function getEventTicketPaymentIntent(
   eventId: string,
