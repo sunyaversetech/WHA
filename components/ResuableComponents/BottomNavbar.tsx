@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Home, Search, Calendar, User } from "lucide-react";
+import { Search, Calendar, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 
+// "/" now renders the same content as "/search" (it's the home page), so a
+// separate "Home" tab here would just duplicate the "Search" tab.
 const NAV_LINKS = (isLoggedIn: boolean) => [
-  { name: "Home",     path: "/",                                            icon: Home     },
   { name: "Search",   path: "/search",                                     icon: Search   },
   { name: "Activity", path: isLoggedIn ? "/activity" : "/auth",            icon: Calendar },
   { name: "Profile",  path: isLoggedIn ? "/dashboard" : "/auth",           icon: User     },
@@ -21,8 +22,12 @@ export default function BottomNav() {
   const buildPath = (href: string) =>
     currentCity ? `${href}?city=${currentCity}` : href;
 
+  // "/" renders the same content as "/search" (it's the home page now), so
+  // the Search tab should read as active on either URL.
   const isActive = (path: string) =>
-    path === "/" ? pathname === "/" : pathname.startsWith(path);
+    path === "/search"
+      ? pathname === "/" || pathname.startsWith("/search")
+      : pathname.startsWith(path);
 
   const links = NAV_LINKS(!!session);
 
