@@ -4,7 +4,9 @@ export const metadata = {
   title: "Local Businesses",
   description:
     "Discover Nepali-owned local businesses near you, across Australia.",
-  alternates: { canonical: "/search" },
+  // Same content now also renders at "/" (the home page) — canonicalize to
+  // there instead of creating duplicate-content signals for Google.
+  alternates: { canonical: "/" },
 };
 
 export default function BusinessesPage() {
