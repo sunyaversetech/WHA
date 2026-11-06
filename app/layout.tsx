@@ -94,8 +94,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${quicksand.variable} ${inter.variable} ${quicksand.className} antialiased bg-background overflow-y-scroll overflow-x-hidden`}
-      >
+        className={`${quicksand.variable} ${inter.variable} ${quicksand.className} antialiased bg-background overflow-y-scroll overflow-x-hidden`}>
         <JsonLd data={ORGANIZATION_JSON_LD} />
         <JsonLd data={WEBSITE_JSON_LD} />
         <ReactQueryContext>

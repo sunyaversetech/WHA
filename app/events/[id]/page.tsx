@@ -15,22 +15,43 @@ function truncate(text: string, max: number) {
 
 // cache() dedupes this within a single request, so generateMetadata and the
 // page body both calling it only hits the DB once.
+//
+// connectToDb() swallows its own connection errors instead of throwing
+// (lib/db.ts), so a transient DB hiccup leaves the connection not actually
+// ready and the query below fails on its own (Mongoose's buffering-timeout
+// error) — uncaught, that was taking down the whole page with a 500 even
+// though this is purely an SEO/metadata enhancement layered on top of a
+// page whose real content comes from the client component's own fetch. A
+// failure here should degrade to "render without the enhancement", never
+// crash the page.
 const getEvent = cache(async (slug: string) => {
-  await connectToDb();
-  return Event.findOne({ slug })
-    .select(
-      "title description venue location city_name image dateRange startTime endTime ticket_price price_category archived",
-    )
-    .populate("user", "business_name")
-    .lean<any>();
+  try {
+    await connectToDb();
+    return await Event.findOne({ slug })
+      .select(
+        "title description venue location city_name image dateRange startTime endTime ticket_price price_category archived",
+      )
+      .populate("user", "business_name")
+      .lean<any>();
+  } catch (err) {
+    console.error(`getEvent(${slug}): DB fetch failed, degrading gracefully`, err);
+    // undefined (DB error) vs null (query ran, no such event) — generateMetadata
+    // and Page below only noindex the genuine case, not a transient hiccup.
+    return undefined;
+  }
 });
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const event = await getEvent(id);
 
-  if (!event) {
+  if (event === null) {
     return { title: "Event not found", robots: { index: false, follow: false } };
+  }
+  if (!event) {
+    // DB error — fall back to generic site metadata rather than falsely
+    // telling crawlers this page doesn't exist.
+    return {};
   }
 
   const place = event.venue || event.location || event.city_name;

@@ -19,8 +19,18 @@ function truncate(text: string, max: number) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
 
-  await connectToDb();
-  const business = await resolveBusinessBySlugOrId(id);
+  // connectToDb() swallows its own connection errors instead of throwing
+  // (lib/db.ts) — a transient DB hiccup otherwise surfaces as an uncaught
+  // Mongoose buffering-timeout error here and takes down the whole page
+  // with a 500, even though this is purely a metadata enhancement.
+  let business;
+  try {
+    await connectToDb();
+    business = await resolveBusinessBySlugOrId(id);
+  } catch (err) {
+    console.error(`search/[id] generateMetadata(${id}): DB fetch failed, degrading gracefully`, err);
+    return {};
+  }
 
   if (!business || business.isblocked || business.deletedAt) {
     return { title: "Business not found", robots: { index: false, follow: false } };
