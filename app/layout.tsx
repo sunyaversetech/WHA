@@ -9,6 +9,7 @@ import ReactQueryContext from "@/lib/ReactQueryContext";
 import { CityFilterProvider } from "@/contexts/city-filter-context";
 import { Toaster } from "sonner";
 import BottomNav from "@/components/ResuableComponents/BottomNavbar";
+import Footer from "@/components/ResuableComponents/Footer";
 import NavbarProvider from "@/components/ResuableComponents/NavbarProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthModal } from "@/components/Auth/DialogLogin/AuthModel";
@@ -102,7 +103,10 @@ export default function RootLayout({
             <SessionWrapper>
               <NavbarProvider />
               <TooltipProvider>
-                <div className="pb-16 md:pb-0">{children}</div>
+                <div className="pb-16 md:pb-0">
+                  {children}
+                  <Footer />
+                </div>
                 <AuthModal />
               </TooltipProvider>
               <Toaster />
