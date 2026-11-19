@@ -109,6 +109,19 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 
+  /* ── /search page system (Fresha-derived layout, WHA brand) ── */
+  --rating: #ffc00a;
+  --shadow-search:   0 2px 4px 0 rgba(var(--color-primary-rgb), .12);
+  --shadow-elevated: 0 2px 8px 0 rgba(var(--color-primary-rgb), .08),
+                     0 4px 20px 0 rgba(var(--color-primary-rgb), .12);
+  --shadow-floating: 0 8px 40px 0 rgba(var(--color-primary-rgb), .12),
+                     0 0 0 .5px rgba(var(--color-primary-rgb), .1),
+                     -1.25px 0 0 -.75px rgba(var(--color-primary-rgb), .1),
+                     1.25px 0 0 -.75px rgba(var(--color-primary-rgb), .1);
+  --shadow-rail:     0 4px 2px -2px rgba(var(--color-primary-rgb), .06);
+  --shadow-dot:      0 1px 3px 0 rgba(var(--color-primary-rgb), .24);
+  --shadow-thumb:    0 2px 4px 0 rgba(var(--color-primary-rgb), .12);
+
   /* ── Sidebar ── */
   --sidebar: #f8fafc;
   --sidebar-foreground: #1a1a1a;

@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 
-import { Inter, Quicksand } from "next/font/google";
+import { Hanken_Grotesk } from "next/font/google";
 import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import JsonLd from "@/components/SEO/JsonLd";
 import "./globals.css";
@@ -9,24 +9,18 @@ import ReactQueryContext from "@/lib/ReactQueryContext";
 import { CityFilterProvider } from "@/contexts/city-filter-context";
 import { Toaster } from "sonner";
 import BottomNav from "@/components/ResuableComponents/BottomNavbar";
+import Footer from "@/components/ResuableComponents/Footer";
 import NavbarProvider from "@/components/ResuableComponents/NavbarProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthModal } from "@/components/Auth/DialogLogin/AuthModel";
 
-/* Brand fonts:
-   Quicksand — headings, nav, buttons (friendly & rounded)
-   Inter      — body text, data, forms (legible & neutral) */
-const quicksand = Quicksand({
+// Single UI font for everything — headings, body, nav, buttons — matching
+// Fresha's one-family approach (their app uses Aktiv Grotesk, a commercial
+// font; Hanken Grotesk is the closest freely-licensed equivalent).
+const hankenGrotesk = Hanken_Grotesk({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-quicksand",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-inter",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-hanken-grotesk",
   display: "swap",
 });
 
@@ -94,7 +88,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${quicksand.variable} ${inter.variable} ${quicksand.className} antialiased bg-background overflow-y-scroll overflow-x-hidden`}>
+        data-ui="page-root"
+        className={`${hankenGrotesk.variable} ${hankenGrotesk.className} antialiased bg-background overflow-y-scroll overflow-x-hidden`}>
         <JsonLd data={ORGANIZATION_JSON_LD} />
         <JsonLd data={WEBSITE_JSON_LD} />
         <ReactQueryContext>
@@ -102,7 +97,10 @@ export default function RootLayout({
             <SessionWrapper>
               <NavbarProvider />
               <TooltipProvider>
-                <div className="pb-16 md:pb-0">{children}</div>
+                <div className="pb-16 md:pb-0">
+                  {children}
+                  <Footer />
+                </div>
                 <AuthModal />
               </TooltipProvider>
               <Toaster />

@@ -303,6 +303,9 @@ export default function LocationMap<T>({
         zoomControl={false}
         className="h-full w-full"
         style={{ height: "100%", width: "100%", position: "absolute" }}>
+        {/* Plain OpenStreetMap tiles — free with no account/API key and no
+           commercial-use restrictions beyond OSM's standard fair-use +
+           attribution policy, unlike third-party basemap services. */}
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"

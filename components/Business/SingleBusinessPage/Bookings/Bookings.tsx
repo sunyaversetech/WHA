@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import { format, addDays, formatDate } from "date-fns";
 import {
@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -64,6 +64,7 @@ function getServiceMaxQty(s: ServiceType): number {
 
 export default function BookingContainer({ services }: BookingContainerProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { onOpen } = useAuthModal();
 
@@ -223,6 +224,45 @@ export default function BookingContainer({ services }: BookingContainerProps) {
     setHasAutoAdvancedDate(false);
     setIsDialogOpen(true);
   };
+
+  // Deep link from a search-results card's time-slot button
+  // (?book_service=&book_date=&book_slot=) — opens straight to the time
+  // step with that slot pre-selected instead of the usual service-picker
+  // entry point. Re-fetches/re-renders the slot through the normal
+  // useGetAvailableSlots call below, so a slot that's gone stale between
+  // the search page and this click still gets caught.
+  const appliedDeepLinkRef = useRef(false);
+  useEffect(() => {
+    if (appliedDeepLinkRef.current || services.length === 0) return;
+    const serviceId = searchParams.get("book_service");
+    const dateStr = searchParams.get("book_date");
+    const slot = searchParams.get("book_slot");
+    if (!serviceId || !dateStr || !slot) return;
+
+    const service = services.find((s) => s._id === serviceId && s.is_active);
+    if (!service) return;
+    appliedDeepLinkRef.current = true;
+
+    if (!session) {
+      onOpen();
+      return;
+    }
+    // One-time sync from the URL (a deep link, not derivable from render) —
+    // intentionally several setState calls rather than a single object, to
+    // match handleOpenBookingWizard's shape above.
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time deep-link read from the URL, not derivable from props/state */
+    setSelectedServices([service]);
+    setSelectedMultipliers({ [service._id]: 1 });
+    setSelectedQuantities({ [service._id]: 1 });
+    setIsNoPreference(true);
+    setSelectedEmployee(null);
+    setSelectedDate(new Date(`${dateStr}T00:00:00`));
+    setSelectedSlot(slot);
+    setHasAutoAdvancedDate(true);
+    setCurrentStep("time");
+    setIsDialogOpen(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [services, searchParams, session, onOpen]);
 
   const handleSelectMultiplier = (serviceId: string, value: number) => {
     setSelectedMultipliers({ ...selectedMultipliers, [serviceId]: value });
