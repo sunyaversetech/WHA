@@ -70,9 +70,9 @@ export default function EventsPageClient() {
           }`}>
           {isLoading ? (
             <div
-              className={`grid gap-4 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
+              className={`grid gap-6 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
               {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-64 w-full rounded-xl" />
+                <Skeleton key={i} className="h-64 w-full rounded-[18px]" />
               ))}
             </div>
           ) : data.length === 0 ? (
@@ -89,7 +89,7 @@ export default function EventsPageClient() {
             </div>
           ) : (
             <div
-              className={`grid gap-4 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
+              className={`grid gap-6 ${showMap ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
               {data.map((event) => (
                 <EventCard key={event._id} event={event} />
               ))}

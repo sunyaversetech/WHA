@@ -39,10 +39,11 @@ export default function DaySelector({
     <div
       style={{
         display: "flex",
-        gap: 8,
+        gap: 20,
         overflowX: "auto",
         scrollbarWidth: "none" as const,
-        marginBottom: 16,
+        marginBottom: 20,
+        borderBottom: "1px solid #eef1f5",
       }}
       className="[&::-webkit-scrollbar]:hidden">
       {days.map((d, i) => {
@@ -54,13 +55,13 @@ export default function DaySelector({
             onClick={() => onSelect(d)}
             style={{
               flexShrink: 0,
-              border: active ? "1.5px solid #051e3a" : "1px solid #e6ebf2",
-              background: active ? "#051e3a" : "#fff",
-              color: active ? "#fff" : "#0f2748",
-              fontWeight: 600,
-              fontSize: 13,
-              padding: "8px 16px",
-              borderRadius: 9999,
+              border: "none",
+              borderBottom: active ? "2px solid #0f2748" : "2px solid transparent",
+              background: "transparent",
+              color: active ? "#0f2748" : "#64748b",
+              fontWeight: active ? 700 : 500,
+              fontSize: 14,
+              padding: "0 2px 10px",
               cursor: "pointer",
               whiteSpace: "nowrap",
             }}>

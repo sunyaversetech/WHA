@@ -63,7 +63,7 @@ const EventCard = memo(function EventCard({
         e.key === "Enter" && router.push(`/events/${event.slug}`)
       }>
       {/* Image */}
-      <div className="relative h-48 md:h-42 w-full overflow-hidden rounded-xl">
+      <div className="relative h-48 md:h-42 w-full overflow-hidden rounded-[18px]">
         <Image
           fill
           src={event.image || "/placeholder.svg"}
@@ -100,9 +100,9 @@ const EventCard = memo(function EventCard({
       </div>
 
       {/* Content */}
-      <div className="pt-4 flex justify-between">
-        <div className="space-y-1 min-w-0">
-          <span className="text-xs text-muted-foreground">
+      <div className="pt-3 flex justify-between">
+        <div className="space-y-1.5 min-w-0">
+          <span className="text-sm text-muted-foreground">
             {event.dateRange?.from ? (
               <>
                 {new Date(event.dateRange.from)
@@ -126,16 +126,16 @@ const EventCard = memo(function EventCard({
               "TBA"
             )}
           </span>
-          <h3 className="text-primary font-bold text-sm md:text-base line-clamp-2 leading-snug">
+          <h3 className="text-primary font-bold text-base md:text-lg line-clamp-2 leading-snug">
             {event.title}
           </h3>
-          <span className="block truncate text-xs text-muted-foreground">
+          <span className="block truncate text-sm text-muted-foreground">
             {event.venue || "Venue TBA"}
           </span>
           {typeof (event as any).distance === "number" && (
             <div className="flex items-center gap-1.5 text-muted-foreground pt-0.5">
               <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-secondary" />
-              <span className="text-xs">
+              <span className="text-sm">
                 {(event as any).distance < 1000
                   ? `${Math.round((event as any).distance)} m away`
                   : `${((event as any).distance / 1000).toFixed(1)} km away`}

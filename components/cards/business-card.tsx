@@ -347,7 +347,7 @@ export default function BusinessCard({
                         color: "#0f172a",
                         flexShrink: 0,
                       }}>
-                      A${service.base_price}
+                      A${service.base_price?.toLocaleString("en-AU")}
                     </span>
                   </div>
                   <div style={{ fontSize: 13, color: "#6b7280", marginTop: 1 }}>
@@ -369,7 +369,7 @@ export default function BusinessCard({
                       </span>
                     ) : slots.length === 0 ? (
                       <span style={{ fontSize: 12, color: "#94a3b8" }}>
-                        No availability today
+                        No availability
                       </span>
                     ) : (
                       slots.slice(0, MAX_SHOWN_SLOTS).map((slot) => (
@@ -384,7 +384,7 @@ export default function BusinessCard({
                             fontWeight: 600,
                             fontSize: 13,
                             padding: "7px 12px",
-                            borderRadius: 9999,
+                            borderRadius: 10,
                             cursor: "pointer",
                           }}>
                           {formatSlotTime(slot)}

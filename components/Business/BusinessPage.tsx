@@ -951,10 +951,10 @@ export default function BusinessesClientPage() {
               alignItems: "start",
             }}>
             <div style={{ minWidth: 0 }}>
+              {Toolbar()}
               {isServices && (
                 <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
               )}
-              {Toolbar()}
               {CardGrid({ cols: showMap ? 2 : 3 })}
             </div>
             <div
