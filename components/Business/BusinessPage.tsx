@@ -9,11 +9,13 @@ import BusinessHeader from "./BusinessFilter";
 import EventHeader from "@/components/Event/EventFilter";
 import { useGetBusiness } from "@/services/business.service";
 import { useGetAllEvents } from "@/services/event.service";
+import { useGetBatchAvailableSlots } from "@/services/booking.service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search, X, ChevronLeft } from "lucide-react";
 import MobileBusinessSearchWithDates from "@/components/ResuableComponents/MobileViewSearch/SearchSectionforBusiness";
 import { useSearchLocation } from "@/components/ResuableComponents/LocationSearch/useSearchLocation";
 import { useDistanceEnriched } from "@/components/ResuableComponents/LocationSearch/geo";
+import DaySelector, { toDateKey } from "./DaySelector";
 
 const SearchMap = dynamic(() => import("./SearchMap"), { ssr: false });
 
@@ -449,6 +451,34 @@ export default function BusinessesClientPage() {
   const enrichedBusinesses = useDistanceEnriched(businesses, refLat, refLng);
   const enrichedEvents = useDistanceEnriched(events, refLat, refLng);
   const data = isServices ? enrichedBusinesses : enrichedEvents;
+
+  // Live time-slot buttons on each business card — the day picker only
+  // matters for the Services tab, so everything here is a no-op (empty
+  // items, hook disabled) while on Events.
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  const selectedDateKey = toDateKey(selectedDate);
+  const timezone =
+    typeof Intl !== "undefined"
+      ? Intl.DateTimeFormat().resolvedOptions().timeZone
+      : "UTC";
+  const slotItems = useMemo(() => {
+    if (!isServices) return [];
+    const items: { business_id: string; service_id: string }[] = [];
+    for (const b of enrichedBusinesses) {
+      const topServiceIds = (b.services ?? [])
+        .filter((s: any) => s.is_active)
+        .sort((a: any, b2: any) => (a.base_price ?? 0) - (b2.base_price ?? 0))
+        .slice(0, 2)
+        .map((s: any) => s._id);
+      for (const service_id of topServiceIds) {
+        items.push({ business_id: String(b._id), service_id });
+      }
+    }
+    return items;
+  }, [isServices, enrichedBusinesses]);
+  const { data: batchSlots, isLoading: isLoadingSlots } =
+    useGetBatchAvailableSlots(slotItems, selectedDateKey, timezone);
+  const slotsByServiceId = batchSlots?.slots;
   const isLoading = isServices ? isLoadingBusinesses : isLoadingEvents;
   const service =
     searchParams.get("service") || searchParams.get("search") || "";
@@ -845,7 +875,13 @@ export default function BusinessesClientPage() {
         }}>
         {isServices
           ? enrichedBusinesses.map((b: any) => (
-              <BusinessCard key={b._id} business={b} />
+              <BusinessCard
+                key={b._id}
+                business={b}
+                selectedDate={selectedDateKey}
+                slotsByServiceId={slotsByServiceId}
+                slotsLoading={isLoadingSlots}
+              />
             ))
           : enrichedEvents.map((event: any) => (
               <EventCard key={event._id} event={event} />
@@ -915,6 +951,9 @@ export default function BusinessesClientPage() {
               alignItems: "start",
             }}>
             <div style={{ minWidth: 0 }}>
+              {isServices && (
+                <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
+              )}
               {Toolbar()}
               {CardGrid({ cols: showMap ? 2 : 3 })}
             </div>
@@ -952,6 +991,9 @@ export default function BusinessesClientPage() {
           {/* List */}
           {!mobileMapOpen && (
             <div style={{ padding: "12px 16px 80px" }}>
+              {isServices && (
+                <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
+              )}
               <div
                 style={{
                   fontSize: 13,
