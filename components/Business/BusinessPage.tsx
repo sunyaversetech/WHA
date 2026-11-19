@@ -11,7 +11,7 @@ import { useGetBusiness } from "@/services/business.service";
 import { useGetAllEvents } from "@/services/event.service";
 import { useGetBatchAvailableSlots } from "@/services/booking.service";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Search, X, ChevronLeft } from "lucide-react";
+import { Search, X, ChevronLeft, SlidersVertical, Map as MapIcon, List as ListIcon, ChevronDown, CalendarClock } from "lucide-react";
 import MobileBusinessSearchWithDates from "@/components/ResuableComponents/MobileViewSearch/SearchSectionforBusiness";
 import { useSearchLocation } from "@/components/ResuableComponents/LocationSearch/useSearchLocation";
 import { useDistanceEnriched } from "@/components/ResuableComponents/LocationSearch/geo";
@@ -21,388 +21,287 @@ const SearchMap = dynamic(() => import("./SearchMap"), { ssr: false });
 
 type ListType = "services" | "events";
 
-/* ── Shared design tokens ── */
-const BTN_TOOLBAR: React.CSSProperties = {
-  display: "flex",
+/* ── Shared atoms (fresha-search-kit/spec/04) ── */
+const outlineBtnStyle: React.CSSProperties = {
+  display: "inline-flex",
   alignItems: "center",
+  justifyContent: "center",
   gap: 8,
-  border: "1px solid #e9edf3",
-  background: "#fff",
-  color: "#0f2748",
-  fontWeight: 600,
-  fontSize: 14,
-  padding: "9px 16px",
+  height: 36,
+  padding: "0 15px",
+  border: "1px solid var(--border-strong)",
   borderRadius: 9999,
-  cursor: "pointer",
+  background: "var(--background)",
+  fontSize: 14,
+  fontWeight: 500,
+  lineHeight: "20px",
   whiteSpace: "nowrap",
+  cursor: "pointer",
 };
 
-/* ── Hover-aware toolbar button ── */
-function ToolBtn({
-  onClick,
-  children,
+function SegmentedControl({
+  listType,
+  onChange,
+  fullWidth,
 }: {
-  onClick: () => void;
-  children: React.ReactNode;
+  listType: ListType;
+  onChange: (t: ListType) => void;
+  fullWidth?: boolean;
 }) {
-  const [hov, setHov] = useState(false);
   return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
+    <div
+      data-ui="result-type-toggle"
       style={{
-        ...BTN_TOOLBAR,
-        background: hov ? "#f4f7fb" : "#fff",
-        transition: "background .15s",
+        display: "flex",
+        flexShrink: fullWidth ? undefined : 0,
+        width: fullWidth ? "100%" : undefined,
+        height: 32,
+        borderRadius: 9999,
+        background: "var(--muted)",
+        boxShadow: "0 0 0 1px var(--border)",
       }}>
-      {children}
-    </button>
+      {(["events", "services"] as ListType[]).map((t) => {
+        const active = listType === t;
+        return (
+          <button
+            key={t}
+            data-ui="result-type-option"
+            aria-pressed={active}
+            onClick={() => onChange(t)}
+            style={{
+              flex: fullWidth ? 1 : undefined,
+              height: 32,
+              padding: "6px 12px",
+              borderRadius: 9999,
+              fontSize: 14,
+              fontWeight: 500,
+              lineHeight: "20px",
+              whiteSpace: "nowrap",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--foreground)",
+              background: active ? "var(--background)" : "transparent",
+              boxShadow: active ? "0 0 0 1px var(--border-strong)" : "none",
+            }}>
+            {t === "events" ? "Events" : "Services"}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
 /* ══════════════════════════════════════
    FILTERS MODAL
 ═══════════════════════════════════════ */
-type SortKey = "best" | "nearest" | "top";
+type SortKey = "best" | "nearest" | "soonest";
 
 function FiltersModal({
   open,
   onClose,
   listType,
   onListTypeChange,
+  resultCount,
 }: {
   open: boolean;
   onClose: () => void;
   listType: ListType;
   onListTypeChange: (type: ListType) => void;
+  resultCount: number;
 }) {
   const [sortBy, setSortBy] = useState<SortKey>("best");
   const [maxPrice, setMaxPrice] = useState(1400);
 
   if (!open) return null;
 
-  const SORT_BASE: React.CSSProperties = {
+  const TILE_BASE: React.CSSProperties = {
+    height: 96,
+    borderRadius: 16,
+    boxShadow: "inset 0 0 0 1px var(--border)",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: 11,
-    border: "1.5px solid #e6ebf2",
-    borderRadius: 16,
-    padding: "20px 12px",
-    cursor: "pointer",
-    background: "#fff",
-    color: "#0f2748",
-    fontWeight: 700,
+    justifyContent: "center",
+    gap: 8,
     fontSize: 14,
-    width: "100%",
-  };
-  const SORT_SEL: React.CSSProperties = {
-    ...SORT_BASE,
-    borderColor: "#3771db",
-    background: "rgba(55,113,219,0.07)",
-    color: "#3771db",
-  };
-  const TAB_BASE: React.CSSProperties = {
-    border: "none",
-    background: "transparent",
-    color: "#64748b",
-    fontWeight: 600,
-    fontSize: 15,
-    padding: "11px",
-    borderRadius: 10,
+    fontWeight: 500,
+    lineHeight: "20px",
+    color: "var(--foreground)",
     cursor: "pointer",
-    flex: 1,
+    background: "var(--background)",
   };
-  const TAB_ACT: React.CSSProperties = {
-    ...TAB_BASE,
-    background: "#fff",
-    color: "#0f2748",
-    fontWeight: 700,
-    boxShadow: "0 1px 5px rgba(2,12,26,0.10)",
+  const TILE_SEL: React.CSSProperties = {
+    ...TILE_BASE,
+    background: "var(--accent)",
+    color: "var(--secondary)",
+    boxShadow: "inset 0 0 0 2px var(--secondary)",
   };
 
   return (
     <div
+      data-ui="modal-overlay"
       onClick={onClose}
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(8,18,35,0.44)",
-        zIndex: 80,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
+        background: "rgba(var(--color-primary-rgb), .25)",
+        zIndex: 2000,
       }}>
       <div
+        data-ui="filters-modal"
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: 680,
+          position: "fixed",
+          top: 32,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: 720,
           maxWidth: "100%",
-          maxHeight: "88vh",
-          background: "#fff",
-          borderRadius: 26,
-          boxShadow: "0 40px 90px rgba(2,12,26,0.32)",
+          maxHeight: "calc(100vh - 64px)",
+          background: "var(--background)",
+          borderRadius: 32,
+          boxShadow: "var(--shadow-elevated)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
         }}>
         {/* Header */}
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "26px 32px 16px",
-          }}>
-          <span style={{ fontSize: 22, fontWeight: 800, color: "#0f2748" }}>
+          data-ui="filters-modal-header"
+          style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "32px 48px 8px" }}>
+          <div
+            data-ui="filters-modal-title"
+            style={{ flex: 1, fontSize: 22, fontWeight: 600, lineHeight: "28px", letterSpacing: "-0.2px", color: "var(--foreground)" }}>
             Filters
-          </span>
+          </div>
           <button
+            data-ui="filters-modal-close"
             onClick={onClose}
+            aria-label="Close"
             style={{
-              width: 38,
-              height: 38,
-              borderRadius: "50%",
+              width: 48,
+              height: 48,
+              margin: -12,
+              borderRadius: 9999,
               border: "none",
-              background: "#f1f4f8",
+              background: "transparent",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
+              flexShrink: 0,
             }}>
-            <X size={18} color="#0f2748" strokeWidth={2.2} />
+            <X size={24} color="var(--foreground)" strokeWidth={1.75} />
           </button>
         </div>
 
         {/* Body */}
-        <div style={{ padding: "4px 32px 10px", overflowY: "auto", flex: 1 }}>
-          {/* Services / Events toggle */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              background: "#f1f4f8",
-              borderRadius: 14,
-              padding: 4,
-              marginBottom: 28,
-            }}>
-            <button
-              onClick={() => onListTypeChange("events")}
-              style={listType === "events" ? TAB_ACT : TAB_BASE}>
-              Events
-            </button>
-            <button
-              onClick={() => onListTypeChange("services")}
-              style={listType === "services" ? TAB_ACT : TAB_BASE}>
-              Services
-            </button>
-          </div>
+        <div style={{ padding: "16px 48px 32px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
+          <SegmentedControl listType={listType} onChange={onListTypeChange} fullWidth />
 
-          {/* Category filter */}
-          <div style={{ marginBottom: 28 }}>
-            <div
-              style={{
-                fontSize: 16,
-                fontWeight: 700,
-                color: "#0f2748",
-                marginBottom: 12,
-              }}>
+          <div>
+            <span data-ui="filters-section-title" style={{ display: "block", fontSize: 16, fontWeight: 600, lineHeight: "22px", color: "var(--foreground)", marginBottom: 16 }}>
               Category
-            </div>
+            </span>
             {listType === "services" ? <BusinessHeader /> : <EventHeader />}
           </div>
 
-          {/* Services-only filters */}
           {listType === "services" && (
             <>
-              {/* Sort by */}
-              <div
-                style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: "#0f2748",
-                  marginBottom: 12,
-                }}>
-                Sort by
-              </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3,1fr)",
-                  gap: 12,
-                  marginBottom: 28,
-                }}>
-                <button
-                  onClick={() => setSortBy("best")}
-                  style={sortBy === "best" ? SORT_SEL : SORT_BASE}>
-                  <svg
-                    width={22}
-                    height={22}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round">
-                    <circle cx={12} cy={12} r={9} />
-                    <circle cx={12} cy={12} r={4.5} />
-                  </svg>
-                  Best match
-                </button>
-                <button
-                  onClick={() => setSortBy("nearest")}
-                  style={sortBy === "nearest" ? SORT_SEL : SORT_BASE}>
-                  <svg
-                    width={22}
-                    height={22}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round">
-                    <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" />
-                    <circle cx={12} cy={10} r={2.5} />
-                  </svg>
-                  Nearest
-                </button>
-                <button
-                  onClick={() => setSortBy("top")}
-                  style={sortBy === "top" ? SORT_SEL : SORT_BASE}>
-                  <svg
-                    width={22}
-                    height={22}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round">
-                    <path d="M12 3.5l2.6 5.6 6 .5-4.5 4 1.3 5.9L12 16.9 6.6 19.5l1.3-5.9-4.5-4 6-.5z" />
-                  </svg>
-                  Top rated
-                </button>
+              <hr style={{ border: 0, height: 1, background: "var(--foreground)", opacity: 0.1, margin: 0 }} />
+              <div>
+                <span data-ui="filters-section-title" style={{ display: "block", fontSize: 16, fontWeight: 600, lineHeight: "22px", color: "var(--foreground)", marginBottom: 16 }}>
+                  Sort by
+                </span>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
+                  <div data-ui="filters-tile" onClick={() => setSortBy("best")} style={sortBy === "best" ? TILE_SEL : TILE_BASE}>
+                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round"><circle cx={12} cy={12} r={9} /><circle cx={12} cy={12} r={4.5} /></svg>
+                    Best match
+                  </div>
+                  <div data-ui="filters-tile" onClick={() => setSortBy("nearest")} style={sortBy === "nearest" ? TILE_SEL : TILE_BASE}>
+                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" /><circle cx={12} cy={10} r={2.5} /></svg>
+                    Nearest
+                  </div>
+                  <div data-ui="filters-tile" onClick={() => setSortBy("soonest")} style={sortBy === "soonest" ? TILE_SEL : TILE_BASE}>
+                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round"><circle cx={12} cy={12} r={9} /><path d="M12 7v5l3 2" /></svg>
+                    Soonest
+                  </div>
+                </div>
               </div>
 
-              {/* Max price */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 12,
-                }}>
-                <span
-                  style={{ fontSize: 16, fontWeight: 700, color: "#0f2748" }}>
-                  Max price
-                </span>
-                <span
-                  style={{ fontSize: 15, fontWeight: 700, color: "#0f2748" }}>
-                  A${maxPrice}
-                  {maxPrice >= 1400 ? "+" : ""}
-                </span>
+              <hr style={{ border: 0, height: 1, background: "var(--foreground)", opacity: 0.1, margin: 0 }} />
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+                  <span data-ui="filters-section-title" style={{ fontSize: 16, fontWeight: 600, lineHeight: "22px", color: "var(--foreground)" }}>
+                    Price range
+                  </span>
+                  <span style={{ fontSize: 14, lineHeight: "20px", color: "var(--foreground)" }}>
+                    A${maxPrice}{maxPrice >= 1400 ? "+" : ""}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={50}
+                  max={1400}
+                  step={50}
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(+e.target.value)}
+                  style={{ width: "100%", accentColor: "var(--secondary)", height: 4, cursor: "pointer" }}
+                />
               </div>
-              <input
-                type="range"
-                min={50}
-                max={1400}
-                step={50}
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(+e.target.value)}
-                style={{
-                  width: "100%",
-                  accentColor: "#051e3a",
-                  height: 5,
-                  cursor: "pointer",
-                  marginBottom: 28,
-                }}
-              />
-
-              {/* Verified pros */}
-              {/* <div style={{ fontSize: 16, fontWeight: 700, color: "#0f2748", marginBottom: 16 }}>
-                Only show
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, paddingBottom: 6 }}>
-                <div
-                  style={{
-                    width: 40, height: 40, borderRadius: 11,
-                    background: "#eaf0fb", display: "flex",
-                    alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  }}>
-                  <svg width={20} height={20} viewBox="0 0 24 24">
-                    <path d="M12 2l2.4 1.8 3-.2.9 2.9 2.5 1.6-1 2.9 1 2.9-2.5 1.6-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.2 14l1-2.9-1-2.9 2.5-1.6.9-2.9 3 .2L12 2Z" fill="#3771db" />
-                    <path d="M8.5 12l2.4 2.4 4.6-4.8" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#0f2748" }}>Verified pros</div>
-                  <div style={{ fontSize: 13, color: "#7c899c" }}>These venues accept WHA gift cards</div>
-                </div>
-                <div
-                  onClick={() => setVerified((v) => !v)}
-                  role="switch"
-                  aria-checked={verified}
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === " " && setVerified((v) => !v)}
-                  style={{
-                    width: 46, height: 27, borderRadius: 9999,
-                    background: verified ? "#051e3a" : "#d4dbe5",
-                    padding: 3, display: "flex", cursor: "pointer",
-                    transition: "background .15s", flexShrink: 0,
-                  }}>
-                  <div
-                    style={{
-                      width: 21, height: 21, borderRadius: "50%",
-                      background: "#fff",
-                      transform: verified ? "translateX(19px)" : "translateX(0)",
-                      transition: "transform .15s",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.18)",
-                    }}
-                  />
-                </div>
-              </div> */}
             </>
           )}
         </div>
 
+        {/* Footer */}
         <div
+          data-ui="filters-modal-footer"
           style={{
-            padding: "16px 32px",
-            borderTop: "1px solid #eef1f5",
-            display: "grid",
-            gridTemplateColumns: "1fr 1.6fr",
+            display: "flex",
+            justifyContent: "space-between",
             gap: 12,
+            padding: "16px 48px 32px",
+            borderTop: "1px solid var(--border)",
           }}>
           <button
+            data-ui="filters-clear-button"
             onClick={() => {
               setSortBy("best");
               setMaxPrice(1400);
               onListTypeChange("events");
             }}
             style={{
-              border: "1px solid #d8dfe9",
-              background: "#fff",
-              color: "#0f2748",
-              fontWeight: 700,
-              fontSize: 15,
-              padding: 14,
-              borderRadius: 13,
+              flex: 1,
+              height: 48,
+              border: "1px solid var(--border-strong)",
+              background: "var(--background)",
+              color: "var(--foreground)",
+              fontWeight: 600,
+              fontSize: 16,
+              lineHeight: "22px",
+              letterSpacing: "-0.1px",
+              borderRadius: 9999,
               cursor: "pointer",
             }}>
             Clear all
           </button>
           <button
+            data-ui="filters-apply-button"
             onClick={onClose}
             style={{
-              border: "none",
-              background: "#051e3a",
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: 15,
-              padding: 14,
-              borderRadius: 13,
+              flex: 1,
+              height: 48,
+              border: "1px solid var(--primary)",
+              background: "var(--primary)",
+              color: "var(--primary-foreground)",
+              fontWeight: 600,
+              fontSize: 16,
+              lineHeight: "22px",
+              letterSpacing: "-0.1px",
+              borderRadius: 9999,
               cursor: "pointer",
             }}>
-            Apply
+            Show {resultCount} {listType === "services" ? "services" : "events"}
           </button>
         </div>
       </div>
@@ -452,17 +351,16 @@ export default function BusinessesClientPage() {
   const enrichedEvents = useDistanceEnriched(events, refLat, refLng);
   const data = isServices ? enrichedBusinesses : enrichedEvents;
 
-  // Live time-slot buttons on each business card — the day picker only
-  // matters for the Services tab, so everything here is a no-op (empty
-  // items, hook disabled) while on Events.
-  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  // Live time-slot buttons on each business card. `selectedDate === null`
+  // means "Any day" — no date filter, batched slots query stays disabled.
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const selectedDateKey = toDateKey(selectedDate);
   const timezone =
     typeof Intl !== "undefined"
       ? Intl.DateTimeFormat().resolvedOptions().timeZone
       : "UTC";
   const slotItems = useMemo(() => {
-    if (!isServices) return [];
+    if (!isServices || !selectedDateKey) return [];
     const items: { business_id: string; service_id: string }[] = [];
     for (const b of enrichedBusinesses) {
       const topServiceIds = (b.services ?? [])
@@ -475,7 +373,7 @@ export default function BusinessesClientPage() {
       }
     }
     return items;
-  }, [isServices, enrichedBusinesses]);
+  }, [isServices, enrichedBusinesses, selectedDateKey]);
   const { data: batchSlots, isLoading: isLoadingSlots } =
     useGetBatchAvailableSlots(slotItems, selectedDateKey, timezone);
   const slotsByServiceId = batchSlots?.slots;
@@ -487,331 +385,116 @@ export default function BusinessesClientPage() {
   const nearLabel =
     searchLocationMode === "mapArea" ? "in this map area" : "near you";
   const cityLabel = searchParams.get("city") ?? (isNearMe ? "" : "Australia");
+  const resultCount = isServices ? businesses.length : events.length;
   const countText = isLoading
     ? "Loading…"
     : isServices
       ? `${businesses.length}${businesses.length === 0 ? "" : "+"} services ${isNearMe ? nearLabel : `in ${cityLabel}`}`
       : `${events.length}${events.length === 0 ? "" : "+"} events ${isNearMe ? nearLabel : `in ${cityLabel}`}`;
 
-  /* ── Segment toggle ── */
-  const SEG_BASE: React.CSSProperties = {
-    border: "none",
-    background: "transparent",
-    color: "#475569",
-    fontWeight: 600,
-    fontSize: 14,
-    padding: "8px 20px",
-    borderRadius: 9999,
-    cursor: "pointer",
-  };
-  const SEG_ACT: React.CSSProperties = {
-    ...SEG_BASE,
-    background: "#051e3a",
-    color: "#fff",
-    fontWeight: 700,
-  };
-
-  /* ── Mobile search header (list + map overlay) ── */
-  const MobileSearchHeader = () => (
-    <>
-      {/* Top row: back · search info · map/list toggle */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "12px 16px",
-          borderBottom: "1px solid #e6ebf2",
-        }}>
-        <button
-          onClick={() => router.back()}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: "50%",
-            border: "1px solid #e6ebf2",
-            background: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            flexShrink: 0,
-          }}>
-          <ChevronLeft size={20} color="#0f2748" />
-        </button>
-
-        <div
-          onClick={() => setSearchOpen(true)}
-          style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
-          <div
-            style={{
-              fontSize: 16,
-              fontWeight: 700,
-              color: "#0f2748",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}>
-            {service || "All services and events"}
-          </div>
-          <div style={{ fontSize: 13, color: "#64748b", marginTop: 1 }}>
-            Any time · {isNearMe ? "Near you" : cityLabel}
-          </div>
-        </div>
-
-        <button
-          onClick={() => setMobileMapOpen((v) => !v)}
-          style={{
-            width: 46,
-            height: 46,
-            borderRadius: "50%",
-            border: "1.5px solid #e0e4ea",
-            background: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            flexShrink: 0,
-            boxShadow: "0 2px 8px rgba(2,12,26,0.08)",
-          }}>
-          {mobileMapOpen ? (
-            /* List icon */
-            <svg
-              width={20}
-              height={20}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#0f2748"
-              strokeWidth={2}
-              strokeLinecap="round">
-              <line x1={3} y1={6} x2={21} y2={6} />
-              <line x1={3} y1={12} x2={21} y2={12} />
-              <line x1={3} y1={18} x2={21} y2={18} />
-            </svg>
-          ) : (
-            /* Map icon */
-            <svg
-              width={20}
-              height={20}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#0f2748"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round">
-              <path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z" />
-              <line x1={9} y1={4} x2={9} y2={17} />
-              <line x1={15} y1={6.5} x2={15} y2={19.5} />
-            </svg>
-          )}
-        </button>
-      </div>
-
-      {/* Filter chips (horizontally scrollable) */}
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          padding: "12px 16px",
-          overflowX: "auto",
-          scrollbarWidth: "none" as const,
-        }}
-        className="[&::-webkit-scrollbar]:hidden items-center">
-        {/* Filter icon button */}
-
-        {/* Services / Events pill — same segmented toggle as desktop, so the
-           choice always reads as "pick one of two", not "tap to flip". */}
-        <div
-          className="items-center"
-          style={{
-            display: "flex",
-            background: "#fff",
-            border: "1px solid #e9edf3",
-            borderRadius: 9999,
-            padding: 4,
-            flexShrink: 0,
-          }}>
-          <button
-            onClick={() => setListType("events")}
-            style={listType === "events" ? SEG_ACT : SEG_BASE}>
-            Events
-          </button>
-          <button
-            onClick={() => setListType("services")}
-            style={listType === "services" ? SEG_ACT : SEG_BASE}>
-            Services
-          </button>
-        </div>
-
-        <button
-          onClick={() => setFiltersOpen(true)}
-          style={{
-            width: 48,
-            height: 48,
-            border: "1px solid #e6ebf2",
-            background: "#fff",
-            borderRadius: 9999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            flexShrink: 0,
-          }}>
-          <svg
-            width={16}
-            height={16}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#0f2748"
-            strokeWidth={2}
-            strokeLinecap="round">
-            <line x1={4} y1={7} x2={20} y2={7} />
-            <line x1={4} y1={17} x2={20} y2={17} />
-            <circle cx={9} cy={7} r={2.4} fill="#fff" />
-            <circle cx={15} cy={17} r={2.4} fill="#fff" />
-          </svg>
-        </button>
-      </div>
-    </>
-  );
-
-  /* ── Toolbar ── */
-  const Toolbar = () => (
+  /* ── Desktop toolbar row (segmented · count · Filters · Hide/Show map) ── */
+  const ToolbarRow = () => (
     <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        marginBottom: 22,
-        flexWrap: "wrap",
-      }}>
-      {/* Services / Events pill */}
-      <div
-        style={{
-          display: "flex",
-          background: "#fff",
-          border: "1px solid #e9edf3",
-          borderRadius: 9999,
-          padding: 4,
-          flexShrink: 0,
-        }}>
-        <button
-          onClick={() => setListType("events")}
-          style={listType === "events" ? SEG_ACT : SEG_BASE}>
-          Events
+      data-ui="results-toolbar-row"
+      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "24px 0", background: "var(--background)" }}>
+      <SegmentedControl listType={listType} onChange={setListType} />
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, minWidth: 0 }}>
+        <p data-ui="results-count" style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 400, lineHeight: "20px", color: "var(--muted-foreground)", textAlign: "right", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {countText}
+        </p>
+        <button data-ui="filters-button" onClick={() => setFiltersOpen(true)} style={outlineBtnStyle}>
+          <SlidersVertical size={20} strokeWidth={1.75} style={{ margin: "0 -2px 0 -4px" }} />
+          Filters
         </button>
-        <button
-          onClick={() => setListType("services")}
-          style={listType === "services" ? SEG_ACT : SEG_BASE}>
-          Services
+        <button data-ui="map-toggle-button" onClick={() => setShowMap((v) => !v)} style={outlineBtnStyle}>
+          <MapIcon size={20} strokeWidth={1.75} style={{ margin: "0 -2px 0 -4px" }} />
+          <span className="lbl">{showMap ? "Hide map" : "Show map"}</span>
         </button>
-      </div>
-
-      {/* Spacer */}
-      <div style={{ flex: 1 }} />
-
-      <span
-        style={{
-          fontSize: 13,
-          color: "#64748b",
-          fontWeight: 500,
-          whiteSpace: "nowrap",
-        }}>
-        {countText}
-      </span>
-
-      {/* Filters */}
-      <ToolBtn onClick={() => setFiltersOpen(true)}>
-        <svg
-          width={15}
-          height={15}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round">
-          <line x1={4} y1={7} x2={20} y2={7} />
-          <line x1={4} y1={17} x2={20} y2={17} />
-          <circle cx={9} cy={7} r={2.4} fill="#fff" />
-          <circle cx={15} cy={17} r={2.4} fill="#fff" />
-        </svg>
-        Filters
-      </ToolBtn>
-
-      {/* Desktop map toggle */}
-      <div className="hidden md:block">
-        <ToolBtn onClick={() => setShowMap((v) => !v)}>
-          <svg
-            width={15}
-            height={15}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z" />
-            <line x1={9} y1={4} x2={9} y2={17} />
-            <line x1={15} y1={6.5} x2={15} y2={19.5} />
-          </svg>
-          {showMap ? "Hide map" : "Show map"}
-        </ToolBtn>
-      </div>
-
-      {/* Mobile map toggle */}
-      <div className="md:hidden">
-        <ToolBtn onClick={() => setMobileMapOpen((v) => !v)}>
-          <svg
-            width={15}
-            height={15}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z" />
-            <line x1={9} y1={4} x2={9} y2={17} />
-            <line x1={15} y1={6.5} x2={15} y2={19.5} />
-          </svg>
-          {mobileMapOpen ? "Hide map" : "Map"}
-        </ToolBtn>
       </div>
     </div>
   );
 
-  /* ── Card grid ── */
-  const CardGrid = ({ cols }: { cols: number }) => {
+  /* ── Mobile compact top bar (spec/04 "Compact top bar") ── */
+  const MobileTopBar = () => (
+    <div data-ui="mobile-topbar" style={{ position: "fixed", inset: "0 0 auto 0", height: 148, background: mobileMapOpen ? "transparent" : "var(--background)", zIndex: 1000 }}>
+      <div style={{ height: 84, padding: "20px 20px 0" }}>
+        <div
+          data-ui="mobile-search-pill"
+          style={{
+            position: "relative",
+            height: 64,
+            padding: 8,
+            display: "grid",
+            gridTemplateColumns: "48px minmax(0,1fr) 48px",
+            gap: 4,
+            alignItems: "center",
+            borderRadius: 9999,
+            background: "var(--background)",
+            boxShadow: "0 2px 8px 0 rgba(var(--color-primary-rgb), .06)",
+          }}>
+          <span style={{ position: "absolute", inset: 0, border: "1px solid var(--border)", borderRadius: 9999, pointerEvents: "none" }} />
+          <button
+            data-ui="mobile-back-button"
+            onClick={() => router.back()}
+            aria-label="Go back"
+            style={{ width: 48, height: 48, borderRadius: 9999, border: "none", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--foreground)" }}>
+            <ChevronLeft size={24} strokeWidth={1.75} />
+          </button>
+          <button onClick={() => setSearchOpen(true)} style={{ minWidth: 0, textAlign: "left", display: "flex", flexDirection: "column", border: "none", background: "transparent", cursor: "pointer" }}>
+            <span data-ui="mobile-search-title" style={{ fontSize: 16, fontWeight: 600, lineHeight: "22px", letterSpacing: "-0.1px", color: "var(--foreground)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {service || "All services and events"}
+            </span>
+            <span data-ui="mobile-search-subtitle" style={{ fontSize: 14, lineHeight: "20px", color: "var(--muted-foreground)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              Any time<span style={{ margin: "0 4px" }}>•</span>{isNearMe ? "Near you" : cityLabel}
+            </span>
+          </button>
+          <button
+            data-ui="mobile-map-toggle"
+            onClick={() => setMobileMapOpen((v) => !v)}
+            aria-label={mobileMapOpen ? "Show list" : "Show map"}
+            style={{ width: 48, height: 48, borderRadius: 9999, border: "1px solid var(--border-strong)", background: "var(--background)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--foreground)" }}>
+            {mobileMapOpen ? <ListIcon size={24} strokeWidth={1.75} /> : <MapIcon size={24} strokeWidth={1.75} />}
+          </button>
+        </div>
+      </div>
+
+      <div data-ui="mobile-toolbar" style={{ height: 64, padding: "12px 20px 16px", display: "flex", alignItems: "center", gap: 8, overflowX: "auto", scrollbarWidth: "none" as const }} className="[&::-webkit-scrollbar]:hidden">
+        <SegmentedControl listType={listType} onChange={setListType} />
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexShrink: 0 }}>
+          <button data-ui="mobile-time-button" aria-label="Any time" style={{ ...outlineBtnStyle, width: 36, padding: 0 }} className="min-[512px]:w-auto min-[512px]:px-[15px]">
+            <CalendarClock size={20} strokeWidth={1.75} className="inline min-[512px]:hidden" />
+            <span className="hidden min-[512px]:inline">Any time</span>
+            <ChevronDown size={20} strokeWidth={1.75} className="hidden min-[512px]:inline" style={{ margin: "0 -4px 0 -2px" }} />
+          </button>
+          <button data-ui="filters-button" onClick={() => setFiltersOpen(true)} aria-label="Filters" style={{ ...outlineBtnStyle, width: 52, padding: 0 }}>
+            <SlidersVertical size={20} strokeWidth={1.75} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  /* ── Card grid ──
+     `cols` drives desktop (2 with map, 3 in list-mode) via inline style —
+     those only ever change from a JS toggle, never a CSS breakpoint.
+     `compact` instead renders 1 col <768px / 2 cols 768-1023px via Tailwind,
+     since both live inside the same "<1024" JS branch. */
+  const CardGrid = ({ cols, compact }: { cols: number; compact?: boolean }) => {
+    const gridClassName = compact ? "grid-cols-1 min-[768px]:grid-cols-2" : undefined;
+    const gridStyle = compact
+      ? { gap: "32px 40px" }
+      : { gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, gap: "32px 40px" };
     if (isLoading) {
       return (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${cols}, 1fr)`,
-            gap: cols === 2 ? "30px 24px" : "34px 26px",
-          }}>
-          {Array.from({ length: cols === 1 ? 4 : cols === 2 ? 4 : 6 }).map(
+        <div data-ui="results-grid" className={gridClassName ? `grid ${gridClassName}` : undefined} style={{ display: gridClassName ? undefined : "grid", ...gridStyle }}>
+          {Array.from({ length: 4 }).map(
             (_, i) => (
               <div key={i}>
-                <Skeleton
-                  style={{
-                    aspectRatio: "16/11",
-                    borderRadius: 18,
-                    width: "100%",
-                  }}
-                />
-                <div style={{ marginTop: 12 }}>
-                  <Skeleton
-                    style={{
-                      height: 14,
-                      width: "65%",
-                      borderRadius: 7,
-                      marginBottom: 8,
-                    }}
-                  />
-                  <Skeleton
-                    style={{ height: 12, width: "45%", borderRadius: 7 }}
-                  />
+                <Skeleton style={{ aspectRatio: "16/9", borderRadius: 16, width: "100%" }} />
+                <div style={{ marginTop: 10 }}>
+                  <Skeleton style={{ height: 14, width: "65%", borderRadius: 7, marginBottom: 8 }} />
+                  <Skeleton style={{ height: 12, width: "45%", borderRadius: 7 }} />
                 </div>
               </div>
             ),
@@ -822,42 +505,18 @@ export default function BusinessesClientPage() {
 
     if (data.length === 0) {
       return (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "80px 24px",
-            textAlign: "center",
-          }}>
-          <div
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: 18,
-              background: "#f1f4f8",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: 14,
-            }}>
-            <Search size={26} color="#94a3b8" />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 24px", textAlign: "center" }}>
+          <div style={{ width: 60, height: 60, borderRadius: 18, background: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+            <Search size={26} color="var(--muted-foreground)" />
           </div>
-          <div
-            style={{
-              fontSize: 16,
-              fontWeight: 700,
-              color: "#0f2748",
-              marginBottom: 6,
-            }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--foreground)", marginBottom: 6 }}>
             {service
               ? `No results for "${service}"`
               : isServices
                 ? "No services found"
                 : "No events found"}
           </div>
-          <div style={{ fontSize: 14, color: "#64748b", maxWidth: 300 }}>
+          <div style={{ fontSize: 14, color: "var(--muted-foreground)", maxWidth: 300 }}>
             {isServices
               ? "Try a different service, location, or clear your filters."
               : "Try a different event, location, or clear your filters."}
@@ -868,11 +527,9 @@ export default function BusinessesClientPage() {
 
     return (
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${cols}, 1fr)`,
-          gap: cols === 2 ? "30px 24px" : cols === 1 ? "20px" : "34px 26px",
-        }}>
+        data-ui="results-grid"
+        className={gridClassName ? `grid ${gridClassName}` : undefined}
+        style={{ display: gridClassName ? undefined : "grid", ...gridStyle, paddingBottom: 32 }}>
         {isServices
           ? enrichedBusinesses.map((b: any) => (
               <BusinessCard
@@ -892,23 +549,19 @@ export default function BusinessesClientPage() {
 
   /* ── Map container ── */
   const MapBox = ({
-    height,
-    radius = 20,
     isVisible = true,
+    fullScreen = false,
   }: {
-    height: string | number;
-    radius?: number;
     isVisible?: boolean;
+    fullScreen?: boolean;
   }) => (
     <div
-      style={{
-        position: "relative",
-        borderRadius: radius,
-        overflow: "hidden",
-        height,
-        background: "#e9eef0",
-        border: "1px solid #e2e8ee",
-      }}>
+      data-ui="map-panel"
+      style={
+        fullScreen
+          ? { position: "fixed", inset: 0, borderRadius: 0, overflow: "hidden", background: "var(--muted)" }
+          : { position: "fixed", top: 96, right: 24, bottom: 24, left: "min(60vw, 855px)", borderRadius: 12, overflow: "hidden", background: "var(--muted)" }
+      }>
       <SearchMap
         activeType={listType}
         businesses={enrichedBusinesses}
@@ -920,128 +573,81 @@ export default function BusinessesClientPage() {
         bounds={bounds}
         onBoundsChange={handleBoundsChange}
         isVisible={isVisible}
+        hideControls={fullScreen}
       />
     </div>
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#fff" }}>
+    <div style={{ minHeight: "100vh", background: "var(--background)" }}>
       <h1 className="sr-only">
         Local Businesses {isNearMe ? "Near You" : `in ${cityLabel}`}
       </h1>
-      {/* Spacer below sticky header — desktop only (mobile navbar is hidden on this page) */}
-      <div className="hidden md:block pt-[88px]" />
 
-      <main
-        style={{ maxWidth: 1680, margin: "0 auto", padding: "20px 16px 56px" }}
-        className="md:px-10">
-        {/* ════════════ DESKTOP ════════════ */}
-        {/* The map column always stays mounted — only its width/opacity
-           toggle with showMap — so the underlying map instance (position,
-           zoom, selected marker) survives hiding it, instead of being
-           destroyed and recreated (which would reset it) every time. */}
-        <div className="hidden md:block">
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: showMap
-                ? "minmax(0, 1.04fr) 0.96fr"
-                : "1fr 0px",
-              gap: showMap ? 26 : 0,
-              alignItems: "start",
-            }}>
-            <div style={{ minWidth: 0 }}>
-              {Toolbar()}
-              {isServices && (
-                <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
-              )}
-              {CardGrid({ cols: showMap ? 2 : 3 })}
-            </div>
-            <div
-              style={{
-                position: "sticky",
-                top: 96,
-                width: showMap ? undefined : 0,
-                height: showMap ? undefined : 0,
-                opacity: showMap ? 1 : 0,
-                overflow: "hidden",
-                pointerEvents: showMap ? "auto" : "none",
-              }}>
-              {MapBox({ height: "calc(100vh - 168px)", isVisible: showMap })}
-            </div>
+      {/* ════════════ DESKTOP (>=1024) ════════════ */}
+      <div className="hidden lg:block">
+        <main
+          data-ui="results-column"
+          style={{
+            width: showMap ? "min(60vw, 855px)" : "100%",
+            maxWidth: showMap ? undefined : 1288,
+            margin: showMap ? undefined : "0 auto",
+            padding: showMap ? "72px 32px 0" : "72px 32px 0",
+          }}>
+          <div data-ui="results-toolbar" style={{ position: "sticky", top: 72, zIndex: 10, background: "var(--background)", marginBottom: 24 }}>
+            {ToolbarRow()}
+            {/* Date rail applies to both tabs on Fresha (events have dates
+               too) — TODO(ui-only): wire up actual event date filtering,
+               no logic for that exists yet; Services already filters via
+               the batched slots query above. */}
+            <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
           </div>
-        </div>
+          {CardGrid({ cols: showMap ? 2 : 3 })}
+        </main>
 
-        {/* ════════════ MOBILE ════════════ */}
-        <div className="md:hidden" style={{ margin: "-20px -16px 0" }}>
-          {/* Sticky header (list mode) */}
-          {!mobileMapOpen && (
-            <div
-              style={{
-                position: "sticky",
-                top: 0,
-                zIndex: 40,
-                background: "#fff",
-                borderBottom: "1px solid #f1f4f8",
-              }}>
-              {MobileSearchHeader()}
-            </div>
-          )}
+        {showMap && MapBox({ isVisible: showMap })}
+      </div>
 
-          {/* List */}
-          {!mobileMapOpen && (
-            <div style={{ padding: "12px 16px 80px" }}>
-              {isServices && (
-                <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
-              )}
-              <div
-                style={{
-                  fontSize: 13,
-                  color: "#64748b",
-                  fontWeight: 500,
-                  marginBottom: 12,
-                }}>
-                {countText}
+      {/* ════════════ COMPACT (<1024) ════════════ */}
+      <div className="lg:hidden">
+        {MobileTopBar()}
+
+        {!mobileMapOpen && (
+          <main data-ui="results-column" style={{ padding: "148px 20px 0" }}>
+            <div data-ui="results-toolbar" style={{ position: "sticky", top: 148, zIndex: 10, background: "var(--background)" }}>
+              <div style={{ margin: "0 -20px" }}>
+                <div style={{ padding: "0 20px" }}>
+                  <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
+                </div>
               </div>
-              {CardGrid({ cols: 1 })}
             </div>
-          )}
+            <div style={{ display: "flex", padding: "16px 0", background: "var(--background)" }}>
+              <p data-ui="results-count" style={{ flex: 1, textAlign: "center", fontSize: 14, fontWeight: 400, lineHeight: "20px", color: "var(--muted-foreground)", margin: 0 }}>
+                {countText}
+              </p>
+            </div>
+            {CardGrid({ cols: 1, compact: true })}
+          </main>
+        )}
 
-          {/* Full-screen map overlay — always mounted, hidden via CSS
-             rather than unmounted, so the map instance (position, zoom,
-             selected marker) survives closing it. */}
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: mobileMapOpen ? 45 : -1,
-              display: "flex",
-              flexDirection: "column",
-              background: "#e9eef0",
-              visibility: mobileMapOpen ? "visible" : "hidden",
-              opacity: mobileMapOpen ? 1 : 0,
-              pointerEvents: mobileMapOpen ? "auto" : "none",
-            }}>
-            <div
-              style={{
-                background: "#fff",
-                borderBottom: "1px solid #f1f4f8",
-                flexShrink: 0,
-              }}>
-              {MobileSearchHeader()}
-            </div>
-            <div style={{ flex: 1, position: "relative" }}>
-              {MapBox({ height: "100%", radius: 0, isVisible: mobileMapOpen })}
-            </div>
-          </div>
+        {/* Full-screen map mode — always mounted, hidden via CSS rather than
+           unmounted, so the map instance (position, zoom, selected marker)
+           survives closing it. */}
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: mobileMapOpen ? 45 : -1,
+            visibility: mobileMapOpen ? "visible" : "hidden",
+            opacity: mobileMapOpen ? 1 : 0,
+            pointerEvents: mobileMapOpen ? "auto" : "none",
+          }}>
+          {MapBox({ isVisible: mobileMapOpen, fullScreen: true })}
         </div>
-      </main>
+      </div>
 
-      {/* Headless search drawer — opened when tapping the mobile search header */}
-      <div className="md:hidden">
+      {/* Headless search drawer — opened when tapping the mobile search pill */}
+      <div className="lg:hidden">
         <MobileBusinessSearchWithDates
           open={searchOpen}
           onOpenChange={setSearchOpen}
@@ -1054,6 +660,7 @@ export default function BusinessesClientPage() {
         onClose={() => setFiltersOpen(false)}
         listType={listType}
         onListTypeChange={setListType}
+        resultCount={resultCount}
       />
     </div>
   );

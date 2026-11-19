@@ -88,6 +88,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+        data-ui="page-root"
         className={`${hankenGrotesk.variable} ${hankenGrotesk.className} antialiased bg-background overflow-y-scroll overflow-x-hidden`}>
         <JsonLd data={ORGANIZATION_JSON_LD} />
         <JsonLd data={WEBSITE_JSON_LD} />

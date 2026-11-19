@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus, Minus, Maximize2 } from "lucide-react";
 import LocationMap from "@/components/ResuableComponents/LocationSearch/LocationMap";
 import { makeMarkerIcon, BusinessPopup } from "./business-map";
 import { makeEventMarkerIcon, EventPopup } from "@/components/Event/Event-map";
@@ -7,6 +8,19 @@ import type {
   SearchLocationMode,
   Bounds,
 } from "@/components/ResuableComponents/LocationSearch/useSearchLocation";
+
+const glassStyle: React.CSSProperties = {
+  background: "linear-gradient(rgba(255,255,255,.7), rgba(255,255,255,.7))",
+  backdropFilter: "blur(6px)",
+  WebkitBackdropFilter: "blur(6px)",
+  boxShadow: "var(--shadow-floating)",
+  border: "none",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "var(--foreground)",
+};
 
 // The /search page's map — ONE persistent Leaflet instance shared by the
 // Services and Events tabs, rather than two separately-mounted maps. That
@@ -28,6 +42,7 @@ export default function SearchMap({
   bounds,
   onBoundsChange,
   isVisible = true,
+  hideControls = false,
 }: {
   activeType: "services" | "events";
   businesses: any[];
@@ -46,11 +61,15 @@ export default function SearchMap({
    * not unmounted) so position/zoom/selection survive a hide/show toggle;
    * this only tells LocationMap when to re-check its size. */
   isVisible?: boolean;
+  /** Hides the glass expand/zoom controls — used in the mobile full-screen
+   * map mode, which has its own close/back affordance instead. */
+  hideControls?: boolean;
 }) {
   const isServices = activeType === "services";
   const items = isServices ? businesses : events;
 
   return (
+    <div style={{ position: "relative", height: "100%", width: "100%" }}>
     <LocationMap
       items={items}
       getId={(item: any) => item._id}
@@ -95,8 +114,34 @@ export default function SearchMap({
       searchLocationMode={searchLocationMode}
       bounds={bounds}
       onBoundsChange={onBoundsChange}
-      showLocateButton
       isVisible={isVisible}
     />
+
+    {!hideControls && (
+      <>
+        {/* TODO(ui-only): wire up a real fullscreen toggle — no state for
+           this exists yet on the desktop map (only the mobile full-screen
+           map mode does, via BusinessPage's mobileMapOpen). */}
+        <button
+          data-ui="map-expand-button"
+          aria-label="Expand map"
+          style={{ ...glassStyle, position: "absolute", top: 20, right: 20, width: 48, height: 48, borderRadius: 9999, zIndex: 1000 }}>
+          <Maximize2 size={24} strokeWidth={1.75} />
+        </button>
+        {/* TODO(ui-only): wire up to the Leaflet instance — LocationMap
+           doesn't currently expose its map ref/zoom handlers as props. */}
+        <div
+          data-ui="map-zoom-group"
+          style={{ ...glassStyle, position: "absolute", right: 20, bottom: 20, width: 48, height: 96, borderRadius: 24, flexDirection: "column", zIndex: 1000 }}>
+          <button aria-label="Zoom in" style={{ width: 48, height: 48, border: "none", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "inherit" }}>
+            <Plus size={24} strokeWidth={1.75} />
+          </button>
+          <button aria-label="Zoom out" style={{ width: 48, height: 48, border: "none", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "inherit" }}>
+            <Minus size={24} strokeWidth={1.75} />
+          </button>
+        </div>
+      </>
+    )}
+    </div>
   );
 }

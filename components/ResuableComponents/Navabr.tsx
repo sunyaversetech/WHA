@@ -16,6 +16,7 @@ import { ChevronDown } from "lucide-react";
 import { LogoutDialog } from "../ui/LogoutDialog";
 
 import BusinessSearchWithDates from "./SearchSectionforBusiness";
+import SearchHeader from "./SearchHeader";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -49,6 +50,9 @@ export default function Navbar() {
   const isHomePage = path === "/";
   const isDashboard = path.startsWith("/dashboard");
   const isBusinessesPage = path === "/businesses";
+  // "/" renders the same search/business-listing content as "/search" — both
+  // get the Fresha-matched header instead of the generic one.
+  const isSearchPage = path === "/" || path === "/search";
 
   /* ── User dropdown (shared) ── */
   const UserDropdown = ({ pillStyle }: { pillStyle?: boolean }) => (
@@ -258,8 +262,19 @@ export default function Navbar() {
   ════════════════════════════════════ */
   return (
     <>
-      {!isBusinessesPage && !isDashboard && MobileNav()}
-      {!isDashboard && (isHomePage ? DesktopHomeNav() : DesktopInnerNav())}
+      {/* /search (and /) own their whole header, including the <1024
+         compact bar rendered inside BusinessPage.tsx — nothing from here. */}
+      {!isSearchPage && !isBusinessesPage && !isDashboard && MobileNav()}
+      {!isDashboard &&
+        (isSearchPage ? (
+          <div className="hidden lg:block">
+            <SearchHeader />
+          </div>
+        ) : isHomePage ? (
+          DesktopHomeNav()
+        ) : (
+          DesktopInnerNav()
+        ))}
     </>
   );
 }
