@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { resolveCityCoords } from "./city-coords";
+import { resolveCityCoords, isWithinAustralia, SYDNEY_COORDS } from "./city-coords";
 
 export type SearchLocationMode = "current" | "mapArea" | "selectedLocation";
 
@@ -84,7 +84,6 @@ export function useSearchLocation() {
   // browser for the user's location so results and the map default to
   // "near me" instead of an unfiltered nationwide view.
   const geoRequestedRef = useRef(false);
-  const [geoDenied, setGeoDenied] = useState(false);
   useEffect(() => {
     if (geoRequestedRef.current) return;
     const hasLocationContext =
@@ -94,15 +93,32 @@ export function useSearchLocation() {
     if (hasLocationContext) return;
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
 
+    // This is an Australia-only listing, so a real GPS fix only helps when
+    // it's actually inside Australia — everyone else (overseas, or denied/
+    // unavailable GPS) gets Sydney as a sane default rather than a
+    // nationwide-view dead end or a meaningless "distance" to a point that
+    // has no nearby businesses anyway.
+    const fallbackToSydney = () => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("lat", String(SYDNEY_COORDS[0]));
+      params.set("lng", String(SYDNEY_COORDS[1]));
+      router.replace(`/search?${params.toString()}`, { scroll: false });
+    };
+
     geoRequestedRef.current = true;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("lat", String(pos.coords.latitude));
-        params.set("lng", String(pos.coords.longitude));
-        router.replace(`/search?${params.toString()}`, { scroll: false });
+        const { latitude, longitude } = pos.coords;
+        if (isWithinAustralia(latitude, longitude)) {
+          const params = new URLSearchParams(searchParams.toString());
+          params.set("lat", String(latitude));
+          params.set("lng", String(longitude));
+          router.replace(`/search?${params.toString()}`, { scroll: false });
+        } else {
+          fallbackToSydney();
+        }
       },
-      () => setGeoDenied(true),
+      fallbackToSydney,
       { timeout: 8000 },
     );
   }, [searchParams, router]);
@@ -145,7 +161,6 @@ export function useSearchLocation() {
     searchLocationMode,
     refLat,
     refLng,
-    geoDenied,
     handleBoundsChange,
     currentCity,
     bounds,

@@ -29,3 +29,20 @@ export function resolveCityCoords(
   if (!city) return null;
   return CITY_COORDS[city.toLowerCase().trim()] ?? null;
 }
+
+// Rough mainland-+-Tasmania bounding box — good enough to tell "somewhere in
+// Australia" from "somewhere else entirely", which is all the GPS fallback
+// below needs (no business listings exist outside AU, so a precise/legal
+// border isn't the point here).
+const AU_BOUNDS = { minLat: -44, maxLat: -10, minLng: 112, maxLng: 154 };
+
+export function isWithinAustralia(lat: number, lng: number): boolean {
+  return (
+    lat >= AU_BOUNDS.minLat &&
+    lat <= AU_BOUNDS.maxLat &&
+    lng >= AU_BOUNDS.minLng &&
+    lng <= AU_BOUNDS.maxLng
+  );
+}
+
+export const SYDNEY_COORDS = CITY_COORDS.sydney;

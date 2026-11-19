@@ -442,7 +442,6 @@ export default function BusinessesClientPage() {
     searchLocationMode,
     refLat,
     refLng,
-    geoDenied,
     handleBoundsChange,
     bounds,
   } = useSearchLocation();
@@ -878,13 +877,7 @@ export default function BusinessesClientPage() {
         activeType={listType}
         businesses={enrichedBusinesses}
         events={enrichedEvents}
-        // If the user denies location permission (and hasn't picked a city
-        // or map area of their own), default the map's view to Sydney
-        // instead of the wide, zoomed-out whole-of-Australia fallback.
-        currentCity={
-          searchParams.get("city") ||
-          (geoDenied && userLat === null ? "Sydney" : "")
-        }
+        currentCity={searchParams.get("city") || ""}
         userLat={userLat ?? undefined}
         userLng={userLng ?? undefined}
         searchLocationMode={searchLocationMode}
@@ -906,22 +899,6 @@ export default function BusinessesClientPage() {
       <main
         style={{ maxWidth: 1680, margin: "0 auto", padding: "20px 16px 56px" }}
         className="md:px-10">
-        {geoDenied && userLat === null && (
-          <div
-            style={{
-              background: "#f8fafc",
-              border: "1px solid #e9edf3",
-              borderRadius: 12,
-              padding: "10px 16px",
-              fontSize: 13,
-              color: "#64748b",
-              marginBottom: 16,
-            }}>
-            Location access is disabled. Search for a location manually to see
-            nearby results.
-          </div>
-        )}
-
         {/* ════════════ DESKTOP ════════════ */}
         {/* The map column always stays mounted — only its width/opacity
            toggle with showMap — so the underlying map instance (position,
