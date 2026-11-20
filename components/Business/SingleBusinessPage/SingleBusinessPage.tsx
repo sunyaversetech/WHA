@@ -1042,7 +1042,7 @@ export default function BusinessPage() {
   return (
     <div style={{ minHeight: "100vh", background: T.white }}>
       {/* ══════════ MOBILE LAYOUT ══════════ */}
-      <div className="md:hidden">
+      <div className="lg:hidden">
         {/* Full-bleed hero */}
         <div
           style={{ position: "relative", height: 300, cursor: "pointer" }}
@@ -1172,8 +1172,8 @@ export default function BusinessPage() {
       </div>
 
       {/* ══════════ DESKTOP LAYOUT ══════════ */}
-      <div className="hidden md:block">
-        <div style={{ height: 80 }} />
+      <div className="hidden lg:block">
+        <div style={{ height: 72 }} />
 
         {/* ── HERO IMAGE GRID ── */}
         <div

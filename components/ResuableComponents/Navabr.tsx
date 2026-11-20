@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { LogoutDialog } from "../ui/LogoutDialog";
 
-import BusinessSearchWithDates from "./SearchSectionforBusiness";
 import SearchHeader from "./SearchHeader";
 
 export default function Navbar() {
@@ -133,7 +132,7 @@ export default function Navbar() {
      MOBILE
   ════════════════════════════════════ */
   const MobileNav = () => (
-    <div className="flex lg:hidden fixed top-0 left-0 w-full z-50" style={solidStyle}>
+    <div className="hidden fixed top-0 left-0 w-full z-50" style={solidStyle}>
       {/* Logo + auth row — always shown */}
       <div
         className="flex items-center justify-between px-4 py-3"
@@ -161,54 +160,20 @@ export default function Navbar() {
   );
 
   /* ════════════════════════════════════
-     DESKTOP — INNER PAGES VARIANT
-     (/ and /search render SearchHeader instead, which also switches over
-     at lg: — matching that breakpoint here keeps every other page's
-     header showing/hiding at the same width, with no gap between them.)
-  ════════════════════════════════════ */
-  const DesktopInnerNav = () => (
-    <nav
-      className="hidden lg:block fixed top-0 left-0 z-50 w-full"
-      style={solidStyle}>
-      <div className="flex items-center gap-6 px-6 py-3">
-        <Link href={buildPath("/")} aria-label="Home" className="flex-shrink-0">
-          <Image
-            src="/wha/logo.png"
-            alt="What's Happening Australia"
-            width={104}
-            height={28}
-            className="object-contain h-auto"
-            priority
-          />
-        </Link>
-
-        <div className="flex-1 min-w-0 max-w-3xl mx-auto">
-          {!pathname.startsWith("/auth") && <BusinessSearchWithDates />}
-        </div>
-
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <AuthSection />
-        </div>
-      </div>
-    </nav>
-  );
-
-  /* ════════════════════════════════════
      RENDER
   ════════════════════════════════════ */
   return (
     <>
-      {/* /search (and /) own their whole header, including the <1024
-         compact bar rendered inside BusinessPage.tsx — nothing from here. */}
+      {/* /search (and /) own their <1024 compact bar inside BusinessPage.tsx
+         instead — nothing from here on mobile. */}
       {!isSearchPage && !isBusinessesPage && !isDashboard && MobileNav()}
-      {!isDashboard &&
-        (isSearchPage ? (
-          <div className="hidden lg:block">
-            <SearchHeader />
-          </div>
-        ) : (
-          DesktopInnerNav()
-        ))}
+      {/* One header, same component, on every non-dashboard page — desktop
+         only (>=1024px); each page's own mobile layout handles <1024px. */}
+      {!isDashboard && (
+        <div className="hidden lg:block">
+          <SearchHeader />
+        </div>
+      )}
     </>
   );
 }

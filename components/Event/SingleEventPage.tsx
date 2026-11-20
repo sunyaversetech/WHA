@@ -401,7 +401,7 @@ export default function EventDetailPage() {
   );
 
   return (
-    <div className="relative md:container-modern mx-auto md:p-6 pb-20 md:pb-0 md:mt-20">
+    <div className="relative md:container-modern mx-auto md:p-6 pb-20 md:pb-0 lg:mt-[72px]">
       {isLoading ? (
         preview ? (
           <EventPreviewShell preview={preview} />
@@ -589,7 +589,7 @@ export default function EventDetailPage() {
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-10 md:rounded-2xl"></div>
 
-                <div className="absolute inset-0 z-60 flex items-start justify-between p-3 md:hidden">
+                <div className="absolute inset-0 z-60 flex items-start justify-between p-3 lg:hidden">
                   <Button
                     variant={"ghost"}
                     className="p-0 transition-all hover:scale-105 active:scale-95"
