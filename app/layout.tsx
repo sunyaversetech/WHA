@@ -1,4 +1,5 @@
 import { type Metadata } from "next";
+import NextTopLoader from "nextjs-toploader";
 
 import { Hanken_Grotesk } from "next/font/google";
 import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seo";
@@ -90,6 +91,7 @@ export default function RootLayout({
       <body
         data-ui="page-root"
         className={`${hankenGrotesk.variable} ${hankenGrotesk.className} antialiased bg-background overflow-y-scroll overflow-x-hidden`}>
+        <NextTopLoader color="var(--primary)" showSpinner={false} height={3} />
         <JsonLd data={ORGANIZATION_JSON_LD} />
         <JsonLd data={WEBSITE_JSON_LD} />
         <ReactQueryContext>
