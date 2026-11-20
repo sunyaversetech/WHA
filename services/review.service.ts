@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { ApiResponseType } from "./apitypes";
-import { PATCH, Post } from "@/lib/action";
+import { PATCH, Post } from "@/lib/client-fetch";
 import { Reviews } from "@/components/Business/Comment";
 import { useFetcher } from "@/lib/generic.service";
 

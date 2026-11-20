@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { ApiResponseType } from "./apitypes";
 import { CategoryFormValues } from "@/components/Dashboard/Inventory/CreateCategoryDialog";
-import { Post } from "@/lib/action";
+import { Post } from "@/lib/client-fetch";
 import { useFetcher } from "@/lib/generic.service";
 import {
   Category,

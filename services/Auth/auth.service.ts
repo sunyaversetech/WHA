@@ -1,4 +1,4 @@
-import { Post } from "@/lib/action";
+import { Post } from "@/lib/client-fetch";
 import { useMutation } from "@tanstack/react-query";
 import { ApiResponseType } from "../apitypes";
 import { SingUPFormSchema } from "@/components/Auth/BusinessSignupPage";

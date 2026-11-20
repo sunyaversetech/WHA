@@ -1,6 +1,6 @@
 import { ApiResponseType } from "./apitypes";
 import { useMutation } from "@tanstack/react-query";
-import { PATCH, Post } from "@/lib/action";
+import { PATCH, Post } from "@/lib/client-fetch";
 import { useFetcher } from "@/lib/generic.service";
 import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
 import { useSearchParams } from "next/navigation";

@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { ApiResponseType } from "./apitypes";
-import { Post } from "@/lib/action";
+import { Post } from "@/lib/client-fetch";
 import { useFetcher } from "@/lib/generic.service";
 
 type RedeemCodeType = {

@@ -1,6 +1,6 @@
 import { useFetcher } from "@/lib/generic.service";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Delete, Post, PATCH } from "@/lib/action";
+import { Delete, Post, PATCH } from "@/lib/client-fetch";
 
 export interface ICategory {
   _id: string;

@@ -1,4 +1,4 @@
-import { Delete, Post } from "@/lib/action";
+import { Delete, Post } from "@/lib/client-fetch";
 import { ApiResponseType } from "./apitypes";
 import { useMutation } from "@tanstack/react-query";
 import { useFetcher } from "@/lib/generic.service";
