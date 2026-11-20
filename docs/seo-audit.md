@@ -349,6 +349,7 @@ Work top to bottom. Phase 1 alone takes the site from invisible to crawlable, so
 
 - [ ] Visible H1 and intro text on home, events and deals. Make the home H1 match the active tab.
 - [ ] Render one responsive layout instead of desktop and mobile duplicates, so the business page H1 shows on mobile.
+- [ ] Deal detail pages have no `<h1>` at all (confirmed via production build HTML, `/deals/[slug]` - not previously called out in the audit, same underlying pattern as the business page H1 gap).
 - [ ] Store suburb and state separately. Shorten business and event titles.
 - [ ] Switch to hyphenated slugs with `legacySlugs` and 308 redirects.
 - [ ] Show an "event ended" state with related upcoming events. Use evergreen URLs for recurring festivals.
