@@ -3,6 +3,7 @@
 import { memo } from "react";
 import { Heart, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import {
   useCreateFavroite,
@@ -14,6 +15,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { EventFormValues } from "../Dashboard/Events/EventsForm";
 import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
 import { format, parse } from "date-fns";
+import { Get } from "@/lib/client-fetch";
+
+function normalizeSlug(id: string) {
+  return id.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
 
 function priceLabel(event: any): string {
   if (event.price_category === "registration") return "Free";
@@ -43,7 +49,6 @@ const EventCard = memo(function EventCard({
       { item_id: eventId, item_type: "Event" },
       {
         onSuccess: (msg) => {
-          router.refresh();
           toast.success(msg.message);
           queryClient.invalidateQueries({ queryKey: ["favroite"] });
         },
@@ -56,6 +61,17 @@ const EventCard = memo(function EventCard({
   const isEventFavorite = userFavorites?.data?.events?.some(
     (item) => (item._id ?? "").toString() === eventId?.toString(),
   );
+
+  const href = `/events/${event.slug}`;
+  const slug = normalizeSlug(event.slug ?? "");
+
+  const prefetch = () => {
+    router.prefetch(href);
+    queryClient.prefetchQuery({
+      queryKey: ["singleEvent", slug],
+      queryFn: () => Get({ url: `/api/event/single-event/${slug}` }),
+    });
+  };
 
   const dateLabel = event.dateRange?.from
     ? `${new Date(event.dateRange.from)
@@ -71,14 +87,16 @@ const EventCard = memo(function EventCard({
   return (
     <article
       data-ui="result-card"
-      className="group cursor-pointer"
-      style={{ position: "relative", display: "flex", flexDirection: "column", minWidth: 0 }}
-      onClick={() => router.push(`/events/${event.slug}`)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) =>
-        e.key === "Enter" && router.push(`/events/${event.slug}`)
-      }>
+      className="group cursor-pointer active:scale-[0.98] transition-transform"
+      style={{ position: "relative", display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <Link
+        href={href}
+        aria-label={event.title}
+        className="absolute inset-0 z-[1]"
+        onMouseEnter={prefetch}
+        onTouchStart={prefetch}
+        onFocus={prefetch}
+      />
       <div
         data-ui="result-card-media"
         style={{ position: "relative", aspectRatio: "16 / 9", borderRadius: 16, overflow: "hidden", background: "var(--muted)" }}>
@@ -103,6 +121,7 @@ const EventCard = memo(function EventCard({
             position: "absolute",
             top: 8,
             right: 8,
+            zIndex: 2,
             width: 32,
             height: 32,
             borderRadius: 9999,

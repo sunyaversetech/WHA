@@ -2,6 +2,7 @@
 
 import { Heart, Loader2, Star, BadgeCheck } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
 import {
@@ -11,6 +12,7 @@ import {
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { Get } from "@/lib/client-fetch";
 
 type SlotsByServiceId = Record<
   string,
@@ -82,6 +84,15 @@ export default function BusinessCard({
     .sort((a, b) => (a.base_price ?? 0) - (b.base_price ?? 0))
     .slice(0, MAX_SHOWN_SERVICES);
 
+  const href = `/businesses/${slug}`;
+  const prefetch = () => {
+    router.prefetch(href);
+    queryClient.prefetchQuery({
+      queryKey: ["getbusiness", slug],
+      queryFn: () => Get({ url: `/api/business/single/${slug}` }),
+    });
+  };
+
   const handleSlotClick = (
     e: React.MouseEvent,
     serviceId: string,
@@ -116,7 +127,6 @@ export default function BusinessCard({
       { item_id: businessId, item_type: "User" },
       {
         onSuccess: (msg: any) => {
-          router.refresh();
           toast.success(msg.message);
           queryClient.invalidateQueries({ queryKey: ["favroite"] });
         },
@@ -128,14 +138,16 @@ export default function BusinessCard({
   return (
     <article
       data-ui="result-card"
-      className="group cursor-pointer"
-      style={{ position: "relative", display: "flex", flexDirection: "column", minWidth: 0 }}
-      onClick={() => router.push(`/businesses/${slug}`)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) =>
-        e.key === "Enter" && router.push(`/businesses/${slug}`)
-      }>
+      className="group cursor-pointer active:scale-[0.98] transition-transform"
+      style={{ position: "relative", display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <Link
+        href={href}
+        aria-label={displayName}
+        className="absolute inset-0 z-[1]"
+        onMouseEnter={prefetch}
+        onTouchStart={prefetch}
+        onFocus={prefetch}
+      />
       <div
         data-ui="result-card-media"
         style={{
@@ -190,6 +202,7 @@ export default function BusinessCard({
             position: "absolute",
             top: 8,
             right: 8,
+            zIndex: 2,
             width: 32,
             height: 32,
             borderRadius: 9999,
@@ -318,6 +331,8 @@ export default function BusinessCard({
                           key={slot}
                           onClick={(e) => handleSlotClick(e, service._id, slot)}
                           style={{
+                            position: "relative",
+                            zIndex: 2,
                             flexShrink: 0,
                             border: "1px solid var(--border-strong)",
                             background: "var(--background)",
