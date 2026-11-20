@@ -1,12 +1,18 @@
+import { Suspense } from "react";
 import DealsPageClient from "@/components/Deal/DealsPageClient";
+import { buildMetadata, SITE_NAME } from "@/lib/seo";
 
-export const metadata = {
-  title: "Deals",
+export const metadata = buildMetadata({
+  title: `Deals | ${SITE_NAME}`,
   description:
     "Find the best deals and offers from Nepali-owned businesses across Australia.",
-  alternates: { canonical: "/deals" },
-};
+  path: "/deals",
+});
 
 export default function DealsPage() {
-  return <DealsPageClient />;
+  return (
+    <Suspense fallback={null}>
+      <DealsPageClient />
+    </Suspense>
+  );
 }

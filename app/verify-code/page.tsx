@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,7 +35,7 @@ const FormSchema = z.object({
   }),
 });
 
-export default function VerifyCode() {
+function VerifyCodeForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
@@ -150,5 +151,13 @@ export default function VerifyCode() {
         </Form>
       </div>
     </div>
+  );
+}
+
+export default function VerifyCodePage() {
+  return (
+    <Suspense fallback={null}>
+      <VerifyCodeForm />
+    </Suspense>
   );
 }

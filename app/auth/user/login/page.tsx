@@ -1,11 +1,13 @@
+import { Suspense } from "react";
 import AuthShell from "@/components/Auth/AuthShell";
 import LoginPage from "@/components/Auth/LoginPage";
+import { buildMetadata, SITE_NAME } from "@/lib/seo";
 
-export const metadata = {
-  title: "Customer Login",
+export const metadata = buildMetadata({
+  title: `Customer Login | ${SITE_NAME}`,
   description: "Log in to book and manage your appointments on What's Happening Australia.",
-  alternates: { canonical: "/auth/user/login" },
-};
+  path: "/auth/user/login",
+});
 
 export default function UserLoginPage() {
   return (
@@ -13,11 +15,13 @@ export default function UserLoginPage() {
       heading="WHA for Customers"
       subheading="Log in to book and manage your appointments."
       backHref="/auth">
-      <LoginPage
-        loginType="user"
-        showGoogle={true}
-        signupHref="/auth/user/signup"
-      />
+      <Suspense fallback={null}>
+        <LoginPage
+          loginType="user"
+          showGoogle={true}
+          signupHref="/auth/user/signup"
+        />
+      </Suspense>
     </AuthShell>
   );
 }

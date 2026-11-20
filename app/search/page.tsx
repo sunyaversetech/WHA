@@ -1,14 +1,21 @@
+import { Suspense } from "react";
 import BusinessesClientPage from "@/components/Business/BusinessPage";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Local Businesses",
+// Same content now also renders at "/" (the home page) — canonicalize to
+// there instead of creating duplicate-content signals for Google, and
+// reuse its title/description/OG rather than the old, disagreeing copy.
+export const metadata = buildMetadata({
+  title: "Nepali Events & Businesses in Australia | What's Happening Australia",
   description:
-    "Discover Nepali-owned local businesses near you, across Australia.",
-  // Same content now also renders at "/" (the home page) — canonicalize to
-  // there instead of creating duplicate-content signals for Google.
-  alternates: { canonical: "/" },
-};
+    "Discover upcoming Nepali concerts, festivals and community events near you, plus Nepali-owned businesses and deals across Australia.",
+  path: "/",
+});
 
 export default function BusinessesPage() {
-  return <BusinessesClientPage />;
+  return (
+    <Suspense fallback={null}>
+      <BusinessesClientPage />
+    </Suspense>
+  );
 }

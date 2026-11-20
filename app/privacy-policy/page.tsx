@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
 import LegalLayout from "@/components/Legal/LegalLayout";
+import { buildMetadata, SITE_NAME } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
+export const metadata = buildMetadata({
+  title: `Privacy Policy | ${SITE_NAME}`,
   description:
     "How What’s Happening Australia (WHA) collects, uses, and protects the personal information of Users and Business Partners on our booking marketplace.",
-  alternates: { canonical: "/privacy-policy" },
-};
+  path: "/privacy-policy",
+});
 
 export default function PrivacyPolicyPage() {
   return (

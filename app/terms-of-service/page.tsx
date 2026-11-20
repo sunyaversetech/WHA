@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
 import LegalLayout from "@/components/Legal/LegalLayout";
+import { buildMetadata, SITE_NAME } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Terms of Service",
+export const metadata = buildMetadata({
+  title: `Terms of Service | ${SITE_NAME}`,
   description:
     "The booking and marketplace terms that apply when Users book services and Business Partners list services on What’s Happening Australia (WHA).",
-  alternates: { canonical: "/terms-of-service" },
-};
+  path: "/terms-of-service",
+});
 
 export default function TermsOfServicePage() {
   return (

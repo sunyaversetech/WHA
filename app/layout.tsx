@@ -1,8 +1,9 @@
 import { type Metadata } from "next";
+import { Suspense } from "react";
 import NextTopLoader from "nextjs-toploader";
 
 import { Hanken_Grotesk } from "next/font/google";
-import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { SITE_URL, SITE_NAME } from "@/lib/seo";
 import JsonLd from "@/components/SEO/JsonLd";
 import "./globals.css";
 import SessionWrapper from "@/components/Auth/SessionWrapper";
@@ -25,33 +26,15 @@ const hankenGrotesk = Hanken_Grotesk({
   display: "swap",
 });
 
-const DEFAULT_DESCRIPTION =
-  "Discover events, local businesses, deals, and community news across Australia.";
-
+// Deliberately just metadataBase + icons here. Every other field (title,
+// description, alternates, openGraph, twitter) used to default to the
+// homepage's here and get inherited by any page that didn't override it -
+// and because a page-level openGraph/twitter replaces the parent's wholesale
+// rather than merging, even pages that DID override their title/canonical
+// kept shipping the homepage's og:title/og:url. Every static page now
+// builds its own complete metadata via lib/seo.ts's buildMetadata().
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: {
-    default: SITE_NAME,
-    template: `%s | ${SITE_NAME}`,
-  },
-  description: DEFAULT_DESCRIPTION,
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    type: "website",
-    siteName: SITE_NAME,
-    title: SITE_NAME,
-    description: DEFAULT_DESCRIPTION,
-    url: SITE_URL,
-    images: [DEFAULT_OG_IMAGE],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: SITE_NAME,
-    description: DEFAULT_DESCRIPTION,
-    images: [DEFAULT_OG_IMAGE.url],
-  },
   icons: {
     icon: [
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
@@ -106,7 +89,11 @@ export default function RootLayout({
                 <AuthModalLoader />
               </TooltipProvider>
               <Toaster />
-              <BottomNav />
+              {/* BottomNav reads useSearchParams() (for ?city=) - same
+                 Suspense requirement as Navbar, see NavbarProvider.tsx. */}
+              <Suspense fallback={null}>
+                <BottomNav />
+              </Suspense>
             </SessionWrapper>
           </CityFilterProvider>
         </ReactQueryContext>

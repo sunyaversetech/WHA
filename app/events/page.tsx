@@ -1,12 +1,18 @@
+import { Suspense } from "react";
 import EventsPageClient from "@/components/Event/EventPage";
+import { buildMetadata, SITE_NAME } from "@/lib/seo";
 
-export const metadata = {
-  title: "Events",
+export const metadata = buildMetadata({
+  title: `Events | ${SITE_NAME}`,
   description:
     "Discover upcoming Nepali community events near you, across Australia.",
-  alternates: { canonical: "/events" },
-};
+  path: "/events",
+});
 
 export default function EventsPage() {
-  return <EventsPageClient />;
+  return (
+    <Suspense fallback={null}>
+      <EventsPageClient />
+    </Suspense>
+  );
 }
