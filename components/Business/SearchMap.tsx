@@ -126,6 +126,7 @@ export default function SearchMap({
       bounds={bounds}
       onBoundsChange={onBoundsChange}
       isVisible={isVisible}
+      isExpanded={isExpanded}
     />
 
     {!hideControls && (
@@ -134,7 +135,13 @@ export default function SearchMap({
           data-ui="map-expand-button"
           onClick={onExpandClick}
           aria-label={isExpanded ? "Exit fullscreen" : "Expand map"}
-          style={{ ...glassStyle, position: "absolute", top: 20, right: 20, width: 48, height: 48, borderRadius: 9999, zIndex: 1000 }}>
+          // Fullscreen mode makes this panel position:fixed/inset:0, so its
+          // own top edge lines up with the sitewide header's — without the
+          // extra offset the button sits directly behind that header (same
+          // top-right corner, header wins the stacking) and is both
+          // invisible and unclickable. Non-fullscreen mode doesn't have
+          // this problem - the panel already starts below the header.
+          style={{ ...glassStyle, position: "absolute", top: isExpanded ? 92 : 20, right: 20, width: 48, height: 48, borderRadius: 9999, zIndex: 1000 }}>
           {isExpanded ? (
             <Minimize2 size={24} strokeWidth={1.75} />
           ) : (

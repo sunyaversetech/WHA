@@ -132,6 +132,25 @@ function FlyToLocation({
   return null;
 }
 
+/* ── Belt-and-braces resize handling: watches the map's own container
+   element directly instead of relying on every caller correctly passing
+   an isVisible/isExpanded prop every time its size can change (that's
+   exactly how SearchMap.tsx's fullscreen toggle went unnoticed — it never
+   forwarded isExpanded to this component at all, so FlyToLocation's
+   effect never re-fired and Leaflet kept rendering tiles sized for the
+   old, narrower container). Fires on any actual size change, whatever
+   caused it. ── */
+function MapResizeObserver() {
+  const map = useMap();
+  useEffect(() => {
+    const container = map.getContainer();
+    const observer = new ResizeObserver(() => map.invalidateSize());
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [map]);
+  return null;
+}
+
 /* ── Fire onBoundsChange whenever the user genuinely pans or zooms — not
    when the move was our own programmatic flyTo (FlyToLocation flags that
    via programmaticRef so it isn't mistaken for a manual map-area change). ── */
@@ -321,6 +340,8 @@ export default function LocationMap<T>({
         {showLocateButton && (
           <UserLocationButton programmaticRef={programmaticRef} />
         )}
+
+        <MapResizeObserver />
 
         <FlyToLocation
           userLat={userLat}
