@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { ApiResponseType } from "./apitypes";
-import { Post } from "@/lib/action";
+import { Post } from "@/lib/client-fetch";
 import { useFetcher } from "@/lib/generic.service";
 import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
 import { DealsGetValues } from "./deal.service";
@@ -26,9 +27,14 @@ export const useCreateFavroite = () => {
 };
 
 export const useGetUserFavroite = () => {
+  // Logged-out visitors can't have favourites — skip the request instead
+  // of firing it (and getting an empty/unauthorized result back) on every
+  // card and every detail page regardless of auth state.
+  const { data: session } = useSession();
   return useFetcher<ApiResponseType<FavoriteType>>(
     "favroite",
     null,
     "/api/favroite",
+    !!session,
   );
 };

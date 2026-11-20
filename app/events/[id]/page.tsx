@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { cache } from "react";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { connectToDb } from "@/lib/db";
-import Event from "@/server/models/Event.model";
+import { getCachedSingleEventData } from "@/server/lib/getSingleEventData";
+import { getQueryClient } from "@/lib/get-query-client";
 import { absoluteUrl, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import JsonLd from "@/components/SEO/JsonLd";
 import EventDetailPage from "@/components/Event/SingleEventPage";
@@ -13,8 +15,19 @@ function truncate(text: string, max: number) {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
 }
 
+// Matches the client page's own slug normalization (SingleEventPage.tsx) so
+// the server-fetched data lands under the same React Query key the client
+// hook (useGetSingleEvent) looks for — in practice a no-op, since real
+// slugs are already lowercase/alphanumeric, but keeps them guaranteed
+// identical rather than assumed identical.
+function normalizeSlug(id: string) {
+  return id.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 // cache() dedupes this within a single request, so generateMetadata and the
-// page body both calling it only hits the DB once.
+// page body share one call — which itself hits getCachedSingleEventData,
+// a 60s-revalidated cache shared across requests/users (see
+// server/lib/getSingleEventData.ts for why and its staleness tradeoffs).
 //
 // connectToDb() swallows its own connection errors instead of throwing
 // (lib/db.ts), so a transient DB hiccup leaves the connection not actually
@@ -27,12 +40,7 @@ function truncate(text: string, max: number) {
 const getEvent = cache(async (slug: string) => {
   try {
     await connectToDb();
-    return await Event.findOne({ slug })
-      .select(
-        "title description venue location city_name image dateRange startTime endTime ticket_price price_category archived",
-      )
-      .populate("user", "business_name")
-      .lean<any>();
+    return await getCachedSingleEventData(normalizeSlug(slug));
   } catch (err) {
     console.error(`getEvent(${slug}): DB fetch failed, degrading gracefully`, err);
     // undefined (DB error) vs null (query ran, no such event) — generateMetadata
@@ -92,6 +100,18 @@ export default async function Page({ params }: Props) {
   const event = await getEvent(id);
   const url = absoluteUrl(`/events/${id}`);
 
+  const queryClient = getQueryClient();
+  if (event) {
+    // Same shape the client's useGetSingleEvent/useFetcher expects from
+    // GET /api/event/single-event/[id], and the same query key
+    // (["singleEvent", slug]) it reads — so the client mounts with this
+    // data already in cache instead of re-fetching it from scratch.
+    queryClient.setQueryData(["singleEvent", normalizeSlug(id)], {
+      message: "Event fetched successfully",
+      data: event,
+    });
+  }
+
   if (!event) {
     return <EventDetailPage />;
   }
@@ -145,10 +165,10 @@ export default async function Page({ params }: Props) {
   };
 
   return (
-    <>
+    <HydrationBoundary state={dehydrate(queryClient)}>
       <JsonLd data={eventJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
       <EventDetailPage />
-    </>
+    </HydrationBoundary>
   );
 }

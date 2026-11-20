@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import crypto from "crypto";
 import Stripe from "stripe";
+import { revalidateTag } from "next/cache";
 import Event from "@/server/models/Event.model";
 import { EventTicketPurchase } from "@/server/models/EventTicketPurchase.model";
 import { TicketHold } from "@/server/models/TicketHold.model";
@@ -295,6 +296,11 @@ export async function finalizeEventTicketPurchase(
       invoiceNumber: createdPurchase.invoiceNumber,
     },
   );
+
+  // A purchase changes this event's ticket availability — don't make the
+  // buyer (or anyone else viewing the event right after) wait out the
+  // getSingleEventData cache's 60s window to see it.
+  revalidateTag("events", { expire: 0 });
 
   return { ok: true, purchase: createdPurchase, event };
 }

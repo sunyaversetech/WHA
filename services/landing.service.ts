@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ApiResponseType } from "./apitypes";
 import { useSearchParams } from "next/navigation";
-import { Get } from "@/lib/action";
+import { Get } from "@/lib/client-fetch";
 
 export const useGetLandingPageData = () => {
   const param = useSearchParams();

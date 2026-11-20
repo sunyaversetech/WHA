@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Get } from "@/lib/action";
+import { Get } from "@/lib/client-fetch";
 import { ApiResponseType } from "./apitypes";
 
 export const useGetCalendarBookings = (
