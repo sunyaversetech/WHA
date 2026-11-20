@@ -1,11 +1,46 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu as MenuIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import FreshaSearchBar from "./FreshaSearchBar";
+
+// Static-build/pre-hydration stand-in for FreshaSearchBar's idle state -
+// same pill shape and placeholder text, no interactivity, no search params.
+function FreshaSearchBarFallback() {
+  return (
+    <div style={{ position: "absolute", left: 0, right: 0, top: 12, display: "flex", justifyContent: "center" }}>
+      <div
+        className="w-[640px] min-[1440px]:w-[723px]"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          height: 50,
+          borderRadius: 9999,
+          border: "1px solid var(--border)",
+          background: "var(--background)",
+          boxShadow: "var(--shadow-search)",
+        }}>
+        {["All services", "Current location", "Any time"].map((label, i) => (
+          <span
+            key={label}
+            style={{
+              flex: 1,
+              padding: "0 16px",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--foreground)",
+              borderLeft: i > 0 ? "1px solid var(--border)" : undefined,
+            }}>
+            {label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // Desktop (>=1024px) header — fresha-search-kit/spec/04 "Header". The one
 // header component every non-dashboard page renders (via Navabr.tsx), so
@@ -76,7 +111,15 @@ export default function SearchHeader() {
         />
       </Link>
 
-      <FreshaSearchBar />
+      {/* FreshaSearchBar reads useSearchParams() (to pre-fill the "service"
+         field) with no boundary of its own - isolated here so it can't
+         take the logo link and Menu dropdown down with it. It only ever
+         pre-fills an input from the URL; rendering with no pre-fill for
+         one static paint, then reconciling on hydration, changes nothing
+         a user or crawler would notice. */}
+      <Suspense fallback={<FreshaSearchBarFallback />}>
+        <FreshaSearchBar />
+      </Suspense>
 
       <div ref={menuRef} style={{ position: "relative", zIndex: 1 }}>
         <button

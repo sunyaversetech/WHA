@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
@@ -17,10 +17,16 @@ import { LogoutDialog } from "../ui/LogoutDialog";
 
 import SearchHeader from "./SearchHeader";
 
-export default function Navbar() {
-  const { data: session } = useSession();
-  const pathname = usePathname();
+// Runs the "remembered city" redirect — the only reason this file used to
+// call useSearchParams() at Navbar's top level, which forced the WHOLE
+// component — including the always-visible SearchHeader below, which
+// doesn't read search params at all — behind a Suspense fallback during
+// static rendering (confirmed: the statically-generated HTML for "/" had
+// no nav, no links, nothing, until this was isolated). Renders nothing, so
+// its own Suspense boundary never has anything visible to fall back to.
+function CityRedirectEffect() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentCity = searchParams.get("city");
 
@@ -33,18 +39,17 @@ export default function Navbar() {
     }
   }, [currentCity, pathname, router, searchParams]);
 
-  const buildPath = (href: string) =>
-    currentCity ? `${href}?city=${currentCity}` : href;
+  return null;
+}
 
-  const path = pathname.split("?")[0];
-  const isDashboard = path.startsWith("/dashboard");
-  const isBusinessesPage = path === "/businesses";
-  // "/" renders the same search/business-listing content as "/search" — both
-  // get the Fresha-matched header instead of the generic one.
-  const isSearchPage = path === "/" || path === "/search";
-
-  /* ── User dropdown (shared) ── */
-  const UserDropdown = ({ pillStyle }: { pillStyle?: boolean }) => (
+function MobileUserDropdown({
+  session,
+  buildPath,
+}: {
+  session: ReturnType<typeof useSession>["data"];
+  buildPath: (href: string) => string;
+}) {
+  return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
@@ -97,42 +102,51 @@ export default function Navbar() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
 
-  /* ── Auth section (logged-in or login button) ── */
-  const AuthSection = ({
-    size = "default",
-    pillAvatar = false,
-  }: {
-    size?: "sm" | "default";
-    pillAvatar?: boolean;
-  }) =>
-    session ? (
-      <UserDropdown pillStyle={pillAvatar} />
-    ) : (
-      <Link href={buildPath("/auth")}>
-        {!pathname.startsWith("/auth") && (
-          <Button size={size} className="rounded-full px-5 font-semibold">
-            Login
-          </Button>
-        )}
-      </Link>
-    );
+function MobileAuthSection({
+  session,
+  pathname,
+  buildPath,
+}: {
+  session: ReturnType<typeof useSession>["data"];
+  pathname: string;
+  buildPath: (href: string) => string;
+}) {
+  return session ? (
+    <MobileUserDropdown session={session} buildPath={buildPath} />
+  ) : (
+    <Link href={buildPath("/auth")}>
+      {!pathname.startsWith("/auth") && (
+        <Button size="sm" className="rounded-full px-5 font-semibold">
+          Login
+        </Button>
+      )}
+    </Link>
+  );
+}
 
-  // Always-solid fixed header — matches SearchHeader's treatment on
-  // / and /search, so the header reads the same (and stays put the same
-  // way) across every page instead of fading in/out as the page scrolls.
-  const solidStyle: React.CSSProperties = {
-    background: "rgba(255,255,255,0.95)",
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    boxShadow: "0 1px 0 #e6ebf2, 0 2px 12px rgba(2,12,26,0.06)",
-  };
+// Permanently hidden (className="hidden ..." below, unconditionally — this
+// predates this change) on every page that renders it, but still needs its
+// own useSearchParams() for the ?city= it appends to its links, so it gets
+// its own small Suspense boundary instead of sharing Navbar's.
+function MobileNav() {
+  const { data: session } = useSession();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentCity = searchParams.get("city");
+  const buildPath = (href: string) =>
+    currentCity ? `${href}?city=${currentCity}` : href;
 
-  /* ════════════════════════════════════
-     MOBILE
-  ════════════════════════════════════ */
-  const MobileNav = () => (
-    <div className="hidden fixed top-0 left-0 w-full z-50" style={solidStyle}>
+  return (
+    <div
+      className="hidden fixed top-0 left-0 w-full z-50"
+      style={{
+        background: "rgba(255,255,255,0.95)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        boxShadow: "0 1px 0 #e6ebf2, 0 2px 12px rgba(2,12,26,0.06)",
+      }}>
       {/* Logo + auth row — always shown */}
       <div
         className="flex items-center justify-between px-4 py-3"
@@ -147,28 +161,44 @@ export default function Navbar() {
             priority
           />
         </Link>
-        {session && <AuthSection size="sm" />}
+        {session && (
+          <MobileAuthSection
+            session={session}
+            pathname={pathname}
+            buildPath={buildPath}
+          />
+        )}
       </div>
-
-      {/* Search row — only on pages where it makes sense */}
-      {/* {showMobileSearch && (
-        <div className="px-4 py-3">
-          <MobileBusinessSearchWithDates />
-        </div>
-      )} */}
     </div>
   );
+}
 
-  /* ════════════════════════════════════
-     RENDER
-  ════════════════════════════════════ */
+export default function Navbar() {
+  const pathname = usePathname();
+
+  const path = pathname.split("?")[0];
+  const isDashboard = path.startsWith("/dashboard");
+  const isBusinessesPage = path === "/businesses";
+  // "/" renders the same search/business-listing content as "/search" — both
+  // get the Fresha-matched header instead of the generic one.
+  const isSearchPage = path === "/" || path === "/search";
+
   return (
     <>
+      <Suspense fallback={null}>
+        <CityRedirectEffect />
+      </Suspense>
       {/* /search (and /) own their <1024 compact bar inside BusinessPage.tsx
          instead — nothing from here on mobile. */}
-      {!isSearchPage && !isBusinessesPage && !isDashboard && MobileNav()}
+      {!isSearchPage && !isBusinessesPage && !isDashboard && (
+        <Suspense fallback={null}>
+          <MobileNav />
+        </Suspense>
+      )}
       {/* One header, same component, on every non-dashboard page — desktop
-         only (>=1024px); each page's own mobile layout handles <1024px. */}
+         only (>=1024px); each page's own mobile layout handles <1024px.
+         Doesn't read search params, so it's deliberately outside every
+         Suspense boundary above — it must never wait on one. */}
       {!isDashboard && (
         <div className="hidden lg:block">
           <SearchHeader />
