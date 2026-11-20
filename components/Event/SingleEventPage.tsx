@@ -18,7 +18,7 @@ import {
   useGetSingleEvent,
   useRedeemEventCode,
 } from "@/services/event.service";
-import EventCheckOut, { PurchasableOption } from "../Stripe/EventCheckOut";
+import type { PurchasableOption } from "../Stripe/EventCheckOut";
 import Image from "next/image";
 import { format, formatDate, parse } from "date-fns";
 import dynamic from "next/dynamic";
@@ -43,6 +43,13 @@ import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
 // (components/Event/Event-map.tsx), instead of bloating every event page's
 // initial bundle.
 const EventLocationMap = dynamic(() => import("./EventLocationMap"), {
+  ssr: false,
+});
+
+// EventCheckOut calls loadStripe() (fetches js.stripe.com/v3) at module
+// scope, so a static import pulled that in on every event page view even
+// when checkout was never opened. Only ever rendered when isCheckoutOpen.
+const EventCheckOut = dynamic(() => import("../Stripe/EventCheckOut"), {
   ssr: false,
 });
 
@@ -81,7 +88,7 @@ export default function EventDetailPage() {
   } | null>(null);
 
   const { mutate: redeem, isPending: redeemPending } = useRedeemEventCode();
-  const { data } = useGetEventRedeem();
+  const { data } = useGetEventRedeem(!!session);
   const { onOpen } = useAuthModal();
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);

@@ -13,7 +13,7 @@ import BottomNav from "@/components/ResuableComponents/BottomNavbar";
 import Footer from "@/components/ResuableComponents/Footer";
 import NavbarProvider from "@/components/ResuableComponents/NavbarProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthModal } from "@/components/Auth/DialogLogin/AuthModel";
+import AuthModalLoader from "@/components/Auth/DialogLogin/AuthModalLoader";
 
 // Single UI font for everything — headings, body, nav, buttons — matching
 // Fresha's one-family approach (their app uses Aktiv Grotesk, a commercial
@@ -103,7 +103,7 @@ export default function RootLayout({
                   {children}
                   <Footer />
                 </div>
-                <AuthModal />
+                <AuthModalLoader />
               </TooltipProvider>
               <Toaster />
               <BottomNav />

@@ -266,11 +266,12 @@ export const useRedeemEventCode = () => {
   });
 };
 
-export const useGetEventRedeem = () => {
+export const useGetEventRedeem = (enabled: boolean = true) => {
   return useFetcher<ApiResponseType<RedeemCodeResponseType[]>>(
     "redeem",
     null,
     "/api/event/redeem",
+    enabled,
   );
 };
 export const useGetEventRedeemBusiness = () => {
