@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { Get, PATCH, Post } from "@/lib/action";
+import { Get, PATCH, Post } from "@/lib/client-fetch";
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
 

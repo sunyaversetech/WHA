@@ -2,7 +2,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useSearchParams } from "next/navigation";
-import { Get, Post } from "./action";
+import { Get, Post } from "./client-fetch";
 import useQueryParams from "./hook.query-parse";
 
 export function useFetcher<T>(

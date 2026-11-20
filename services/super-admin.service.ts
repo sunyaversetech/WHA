@@ -5,7 +5,7 @@ import { UserBusinessType } from "./business.service";
 import { EventType } from "./event.service";
 import { DealsGetValues } from "./deal.service";
 import { useMutation } from "@tanstack/react-query";
-import { Post } from "@/lib/action";
+import { Post } from "@/lib/client-fetch";
 
 export const useSuperAdminGetALLBusiness = () => {
   return useFetcher<ApiResponseType<UserBusinessType[]>>(

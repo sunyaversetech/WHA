@@ -18,7 +18,7 @@ import {
   useGetSingleEvent,
   useRedeemEventCode,
 } from "@/services/event.service";
-import EventCheckOut, { PurchasableOption } from "../Stripe/EventCheckOut";
+import type { PurchasableOption } from "../Stripe/EventCheckOut";
 import Image from "next/image";
 import { format, formatDate, parse } from "date-fns";
 import dynamic from "next/dynamic";
@@ -35,6 +35,7 @@ import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import EventDetailsSkeleton from "./SingleEventSkeleton";
+import EventPreviewShell, { type EventPreview } from "./EventPreviewShell";
 import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
 
 // Leaflet needs `window` and is a meaningful chunk of JS for a below-the-
@@ -42,6 +43,13 @@ import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
 // (components/Event/Event-map.tsx), instead of bloating every event page's
 // initial bundle.
 const EventLocationMap = dynamic(() => import("./EventLocationMap"), {
+  ssr: false,
+});
+
+// EventCheckOut calls loadStripe() (fetches js.stripe.com/v3) at module
+// scope, so a static import pulled that in on every event page view even
+// when checkout was never opened. Only ever rendered when isCheckoutOpen.
+const EventCheckOut = dynamic(() => import("../Stripe/EventCheckOut"), {
   ssr: false,
 });
 
@@ -55,10 +63,22 @@ export default function EventDetailPage() {
   const {
     data: event,
     isLoading,
-    isFetching,
     refetch: refetchEvent,
   } = useGetSingleEvent(slug);
   const queryClient = useQueryClient();
+  // Seeded by the search card's hover prefetch (components/cards/
+  // event-card.tsx) — covers fast clicks that outrun that prefetch, and
+  // is irrelevant (undefined) once the real `event` data has arrived.
+  const preview = queryClient.getQueryData<EventPreview>([
+    "eventPreview",
+    slug,
+  ]);
+  // Only matters right after a preview shell was shown — fades the real
+  // (higher-res) hero in instead of an abrupt swap from the shell's plain
+  // <img>. Starts true when there's no preview to hand off from, so the
+  // normal server-rendered case (no shell shown) isn't held at opacity-0
+  // waiting on a load event that may have already fired before mount.
+  const [heroLoaded, setHeroLoaded] = useState(!preview);
 
   const [redemptionResult, setRedemptionResult] = useState<{
     success: boolean;
@@ -68,7 +88,7 @@ export default function EventDetailPage() {
   } | null>(null);
 
   const { mutate: redeem, isPending: redeemPending } = useRedeemEventCode();
-  const { data, isLoading: redeemLoading } = useGetEventRedeem();
+  const { data } = useGetEventRedeem(!!session);
   const { onOpen } = useAuthModal();
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -380,14 +400,14 @@ export default function EventDetailPage() {
     (item) => (item._id ?? "").toString() === EventId?.toString(),
   );
 
-  if (isLoading || redeemLoading || isFetching) {
-    <EventDetailsSkeleton />;
-  }
-
   return (
     <div className="relative md:container-modern mx-auto md:p-6 pb-20 md:pb-0 md:mt-20">
       {isLoading ? (
-        <EventDetailsSkeleton />
+        preview ? (
+          <EventPreviewShell preview={preview} />
+        ) : (
+          <EventDetailsSkeleton />
+        )
       ) : (
         <>
           {isCheckoutOpen && (
@@ -555,9 +575,16 @@ export default function EventDetailPage() {
               <div className="relative h-80 md:h-[70vh] w-full md:rounded-xl overflow-hidden">
                 <Image
                   fill
+                  priority
+                  fetchPriority="high"
+                  sizes="(max-width: 768px) 100vw, 60vw"
                   src={event?.data?.image || "/placeholder.svg"}
                   alt={event?.data?.title || "Event Image"}
-                  className="w-full h-full object-cover"
+                  onLoad={() => setHeroLoaded(true)}
+                  className={cn(
+                    "w-full h-full object-cover transition-opacity duration-300",
+                    heroLoaded ? "opacity-100" : "opacity-0",
+                  )}
                 />
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-10 md:rounded-2xl"></div>

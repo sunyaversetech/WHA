@@ -2,7 +2,7 @@ import { useFetcher } from "@/lib/generic.service";
 import { ApiResponseType } from "./apitypes";
 import { useParams, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { Post } from "@/lib/action";
+import { Post } from "@/lib/client-fetch";
 import { OperatingHourPostType } from "@/components/Dashboard/Settings/OperatingHours";
 import { BusinessHoursData } from "@/components/Business/SingleBusinessPage/Hours";
 import { DealsGetValues } from "./deal.service";
