@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
@@ -37,17 +37,7 @@ export default function Navbar() {
   const buildPath = (href: string) =>
     currentCity ? `${href}?city=${currentCity}` : href;
 
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   const path = pathname.split("?")[0];
-  const isHomePage = path === "/";
   const isDashboard = path.startsWith("/dashboard");
   const isBusinessesPage = path === "/businesses";
   // "/" renders the same search/business-listing content as "/search" — both
@@ -129,37 +119,25 @@ export default function Navbar() {
       </Link>
     );
 
+  // Always-solid fixed header — matches SearchHeader's treatment on
+  // / and /search, so the header reads the same (and stays put the same
+  // way) across every page instead of fading in/out as the page scrolls.
   const solidStyle: React.CSSProperties = {
     background: "rgba(255,255,255,0.95)",
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
     boxShadow: "0 1px 0 #e6ebf2, 0 2px 12px rgba(2,12,26,0.06)",
   };
-  const clearStyle: React.CSSProperties = {
-    background: "transparent",
-    backdropFilter: "none",
-    WebkitBackdropFilter: "none",
-    boxShadow: "none",
-  };
-  const navStyle: React.CSSProperties = {
-    ...(scrolled ? solidStyle : clearStyle),
-    transition:
-      "background 0.25s ease, box-shadow 0.25s ease, backdrop-filter 0.25s ease",
-  };
 
   /* ════════════════════════════════════
      MOBILE
   ════════════════════════════════════ */
   const MobileNav = () => (
-    <div className="hidden fixed top-0 left-0 w-full z-50" style={navStyle}>
+    <div className="flex lg:hidden fixed top-0 left-0 w-full z-50" style={solidStyle}>
       {/* Logo + auth row — always shown */}
       <div
         className="flex items-center justify-between px-4 py-3"
-        style={{
-          borderBottom: scrolled
-            ? "1px solid rgba(230,235,242,0.8)"
-            : "1px solid transparent",
-        }}>
+        style={{ borderBottom: "1px solid rgba(230,235,242,0.8)" }}>
         <Link href={buildPath("/")} aria-label="Home">
           <Image
             src="/wha/logo.png"
@@ -183,57 +161,15 @@ export default function Navbar() {
   );
 
   /* ════════════════════════════════════
-     DESKTOP — HOMEPAGE VARIANT
-  ════════════════════════════════════ */
-  const DesktopHomeNav = () => (
-    <nav
-      className="hidden md:block fixed top-0 left-0 z-50 w-full"
-      style={navStyle}>
-      <div
-        style={{ maxWidth: 1280, margin: "0 auto" }}
-        className="flex items-center justify-between px-6 md:px-14 py-4">
-        <Link href={buildPath("/")} aria-label="Home" className="flex-shrink-0">
-          <Image
-            src="/wha/logo.png"
-            alt="What's Happening Australia"
-            width={108}
-            height={28}
-            className="object-contain h-auto"
-            priority
-          />
-        </Link>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push("/auth/business/login")}
-            style={{
-              border: "1px solid #d8dfe9",
-              background: scrolled
-                ? "rgba(255,255,255,0.9)"
-                : "rgba(255,255,255,0.6)",
-              color: "#0f2748",
-              fontWeight: 600,
-              fontSize: 15,
-              padding: "11px 20px",
-              borderRadius: 9999,
-              cursor: "pointer",
-              transition: "background 0.25s ease",
-            }}>
-            List your business
-          </button>
-          <AuthSection pillAvatar />
-        </div>
-      </div>
-    </nav>
-  );
-
-  /* ════════════════════════════════════
      DESKTOP — INNER PAGES VARIANT
+     (/ and /search render SearchHeader instead, which also switches over
+     at lg: — matching that breakpoint here keeps every other page's
+     header showing/hiding at the same width, with no gap between them.)
   ════════════════════════════════════ */
   const DesktopInnerNav = () => (
     <nav
-      className="hidden md:block fixed top-0 left-0 z-50 w-full"
-      style={navStyle}>
+      className="hidden lg:block fixed top-0 left-0 z-50 w-full"
+      style={solidStyle}>
       <div className="flex items-center gap-6 px-6 py-3">
         <Link href={buildPath("/")} aria-label="Home" className="flex-shrink-0">
           <Image
@@ -270,8 +206,6 @@ export default function Navbar() {
           <div className="hidden lg:block">
             <SearchHeader />
           </div>
-        ) : isHomePage ? (
-          DesktopHomeNav()
         ) : (
           DesktopInnerNav()
         ))}
