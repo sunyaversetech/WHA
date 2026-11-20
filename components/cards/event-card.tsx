@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useRef } from "react";
 import { Heart, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -64,14 +64,7 @@ const EventCard = memo(function EventCard({
 
   const href = `/events/${event.slug}`;
   const slug = normalizeSlug(event.slug ?? "");
-
-  const prefetch = () => {
-    router.prefetch(href);
-    queryClient.prefetchQuery({
-      queryKey: ["singleEvent", slug],
-      queryFn: () => Get({ url: `/api/event/single-event/${slug}` }),
-    });
-  };
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const dateLabel = event.dateRange?.from
     ? `${new Date(event.dateRange.from)
@@ -83,6 +76,27 @@ const EventCard = memo(function EventCard({
     : "Date TBA";
   const venueLabel = event.venue || "Venue TBA";
   const price = priceLabel(event);
+
+  const prefetch = () => {
+    router.prefetch(href);
+    queryClient.prefetchQuery({
+      queryKey: ["singleEvent", slug],
+      queryFn: () => Get({ url: `/api/event/single-event/${slug}` }),
+    });
+    // Lets the detail page paint an instant preview shell (same image URL
+    // the browser already fetched for this card, same title/date/venue)
+    // instead of a generic skeleton while the real data loads — mainly
+    // covers fast clicks that outrun the prefetch above.
+    queryClient.setQueryData(["eventPreview", slug], {
+      title: event.title,
+      venue: venueLabel,
+      dateLabel,
+      // The exact resolved URL (size/format Next's optimizer picked for
+      // this card), not the raw event.image — that's what's actually
+      // sitting in the browser's image cache right now.
+      previewImageSrc: imgRef.current?.currentSrc || event.image,
+    });
+  };
 
   return (
     <article
@@ -101,6 +115,7 @@ const EventCard = memo(function EventCard({
         data-ui="result-card-media"
         style={{ position: "relative", aspectRatio: "16 / 9", borderRadius: 16, overflow: "hidden", background: "var(--muted)" }}>
         <Image
+          ref={imgRef}
           fill
           src={event.image || "/placeholder.svg"}
           alt={event.title}
