@@ -8,6 +8,7 @@ import { BusinessHoursData } from "@/components/Business/SingleBusinessPage/Hour
 import { DealsGetValues } from "./deal.service";
 import { EventFormValues } from "@/components/Dashboard/Events/EventsForm";
 import { EmployeeType, ServiceType } from "./booking.service";
+import { businessQueryKey } from "@/lib/queries/business-query";
 
 export type UserBusinessType = {
   _id?: string;
@@ -61,7 +62,7 @@ export const useGetBusiness = () => {
   const neLat     = param.get("neLat")     || "";
   const neLng     = param.get("neLng")     || "";
   return useFetcher<ApiResponseType<UserBusinessType[]>>(
-    ["getbusinesses", category, search, service, city, community, lat, lng, swLat, swLng, neLat, neLng],
+    businessQueryKey({ category, search, service, city, community, lat, lng, swLat, swLng, neLat, neLng }),
     null,
     `/api/business?category=${category}&search=${search}&service=${service}&city=${city}&community=${community}&lat=${lat}&lng=${lng}&radius=${radius}&swLat=${swLat}&swLng=${swLng}&neLat=${neLat}&neLng=${neLng}`,
   );
