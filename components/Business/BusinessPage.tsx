@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import BusinessCard from "@/components/cards/business-card";
@@ -16,6 +16,7 @@ import MobileBusinessSearchWithDates from "@/components/ResuableComponents/Mobil
 import { useSearchLocation } from "@/components/ResuableComponents/LocationSearch/useSearchLocation";
 import { useDistanceEnriched } from "@/components/ResuableComponents/LocationSearch/geo";
 import DaySelector, { toDateKey } from "./DaySelector";
+import { useSearchMapVisibility } from "./search-map-visibility";
 
 const SearchMap = dynamic(() => import("./SearchMap"), { ssr: false });
 
@@ -321,6 +322,17 @@ export default function BusinessesClientPage() {
   const router = useRouter();
 
   const [showMap, setShowMap] = useState(true);
+  // The map panel is position:fixed to the viewport, so it would otherwise
+  // float over the sitewide Footer (rendered in app/layout.tsx, outside
+  // this component) once scrolled into view. Footer reads this to shrink
+  // itself to the results-column width while the map's showing, and go
+  // full width once it's hidden.
+  const setMapVisible = useSearchMapVisibility((s) => s.setMapVisible);
+  useEffect(() => {
+    setMapVisible(showMap);
+    return () => setMapVisible(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showMap]);
   // Events is the default/first tab — Services stays available as the other
   // tab, only shown when explicitly requested via ?tab=services.
   const [listType, setListType] = useState<ListType>(() =>
@@ -328,6 +340,11 @@ export default function BusinessesClientPage() {
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
+  // Desktop-only "expand map" — makes the normally fixed-sidebar map panel
+  // cover the full viewport, hiding the results column (mirrors mobile's
+  // mobileMapOpen full-screen mode, which is a separate flag since it also
+  // hides the controls and shows its own top bar instead).
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const businesses = useMemo(() => apiResponse?.data || [], [apiResponse]);
@@ -551,9 +568,15 @@ export default function BusinessesClientPage() {
   const MapBox = ({
     isVisible = true,
     fullScreen = false,
+    hideControls = false,
+    isExpanded = false,
+    onExpandClick,
   }: {
     isVisible?: boolean;
     fullScreen?: boolean;
+    hideControls?: boolean;
+    isExpanded?: boolean;
+    onExpandClick?: () => void;
   }) => (
     <div
       data-ui="map-panel"
@@ -573,7 +596,9 @@ export default function BusinessesClientPage() {
         bounds={bounds}
         onBoundsChange={handleBoundsChange}
         isVisible={isVisible}
-        hideControls={fullScreen}
+        hideControls={hideControls}
+        isExpanded={isExpanded}
+        onExpandClick={onExpandClick}
       />
     </div>
   );
@@ -586,24 +611,32 @@ export default function BusinessesClientPage() {
 
       {/* ════════════ DESKTOP (>=1024) ════════════ */}
       <div className="hidden lg:block">
-        <main
-          data-ui="results-column"
-          style={{
-            width: showMap ? "min(60vw, 855px)" : "100%",
-            maxWidth: showMap ? undefined : 1288,
-            margin: showMap ? undefined : "0 auto",
-            padding: showMap ? "72px 32px 0" : "72px 32px 0",
-          }}>
-          <div data-ui="results-toolbar" style={{ position: "sticky", top: 72, zIndex: 10, background: "var(--background)", marginBottom: 24 }}>
-            {ToolbarRow()}
-            {isServices && (
-              <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
-            )}
-          </div>
-          {CardGrid({ cols: showMap ? 2 : 3 })}
-        </main>
+        {!isMapExpanded && (
+          <main
+            data-ui="results-column"
+            style={{
+              width: showMap ? "min(60vw, 855px)" : "100%",
+              maxWidth: showMap ? undefined : 1288,
+              margin: showMap ? undefined : "0 auto",
+              padding: showMap ? "72px 32px 0" : "72px 32px 0",
+            }}>
+            <div data-ui="results-toolbar" style={{ position: "sticky", top: 72, zIndex: 10, background: "var(--background)", marginBottom: 24 }}>
+              {ToolbarRow()}
+              {isServices && (
+                <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
+              )}
+            </div>
+            {CardGrid({ cols: showMap ? 2 : 3 })}
+          </main>
+        )}
 
-        {showMap && MapBox({ isVisible: showMap })}
+        {showMap &&
+          MapBox({
+            isVisible: showMap,
+            fullScreen: isMapExpanded,
+            isExpanded: isMapExpanded,
+            onExpandClick: () => setIsMapExpanded((v) => !v),
+          })}
       </div>
 
       {/* ════════════ COMPACT (<1024) ════════════ */}
@@ -642,7 +675,7 @@ export default function BusinessesClientPage() {
             opacity: mobileMapOpen ? 1 : 0,
             pointerEvents: mobileMapOpen ? "auto" : "none",
           }}>
-          {MapBox({ isVisible: mobileMapOpen, fullScreen: true })}
+          {MapBox({ isVisible: mobileMapOpen, fullScreen: true, hideControls: true })}
         </div>
       </div>
 

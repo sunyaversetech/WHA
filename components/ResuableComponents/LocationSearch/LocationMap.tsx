@@ -211,6 +211,11 @@ export type LocationMapProps<T> = {
   isVisible?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  /** Hands the caller the underlying Leaflet map instance once it mounts —
+   * for a caller (e.g. SearchMap.tsx) that renders its own zoom/expand
+   * controls instead of this component's built-in ones and needs
+   * something to actually call .zoomIn()/.zoomOut() on. */
+  onMapReady?: (map: L.Map) => void;
 };
 
 export default function LocationMap<T>({
@@ -229,6 +234,7 @@ export default function LocationMap<T>({
   isVisible = true,
   isExpanded = false,
   onToggleExpand,
+  onMapReady,
 }: LocationMapProps<T>) {
   const userLocation: [number, number] | null =
     userLat != null && userLng != null ? [userLat, userLng] : null;
@@ -297,6 +303,7 @@ export default function LocationMap<T>({
       )}
 
       <MapContainer
+        ref={onMapReady ? (map) => { if (map) onMapReady(map); } : undefined}
         center={initialBounds ? undefined : AU_CENTRE}
         zoom={initialBounds ? undefined : auZoom}
         bounds={initialBounds ?? undefined}
