@@ -596,11 +596,9 @@ export default function BusinessesClientPage() {
           }}>
           <div data-ui="results-toolbar" style={{ position: "sticky", top: 72, zIndex: 10, background: "var(--background)", marginBottom: 24 }}>
             {ToolbarRow()}
-            {/* Date rail applies to both tabs on Fresha (events have dates
-               too) — TODO(ui-only): wire up actual event date filtering,
-               no logic for that exists yet; Services already filters via
-               the batched slots query above. */}
-            <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
+            {isServices && (
+              <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
+            )}
           </div>
           {CardGrid({ cols: showMap ? 2 : 3 })}
         </main>
@@ -615,11 +613,13 @@ export default function BusinessesClientPage() {
         {!mobileMapOpen && (
           <main data-ui="results-column" style={{ padding: "148px 20px 0" }}>
             <div data-ui="results-toolbar" style={{ position: "sticky", top: 148, zIndex: 10, background: "var(--background)" }}>
-              <div style={{ margin: "0 -20px" }}>
-                <div style={{ padding: "0 20px" }}>
-                  <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
+              {isServices && (
+                <div style={{ margin: "0 -20px" }}>
+                  <div style={{ padding: "0 20px" }}>
+                    <DaySelector selected={selectedDate} onSelect={setSelectedDate} />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             <div style={{ display: "flex", padding: "16px 0", background: "var(--background)" }}>
               <p data-ui="results-count" style={{ flex: 1, textAlign: "center", fontSize: 14, fontWeight: 400, lineHeight: "20px", color: "var(--muted-foreground)", margin: 0 }}>
