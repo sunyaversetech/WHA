@@ -77,7 +77,9 @@ const EventSchema = new Schema({
   community: { type: String },
   community_name: { type: String },
   isSponsor: { type: Boolean, default: false },
-  slug: { type: String },
+  // Indexed: every event detail page looks this up (Event.findOne({ slug }))
+  // — without an index this was a full collection scan on every page view.
+  slug: { type: String, index: true },
   archived: { type: Boolean, default: false },
 }, { timestamps: true });
 

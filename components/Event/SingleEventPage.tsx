@@ -55,7 +55,6 @@ export default function EventDetailPage() {
   const {
     data: event,
     isLoading,
-    isFetching,
     refetch: refetchEvent,
   } = useGetSingleEvent(slug);
   const queryClient = useQueryClient();
@@ -68,7 +67,7 @@ export default function EventDetailPage() {
   } | null>(null);
 
   const { mutate: redeem, isPending: redeemPending } = useRedeemEventCode();
-  const { data, isLoading: redeemLoading } = useGetEventRedeem();
+  const { data } = useGetEventRedeem();
   const { onOpen } = useAuthModal();
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -380,10 +379,6 @@ export default function EventDetailPage() {
     (item) => (item._id ?? "").toString() === EventId?.toString(),
   );
 
-  if (isLoading || redeemLoading || isFetching) {
-    <EventDetailsSkeleton />;
-  }
-
   return (
     <div className="relative md:container-modern mx-auto md:p-6 pb-20 md:pb-0 md:mt-20">
       {isLoading ? (
@@ -555,6 +550,9 @@ export default function EventDetailPage() {
               <div className="relative h-80 md:h-[70vh] w-full md:rounded-xl overflow-hidden">
                 <Image
                   fill
+                  priority
+                  fetchPriority="high"
+                  sizes="(max-width: 768px) 100vw, 60vw"
                   src={event?.data?.image || "/placeholder.svg"}
                   alt={event?.data?.title || "Event Image"}
                   className="w-full h-full object-cover"
