@@ -1,6 +1,8 @@
 "use client";
 
-import { Plus, Minus, Maximize2 } from "lucide-react";
+import { useRef } from "react";
+import type { Map as LeafletMap } from "leaflet";
+import { Plus, Minus, Maximize2, Minimize2 } from "lucide-react";
 import LocationMap from "@/components/ResuableComponents/LocationSearch/LocationMap";
 import { makeMarkerIcon, BusinessPopup } from "./business-map";
 import { makeEventMarkerIcon, EventPopup } from "@/components/Event/Event-map";
@@ -43,6 +45,8 @@ export default function SearchMap({
   onBoundsChange,
   isVisible = true,
   hideControls = false,
+  isExpanded = false,
+  onExpandClick,
 }: {
   activeType: "services" | "events";
   businesses: any[];
@@ -64,13 +68,20 @@ export default function SearchMap({
   /** Hides the glass expand/zoom controls — used in the mobile full-screen
    * map mode, which has its own close/back affordance instead. */
   hideControls?: boolean;
+  /** Whether the caller is currently showing this map full-screen — just
+   * flips the expand button's icon, the actual full-screen layout is
+   * BusinessPage's concern. */
+  isExpanded?: boolean;
+  onExpandClick?: () => void;
 }) {
   const isServices = activeType === "services";
   const items = isServices ? businesses : events;
+  const mapRef = useRef<LeafletMap | null>(null);
 
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
     <LocationMap
+      onMapReady={(map) => { mapRef.current = map; }}
       items={items}
       getId={(item: any) => item._id}
       getPosition={(item: any) =>
@@ -119,24 +130,30 @@ export default function SearchMap({
 
     {!hideControls && (
       <>
-        {/* TODO(ui-only): wire up a real fullscreen toggle — no state for
-           this exists yet on the desktop map (only the mobile full-screen
-           map mode does, via BusinessPage's mobileMapOpen). */}
         <button
           data-ui="map-expand-button"
-          aria-label="Expand map"
+          onClick={onExpandClick}
+          aria-label={isExpanded ? "Exit fullscreen" : "Expand map"}
           style={{ ...glassStyle, position: "absolute", top: 20, right: 20, width: 48, height: 48, borderRadius: 9999, zIndex: 1000 }}>
-          <Maximize2 size={24} strokeWidth={1.75} />
+          {isExpanded ? (
+            <Minimize2 size={24} strokeWidth={1.75} />
+          ) : (
+            <Maximize2 size={24} strokeWidth={1.75} />
+          )}
         </button>
-        {/* TODO(ui-only): wire up to the Leaflet instance — LocationMap
-           doesn't currently expose its map ref/zoom handlers as props. */}
         <div
           data-ui="map-zoom-group"
           style={{ ...glassStyle, position: "absolute", right: 20, bottom: 20, width: 48, height: 96, borderRadius: 24, flexDirection: "column", zIndex: 1000 }}>
-          <button aria-label="Zoom in" style={{ width: 48, height: 48, border: "none", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "inherit" }}>
+          <button
+            onClick={() => mapRef.current?.zoomIn()}
+            aria-label="Zoom in"
+            style={{ width: 48, height: 48, border: "none", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "inherit" }}>
             <Plus size={24} strokeWidth={1.75} />
           </button>
-          <button aria-label="Zoom out" style={{ width: 48, height: 48, border: "none", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "inherit" }}>
+          <button
+            onClick={() => mapRef.current?.zoomOut()}
+            aria-label="Zoom out"
+            style={{ width: 48, height: 48, border: "none", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "inherit" }}>
             <Minus size={24} strokeWidth={1.75} />
           </button>
         </div>

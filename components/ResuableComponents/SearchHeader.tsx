@@ -7,10 +7,9 @@ import { Menu as MenuIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import FreshaSearchBar from "./FreshaSearchBar";
 
-// Desktop (>=1024px) header for /search (and /, which renders the same
-// content) — fresha-search-kit/spec/04 "Header". Replaces the generic
-// Navabr desktop variants on these two routes only; every other page keeps
-// its existing header untouched.
+// Desktop (>=1024px) header — fresha-search-kit/spec/04 "Header". The one
+// header component every non-dashboard page renders (via Navabr.tsx), so
+// /search and every detail page show the exact same bar.
 export default function SearchHeader() {
   const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);

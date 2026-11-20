@@ -1,5 +1,6 @@
 import { connectToDb } from "@/lib/db";
 import { Review } from "@/server/models/Review.model";
+import Booking from "@/server/models/Booking.model";
 import { NextRequest, NextResponse } from "next/server";
 
 import * as z from "zod";
@@ -65,6 +66,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // business_id from the client may be a slug or a raw id (either is
+    // accepted elsewhere on the site) — resolve it once up front so the
+    // eligibility check below and the notification further down are both
+    // matching against the business's real _id, not whatever string shape
+    // happened to be submitted.
+    const business = await resolveBusinessBySlugOrId(business_id);
+    if (!business) {
+      return NextResponse.json(
+        { message: "Business not found" },
+        { status: 404 },
+      );
+    }
+
+    // Reviews are only for people who've actually used the business —
+    // require at least one completed booking with them.
+    const hasCompletedBooking = await Booking.exists({
+      user_id: userId,
+      business_id: business._id.toString(),
+      status: "completed",
+    });
+    if (!hasCompletedBooking) {
+      return NextResponse.json(
+        {
+          message:
+            "You can only review a business after completing a booking with them.",
+        },
+        { status: 403 },
+      );
+    }
+
     const newReview = await Review.create({
       business_id: business_id,
       user: userId,
@@ -72,16 +103,13 @@ export async function POST(req: NextRequest) {
       comment,
     });
 
-    const business = await resolveBusinessBySlugOrId(business_id);
-    if (business) {
-      await Notification.create({
-        business_id: business._id.toString(),
-        type: "review",
-        title: "New review",
-        body: `${rating}-star review: "${comment.slice(0, 80)}"`,
-        related_id: newReview._id,
-      });
-    }
+    await Notification.create({
+      business_id: business._id.toString(),
+      type: "review",
+      title: "New review",
+      body: `${rating}-star review: "${comment.slice(0, 80)}"`,
+      related_id: newReview._id,
+    });
 
     return NextResponse.json(
       {
