@@ -108,6 +108,29 @@ const testEvents = [
     archived: false,
   },
   {
+    title: "SEO Test TBA Venue Event — Brisbane",
+    slug: "seotesttbabrisbane",
+    description:
+      "Internal test fixture for the 1(b) TBA-venue city-level PostalAddress fallback. Safe to delete.",
+    dateRange: {
+      from: sydneyMidnightDate("2026-12-22", 11),
+      to: sydneyMidnightDate("2026-12-22", 11),
+    },
+    startTime: "18:30",
+    endTime: "21:30",
+    venue: "",
+    location_tba: true,
+    location: "",
+    city: "brisbane",
+    city_name: "Brisbane",
+    category: "concerts",
+    category_name: "Concerts",
+    price_category: "registration",
+    host_name: "SEO Test Fixture",
+    image: PLACEHOLDER_IMAGE,
+    archived: false,
+  },
+  {
     title: "SEO Test Clean-Format Event — Control",
     slug: "seotestcleancontrol",
     description:

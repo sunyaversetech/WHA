@@ -7,7 +7,7 @@ import L from "leaflet";
 import LocationMap from "@/components/ResuableComponents/LocationSearch/LocationMap";
 import { fmtDistance, haversineMetres } from "@/components/ResuableComponents/LocationSearch/geo";
 import type { SearchLocationMode, Bounds } from "@/components/ResuableComponents/LocationSearch/useSearchLocation";
-import { formatTime } from "@/components/Dashboard/Ticket/ticket-utils";
+import { getEventLocalDate, formatEventDisplayTime } from "@/lib/event-date";
 
 /* ── Fresha-style dark-pill event marker (mirrors the business rating pill,
    swapped for a pin icon since events don't carry a single rating value) ── */
@@ -50,8 +50,12 @@ export function EventPopup({
     );
   }
 
-  const dateText = event.dateRange?.from
-    ? `${new Date(event.dateRange.from).toLocaleDateString("en-US", { weekday: "short", day: "2-digit", month: "short" })}, ${formatTime(String(event.dateRange.from))}`
+  const eventLocalDate = getEventLocalDate(event.dateRange?.from);
+  const eventTimeLabel = formatEventDisplayTime(event.startTime);
+  const dateText = eventLocalDate
+    ? `${new Intl.DateTimeFormat("en-AU", { weekday: "short", day: "2-digit", month: "short" }).format(eventLocalDate)}${
+        eventTimeLabel ? `, ${eventTimeLabel}` : ""
+      }`
     : "Date TBA";
 
   return (

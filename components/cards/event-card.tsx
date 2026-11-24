@@ -14,8 +14,8 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { EventFormValues } from "../Dashboard/Events/EventsForm";
 import { useAuthModal } from "../Auth/DialogLogin/use-auth-model";
-import { format, parse } from "date-fns";
 import { Get } from "@/lib/client-fetch";
+import { getEventLocalDate, formatEventDisplayTime } from "@/lib/event-date";
 
 function normalizeSlug(id: string) {
   return id.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -66,12 +66,11 @@ const EventCard = memo(function EventCard({
   const slug = normalizeSlug(event.slug ?? "");
   const imgRef = useRef<HTMLImageElement>(null);
 
-  const dateLabel = event.dateRange?.from
-    ? `${new Date(event.dateRange.from)
-        .toLocaleDateString("en-US", { weekday: "short", day: "2-digit", month: "short" })}${
-        event?.startTime
-          ? ` • ${format(parse(event.startTime, "HH:mm", new Date()), "h:mm aa")}`
-          : ""
+  const eventLocalDate = getEventLocalDate(event.dateRange?.from);
+  const eventTimeLabel = formatEventDisplayTime(event.startTime);
+  const dateLabel = eventLocalDate
+    ? `${new Intl.DateTimeFormat("en-AU", { weekday: "short", day: "2-digit", month: "short" }).format(eventLocalDate)}${
+        eventTimeLabel ? ` • ${eventTimeLabel}` : ""
       }`
     : "Date TBA";
   const venueLabel = event.venue || "Venue TBA";

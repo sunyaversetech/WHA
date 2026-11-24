@@ -7,6 +7,8 @@ import { getQueryClient } from "@/lib/get-query-client";
 import { absoluteUrl, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import JsonLd from "@/components/SEO/JsonLd";
 import EventDetailPage from "@/components/Event/SingleEventPage";
+import { formatEventJsonLdDateTime } from "@/lib/event-date";
+import { deriveAddressRegion, extractAuStateFromCity } from "@/lib/au-address";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -116,14 +118,45 @@ export default async function Page({ params }: Props) {
     return <EventDetailPage />;
   }
 
-  const startDate = event.dateRange?.from
-    ? `${event.dateRange.from}${event.startTime ? `T${event.startTime}:00` : ""}`
-    : undefined;
-  const endDate = event.dateRange?.to
-    ? `${event.dateRange.to}${event.endTime ? `T${event.endTime}:00` : ""}`
-    : undefined;
+  const startDate = formatEventJsonLdDateTime(event.dateRange?.from, event.startTime);
+  const endDate = formatEventJsonLdDateTime(event.dateRange?.to, event.endTime);
 
-  const eventJsonLd = {
+  // Real venue takes priority; a TBA (or simply missing) venue falls back
+  // to a city-level Place instead of inventing a venue name ("To Be
+  // Announced" was going straight into the Place name before this). If
+  // there's no venue AND no city either, there's nothing honest to put
+  // in `location` at all - skip the whole Event block below rather than
+  // emit one Google would flag as invalid.
+  const cityName = event.city_name || event.city || null;
+  const hasRealVenue = !!event.venue && !event.location_tba;
+  const region = hasRealVenue
+    ? deriveAddressRegion({
+        addressText: event.location,
+        lat: event.latitude,
+        lng: event.longitude,
+      })
+    : extractAuStateFromCity(cityName) ??
+      deriveAddressRegion({
+        addressText: event.location,
+        lat: event.latitude,
+        lng: event.longitude,
+      });
+
+  const location =
+    hasRealVenue || cityName
+      ? {
+          "@type": "Place",
+          name: hasRealVenue ? event.venue : cityName,
+          address: {
+            "@type": "PostalAddress",
+            ...(cityName && { addressLocality: cityName }),
+            ...(region && { addressRegion: region }),
+            addressCountry: "AU",
+          },
+        }
+      : null;
+
+  const eventJsonLd = location && {
     "@context": "https://schema.org",
     "@type": "Event",
     name: event.title,
@@ -132,11 +165,7 @@ export default async function Page({ params }: Props) {
     endDate,
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    location: {
-      "@type": "Place",
-      name: event.venue || event.location || event.city_name,
-      address: event.location || event.city_name,
-    },
+    location,
     image: event.image ? [event.image] : [DEFAULT_OG_IMAGE.url],
     url,
     ...(event.user?.business_name && {
@@ -166,7 +195,7 @@ export default async function Page({ params }: Props) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <JsonLd data={eventJsonLd} />
+      {eventJsonLd && <JsonLd data={eventJsonLd} />}
       <JsonLd data={breadcrumbJsonLd} />
       <EventDetailPage />
     </HydrationBoundary>
