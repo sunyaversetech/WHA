@@ -151,9 +151,6 @@ export async function POST(request: Request) {
       const final_duration = service.base_duration * requested_multiplier;
       const requested_start = new Date(validated_data.start_time);
       requested_start.setUTCMilliseconds(0);
-      const requested_end = new Date(
-        requested_start.getTime() + final_duration * 60_000,
-      );
 
       const local_date_str = get_local_date_string(
         requested_start,
@@ -166,6 +163,13 @@ export async function POST(request: Request) {
 
       const day_start = to_utc(local_date_str, "00:00", validated_data.timezone);
       const day_end = new Date(day_start.getTime() + 24 * 60 * 60 * 1000);
+
+      // "not_fixed" services have no set end time - the team member/resource
+      // is held for the rest of the day instead of for final_duration minutes.
+      const is_not_fixed = service.duration_type === "not_fixed";
+      const requested_end = is_not_fixed
+        ? day_end
+        : new Date(requested_start.getTime() + final_duration * 60_000);
 
       // ─── FORK A: RESOURCE BASED LOGIC ───
       if (
@@ -413,7 +417,10 @@ export async function POST(request: Request) {
           );
           if (!sched?.shifts?.length) continue;
 
-          // Check if the requested slot fits inside ANY of this employee's shifts
+          // Check if the requested slot fits inside ANY of this employee's shifts.
+          // For a not_fixed service, requested_end is the end of the day, not
+          // the end of the booking - so "fits" just means the start time is
+          // somewhere inside a shift, not that the whole (day-long) window is.
           const fits_in_shift = sched.shifts.some((shift: any) => {
             if (!shift.start || !shift.end) return false;
             const shift_start = to_utc(
@@ -426,7 +433,9 @@ export async function POST(request: Request) {
               shift.end,
               validated_data.timezone,
             );
-            return requested_start >= shift_start && requested_end <= shift_end;
+            return is_not_fixed
+              ? requested_start >= shift_start && requested_start < shift_end
+              : requested_start >= shift_start && requested_end <= shift_end;
           });
           if (!fits_in_shift) continue;
 

@@ -37,6 +37,7 @@ import {
   ServiceFormValues,
   IService,
   DURATION_OPTIONS,
+  DURATION_TYPES,
   PRICE_TYPES,
   CATEGORY_COLORS,
   DAYS_OF_WEEK,
@@ -329,6 +330,7 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
           category_id: initialData.category_id ?? "",
           price_type: (initialData as any).price_type ?? "Fixed",
           base_price: initialData.base_price ?? 0,
+          duration_type: (initialData as any).duration_type ?? "fixed",
           base_duration: initialData.base_duration ?? 60,
           buffer_time: initialData.buffer_time ?? 0,
           service_type: (initialData as any).service_type ?? "",
@@ -370,6 +372,7 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
           category_id: "",
           price_type: "Fixed",
           base_price: 0,
+          duration_type: "fixed",
           base_duration: 60,
           buffer_time: 0,
           service_type: "",
@@ -392,6 +395,10 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
   });
 
   const priceType = useWatch({ control: form.control, name: "price_type" });
+  const durationType = useWatch({
+    control: form.control,
+    name: "duration_type",
+  });
   const serviceType = useWatch({ control: form.control, name: "service_type" });
   const assignedEmployees = useWatch({
     control: form.control,
@@ -855,18 +862,19 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
 
                       <FormField
                         control={form.control}
-                        name="base_duration"
+                        name="duration_type"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm font-semibold text-[#051e3a]">
-                              Duration <span className="text-red-500">*</span>
+                              Duration type{" "}
+                              <span className="text-red-500">*</span>
                             </FormLabel>
                             <FormControl>
                               <SelectField
                                 value={field.value}
-                                onChange={(v) => field.onChange(Number(v))}
+                                onChange={field.onChange}
                                 className="border-gray-200 focus-visible:ring-0 focus-visible:border-[#051e3a] text-[#051e3a] placeholder:text-gray-400"
-                                options={DURATION_OPTIONS.map((d) => ({
+                                options={DURATION_TYPES.map((d) => ({
                                   label: d.label,
                                   value: d.value,
                                 }))}
@@ -876,7 +884,45 @@ export function ServiceForm({ initialData }: { initialData?: IService }) {
                           </FormItem>
                         )}
                       />
+
+                      {durationType === "fixed" && (
+                        <FormField
+                          control={form.control}
+                          name="base_duration"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-semibold text-[#051e3a]">
+                                Duration{" "}
+                                <span className="text-red-500">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <SelectField
+                                  value={field.value}
+                                  onChange={(v) => field.onChange(Number(v))}
+                                  className="border-gray-200 focus-visible:ring-0 focus-visible:border-[#051e3a] text-[#051e3a] placeholder:text-gray-400"
+                                  options={DURATION_OPTIONS.map((d) => ({
+                                    label: d.label,
+                                    value: d.value,
+                                  }))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                     </div>
+
+                    {durationType === "not_fixed" && (
+                      <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-700">
+                        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                        <span>
+                          This service has no fixed end time. Whichever team
+                          member or resource is booked for it will be marked
+                          unavailable for the rest of that day.
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Prompt to pick type if not yet selected */}

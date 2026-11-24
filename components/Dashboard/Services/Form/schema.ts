@@ -38,6 +38,11 @@ export const TREATMENT_TYPES = [
 
 export const PRICE_TYPES = ["Fixed", "From", "Free", "Custom"] as const;
 
+export const DURATION_TYPES = [
+  { label: "Fixed duration", value: "fixed" },
+  { label: "Not fixed (flexible)", value: "not_fixed" },
+] as const;
+
 export const CATEGORY_COLORS = [
   { label: "Blue", hex: "#3b82f6" },
   { label: "Teal", hex: "#14b8a6" },
@@ -162,7 +167,8 @@ export const serviceSchema = z
 
     price_type: z.enum(["Fixed", "From", "Free", "Custom"]),
     base_price: z.number().min(0),
-    base_duration: z.number().min(5, "Select a duration"),
+    duration_type: z.enum(["fixed", "not_fixed"]),
+    base_duration: z.number().min(0),
     buffer_time: z.number().min(0),
 
     // Allows "" as unselected state; refinement below enforces a valid choice
@@ -216,7 +222,11 @@ export const serviceSchema = z
       message: "Add at least one time slot to an active day",
       path: ["group_schedule"],
     },
-  );
+  )
+  .refine((d) => d.duration_type !== "fixed" || d.base_duration >= 5, {
+    message: "Select a duration",
+    path: ["base_duration"],
+  });
 
 export type ServiceFormValues = z.infer<typeof serviceSchema>;
 

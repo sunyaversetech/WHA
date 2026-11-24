@@ -30,6 +30,7 @@ interface BookingRecord {
     _id: string;
     name: string;
     base_price: number;
+    duration_type?: "fixed" | "not_fixed";
     base_duration: number;
   } | null;
   employee_id: { _id: string; name: string } | null;
@@ -283,6 +284,7 @@ function RescheduleModal({
   const [selectedSlot, setSelectedSlot] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const isNotFixed = booking.service_id?.duration_type === "not_fixed";
   const duration = booking.service_id?.base_duration ?? booking.duration;
   const { slots, loading } = useAvailableSlots(
     booking.service_id?._id ?? "",
@@ -296,7 +298,19 @@ function RescheduleModal({
     setSaving(true);
     try {
       const start = new Date(selectedSlot);
-      const end = new Date(start.getTime() + duration * 60_000);
+      // A not_fixed service blocks the rest of its (local) day rather than
+      // a fixed number of minutes - mirrors the server-side lock/booking
+      // logic in app/api/bookings/lock/route.ts.
+      const end = isNotFixed
+        ? new Date(
+            start.getFullYear(),
+            start.getMonth(),
+            start.getDate() + 1,
+          )
+        : new Date(start.getTime() + duration * 60_000);
+      const final_duration = Math.round(
+        (end.getTime() - start.getTime()) / 60_000,
+      );
       const res = await fetch(`/api/bookings/user/${booking._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -304,7 +318,7 @@ function RescheduleModal({
           action: "reschedule",
           start_time: start.toISOString(),
           end_time: end.toISOString(),
-          duration,
+          duration: final_duration,
         }),
       });
       const data = await res.json();
@@ -361,7 +375,8 @@ function RescheduleModal({
               Reschedule Booking
             </p>
             <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0" }}>
-              {booking.service_id?.name} · {fmtDuration(duration)}
+              {booking.service_id?.name} ·{" "}
+              {isNotFixed ? "Flexible (full day)" : fmtDuration(duration)}
             </p>
           </div>
           <button

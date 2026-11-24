@@ -13,6 +13,7 @@ export interface ServiceType {
   /** @deprecated use max_concurrent_bookings for resource_based services */
   inventory?: number;
   base_price: number;
+  duration_type?: "fixed" | "not_fixed";
   base_duration: number;
   service_type?: "employee_based" | "resource_based" | "group_session";
   require_employee_selection: boolean;

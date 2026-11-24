@@ -2129,7 +2129,11 @@ function AppointmentWizard({
                                     {svc.name}
                                   </p>
                                   <p className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1.5">
-                                    <span>{svc.base_duration} min</span>
+                                    <span>
+                                      {svc.duration_type === "not_fixed"
+                                        ? "Flexible (full day)"
+                                        : `${svc.base_duration} min`}
+                                    </span>
                                     {svc.service_type && (
                                       <span className="px-1.5 py-0.5 rounded bg-gray-100 text-[9px] text-gray-400">
                                         {svc.service_type.replace(/_/g, " ")}
@@ -2316,7 +2320,10 @@ function AppointmentWizard({
                         {selectedService?.name}
                       </span>
                       <span className="text-gray-500 text-xs">
-                        · {selectedService?.base_duration} min
+                        ·{" "}
+                        {selectedService?.duration_type === "not_fixed"
+                          ? "Flexible (full day)"
+                          : `${selectedService?.base_duration} min`}
                       </span>
                       {selectedService?.base_price != null && (
                         <span className="text-gray-500 text-xs">

@@ -125,6 +125,7 @@ export async function POST(request: Request) {
           : 0;
 
       const requested_multiplier = Number(item_context?.multiplier || 1);
+      const is_not_fixed = service.duration_type === "not_fixed";
 
       let duration = service.base_duration * requested_multiplier;
       let total_price =
@@ -151,7 +152,9 @@ export async function POST(request: Request) {
             (o: any) => o.service_id.toString() === service._id.toString(),
           );
           if (override) {
-            if (override.custom_duration)
+            // A custom duration override doesn't apply to a not_fixed
+            // service - there's no fixed length to override.
+            if (override.custom_duration && !is_not_fixed)
               duration = override.custom_duration * requested_multiplier;
             if (override.custom_price)
               total_price = override.custom_price * requested_multiplier;
@@ -159,7 +162,14 @@ export async function POST(request: Request) {
         }
       }
 
-      const end_date = new Date(start_date.getTime() + duration * 60_000);
+      // "not_fixed" services were locked through the end of the day (see
+      // app/api/bookings/lock/route.ts) - reuse that same end_time here
+      // rather than re-deriving it, so the lock and the booking it confirms
+      // can never disagree on how long the booking actually blocks for.
+      const end_date = is_not_fixed
+        ? new Date(lock.end_time)
+        : new Date(start_date.getTime() + duration * 60_000);
+      duration = Math.round((end_date.getTime() - start_date.getTime()) / 60_000);
       const candidate_buffer = service.buffer_time || 0;
       const candidate_blocked_end = new Date(
         end_date.getTime() + candidate_buffer * 60_000,

@@ -18,7 +18,7 @@ export async function GET() {
     const userId = (session.user as any).id;
 
     const bookings = await Booking.find({ user_id: userId })
-      .populate("service_id", "name base_price base_duration")
+      .populate("service_id", "name base_price duration_type base_duration")
       .populate("employee_id", "name")
       .sort({ start_time: -1 })
       .lean();

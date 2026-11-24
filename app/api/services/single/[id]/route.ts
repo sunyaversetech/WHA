@@ -80,6 +80,7 @@ export async function POST(
       category_id,
       price_type,
       base_price,
+      duration_type,
       base_duration,
       buffer_time,
       service_type,
@@ -144,6 +145,8 @@ export async function POST(
           category_id,
           price_type,
           base_price,
+          duration_type:
+            duration_type === "not_fixed" ? "not_fixed" : "fixed",
           base_duration,
           buffer_time,
           service_type,

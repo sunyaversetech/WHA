@@ -26,7 +26,10 @@ const getBusiness = cache(async (id: string) => {
     await connectToDb();
     return await resolveBusinessBySlugOrId(id);
   } catch (err) {
-    console.error(`getBusiness(${id}): DB fetch failed, degrading gracefully`, err);
+    console.error(
+      `getBusiness(${id}): DB fetch failed, degrading gracefully`,
+      err,
+    );
     // undefined (DB error) vs null (query ran, no such business) —
     // generateMetadata only noindexes the genuine case, not a transient hiccup.
     return undefined;
@@ -38,14 +41,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const business = await getBusiness(id);
 
   if (business === null || business?.isblocked || business?.deletedAt) {
-    return { title: "Business not found", robots: { index: false, follow: false } };
+    return {
+      title: "Business not found",
+      robots: { index: false, follow: false },
+    };
   }
   if (!business) {
     return {};
   }
 
   const place = business.city_name || business.location || business.city;
-  const title = place ? `${business.business_name} — ${place}` : business.business_name;
+  const title = place
+    ? `${business.business_name} — ${place}`
+    : business.business_name;
   const description = truncate(
     business.seo_description?.trim() ||
       `${business.business_name}${place ? ` in ${place}` : ""}${
@@ -92,7 +100,25 @@ export default async function Page({ params }: Props) {
   const url = absoluteUrl(`/businesses/${business.slug || id}`);
 
   const place = business.city_name || business.location || business.city;
-
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Local Businesses",
+        item: `${SITE_URL}/search`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: business.business_name,
+        item: url,
+      },
+    ],
+  };
   const localBusinessJsonLd = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -100,17 +126,9 @@ export default async function Page({ params }: Props) {
     description: business.seo_description?.trim(),
     image: business.image || DEFAULT_OG_IMAGE.url,
     url,
-    ...(place && { address: { "@type": "PostalAddress", addressLocality: place } }),
-  };
-
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-      { "@type": "ListItem", position: 2, name: "Local Businesses", item: `${SITE_URL}/search` },
-      { "@type": "ListItem", position: 3, name: business.business_name, item: url },
-    ],
+    ...(place && {
+      address: { "@type": "PostalAddress", addressLocality: place },
+    }),
   };
 
   return (

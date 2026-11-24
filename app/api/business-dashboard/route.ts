@@ -41,7 +41,7 @@ export async function GET() {
           start_time: { $gte: now, $lte: sevenDaysAhead },
           status: { $in: ["pending", "confirmed"] },
         })
-          .populate("service_id", "name base_duration base_price")
+          .populate("service_id", "name duration_type base_duration base_price")
           .populate("user_id", "name email")
           .sort({ start_time: 1 })
           .limit(10)
@@ -51,7 +51,7 @@ export async function GET() {
           start_time: { $gte: todayStart, $lte: todayEnd },
           status: { $in: ["pending", "confirmed"] },
         })
-          .populate("service_id", "name base_duration base_price")
+          .populate("service_id", "name duration_type base_duration base_price")
           .populate("user_id", "name email")
           .sort({ start_time: 1 })
           .lean(),
