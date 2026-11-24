@@ -366,6 +366,13 @@ Work top to bottom. Phase 1 alone takes the site from invisible to crawlable, so
 - [ ] Content rules for businesses: require a description, one service and one photo before listing.
 - [ ] Rewrite the duplicate Albatross descriptions (the Melbourne page mentions Belconnen). Archive the `houseparty` test event.
 
+## Implementation follow-ups (found while building Phase 1, not in the original audit)
+
+Discovered verifying 1(c) (server-prefetching `/`, `/search`, `/events`, `/deals`). Not fixed - deferred.
+
+- [ ] **Initial load server-renders the page 3 times.** SSR, then an RSC re-render when the geolocation fallback sets `lat`/`lng`, then another when the map's initial bounds settle - each running both the business and event queries. Possible fix: apply the fallback location in `page.tsx` itself so the first render already matches, and stop pushing the map's initial bounds into the URL.
+- [ ] **Filter changes may leave stale results on screen until the server responds.** Changing category/city now triggers a real server round trip (previously a client-side fetch did too, just via a different path - not a regression, see the 1(c) commit). Measured ~100ms locally; check on the preview deploy. If noticeable, wrap the triggering `router.push` in `useTransition` and dim the results while `isPending`.
+
 ## After deploying: verify and monitor
 
 The Search Console verification file is already in place at `public/googlef329283d5e4da8c5.html`. Confirm the property is verified, then run these checks.
