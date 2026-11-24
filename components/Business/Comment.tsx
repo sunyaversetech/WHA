@@ -4,8 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Star, User, Loader2, Send, Edit, BadgeCheck } from "lucide-react";
-import { formatDistanceToNowStrict } from "date-fns";
+import { Star, User, Loader2, Send, Edit, X } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +19,13 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 import {
   ReviewType,
@@ -41,6 +48,190 @@ const reviewSchema = z.object({
 });
 
 export type Reviews = z.infer<typeof reviewSchema>;
+
+const REVIEWS_PREVIEW_COUNT = 6;
+const COMMENT_PREVIEW_LENGTH = 140;
+
+function initialsOf(name?: string) {
+  if (!name) return "?";
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
+}
+
+// Lifted to module scope (not a closure inside BusinessReviewSection) so it
+// isn't redefined every render — matches the fix already applied to
+// MobileUserDropdown/MobileAuthSection for the same react-hooks/static-components rule.
+function ReviewCard({
+  review,
+  businessId,
+  currentUserId,
+  isSuperAdmin,
+  canReply,
+  isReplyOpen,
+  replyDraft,
+  isReplying,
+  commentExpanded,
+  onReplyDraftChange,
+  onOpenReply,
+  onCancelReply,
+  onSubmitReply,
+  onEdit,
+  onDelete,
+  onExpandComment,
+}: {
+  review: ReviewType;
+  businessId?: string;
+  currentUserId?: string;
+  isSuperAdmin: boolean;
+  canReply: boolean;
+  isReplyOpen: boolean;
+  replyDraft: string;
+  isReplying: boolean;
+  commentExpanded: boolean;
+  onReplyDraftChange: (value: string) => void;
+  onOpenReply: () => void;
+  onCancelReply: () => void;
+  onSubmitReply: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onExpandComment: () => void;
+}) {
+  const isOwn = currentUserId === review.user?._id;
+  const isLongComment = review.comment.length > COMMENT_PREVIEW_LENGTH;
+
+  return (
+    <div id={`review-${review._id}`} className="scroll-mt-24">
+      <div className="flex items-start gap-3">
+        <Avatar className="bg-indigo-100 shrink-0">
+          <AvatarImage src={review?.user?.image} className="object-cover" />
+          <AvatarFallback className="bg-indigo-100 text-indigo-700 font-semibold">
+            {initialsOf(review?.user?.name)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-slate-900">
+              {review?.user?.name}
+            </span>
+            {isOwn && (
+              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-xs font-medium">
+                You
+              </span>
+            )}
+            {isOwn && (
+              <Edit
+                size={14}
+                className="text-slate-400 hover:text-green-600 cursor-pointer"
+                onClick={onEdit}
+              />
+            )}
+            {(isOwn || isSuperAdmin) && (
+              <DeleteConfirmDialog onConfirm={onDelete} text={review?.comment} />
+            )}
+          </div>
+          <div className="flex gap-0.5 mt-1">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={cn(
+                  "w-3.5 h-3.5",
+                  i < review.rating
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-slate-200",
+                )}
+              />
+            ))}
+          </div>
+          <p
+            className={cn(
+              "text-slate-600 leading-relaxed mt-2",
+              !commentExpanded && isLongComment && "line-clamp-3",
+            )}>
+            {review.comment}
+            {isLongComment && !commentExpanded && (
+              <>
+                {" "}
+                <button
+                  type="button"
+                  className="text-blue-600 font-medium hover:underline whitespace-nowrap"
+                  onClick={onExpandComment}>
+                  Read more
+                </button>
+              </>
+            )}
+          </p>
+          <p className="text-xs text-slate-500 mt-2">
+            {formatDistanceToNow(new Date(review.created_at), {
+              addSuffix: true,
+            })}
+          </p>
+
+          {review.replies?.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {review.replies.map((reply) => (
+                <div
+                  key={reply._id}
+                  className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <p className="text-xs font-semibold text-slate-700 mb-1">
+                    {reply.user?._id === businessId
+                      ? reply.user?.business_name || "Business"
+                      : reply.user?.name || "User"}
+                  </p>
+                  <p className="text-sm text-slate-600 leading-relaxed">
+                    {reply.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {canReply &&
+            (isReplyOpen ? (
+              <div className="mt-3 space-y-2">
+                <Textarea
+                  placeholder="Write a reply..."
+                  className="min-h-20 bg-slate-50/50"
+                  value={replyDraft}
+                  onChange={(e) => onReplyDraftChange(e.target.value)}
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={onCancelReply}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={isReplying}
+                    onClick={onSubmitReply}>
+                    {isReplying ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Post reply"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="mt-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
+                onClick={onOpenReply}>
+                Reply to this review
+              </button>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function BusinessReviewSection({
   reviews,
@@ -69,17 +260,20 @@ export default function BusinessReviewSection({
   const canReply = !!session?.user?.id;
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [openReplyFor, setOpenReplyFor] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  const [reviewsDrawerOpen, setReviewsDrawerOpen] = useState(false);
+  const [expandedComments, setExpandedComments] = useState<
+    Record<string, boolean>
+  >({});
 
-  const totalReviews = reviews?.length ?? 0;
   const avgRating =
-    totalReviews > 0
-      ? reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews
+    reviews && reviews.length > 0
+      ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
       : null;
-  const PREVIEW_COUNT = 4;
-  const visibleReviews = showAll
-    ? (reviews ?? [])
-    : (reviews ?? []).slice(0, PREVIEW_COUNT);
+  const hasMoreReviews = (reviews?.length ?? 0) > REVIEWS_PREVIEW_COUNT;
+  const visibleReviews = (reviews ?? []).slice(0, REVIEWS_PREVIEW_COUNT);
+
+  const isSuperAdmin = session?.user?.category === "super-admin";
+  const currentUserId = session?.user?.id;
 
   const submitReply = (reviewId: string) => {
     const text = (replyDrafts[reviewId] || "").trim();
@@ -155,94 +349,144 @@ export default function BusinessReviewSection({
   };
 
   return (
-    <div className=" mx-auto space-y-4 md:card-lg md:p-4 md:p-6 pb-4 md:pb-0">
-      <div className="space-y-6 mt-10">
-        <div className="flex items-center gap-3 justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800">
+    <div className=" mx-auto space-y-4 md:card-lg md:pb-4 pb-4 md:pb-0">
+      <div className="space-y-4 mt-4">
+        <div className="flex items-center gap-2.5 justify-between">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">
               Reviews
             </h2>
-            <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">
-              {totalReviews}
+            <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-sm font-medium">
+              {reviews?.length ?? 0}
             </span>
           </div>
-          {totalReviews > PREVIEW_COUNT && (
+          {hasMoreReviews && (
             <button
               type="button"
-              onClick={() => setShowAll((v) => !v)}
-              className="text-sm font-semibold text-slate-700 hover:text-slate-900 underline underline-offset-2">
-              {showAll ? "Show less" : "See all"}
+              className="text-sm font-semibold text-blue-600 hover:underline"
+              onClick={() => setReviewsDrawerOpen(true)}>
+              See all
             </button>
           )}
         </div>
 
-        {totalReviews > 0 && avgRating !== null && (
-          <div className="flex items-start gap-4">
-            <div className="flex items-center gap-1 shrink-0">
-              <span className="text-3xl font-bold text-slate-900">
-                {avgRating.toFixed(1)}
-              </span>
-              <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-            </div>
-            <div className="flex-1 min-w-0 pt-1">
-              <p className="text-sm text-slate-600 leading-relaxed">
-                {totalReviews === 1
-                  ? "1 customer has reviewed this business."
-                  : `${totalReviews} customers have reviewed this business, rating it ${avgRating.toFixed(1)} out of 5 on average.`}
-              </p>
-              <div className="flex items-center -space-x-2 mt-2">
-                {reviews.slice(0, 5).map((r) => (
-                  <Avatar
-                    key={r._id}
-                    className="h-6 w-6 border-2 border-white">
-                    <AvatarImage src={r.user?.image} className="object-cover" />
-                    <AvatarFallback className="text-[10px] bg-primary text-white">
-                      {r.user?.name?.[0]?.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
-              </div>
-            </div>
+        {avgRating !== null && (
+          <div className="flex items-center gap-2">
+            <span className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-none">
+              {avgRating.toFixed(1)}
+            </span>
+            <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
           </div>
         )}
 
         <Separator />
 
-        {totalReviews > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {visibleReviews.map((review) => (
-              <ReviewCard
-                key={review._id}
-                review={review}
-                businessId={businessId}
-                session={session}
-                canReply={canReply}
-                isReplying={isReplying}
-                openReplyFor={openReplyFor}
-                setOpenReplyFor={setOpenReplyFor}
-                replyDraft={replyDrafts[review._id] || ""}
-                setReplyDraft={(text) =>
-                  setReplyDrafts((d) => ({ ...d, [review._id]: text }))
-                }
-                submitReply={() => submitReply(review._id)}
-                onEdit={() => {
-                  form.setValue("comment", review?.comment);
-                  form.setValue("rating", review?.rating);
-                  form.setValue("review_id", review?._id);
-                }}
-                onDelete={() => handleDelete(review._id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20 border-2 border-dashed border-slate-100 rounded-3xl">
-            <User className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-            <p className="text-slate-400">
-              No reviews yet. Be the first to share your experience!
-            </p>
-          </div>
-        )}
+        <div className="space-y-4">
+          {reviews && reviews?.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                {visibleReviews.map((review) => (
+                  <ReviewCard
+                    key={review._id}
+                    review={review}
+                    businessId={businessId}
+                    currentUserId={currentUserId}
+                    isSuperAdmin={isSuperAdmin}
+                    canReply={canReply}
+                    isReplyOpen={openReplyFor === review._id}
+                    replyDraft={replyDrafts[review._id] || ""}
+                    isReplying={isReplying}
+                    commentExpanded={!!expandedComments[review._id]}
+                    onReplyDraftChange={(v) =>
+                      setReplyDrafts((d) => ({ ...d, [review._id]: v }))
+                    }
+                    onOpenReply={() => setOpenReplyFor(review._id)}
+                    onCancelReply={() => setOpenReplyFor(null)}
+                    onSubmitReply={() => submitReply(review._id)}
+                    onEdit={() => {
+                      form.setValue("comment", review.comment);
+                      form.setValue("rating", review.rating);
+                      form.setValue("review_id", review._id);
+                    }}
+                    onDelete={() => handleDelete(review._id)}
+                    onExpandComment={() =>
+                      setExpandedComments((d) => ({ ...d, [review._id]: true }))
+                    }
+                  />
+                ))}
+              </div>
+
+              {hasMoreReviews && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    type="button"
+                    className="border border-slate-300 rounded-full px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 transition-colors"
+                    onClick={() => setReviewsDrawerOpen(true)}>
+                    {`See all ${reviews.length} reviews`}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-20 border-2 border-dashed border-slate-100 rounded-3xl">
+              <User className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+              <p className="text-slate-400">
+                No reviews yet. Be the first to share your experience!
+              </p>
+            </div>
+          )}
+        </div>
       </div>
+
+      <Drawer open={reviewsDrawerOpen} onOpenChange={setReviewsDrawerOpen}>
+        <DrawerContent className="min-h-screen! fixed inset-x-0 bottom-0 top-0! mt-0! rounded-t-none border-none z-999">
+          <div className="mx-auto w-full h-full flex flex-col">
+            <DrawerHeader className="flex flex-row items-center justify-between border-b px-6">
+              <DrawerTitle className="text-2xl">
+                {reviews?.length ?? 0} reviews
+              </DrawerTitle>
+              <DrawerClose asChild>
+                <Button variant="ghost" size="icon">
+                  <X className="h-5 w-5" />
+                </Button>
+              </DrawerClose>
+            </DrawerHeader>
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 max-w-5xl mx-auto">
+                {(reviews ?? []).map((review) => (
+                  <ReviewCard
+                    key={review._id}
+                    review={review}
+                    businessId={businessId}
+                    currentUserId={currentUserId}
+                    isSuperAdmin={isSuperAdmin}
+                    canReply={canReply}
+                    isReplyOpen={openReplyFor === review._id}
+                    replyDraft={replyDrafts[review._id] || ""}
+                    isReplying={isReplying}
+                    commentExpanded={!!expandedComments[review._id]}
+                    onReplyDraftChange={(v) =>
+                      setReplyDrafts((d) => ({ ...d, [review._id]: v }))
+                    }
+                    onOpenReply={() => setOpenReplyFor(review._id)}
+                    onCancelReply={() => setOpenReplyFor(null)}
+                    onSubmitReply={() => submitReply(review._id)}
+                    onEdit={() => {
+                      form.setValue("comment", review.comment);
+                      form.setValue("rating", review.rating);
+                      form.setValue("review_id", review._id);
+                    }}
+                    onDelete={() => handleDelete(review._id)}
+                    onExpandComment={() =>
+                      setExpandedComments((d) => ({ ...d, [review._id]: true }))
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <Card className="border-slate-200 shadow-sm overflow-hidden p-0 mt-0">
         <CardContent className="pt-6">
@@ -309,196 +553,6 @@ export default function BusinessReviewSection({
           </Form>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function ReviewCard({
-  review,
-  businessId,
-  session,
-  canReply,
-  isReplying,
-  openReplyFor,
-  setOpenReplyFor,
-  replyDraft,
-  setReplyDraft,
-  submitReply,
-  onEdit,
-  onDelete,
-}: {
-  review: ReviewType;
-  businessId?: string;
-  session: ReturnType<typeof useSession>["data"];
-  canReply: boolean;
-  isReplying: boolean;
-  openReplyFor: string | null;
-  setOpenReplyFor: (id: string | null) => void;
-  replyDraft: string;
-  setReplyDraft: (text: string) => void;
-  submitReply: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const isOwner = session?.user?.id === review.user?._id;
-  const isSuperAdmin = session?.user?.category === "super-admin";
-
-  return (
-    <div
-      id={`review-${review._id}`}
-      className="p-5 rounded-2xl border border-slate-100 scroll-mt-24 hover:border-slate-200 transition-all shadow-sm">
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex items-center gap-3 min-w-0">
-          <Avatar className="h-10 w-10 shrink-0">
-            <AvatarImage src={review?.user?.image} className="object-cover" />
-            <AvatarFallback className="bg-primary text-white font-semibold">
-              {review?.user?.name?.[0]?.toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-semibold text-slate-900 text-sm truncate">
-                {review?.user?.name}
-              </span>
-              {isOwner && (
-                <span className="text-xs text-slate-400">(You)</span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={cn(
-                      "w-3.5 h-3.5",
-                      i < review.rating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-slate-200",
-                    )}
-                  />
-                ))}
-              </div>
-              <span className="text-xs text-slate-400">·</span>
-              <span className="text-xs text-slate-500">
-                {formatDistanceToNowStrict(new Date(review.created_at), {
-                  addSuffix: true,
-                })}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {isOwner && (
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              aria-label="Edit your review"
-              onClick={onEdit}
-              className="p-1.5 rounded-md text-slate-400 hover:text-green-600 hover:bg-slate-50 transition-colors">
-              <Edit size={15} />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Every review now requires a completed booking with the business
-         (enforced server-side) - this is always true, not a per-review claim
-         about which service or staff member it was for. */}
-      <p className="flex items-center gap-1 text-xs text-emerald-600 font-medium mb-2">
-        <BadgeCheck size={13} />
-        Verified booking
-      </p>
-
-      <ReviewComment text={review.comment} />
-
-      {(isOwner || isSuperAdmin) && (
-        <div className="mt-2">
-          <DeleteConfirmDialog onConfirm={onDelete} text={review?.comment} />
-        </div>
-      )}
-
-      {review.replies?.length > 0 && (
-        <div className="mt-4 ml-6 space-y-3">
-          {review.replies.map((reply) => (
-            <div
-              key={reply._id}
-              className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <p className="text-xs font-semibold text-slate-700 mb-1">
-                {reply.user?._id === businessId
-                  ? reply.user?.business_name || "Business"
-                  : reply.user?.name || "User"}
-              </p>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                {reply.text}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {canReply &&
-        (openReplyFor === review._id ? (
-          <div className="mt-4 ml-6 space-y-2">
-            <Textarea
-              placeholder="Write a reply..."
-              className="min-h-20 bg-slate-50/50"
-              value={replyDraft}
-              onChange={(e) => setReplyDraft(e.target.value)}
-            />
-            <div className="flex gap-2 justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setOpenReplyFor(null)}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={isReplying}
-                onClick={submitReply}>
-                {isReplying ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "Post reply"
-                )}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="mt-3 ml-1 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
-            onClick={() => setOpenReplyFor(review._id)}>
-            Reply to this review
-          </button>
-        ))}
-    </div>
-  );
-}
-
-function ReviewComment({ text }: { text: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const isLong = text.length > 180;
-
-  return (
-    <div>
-      <p
-        className={cn(
-          "text-slate-600 leading-relaxed text-sm",
-          !expanded && isLong && "line-clamp-3",
-        )}>
-        {text}
-      </p>
-      {isLong && (
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="text-sm font-semibold text-slate-700 hover:underline mt-1">
-          {expanded ? "Show less" : "Read more"}
-        </button>
-      )}
     </div>
   );
 }
