@@ -1223,9 +1223,12 @@ export function EmployeeForm({ initialData }: EmployeeFormProps) {
                               <p className="text-sm font-medium text-[#051e3a]">
                                 {svc.name}
                               </p>
-                              {svc.base_duration > 0 && (
+                              {(svc.duration_type === "not_fixed" ||
+                                svc.base_duration > 0) && (
                                 <p className="text-xs text-gray-400">
-                                  {fmtDuration(svc.base_duration)}
+                                  {svc.duration_type === "not_fixed"
+                                    ? "Flexible (full day)"
+                                    : fmtDuration(svc.base_duration)}
                                 </p>
                               )}
                             </div>

@@ -771,7 +771,9 @@ export default function ServicesTable() {
                               {svc.name}
                             </p>
                             <p className="text-xs text-gray-400 mt-0.5 truncate">
-                              {fmtDuration(svc.base_duration)}
+                              {svc.duration_type === "not_fixed"
+                                ? "Flexible (full day)"
+                                : fmtDuration(svc.base_duration)}
                               {svc.buffer_time > 0 &&
                                 ` · +${fmtDuration(svc.buffer_time)} buffer`}
                             </p>

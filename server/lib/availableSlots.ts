@@ -239,7 +239,12 @@ export async function computeAvailableSlotsForService(
     if (res_snap > 0) runner = new Date(runner.getTime() + (step_ms - res_snap));
 
     while (runner < close_time) {
-      const slot_end = new Date(runner.getTime() + selected_duration * 60_000);
+      // "not_fixed" duration means the resource is held for the rest of its
+      // available window that day, not for a fixed number of minutes.
+      const slot_end =
+        service.duration_type === "not_fixed"
+          ? close_time
+          : new Date(runner.getTime() + selected_duration * 60_000);
       const buffer = service.buffer_time || 0;
       const blocked_end = new Date(slot_end.getTime() + buffer * 60_000);
 
@@ -447,17 +452,25 @@ export async function computeAvailableSlotsForService(
       );
       const duration =
         selected_duration ?? override?.custom_duration ?? service.base_duration;
+      const is_not_fixed = service.duration_type === "not_fixed";
 
-      const slot_end = new Date(runner.getTime() + duration * 60_000);
-
-      const fits_shift = day_sched.shifts.some((shift: any) => {
+      // "not_fixed" duration books the employee for the rest of whichever
+      // shift the start time falls in, rather than for a fixed length -
+      // so the matching shift (and its end time) has to be found first.
+      const matching_shift = day_sched.shifts.find((shift: any) => {
         if (!shift.start || !shift.end) return false;
         const shift_start = to_utc(opts.date, shift.start, opts.timezone);
         const shift_end = to_utc(opts.date, shift.end, opts.timezone);
+        if (is_not_fixed) return runner >= shift_start && runner < shift_end;
+        const slot_end = new Date(runner.getTime() + duration * 60_000);
         return runner >= shift_start && slot_end <= shift_end;
       });
 
-      if (!fits_shift) continue;
+      if (!matching_shift) continue;
+
+      const slot_end = is_not_fixed
+        ? to_utc(opts.date, matching_shift.end, opts.timezone)
+        : new Date(runner.getTime() + duration * 60_000);
 
       const has_time_off = time_offs.some(
         (to: any) =>

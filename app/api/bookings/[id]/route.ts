@@ -82,7 +82,7 @@ export async function PATCH(
     );
 
     const updated = await Booking.findById(id)
-      .populate("service_id", "name service_type base_price base_duration")
+      .populate("service_id", "name service_type base_price duration_type base_duration")
       .populate("employee_id", "full_name calendar_color employee_photo job_title")
       .populate("user_id", "name email")
       .lean();

@@ -44,6 +44,17 @@ const service_schema = new mongoose.Schema(
     },
 
     base_price: { type: Number, required: true, min: 0 },
+    // "not_fixed" means the service has no set end time - booking it blocks
+    // the assigned team member/resource for the rest of that day, rather
+    // than for base_duration minutes. base_duration is still stored (and
+    // still required) as a fallback/estimate for anything that hasn't been
+    // updated to branch on duration_type, but the booking engine and lock
+    // route both treat "not_fixed" as "until the end of the day" instead.
+    duration_type: {
+      type: String,
+      enum: ["fixed", "not_fixed"],
+      default: "fixed",
+    },
     base_duration: { type: Number, required: true },
     buffer_time: { type: Number, default: 0 },
 

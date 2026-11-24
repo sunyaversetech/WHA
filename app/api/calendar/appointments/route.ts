@@ -52,7 +52,19 @@ export async function POST(request: Request) {
   }
 
   const start = new Date(body.start_time);
-  const end = new Date(start.getTime() + body.duration * 60_000);
+  // "not_fixed" services have no set end time - block the rest of the
+  // (UTC) calendar day instead of trusting the client-sent duration.
+  const is_not_fixed = (service as any).duration_type === "not_fixed";
+  const end = is_not_fixed
+    ? new Date(
+        Date.UTC(
+          start.getUTCFullYear(),
+          start.getUTCMonth(),
+          start.getUTCDate() + 1,
+        ),
+      )
+    : new Date(start.getTime() + body.duration * 60_000);
+  const duration = Math.round((end.getTime() - start.getTime()) / 60_000);
 
   const notes = [
     body.customer_name ? `Client: ${body.customer_name}` : null,
@@ -68,7 +80,7 @@ export async function POST(request: Request) {
     employee_id: body.employee_id || null,
     start_time: start,
     end_time: end,
-    duration: body.duration,
+    duration,
     total_price: body.total_price ?? (service as any).base_price ?? 0,
     currency: "AUD",
     payment_status: "unpaid",

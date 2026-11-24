@@ -91,6 +91,7 @@ export async function GET(request: Request) {
           description: 1,
           category: 1,
           base_price: 1,
+          duration_type: 1,
           base_duration: 1,
           assigned_employees: 1,
           is_active: 1,

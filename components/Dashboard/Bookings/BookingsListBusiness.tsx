@@ -52,6 +52,7 @@ export interface ServiceId {
   description: string;
   category: string;
   base_price: number;
+  duration_type?: "fixed" | "not_fixed";
   base_duration: number;
   assigned_employees: string[];
   is_active: boolean;

@@ -313,7 +313,9 @@ export default function BusinessCard({
                     </span>
                   </div>
                   <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginTop: 1 }}>
-                    {formatDurationLabel(service.base_duration)}
+                    {service.duration_type === "not_fixed"
+                      ? "Flexible (full day)"
+                      : formatDurationLabel(service.base_duration)}
                   </div>
 
                   <div
