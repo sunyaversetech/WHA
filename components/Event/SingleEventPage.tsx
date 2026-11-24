@@ -20,7 +20,8 @@ import {
 } from "@/services/event.service";
 import type { PurchasableOption } from "../Stripe/EventCheckOut";
 import Image from "next/image";
-import { format, formatDate, parse } from "date-fns";
+import { formatDate } from "date-fns";
+import { formatEventDisplayDate, formatEventDisplayTime } from "@/lib/event-date";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
@@ -534,18 +535,15 @@ export default function EventDetailPage() {
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
                   <span className="font-medium text-foreground">
-                    {event?.data?.dateRange?.from
-                      ? `${formatDate(event?.data?.dateRange.from, "dd MMM yyyy")} ${
-                          event?.data?.dateRange.from !==
-                            event?.data?.dateRange.to &&
-                          event?.data?.dateRange.to
-                            ? `- ${formatDate(
-                                event?.data?.dateRange.to,
-                                "dd MMM yyyy",
-                              )}`
-                            : ""
-                        }`
-                      : "Date TBA"}
+                    {(() => {
+                      const from = formatEventDisplayDate(event?.data?.dateRange?.from);
+                      if (!from) return "Date TBA";
+                      const to =
+                        event?.data?.dateRange?.from !== event?.data?.dateRange?.to
+                          ? formatEventDisplayDate(event?.data?.dateRange?.to)
+                          : null;
+                      return to ? `${from} - ${to}` : from;
+                    })()}
                   </span>
                 </div>
 
@@ -554,18 +552,10 @@ export default function EventDetailPage() {
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Clock className="h-4 w-4 text-primary flex-shrink-0" />
                   <p className="font-medium text-gray-800">
-                    {event?.data?.startTime
-                      ? format(
-                          parse(event.data.startTime, "HH:mm", new Date()),
-                          "h:mm aa",
-                        )
-                      : "Time TBA"}
-
+                    {formatEventDisplayTime(event?.data?.startTime) ?? "Time TBA"}
                     {event?.data?.endTime &&
-                      ` - ${format(
-                        parse(event.data.endTime, "HH:mm", new Date()),
-                        "h:mm aa",
-                      )}`}
+                      formatEventDisplayTime(event.data.endTime) &&
+                      ` - ${formatEventDisplayTime(event.data.endTime)}`}
                   </p>
                 </div>
               </div>
@@ -756,27 +746,17 @@ export default function EventDetailPage() {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-primary" />
                         <span>
-                          {event?.data?.dateRange?.from
-                            ? `${formatDate(event.data.dateRange.from, "dd MMM yyyy")}`
-                            : "Date TBA"}
+                          {formatEventDisplayDate(event?.data?.dateRange?.from) ?? "Date TBA"}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-primary" />
                         <p className="font-medium text-gray-800">
-                          {event?.data?.startTime
-                            ? format(
-                                parse(
-                                  event.data.startTime,
-                                  "HH:mm",
-                                  new Date(),
-                                ),
-                                "h:mm aa",
-                              )
-                            : "Time TBA"}
+                          {formatEventDisplayTime(event?.data?.startTime) ?? "Time TBA"}
                           {event?.data?.endTime &&
-                            ` - ${format(parse(event.data.endTime, "HH:mm", new Date()), "h:mm aa")}`}
+                            formatEventDisplayTime(event.data.endTime) &&
+                            ` - ${formatEventDisplayTime(event.data.endTime)}`}
                         </p>
                       </div>
 

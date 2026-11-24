@@ -5,6 +5,7 @@ import { useFetcher } from "@/lib/generic.service";
 import { UserBusinessType } from "./business.service";
 import { DealFormValues } from "@/components/Dashboard/Deals/DealForm";
 import { useSearchParams } from "next/navigation";
+import { dealsQueryKey } from "@/lib/queries/deals-query";
 
 export type DealsGetValues = {
   _id: string;
@@ -66,7 +67,7 @@ export const useGetAllDeals = () => {
   const to = param.get("to") || "";
   const city = param.get("city") || "";
   return useFetcher<ApiResponseType<DealsGetValues[]>>(
-    ["all-deals", category, search, from, to, city],
+    dealsQueryKey({ category, search, from, to, city }),
     null,
     `/api/deals/get-all?category=${category}&search=${search}&from=${from}&to=${to}&city=${city}`,
   );

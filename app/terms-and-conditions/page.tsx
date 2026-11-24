@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
 import LegalLayout from "@/components/Legal/LegalLayout";
+import { buildMetadata, SITE_NAME } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Terms and Conditions",
+export const metadata = buildMetadata({
+  title: `Terms and Conditions | ${SITE_NAME}`,
   description:
     "The general terms and conditions governing use of the What’s Happening Australia (WHA) booking marketplace platform.",
-  alternates: { canonical: "/terms-and-conditions" },
-};
+  path: "/terms-and-conditions",
+});
 
 export default function TermsAndConditionsPage() {
   return (
