@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Star, User, Loader2, Send, Edit, X } from "lucide-react";
+import { Star, User, Loader2, Send, Edit, X, BadgeCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -149,6 +149,10 @@ function ReviewCard({
               />
             ))}
           </div>
+          <p className="mt-1.5 flex items-center gap-1 text-xs text-emerald-600 font-medium">
+            <BadgeCheck size={13} />
+            Verified booking
+          </p>
           <p
             className={cn(
               "text-slate-600 leading-relaxed mt-2",
