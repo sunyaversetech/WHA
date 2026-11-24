@@ -155,6 +155,56 @@ const testEvents = [
     image: PLACEHOLDER_IMAGE,
     archived: false,
   },
+  {
+    title: "SEO Test Nepali New Year Mirror",
+    slug: "seotestnepalinewyearmirror",
+    description:
+      "Internal fixture mirroring nepalinewyear's exact real stored dateRange.from value, for a literal before/after comparison. Safe to delete.",
+    // The literal real-world value, confirmed via production's rendered
+    // JSON-LD: dateRange.from decodes to 14 April 2026 in Sydney time
+    // (matching the event's own description, which says "14 April"),
+    // with startTime "13:00" - this is not a constructed test date like
+    // the other fixtures, it's nepalinewyear's actual bug reproduced.
+    dateRange: {
+      from: new Date("2026-04-13T14:00:00.000Z"),
+      to: new Date("2026-04-13T14:00:00.000Z"),
+    },
+    startTime: "13:00",
+    endTime: "21:00",
+    venue: "Granville Park",
+    location: "Granville Park, Merrylands, Sydney, Cumberland City Council, New South Wales, 2160, Australia",
+    city: "sydney",
+    city_name: "Sydney",
+    category: "concerts",
+    category_name: "Concerts",
+    price_category: "registration",
+    host_name: "SEO Test Fixture",
+    image: PLACEHOLDER_IMAGE,
+    archived: false,
+  },
+  {
+    title: "SEO Test No Venue No City",
+    slug: "seotestnovenuenocity",
+    description:
+      "Internal fixture with neither a venue nor a known city - confirms the Event JSON-LD block is omitted entirely rather than emitting one with no usable location. Safe to delete.",
+    dateRange: {
+      from: sydneyMidnightDate("2026-12-23", 11),
+      to: sydneyMidnightDate("2026-12-23", 11),
+    },
+    startTime: "19:00",
+    endTime: "22:00",
+    venue: "",
+    location_tba: true,
+    location: "",
+    city: "",
+    city_name: "",
+    category: "concerts",
+    category_name: "Concerts",
+    price_category: "registration",
+    host_name: "SEO Test Fixture",
+    image: PLACEHOLDER_IMAGE,
+    archived: false,
+  },
 ];
 
 async function main() {
