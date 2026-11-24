@@ -48,8 +48,12 @@ export async function proxy(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ")) {
       try {
-        const claims = await verifyAccessToken(authHeader.slice("Bearer ".length).trim());
-        rateLimitKey = claims ? `user:${claims.sub}` : `ip:${getClientIp(request)}`;
+        const claims = await verifyAccessToken(
+          authHeader.slice("Bearer ".length).trim(),
+        );
+        rateLimitKey = claims
+          ? `user:${claims.sub}`
+          : `ip:${getClientIp(request)}`;
       } catch {
         // MobileAuthConfigError (MOBILE_JWT_SECRET missing) or any other failure —
         // don't let a rate-limiter concern block the request or crash the proxy.
