@@ -464,7 +464,7 @@ export default function BusinessPage() {
 
   const MainContent = () => (
     <div>
-      {community.length > 0 && (
+      {/* {community.length > 0 && (
         <>
           <section style={{ marginBottom: 28 }}>
             <SecTitle>Community</SecTitle>
@@ -504,7 +504,7 @@ export default function BusinessPage() {
           <Divider my={0} />
           <div style={{ height: 28 }} />
         </>
-      )}
+      )} */}
 
       <section>
         <SecTitle>
@@ -610,40 +610,6 @@ export default function BusinessPage() {
       {/* REVIEWS */}
       <Divider />
       <section>
-        {ratingNum && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-              marginBottom: 24,
-              padding: "20px 24px",
-              background: T.bg,
-              borderRadius: 16,
-              border: `1px solid ${T.border}`,
-            }}>
-            <div style={{ textAlign: "center" }}>
-              <div
-                style={{
-                  fontSize: 48,
-                  fontWeight: 900,
-                  color: T.navy,
-                  lineHeight: 1,
-                }}>
-                {ratingNum.toFixed(1)}
-              </div>
-              <div style={{ fontSize: 12, color: T.gray, marginTop: 4 }}>
-                out of 5
-              </div>
-            </div>
-            <div>
-              <StarRow rating={ratingNum} size={24} />
-              <div style={{ fontSize: 14, color: T.gray, marginTop: 6 }}>
-                Based on {totalReviews} review{totalReviews !== 1 ? "s" : ""}
-              </div>
-            </div>
-          </div>
-        )}
         <BusinessReviewSection
           reviews={reviews?.data || []}
           businessId={businessId}
@@ -1175,69 +1141,165 @@ export default function BusinessPage() {
       <div className="hidden lg:block">
         <div style={{ height: 72 }} />
 
+        {/* ── BUSINESS INFO BAR — name, rating, location, now above the
+           gallery (matches how real business-profile references like
+           Google Maps lay this out: identity first, photos after) ── */}
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "24px 32px 0",
+          }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 24,
+            }}>
+            {/* Left: name + rating + location */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  flexWrap: "wrap",
+                }}>
+                <h1
+                  style={{
+                    fontSize: 28,
+                    fontWeight: 900,
+                    color: T.navy,
+                    lineHeight: 1.15,
+                    margin: 0,
+                  }}>
+                  {name}
+                </h1>
+                {biz?.verified && (
+                  <BadgeCheck size={26} fill={T.blue} color={T.white} />
+                )}
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <RatingSummary
+                  ratingNum={ratingNum}
+                  totalReviews={totalReviews}
+                  category={category}
+                />
+              </div>
+              {businessType && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    marginTop: 8,
+                    padding: "3px 10px",
+                    borderRadius: 9999,
+                    background: "#eff6ff",
+                    color: "#1d4ed8",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}>
+                  {businessType === "item_based"
+                    ? "Item Booking"
+                    : "Service Booking"}
+                </span>
+              )}
+              {(city || address) && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    marginTop: 7,
+                    fontSize: 13,
+                    color: T.gray,
+                  }}>
+                  <MapPin size={13} color={T.gray} />
+                  <span style={{ textTransform: "capitalize" }}>{city}</span>
+                  {city && address && (
+                    <span style={{ color: T.border }}>·</span>
+                  )}
+                  <span>{address}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Right: share/save actions + service count */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: 10,
+                flexShrink: 0,
+              }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button
+                  onClick={handleShare}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: "transparent",
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 8,
+                    padding: "7px 14px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: T.navy,
+                    cursor: "pointer",
+                  }}>
+                  <Share2 size={14} />
+                  Share
+                </button>
+                <button
+                  onClick={handleFav}
+                  disabled={isPending}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: "transparent",
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 8,
+                    padding: "7px 14px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: isBusinessFavorite ? "#e11d48" : T.navy,
+                    cursor: "pointer",
+                  }}>
+                  {isPending ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Heart
+                      size={14}
+                      fill={isBusinessFavorite ? "#e11d48" : "none"}
+                      color={isBusinessFavorite ? "#e11d48" : T.navy}
+                    />
+                  )}
+                  {isBusinessFavorite ? "Saved" : "Save"}
+                </button>
+              </div>
+              {activeServices.length > 0 && (
+                <span style={{ fontSize: 13, color: T.gray, fontWeight: 500 }}>
+                  {activeServices.length} services available
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Thin divider */}
+          <div style={{ height: 1, background: T.border, marginTop: 20 }} />
+        </div>
+
         {/* ── HERO IMAGE GRID ── */}
         <div
           style={{
             maxWidth: 1200,
             margin: "0 auto",
-            padding: "0 32px",
+            padding: "20px 32px 0",
           }}>
-          {/* Top action row */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              gap: 10,
-              marginBottom: 14,
-            }}>
-            <button
-              onClick={handleShare}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                background: "transparent",
-                border: `1px solid ${T.border}`,
-                borderRadius: 8,
-                padding: "7px 14px",
-                fontSize: 13,
-                fontWeight: 600,
-                color: T.navy,
-                cursor: "pointer",
-              }}>
-              <Share2 size={14} />
-              Share
-            </button>
-            <button
-              onClick={handleFav}
-              disabled={isPending}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                background: "transparent",
-                border: `1px solid ${T.border}`,
-                borderRadius: 8,
-                padding: "7px 14px",
-                fontSize: 13,
-                fontWeight: 600,
-                color: isBusinessFavorite ? "#e11d48" : T.navy,
-                cursor: "pointer",
-              }}>
-              {isPending ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Heart
-                  size={14}
-                  fill={isBusinessFavorite ? "#e11d48" : "none"}
-                  color={isBusinessFavorite ? "#e11d48" : T.navy}
-                />
-              )}
-              {isBusinessFavorite ? "Saved" : "Save"}
-            </button>
-          </div>
-
           {/* Image grid — shape follows how many real images there actually
              are, instead of always drawing 3 cells and repeating the only
              image into the empty ones. */}
@@ -1265,7 +1327,8 @@ export default function BusinessPage() {
               style={{
                 display: "grid",
                 gridTemplateColumns: "1.55fr 1fr",
-                gridTemplateRows: allImages.length === 2 ? "448px" : "220px 220px",
+                gridTemplateRows:
+                  allImages.length === 2 ? "448px" : "220px 220px",
                 gap: 8,
                 borderRadius: 20,
                 overflow: "hidden",
@@ -1348,114 +1411,6 @@ export default function BusinessPage() {
               )}
             </div>
           )}
-        </div>
-
-        {/* ── BUSINESS INFO BAR ── */}
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "24px 32px 0",
-          }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 24,
-            }}>
-            {/* Left: name + rating + location */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  flexWrap: "wrap",
-                }}>
-                <h1
-                  style={{
-                    fontSize: 28,
-                    fontWeight: 900,
-                    color: T.navy,
-                    lineHeight: 1.15,
-                    margin: 0,
-                  }}>
-                  {name}
-                </h1>
-                {biz?.verified && (
-                  <BadgeCheck size={26} fill={T.blue} color={T.white} />
-                )}
-              </div>
-              <div style={{ marginTop: 8 }}>
-                <RatingSummary
-                  ratingNum={ratingNum}
-                  totalReviews={totalReviews}
-                  category={category}
-                />
-              </div>
-              {businessType && (
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    marginTop: 8,
-                    padding: "3px 10px",
-                    borderRadius: 9999,
-                    background: "#eff6ff",
-                    color: "#1d4ed8",
-                    fontSize: 12,
-                    fontWeight: 600,
-                  }}>
-                  {businessType === "item_based"
-                    ? "Item Booking"
-                    : "Service Booking"}
-                </span>
-              )}
-              {(city || address) && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    marginTop: 7,
-                    fontSize: 13,
-                    color: T.gray,
-                  }}>
-                  <MapPin size={13} color={T.gray} />
-                  <span style={{ textTransform: "capitalize" }}>{city}</span>
-                  {city && address && (
-                    <span style={{ color: T.border }}>·</span>
-                  )}
-                  <span>{address}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Right: service count + book button */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-end",
-                gap: 10,
-                flexShrink: 0,
-              }}>
-              {activeServices.length > 0 && (
-                <span style={{ fontSize: 13, color: T.gray, fontWeight: 500 }}>
-                  {activeServices.length} services available
-                </span>
-              )}
-              {/* <BookNowBtn
-                onClick={() =>
-                  router.push(`/bookings?business_id=${businessId}`)
-                }
-              /> */}
-            </div>
-          </div>
-
-          {/* Thin divider */}
-          <div style={{ height: 1, background: T.border, marginTop: 24 }} />
         </div>
 
         {/* ── 2-COLUMN CONTENT ── */}

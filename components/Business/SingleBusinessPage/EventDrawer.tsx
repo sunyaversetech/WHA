@@ -26,7 +26,7 @@ const EventDrawer = ({
           <ListChevronsDownUp className="mr-2 h-4 w-4" /> Show More Event
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="min-h-screen! fixed inset-x-0 bottom-0 -top-25 rounded-t-none border-none z-999">
+      <DrawerContent className="min-h-screen! fixed inset-x-0 bottom-0 top-0! mt-0! rounded-t-none border-none z-999">
         <div className="mx-auto w-full  h-full flex flex-col">
           <DrawerHeader className="flex flex-row items-center justify-between border-b px-6">
             <div className="space-y-1">
