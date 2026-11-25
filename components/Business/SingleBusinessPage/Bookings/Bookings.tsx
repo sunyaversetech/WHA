@@ -520,7 +520,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
         onOpenChange={(open) => {
           if (!open && !isMutationLoading) handleGlobalWizardReset();
         }}>
-        <DialogContent className="w-full md:max-w-5xl z-50 p-0 overflow-hidden bg-[#F9F9F9] rounded-none md:rounded-3xl border-none flex flex-col md:flex-row h-dvh md:h-[90vh] md:max-h-180 shadow-2xl">
+        <DialogContent className="w-full md:max-w-5xl z-[1001] p-0 overflow-hidden bg-[#F9F9F9] rounded-none md:rounded-3xl border-none flex flex-col md:flex-row h-dvh md:h-[90vh] md:max-h-180 shadow-2xl">
           {/* Left Step Canvas */}
           {isPaymentModalOpen && activeLockId && checkoutSummary ? (
             <BookingCheckout
@@ -965,7 +965,7 @@ export default function BookingContainer({ services }: BookingContainerProps) {
                   <div
                     className="w-11 h-11 rounded-xl bg-slate-900 bg-cover bg-center"
                     style={{
-                      backgroundImage: `url('https://wha-sunya-my-uploads.s3.ap-southeast-2.amazonaws.com/profile_1780979383458.jpeg')`,
+                      backgroundImage: `url('${services[0]?.business_id?.image || "/placeholder.svg"}')`,
                     }}
                   />
                   <div>
