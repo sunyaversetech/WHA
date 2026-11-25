@@ -18,7 +18,6 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
 );
 
-const SURCHARGE_PERCENT = 0.025;
 const RESERVATION_LOCK_DURATION_MS = 5 * 60 * 1000; // must match backend lock expires_at
 
 export interface BookingCheckoutProps {
@@ -40,7 +39,6 @@ export interface BookingCheckoutProps {
 
 interface Fees {
   baseAmount: number;
-  surcharge: number;
   totalToPay: number;
 }
 
@@ -53,11 +51,9 @@ function generateInvoiceNumber(): string {
 }
 
 function computeFees(price: number): Fees {
-  const surcharge = price * SURCHARGE_PERCENT;
   return {
     baseAmount: price,
-    surcharge,
-    totalToPay: price + surcharge,
+    totalToPay: price,
   };
 }
 
@@ -388,14 +384,6 @@ function BookingPaymentForm({
             <span className="font-medium">
               AUD {fees.baseAmount.toFixed(2)}
             </span>
-          </div>
-
-          <div className="flex justify-between items-center px-4 py-2.5 text-slate-500">
-            <span className="flex items-center gap-1">
-              Card processing surcharge
-              <span className="text-xs text-slate-400">(2.5%)</span>
-            </span>
-            <span>AUD {fees.surcharge.toFixed(2)}</span>
           </div>
 
           <div className="flex justify-between items-center px-4 py-3.5 font-bold text-white text-base bg-slate-900">
