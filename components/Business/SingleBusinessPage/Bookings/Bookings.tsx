@@ -16,6 +16,7 @@ import {
   Minus,
   Plus,
   CreditCard,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -23,6 +24,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import BookingCheckout from "./BookingCheckout";
 
 import {
@@ -47,6 +55,8 @@ interface BookingContainerProps {
 
 type StepType = "professionals" | "time";
 
+const SERVICES_PREVIEW_COUNT = 3;
+
 function formatDurationLabel(totalMinutes: number): string {
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;
@@ -60,6 +70,53 @@ function getServiceMaxQty(s: ServiceType): number {
   if (s.service_type === "resource_based")
     return s.max_concurrent_bookings ?? 0;
   return 0; // employee_based and group_session don't have multi-quantity booking
+}
+
+// Lifted to module scope (not a closure inside BookingContainer) so it isn't
+// redefined every render, matching the fix applied to ReviewCard/Comment.tsx
+// for the same react-hooks/static-components rule.
+function ServiceListItem({
+  service,
+  onBook,
+}: {
+  service: ServiceType;
+  onBook: () => void;
+}) {
+  return (
+    <div className="flex items-center w-full justify-between p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all">
+      <div className="space-y-1 pr-4">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase font-bold text-primary tracking-wider bg-purple-50 px-2 py-0.5 rounded-md">
+            {service.category}
+          </span>
+          {getServiceMaxQty(service) > 0 && (
+            <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider bg-amber-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+              <Layers className="w-2.5 h-2.5" /> Max Qty:{" "}
+              {getServiceMaxQty(service)}
+            </span>
+          )}
+        </div>
+        <h3 className="font-bold text-base text-slate-900 pt-1">
+          {service.name}
+        </h3>
+        <p className="text-xs text-slate-400 flex items-center gap-1">
+          <Clock className="w-3.5 h-3.5" />{" "}
+          {service.duration_type === "not_fixed"
+            ? "Flexible duration"
+            : `${service.base_duration} mins`}
+        </p>
+        <p className="text-sm font-extrabold text-slate-900 pt-1">
+          AUD {service.base_price}
+        </p>
+      </div>
+      <Button
+        onClick={onBook}
+        className="px-5 rounded-xl border border-slate-200 hover:bg-slate-50 font-semibold"
+        variant="outline">
+        Book
+      </Button>
+    </div>
+  );
 }
 
 export default function BookingContainer({ services }: BookingContainerProps) {
@@ -110,6 +167,13 @@ export default function BookingContainer({ services }: BookingContainerProps) {
       ? s.is_active
       : s.category === activeTab && s.is_active,
   );
+  const visibleDashboardServices = filteredDashboardServices.slice(
+    0,
+    SERVICES_PREVIEW_COUNT,
+  );
+  const hasMoreDashboardServices =
+    filteredDashboardServices.length > SERVICES_PREVIEW_COUNT;
+  const [servicesDrawerOpen, setServicesDrawerOpen] = useState(false);
 
   // Only employee_based services have professionals to select
   const isEmployeeBasedSelection = useMemo(
@@ -474,45 +538,58 @@ export default function BookingContainer({ services }: BookingContainerProps) {
         </div>
 
         <div className="grid grid-cols-1 gap-4">
-          {filteredDashboardServices.map((service) => (
-            <div
+          {visibleDashboardServices.map((service) => (
+            <ServiceListItem
               key={service._id}
-              className="flex items-center w-full justify-between p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all">
-              <div className="space-y-1 pr-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase font-bold text-primary tracking-wider bg-purple-50 px-2 py-0.5 rounded-md">
-                    {service.category}
-                  </span>
-                  {getServiceMaxQty(service) > 0 && (
-                    <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider bg-amber-50 px-2 py-0.5 rounded-md flex items-center gap-1">
-                      <Layers className="w-2.5 h-2.5" /> Max Qty:{" "}
-                      {getServiceMaxQty(service)}
-                    </span>
-                  )}
-                </div>
-                <h3 className="font-bold text-base text-slate-900 pt-1">
-                  {service.name}
-                </h3>
-                <p className="text-xs text-slate-400 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />{" "}
-                  {service.duration_type === "not_fixed"
-                    ? "Flexible duration"
-                    : `${service.base_duration} mins`}
-                </p>
-                <p className="text-sm font-extrabold text-slate-900 pt-1">
-                  AUD {service.base_price}
-                </p>
-              </div>
-              <Button
-                onClick={() => handleOpenBookingWizard(service)}
-                className="px-5 rounded-xl border border-slate-200 hover:bg-slate-50 font-semibold"
-                variant="outline">
-                Book
-              </Button>
-            </div>
+              service={service}
+              onBook={() => handleOpenBookingWizard(service)}
+            />
           ))}
         </div>
+
+        {hasMoreDashboardServices && (
+          <div className="flex justify-center pt-2">
+            <button
+              type="button"
+              className="border border-slate-300 rounded-full px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 transition-colors"
+              onClick={() => setServicesDrawerOpen(true)}>
+              {`Show all ${filteredDashboardServices.length} services`}
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* ─── ALL SERVICES DRAWER (full page, above the fixed header) ─── */}
+      <Drawer open={servicesDrawerOpen} onOpenChange={setServicesDrawerOpen}>
+        <DrawerContent className="min-h-screen! fixed inset-x-0 bottom-0 top-0! mt-0! rounded-t-none border-none z-[1001]">
+          <div className="mx-auto w-full h-full flex flex-col">
+            <DrawerHeader className="flex flex-row items-center justify-between border-b px-6">
+              <DrawerTitle className="text-2xl">
+                {`${filteredDashboardServices.length} services`}
+              </DrawerTitle>
+              <DrawerClose asChild>
+                <Button variant="ghost" size="icon">
+                  <X className="h-5 w-5" />
+                </Button>
+              </DrawerClose>
+            </DrawerHeader>
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-1 gap-4 max-w-3xl mx-auto">
+                {filteredDashboardServices.map((service) => (
+                  <ServiceListItem
+                    key={service._id}
+                    service={service}
+                    onBook={() => {
+                      setServicesDrawerOpen(false);
+                      handleOpenBookingWizard(service);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {/* ─── BOOKING WIZARD DIALOG ─── */}
       <Dialog
