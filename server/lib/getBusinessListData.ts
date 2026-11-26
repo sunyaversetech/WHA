@@ -129,7 +129,7 @@ export async function getBusinessListData(rawParams: BusinessQueryParams) {
 
   const hasBounds = !!(rawSwLat && rawSwLng && rawNeLat && rawNeLng);
 
-  const baseFilter: any = { category: "business" };
+  const baseFilter: any = { category: "business", verified: true };
 
   if (category && category !== "all") {
     baseFilter.business_category = category;
