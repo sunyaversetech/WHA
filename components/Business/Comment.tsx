@@ -446,7 +446,7 @@ export default function BusinessReviewSection({
       </div>
 
       <Drawer open={reviewsDrawerOpen} onOpenChange={setReviewsDrawerOpen}>
-        <DrawerContent className="min-h-screen! fixed inset-x-0 bottom-0 top-0! mt-0! rounded-t-none border-none z-999">
+        <DrawerContent className="min-h-screen! fixed inset-x-0 bottom-0 top-0! mt-0! rounded-t-none border-none z-[1001]">
           <div className="mx-auto w-full h-full flex flex-col">
             <DrawerHeader className="flex flex-row items-center justify-between border-b px-6">
               <DrawerTitle className="text-2xl">
